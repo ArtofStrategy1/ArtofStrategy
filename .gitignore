@@ -1,0 +1,110 @@
+# ===================================================================
+# General & OS-specific files
+# ===================================================================
+
+# Thumbnails
+._*
+
+*.pass.txt
+
+open-webui-data
+ollama-data
+n8n-data
+searxng-data
+mongodb-data
+utility/
+
+# ===================================================================
+# Editor & IDE-specific files
+# ===================================================================
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/
+*.code-workspace
+
+# JetBrains (PyCharm, WebStorm, etc.)
+.idea/
+
+# Sublime Text
+*.sublime-workspace
+
+# Vim
+*~
+*.swp
+*.swo
+
+# ===================================================================
+# Python Backend
+# ===================================================================
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+virtualenv/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Byte-compiled / optimized / C extensions
+*.so
+*.pyd
+
+# Unit test / coverage reports
+.pytest_cache/
+htmlcov/
+.coverage
+nosetests.xml
+coverage.xml
+
+# Django specific
+*.log
+local_settings.py
+
+# Flask specific
+instance/
+.webassets-cache
+
+# Database files
+db.sqlite3
+db.sqlite3-journal
+
+# ===================================================================
+# JavaScript Frontend
+# ===================================================================
+# Dependencies
+node_modules/
+
+# Build artifacts
+build/
+dist/
+.next/
+out/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Lockfile resolutions (optional, but sometimes excluded in team envs)
+# yarn.lock
+# package-lock.json
+
+# Secrets and environment variables
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Debugging
+.pnp.*
+.pnp.js

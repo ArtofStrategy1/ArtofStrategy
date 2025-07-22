@@ -1,0 +1,114 @@
+services:
+  # Ollama service.
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    networks:
+      - data2int-net
+    environment:
+      - OLLAMA_AUTH=false  # Disable authentication
+    volumes:
+      - ./ollama/ollama-data:/root/.ollama  # Persistent storage for models
+  
+  # Open WebUI service
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:latest
+    container_name: open-webui
+    restart: unless-stopped
+    ports:
+      - "3000:8080"
+    networks:
+      - data2int-net
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434  # Connect Open WebUI to Ollama
+    volumes:
+      - ./open-webui/open-webui-data:/app/backend/data
+
+  # n8n Service.
+  n8n:
+    image: n8nio/n8n
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    networks:
+      - data2int-net
+    volumes:
+      - ./n8n/n8n-data:/home/node/.n8n
+    environment:
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
+      - N8N_PORT=${N8N_PORT}
+      - N8N_SECURE_COOKIE=${N8N_SECURE_COOKIE}
+      - WEBHOOK_URL=${WEBHOOK_URL}
+      - N8N_CORS_ALLOW_ORIGIN=${N8N_CORS_ALLOW_ORIGIN}
+      - N8N_WEBHOOK_TTL=${N8N_WEBHOOK_TTL}
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      # Install community nodes
+      - N8N_COMMUNITY_PACKAGES=n8n-nodes-searxng,n8n-nodes-bcrypt
+    depends_on:
+      - mongodb
+
+  # MongoDB Service
+  mongodb:
+    image: mongo:7.0
+    container_name: mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    networks:
+      - data2int-net
+    volumes:
+      - ./mongodb/mongodb-data:/data/db
+
+  # SearXNG service.
+  searxng:
+    image: searxng/searxng:latest
+    container_name: searxng
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    networks:
+      - data2int-net
+    environment:
+      # Use internal Docker network URL for base URL
+      - SEARXNG_BASE_URL=http://searxng:8080
+      # Change this to a secure random string
+      - SEARXNG_SECRET_KEY=${SEARXNG_SECRET_KEY}
+      # Disable bot detection for API access
+      - SEARXNG_SETTINGS_USE_DEFAULT_SETTINGS=false
+    volumes:
+      - ./searxng:/etc/searxng:ro
+      - ./searxng/searxng-data:/var/cache/searxng
+    # Add healthcheck
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # data2int API service
+  data2int-api:
+    build:
+      context: ./data2int-api/
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    container_name: data2int-api
+    ports:
+      - "8004:8000" # Map host port 8000 to container port 8000 (for direct testing if needed)
+    networks:
+      - data2int-net
+      - npm_default # Connect to Nginx Proxy Manager network
+    volumes:
+      - ./data2int-api/:/app/
+
+networks:
+  default:
+  data2int-net:
+    external: true
+  npm_default:
+    external: true

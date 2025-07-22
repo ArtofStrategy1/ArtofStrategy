@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data to Intelligence</title>
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+    
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="#" class="logo">Data to Intelligence</a>
+            <ul class="nav-links">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#vision">Vision</a></li>
+                <li><a href="#mission">Mission</a></li>
+                <li><a href="#goals">Goals</a></li>
+                <li><a href="#analysis">Analysis</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="hero" id="home">
+        <div class="container">
+            <h1>Unlock Your Strategic Potential</h1>
+            <p>Transform your organization with comprehensive strategic planning tools and methodologies designed to drive success and innovation.</p>
+            <div class="cta-buttons">
+                <a href="#vision" class="btn btn-primary">Get Started</a>
+                <a href="#analysis" class="btn btn-secondary">View Analysis</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <section class="section" id="vision">
+            <h2>Vision</h2>
+            <p>We help you craft a clear vision with detailed strategic steps that will transform your organization and position you for long-term success in an ever-changing marketplace.</p>
+            <button class="expand-btn" onclick="toggleExpanded('vision-content')">More</button>
+            <div class="expanded-content" id="vision-content">
+                <h3>Our Vision Framework</h3>
+                <p>Our comprehensive vision development process includes stakeholder alignment, future scenario planning, and measurable outcome definition. We work with your team to create a vision that inspires action and provides clear direction for organizational growth.</p>
+                <ul>
+                    <li>Stakeholder engagement and alignment</li>
+                    <li>Market trend analysis and future forecasting</li>
+                    <li>Vision statement development and refinement</li>
+                    <li>Implementation roadmap creation</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="section" id="mission">
+            <h2>Mission or Aim</h2>
+            <p>Define your organization's core purpose and establish the foundational principles that will guide all strategic decisions and operational activities.</p>
+            <button class="expand-btn" onclick="toggleExpanded('mission-content')">More</button>
+            <div class="expanded-content" id="mission-content">
+                <h3>Mission Development Process</h3>
+                <p>We facilitate workshops to help you articulate your organization's fundamental purpose, core values, and primary objectives. This process ensures alignment across all levels of your organization.</p>
+                <ul>
+                    <li>Purpose clarification sessions</li>
+                    <li>Value proposition development</li>
+                    <li>Mission statement crafting</li>
+                    <li>Organizational alignment verification</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="section" id="goals">
+            <h2>Goals</h2>
+            <p>Set ambitious yet achievable goals that align with your vision and mission, creating a clear pathway to success with measurable milestones and timelines.</p>
+            <button class="expand-btn" onclick="toggleExpanded('goals-content')">More</button>
+            <div class="expanded-content" id="goals-content">
+                <h3>SMART Goals Framework</h3>
+                <p>Our goal-setting methodology ensures your objectives are Specific, Measurable, Achievable, Relevant, and Time-bound. We help you create both short-term and long-term goals that drive meaningful progress.</p>
+                <ul>
+                    <li>Strategic objective identification</li>
+                    <li>KPI and metric development</li>
+                    <li>Timeline and milestone planning</li>
+                    <li>Resource allocation planning</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>Strategic Initiatives</h2>
+            <p>Develop comprehensive strategic initiatives that translate your vision into actionable plans, ensuring effective resource allocation and timeline management.</p>
+            <button class="expand-btn" onclick="toggleExpanded('initiatives-content')">More</button>
+            <div class="expanded-content" id="initiatives-content">
+                <h3>Initiative Development</h3>
+                <p>We help you identify and prioritize strategic initiatives that will have the greatest impact on achieving your organizational goals. Each initiative includes detailed planning, resource requirements, and success metrics.</p>
+                <ul>
+                    <li>Initiative prioritization matrix</li>
+                    <li>Resource requirement analysis</li>
+                    <li>Risk assessment and mitigation</li>
+                    <li>Implementation timeline development</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>Objectives</h2>
+            <p>Break down your goals into specific, measurable objectives that provide clear direction and enable effective progress tracking throughout your organization.</p>
+            <button class="expand-btn" onclick="toggleExpanded('objectives-content')">More</button>
+            <div class="expanded-content" id="objectives-content">
+                <h3>Objective Setting Framework</h3>
+                <p>Our systematic approach to objective setting ensures alignment with strategic goals while maintaining flexibility for changing market conditions and organizational needs.</p>
+                <ul>
+                    <li>Objective hierarchy development</li>
+                    <li>Performance indicator definition</li>
+                    <li>Progress tracking systems</li>
+                    <li>Review and adjustment protocols</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>Actions</h2>
+            <p>Define specific actions and tactics that will drive the achievement of your objectives, with clear accountability and timeline specifications.</p>
+            <button class="expand-btn" onclick="toggleExpanded('actions-content')">More</button>
+            <div class="expanded-content" id="actions-content">
+                <h3>Action Planning</h3>
+                <p>We help you create detailed action plans that specify who, what, when, and how for each strategic initiative, ensuring nothing falls through the cracks.</p>
+                <ul>
+                    <li>Task breakdown and assignment</li>
+                    <li>Timeline and dependency mapping</li>
+                    <li>Resource allocation and budgeting</li>
+                    <li>Progress monitoring systems</li>
+                </ul>
+            </div>
+        </section>
+
+        <div class="grid" id="analysis">
+            <div class="card">
+                <h3>Factor Analysis</h3>
+                <p>Identify and analyze key factors that influence your strategic success, including market conditions, competitive landscape, and internal capabilities.</p>
+                <button class="expand-btn" onclick="toggleExpanded('factor-content')">More</button>
+                <div class="expanded-content" id="factor-content">
+                    <p>Our factor analysis examines both internal and external elements that impact your strategic planning, providing insights for informed decision-making.</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>SWOT/TOWS Analysis</h3>
+                <p>Comprehensive analysis of Strengths, Weaknesses, Opportunities, and Threats, with strategic recommendations for leveraging insights.</p>
+                <button class="expand-btn" onclick="toggleExpanded('swot-content')">More</button>
+                <div class="expanded-content" id="swot-content">
+                    <p>We conduct thorough SWOT analysis and extend it to TOWS matrix for strategic option generation and evaluation.</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>System Thinking</h3>
+                <p>Apply systems thinking principles to understand complex organizational dynamics and identify leverage points for strategic intervention.</p>
+                <button class="expand-btn" onclick="toggleExpanded('system-content')">More</button>
+                <div class="expanded-content" id="system-content">
+                    <p>Systems thinking helps you see the bigger picture and understand how different parts of your organization interact and influence each other.</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Thinking Systems</h3>
+                <p>Develop systematic approaches to strategic thinking that enhance decision-making and problem-solving capabilities across your organization.</p>
+                <button class="expand-btn" onclick="toggleExpanded('thinking-content')">More</button>
+                <div class="expanded-content" id="thinking-content">
+                    <p>We help you build thinking frameworks that support consistent, high-quality strategic decision-making at all organizational levels.</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Living System Analysis</h3>
+                <p>Analyze your organization as a living system, understanding adaptation, evolution, and resilience in dynamic environments.</p>
+                <button class="expand-btn" onclick="toggleExpanded('living-content')">More</button>
+                <div class="expanded-content" id="living-content">
+                    <p>This analysis helps you understand how your organization can adapt and thrive in changing conditions, building resilience and sustainability.</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Principles or Benchmarks</h3>
+                <p>Establish guiding principles and benchmarks that ensure consistent decision-making and performance measurement across initiatives.</p>
+                <button class="expand-btn" onclick="toggleExpanded('principles-content')">More</button>
+                <div class="expanded-content" id="principles-content">
+                    <p>We help you define the core principles that will guide your strategic decisions and establish benchmarks for measuring success.</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Redteam & Wargaming</h3>
+                <p>Stress-test your strategies through adversarial thinking and scenario-based wargaming exercises to identify vulnerabilities and opportunities.</p>
+                <button class="expand-btn" onclick="toggleExpanded('redteam-content')">More</button>
+                <div class="expanded-content" id="redteam-content">
+                    <p>Red team exercises help you identify blind spots and vulnerabilities in your strategic plans, while wargaming tests your strategies under various scenarios.</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Game Theory Analysis</h3>
+                <p>Apply game theory principles to understand competitive dynamics and optimize strategic decisions in multi-player environments.</p>
+                <button class="expand-btn" onclick="toggleExpanded('game-content')">More</button>
+                <div class="expanded-content" id="game-content">
+                    <p>Game theory analysis helps you understand how competitors might respond to your strategic moves and how to optimize your decisions accordingly.</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Data Analysis</h3>
+                <p>Leverage data analytics to inform strategic decisions, identify trends, and measure the effectiveness of your strategic initiatives.</p>
+                <button class="expand-btn" onclick="toggleExpanded('data-content')">More</button>
+                <div class="expanded-content" id="data-content">
+                    <p>Our data analysis services help you turn raw data into actionable insights that support evidence-based strategic planning and decision-making.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Data to Intelligence. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <button class="back-to-top" id="backToTop" onclick="scrollToTop()">↑</button>
+
+    <script src="./js/script.js"></script>
+</body>
+</html>

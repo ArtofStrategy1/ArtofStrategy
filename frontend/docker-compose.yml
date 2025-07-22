@@ -1,0 +1,16 @@
+services:
+  nginx-webserver:
+    image: nginx:stable
+    container_name: nginx-webserver
+    restart: unless-stopped
+    volumes:
+      - ./data2int-web:/usr/share/nginx/data2int-web
+      - ./nginx-conf/default.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - "8002:80"
+    networks:
+      - npm_default
+
+networks:
+  npm_default:
+    external: true
