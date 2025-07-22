@@ -1,11 +1,11 @@
-// Progress bar functionality
+// Progress bar functionality.
 window.addEventListener('scroll', () => {
     const scrollTop = window.pageYOffset;
     const documentHeight = document.documentElement.scrollHeight - window.innerHeight;
     const scrollPercent = (scrollTop / documentHeight) * 100;
     document.getElementById('progressBar').style.width = scrollPercent + '%';
     
-    // Back to top button
+    // Back to top button.
     const backToTop = document.getElementById('backToTop');
     if (scrollTop > 300) {
         backToTop.classList.add('show');
@@ -14,7 +14,7 @@ window.addEventListener('scroll', () => {
     }
 });
 
-// Smooth scrolling for navigation links
+// Smooth scrolling for navigation links.
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
         e.preventDefault();
@@ -28,7 +28,7 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
-// Toggle expanded content
+// Toggle expanded content.
 function toggleExpanded(contentId) {
     const content = document.getElementById(contentId);
     const button = content.previousElementSibling;
@@ -42,7 +42,7 @@ function toggleExpanded(contentId) {
     }
 }
 
-// Scroll to top function
+// Scroll to top function.
 function scrollToTop() {
     window.scrollTo({
         top: 0,
@@ -50,7 +50,7 @@ function scrollToTop() {
     });
 }
 
-// Add intersection observer for animations
+// Intersection observer for animations.
 const observerOptions = {
     threshold: 0.1,
     rootMargin: '0px 0px -50px 0px'
@@ -65,7 +65,7 @@ const observer = new IntersectionObserver((entries) => {
     });
 }, observerOptions);
 
-// Observe all sections and cards
+// Observe all sections and cards.
 document.querySelectorAll('.section, .card').forEach(element => {
     element.style.opacity = '0';
     element.style.transform = 'translateY(20px)';
@@ -73,26 +73,25 @@ document.querySelectorAll('.section, .card').forEach(element => {
     observer.observe(element);
 });
 
-// Initialize page
+// Initialize page.
 document.addEventListener('DOMContentLoaded', function() {
-    // Add any initialization code here
     console.log('Strategic Planning Page Loaded');
     
-    // Initialize progress bar
+    // Initialize progress bar.
     const progressBar = document.getElementById('progressBar');
     if (progressBar) {
         progressBar.style.width = '0%';
     }
     
-    // Initialize back to top button
+    // Initialize back to top button.
     const backToTopBtn = document.getElementById('backToTop');
     if (backToTopBtn) {
         backToTopBtn.classList.remove('show');
     }
     
-    // Add keyboard navigation support
+    // Add keyboard navigation support.
     document.addEventListener('keydown', function(e) {
-        // Press 'b' to scroll back to top
+        // Press 'b' to scroll back to top.
         if (e.key === 'b' || e.key === 'B') {
             if (e.ctrlKey || e.metaKey) {
                 e.preventDefault();
@@ -100,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // Press 'Escape' to close expanded content
+        // Press 'Escape' to close expanded content.
         if (e.key === 'Escape') {
             const expandedElements = document.querySelectorAll('.expanded-content.show');
             expandedElements.forEach(element => {
@@ -113,7 +112,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Add mobile menu toggle functionality (if needed in future)
+    // Add mobile menu toggle functionality.
     const navToggle = document.getElementById('navToggle');
     const navLinks = document.querySelector('.nav-links');
     
@@ -123,12 +122,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Add smooth scroll offset for sticky navigation
+    // Add smooth scroll offset for sticky navigation.
     const navHeight = document.querySelector('.nav').offsetHeight;
     document.documentElement.style.setProperty('--nav-height', navHeight + 'px');
 });
 
-// Additional utility functions
+// Additional utility functions.
 function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
@@ -141,9 +140,8 @@ function debounce(func, wait) {
     };
 }
 
-// Debounced scroll handler for better performance
+// Debounced scroll handler for better performance.
 const debouncedScrollHandler = debounce(() => {
-    // Add any additional scroll-based functionality here
     const scrollTop = window.pageYOffset;
     const sections = document.querySelectorAll('section[id]');
     
@@ -165,14 +163,14 @@ const debouncedScrollHandler = debounce(() => {
 
 window.addEventListener('scroll', debouncedScrollHandler);
 
-// Error handling for missing elements
+// Error handling for missing elements.
 window.addEventListener('error', function(e) {
     console.error('JavaScript error:', e.error);
 });
 
-// Handle resize events
+// Handle resize events.
 window.addEventListener('resize', debounce(() => {
-    // Recalculate any size-dependent elements
+    // Recalculate any size-dependent elements.
     const navHeight = document.querySelector('.nav')?.offsetHeight || 0;
     document.documentElement.style.setProperty('--nav-height', navHeight + 'px');
 }, 250));

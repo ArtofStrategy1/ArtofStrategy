@@ -7,17 +7,16 @@ const fileName = document.getElementById('fileName');
 const removeFile = document.getElementById('removeFile');
 const chatMessages = document.getElementById('chatMessages');
 
-// Global variable to store the WebSocket connection
+// Global variable to store the WebSocket connection.
 let ws;
-// Map to store temporary AI message IDs, keyed by execution ID if available
+// Map to store temporary AI message IDs, keyed by execution ID.
 const activeAiMessages = new Map();
 
 // --- WebSocket Setup ---
-// IMPORTANT: Replace 'wss://listener.ai2int.com/ws' with your actual WebSocket URL for FastAPI
 const websocketUrl = 'wss://api.data2int.com/ws';
 
 function connectWebSocket() {
-    // Prevent multiple connections
+    // Prevent multiple connections.
     if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
         console.log("WebSocket already connected or connecting.");
         return;
@@ -33,18 +32,23 @@ function connectWebSocket() {
     ws.onmessage = (event) => {
         console.log('WebSocket message received:', event.data);
         try {
+			
             const data = JSON.parse(event.data);
-            // Assuming n8n sends the final report_content or a structured JSON
-            const executionId = data.executionId; // Assuming n8n sends an executionId
+            // Store the executionId from n8n.
+            const executionId = data.executionId;
+			// Store the final report_content or a structured JSON from n8n.
             const content = data.report_content || data.message || JSON.stringify(data, null, 2);
 
             let targetMessageId = null;
             if (executionId && activeAiMessages.has(executionId)) {
                 targetMessageId = activeAiMessages.get(executionId);
-                updateMessage(targetMessageId, content); // Update the specific AI message
-                activeAiMessages.delete(executionId); // Remove from map once updated
+				// Update the specific AI message with the report content.
+                updateMessage(targetMessageId, content);
+				// Remove the executionId from the map once updated.
+                activeAiMessages.delete(executionId);
             } else {
-                // If no executionId or not found, add as a new message
+                // If executionId is not set or not found in the map, add the report content 
+				// as a new message
                 addMessage(`Real-time update: ${content}`, 'ai');
             }
 
@@ -64,18 +68,20 @@ function connectWebSocket() {
     ws.onerror = (error) => {
         console.error('WebSocket error:', error);
         addMessage('WebSocket error occurred. Check console for details.', 'ai');
-        ws.close(); // Close to trigger onclose and reconnect logic
+        // Close to trigger onclose and reconnect logic
+		ws.close();
     };
 }
 
 // Connect WebSocket when the page loads
 window.addEventListener('load', connectWebSocket);
 
-// --- Utility Functions (mostly unchanged) ---
+// --- Utility Functions ---
 function updateSendButtonState() {
     sendButton.disabled = messageInput.value.trim().length === 0;
 }
-updateSendButtonState(); // Initial state
+// Initial state of send button.
+updateSendButtonState();
 
 messageInput.addEventListener('input', function () {
     const count = this.value.length;
@@ -110,21 +116,23 @@ messageInput.addEventListener('keydown', function (e) {
     }
 });
 
-// --- Modified sendMessage function ---
+// --- sendMessage function ---
 async function sendMessage() {
     const message = messageInput.value.trim();
     if (!message) return;
 
-    // Add user message
+    // Add user message.
     addMessage(message, 'user');
     messageInput.value = '';
     messageInput.style.height = 'auto';
     charCount.textContent = '0/2000';
     updateSendButtonState();
 
-    // Add initial "AI is thinking..." message and store its ID
-    const aiMessageElement = addMessage('AI is thinking...', 'ai', true); // Pass true for isLoading
-    const aiMessageId = aiMessageElement.id; // Get the ID of the created message element
+    // Add initial "AI is thinking..." message and store its ID.
+	// Set isLoading to true.
+    const aiMessageElement = addMessage('AI is thinking...', 'ai', true);
+    // Get the ID of the created message element.
+	const aiMessageId = aiMessageElement.id;
 
     const payload = [{
         customerName: 'GUI User',
@@ -134,8 +142,8 @@ async function sendMessage() {
     }];
 
     try {
-        // Make the initial fetch request to n8n
-        // n8n should immediately respond with a status and optionally an executionId
+        // Make the initial fetch request to n8n.
+        // n8n should immediately respond with a status and optionally an executionId.
         const response = await fetch('https://n8n.data2int.com/webhook-test/vision-analysis-13', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -148,13 +156,15 @@ async function sendMessage() {
             throw new Error(`Server error: ${response.status}`);
         }
 
-        const data = await response.json(); // This is the immediate response from n8n
+		// Immediate response from n8n.
+        const data = await response.json();
         const status = data.status || 'processing';
-        const executionId = data.executionId; // Get execution ID from n8n's immediate response
+        // Get execution ID from n8n's immediate response.
+		const executionId = data.executionId;
 
         updateMessage(aiMessageId, `Workflow status: ${status}. Waiting for real-time updates...`);
 
-        // If n8n provides an executionId, map it to the AI message ID for later update
+        // If n8n provides an executionId, map it to the AI message ID for later update.
         if (executionId) {
             activeAiMessages.set(executionId, aiMessageId);
         }
@@ -165,12 +175,13 @@ async function sendMessage() {
     }
 }
 
-// --- Message Display Functions (slightly modified for ID handling) ---
+// --- Message Display Functions ---
 function addMessage(text, sender, isLoading = false) {
     const wrapper = document.createElement('div');
-    // Assign a unique ID to the wrapper for easier updates
+    // Assign a unique ID to the wrapper for easier updates.
     const messageUniqueId = `msg-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-    wrapper.id = messageUniqueId; // Assign ID to the wrapper
+    // Assign ID to the wrapper.
+	wrapper.id = messageUniqueId;
     wrapper.classList.add('flex', 'items-start', 'space-x-4', sender === 'user' ? 'justify-end' : 'justify-start', 'animate-slide-right');
 
     const bubble = document.createElement('div');
@@ -195,17 +206,17 @@ function addMessage(text, sender, isLoading = false) {
     chatMessages.appendChild(wrapper);
     chatMessages.scrollTop = chatMessages.scrollHeight;
 
-    return wrapper; // Return the wrapper element so its ID can be used
+	// Return the wrapper element so its ID can be used.
+    return wrapper;
 }
 
 function updateMessage(elementId, text) {
     const wrapper = typeof elementId === 'string' ? document.getElementById(elementId) : elementId;
     if (wrapper) {
-        // Assuming the bubble is the first child of the wrapper
         const bubble = wrapper.querySelector('.rounded-2xl');
         if (bubble) {
             bubble.innerHTML = renderMarkdown(text);
-            // Remove typing indicator if present
+            // Remove typing indicator if present.
             const typingIndicator = bubble.querySelector('.typing-indicator');
             if (typingIndicator) {
                 typingIndicator.remove();
@@ -220,8 +231,7 @@ function updateMessage(elementId, text) {
 }
 
 function renderMarkdown(rawText) {
-    // Ensure marked and DOMPurify are loaded.
-    // They are loaded in vision-analysis.html, so this should be fine.
+    // marked and DOMPurify are already loaded.
     const html = marked.parse(rawText, { breaks: true });
     return DOMPurify.sanitize(html);
 }
