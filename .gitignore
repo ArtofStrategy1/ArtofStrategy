@@ -95,7 +95,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Lockfile resolutions (optional, but sometimes excluded in team envs)
+# Lockfile resolutions
 # yarn.lock
 # package-lock.json
 
