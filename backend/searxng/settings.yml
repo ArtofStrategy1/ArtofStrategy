@@ -7,7 +7,7 @@ general:
 server:
   port: 8080
   bind_address: "0.0.0.0"
-  secret_key: "2a122eyxG4T1vkoqErfpoWt7eSHKW1aZJwD5VbWbysVS7Bo3YfXGeV2"
+  secret_key: "%(SEARXNG_SECRET_KEY)s"
   limiter: false
   public_instance: false
 
