@@ -15,8 +15,8 @@ app = FastAPI(
 )
 
 # --- CORS Configuration ---
-# This allows your web.ai2int.com frontend to connect to this FastAPI backend
-# and for the n8n webhook to send data.
+# This allows the data2int.com frontend to connect to this FastAPI backend and for the n8n
+# webhook to send data to this Fast
 # IMPORTANT: Adjust origins as needed for your specific domains.
 origins = [
     "https://data2int.com",

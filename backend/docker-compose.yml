@@ -80,8 +80,10 @@ services:
       - SEARXNG_SECRET_KEY=${SEARXNG_SECRET_KEY}
       # Disable bot detection for API access
       - SEARXNG_SETTINGS_USE_DEFAULT_SETTINGS=false
+    env_file:
+      - ./.env
     volumes:
-      - ./searxng:/etc/searxng:ro
+      - ./searxng:/etc/searxng:rw
       - ./searxng/searxng-data:/var/cache/searxng
     # Add healthcheck
     healthcheck:

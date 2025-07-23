@@ -1,17 +1,17 @@
-# Use a lightweight Python base image
+# Use a lightweight Python base image.
 FROM python:3.9-buster
 
-# Set the working directory in the container
+# Set the working directory inside the container.
 WORKDIR /app
 
-# Copy the requirements file and install dependencies
+# Copy the requirements file and install dependencies.
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the application code
+# Copy the application code.
 COPY main.py .
 
-# Expose the port the FastAPI app runs on (uvicorn default is 8000)
+# Expose the port the FastAPI app runs on.
 EXPOSE 8000
 
 # Command to run the application using Uvicorn
