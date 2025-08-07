@@ -13,7 +13,7 @@ let ws;
 const activeAiMessages = new Map();
 
 // --- WebSocket Setup ---
-const websocketUrl = 'wss://api.data2int.com/ws';
+const websocketUrl = 'wss://n8n-api.data2int.com/ws';
 
 function connectWebSocket() {
     // Prevent multiple connections.

@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Strategy Assistant</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- ----------  SHARED + LOGIN / SIGN‑UP STYLES  ---------- -->
+  <style>
+    /* login / sign‑up look */
+    body { font-family: system-ui, sans-serif; background:#f9fafb; }
+
+    .form-container{background:#fff;border-radius:1rem;padding:2rem;
+      box-shadow:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
+      border:1px solid #e5e7eb;}
+
+    .input-field{width:100%;padding:1rem;border:1px solid #d1d5db;
+      border-radius:.5rem;font-size:1rem;transition:border-color .2s}
+    .input-field:focus{outline:none;border-color:#4f46e5;
+      box-shadow:0 0 0 3px rgba(79,70,229,.1)}
+
+    .btn-primary{background:#4f46e5;color:#fff;padding:.75rem 1.5rem;
+      border-radius:.5rem;font-weight:600;width:100%;border:none;cursor:pointer;
+      transition:background-color .2s}
+    .btn-primary:hover{background:#4338ca}
+    .btn-primary:disabled{background:#9ca3af;cursor:not-allowed}
+
+    .btn-secondary{background:transparent;color:#4f46e5;padding:.5rem;border:none;
+      cursor:pointer;text-decoration:underline;font-weight:500}
+    .btn-secondary:hover{color:#4338ca}
+
+    .error-message{color:#dc2626;font-size:.875rem;margin-top:.5rem}
+    .success-message{color:#059669;font-size:.875rem;margin-top:.5rem}
+
+    .loading-spinner{display:inline-block;width:16px;height:16px;border:2px solid #fff;
+      border-radius:50%;border-top-color:transparent;animation:spin 1s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* ----------  CHAT‑MODE OVERRIDES (activated via .chat-active)  ---------- */
+    body.chat-active{
+      background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+      min-height:100vh;
+      font-family:'Inter',sans-serif
+    }
+  </style>
+
+  <!-- ----------  CHAT‑SPECIFIC STYLES  (unaltered) ---------- -->
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+    *{font-family:'Inter',sans-serif}
+
+    .glass{background:rgba(255,255,255,.1);backdrop-filter:blur(10px);
+      border:1px solid rgba(255,255,255,.2)}
+
+    .message-user{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff}
+    .message-ai{background:rgba(255,255,255,.95);color:#1f2937}
+
+    .input-focus:focus{outline:none;ring:2px;ring-color:rgba(102,126,234,.5)}
+
+    .btn-primary-chat{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+      transition:all .3s}
+    .btn-primary-chat:hover{transform:translateY(-2px);
+      box-shadow:0 10px 25px rgba(102,126,234,.3)}
+
+    .template-card{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
+      backdrop-filter:blur(10px);transition:all .3s;cursor:pointer}
+    .template-card:hover{background:rgba(255,255,255,.15);transform:translateY(-2px);
+      box-shadow:0 10px 25px rgba(102,126,234,.2)}
+
+    .book-card{background:rgba(255,255,255,.95);border:1px solid rgba(255,255,255,.3);
+      transition:all .3s;cursor:pointer}
+    .book-card:hover{transform:translateY(-2px);
+      box-shadow:0 15px 35px rgba(102,126,234,.3)}
+
+    .animate-fade-in{animation:fadeIn .5s ease-out}
+    .animate-slide-up{animation:slideUp .4s ease-out}
+    .animate-slide-right{animation:slideRight .4s ease-out}
+    .animate-slide-left{animation:slideLeft .4s ease-out}
+
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    @keyframes slideUp{from{opacity:0;transform:translateY(20px)}
+                       to{opacity:1;transform:translateY(0)}}
+    @keyframes slideRight{from{opacity:0;transform:translateX(-20px)}
+                          to{opacity:1;transform:translateX(0)}}
+    @keyframes slideLeft{from{opacity:0;transform:translateX(20px)}
+                         to{opacity:1;transform:translateX(0)}}
+
+    .typing-indicator{display:inline-flex;align-items:center;gap:4px}
+    .typing-dot{width:8px;height:8px;border-radius:50%;background:#667eea;
+      animation:typing 1.4s infinite ease-in-out}
+    .typing-dot:nth-child(1){animation-delay:-.32s}
+    .typing-dot:nth-child(2){animation-delay:-.16s}
+    .typing-dot:nth-child(3){animation-delay:0s}
+    @keyframes typing{0%,80%,100%{transform:scale(.8);opacity:.5}
+                      40%{transform:scale(1);opacity:1}}
+
+    .scrollbar-thin::-webkit-scrollbar{width:6px}
+    .scrollbar-thin::-webkit-scrollbar-track{background:rgba(255,255,255,.1);border-radius:3px}
+    .scrollbar-thin::-webkit-scrollbar-thumb{background:rgba(255,255,255,.3);border-radius:3px}
+    .scrollbar-thin::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.5)}
+
+    .tab-button{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
+      color:rgba(255,255,255,.7);transition:all .3s}
+    .tab-button.active{background:rgba(255,255,255,.2);color:white;
+      border-color:rgba(255,255,255,.4)}
+    .tab-button:hover{background:rgba(255,255,255,.15)}
+  </style>
+</head>
+
+<body class="flex flex-col items-center justify-center min-h-screen p-6">
+
+<!-- ========================================================= -->
+<!-- LOGIN / SIGN‑UP SECTION                                   -->
+<!-- ========================================================= -->
+<div id="authSection" class="w-full max-w-md">
+  <h1 class="text-3xl font-bold text-center mb-8">Carleton Hospital Strategy AI</h1>
+
+  <div class="form-container">
+    <!-- --------- LOGIN --------- -->
+    <div id="loginForm">
+      <h2 class="text-2xl font-semibold mb-6 text-center">Sign In</h2>
+      <div class="space-y-4">
+        <div>
+          <label for="loginEmail" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+          <input type="email" id="loginEmail" class="input-field" placeholder="Enter your email" required>
+        </div>
+        <div>
+          <label for="loginPassword" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+          <input type="password" id="loginPassword" class="input-field" placeholder="Enter your password" required>
+        </div>
+        <button id="loginBtn" class="btn-primary">
+          <span id="loginBtnText">Sign In</span>
+          <span id="loginSpinner" class="loading-spinner hidden ml-2"></span>
+        </button>
+        <div id="loginMessage" class="hidden"></div>
+      </div>
+      <div class="text-center mt-6">
+        <p class="text-gray-600">Don't have an account?</p>
+        <button id="showRegister" class="btn-secondary">Create Account</button>
+      </div>
+    </div>
+
+    <!-- --------- REGISTER --------- -->
+    <div id="registerForm" class="hidden">
+      <h2 class="text-2xl font-semibold mb-6 text-center">Create Account</h2>
+      <div class="space-y-4">
+        <div>
+          <label for="registerName"  class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+          <input type="text" id="registerName" class="input-field" placeholder="Enter your full name" required>
+        </div>
+        <div>
+          <label for="registerEmail" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+          <input type="email" id="registerEmail" class="input-field" placeholder="Enter your email" required>
+        </div>
+        <div>
+          <label for="registerPassword" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+          <input type="password" id="registerPassword" class="input-field" placeholder="Create a password" required>
+        </div>
+        <div>
+          <label for="registerConfirmPassword" class="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+          <input type="password" id="registerConfirmPassword" class="input-field" placeholder="Confirm your password" required>
+        </div>
+        <button id="registerBtn" class="btn-primary">
+          <span id="registerBtnText">Create Account</span>
+          <span id="registerSpinner" class="loading-spinner hidden ml-2"></span>
+        </button>
+        <div id="registerMessage" class="hidden"></div>
+      </div>
+      <div class="text-center mt-6">
+        <p class="text-gray-600">Already have an account?</p>
+        <button id="showLogin" class="btn-secondary">Sign In</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- CHAT SECTION (initially hidden)                           -->
+<!-- ========================================================= -->
+<div id="chatSection" class="hidden w-full">
+  <div class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="glass border-b border-white/20 animate-slide-up">
+      <div class="max-w-6xl mx-auto px-6 py-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+              </svg>
+            </div>
+            <div>
+              <h1 class="text-xl font-semibold text-white">AI Strategy Assistant</h1>
+              <p class="text-white/70 text-sm">Powered by advanced AI</p>
+            </div>
+          </div>
+          <div class="hidden md:flex items-center space-x-4">
+            <span class="text-white/70 text-sm">Ready to assist</span>
+            <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-6xl mx-auto w-full px-6 py-8">
+      <!-- Tab Navigation -->
+      <div class="flex space-x-4 mb-6">
+        <button id="chatTab" class="tab-button active px-6 py-3 rounded-xl font-medium">
+          Chat Assistant
+        </button>
+        <button id="templatesTab" class="tab-button px-6 py-3 rounded-xl font-medium">
+          Strategy Templates
+        </button>
+      </div>
+
+      <!-- Chat Section -->
+      <div id="chatContent" class="glass rounded-2xl h-full flex flex-col overflow-hidden animate-fade-in">
+        <!-- Messages Container -->
+        <div id="chatMessages" class="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin min-h-[60vh]">
+          <!-- Welcome message -->
+          <div class="flex items-start space-x-4 animate-slide-right">
+            <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+              </svg>
+            </div>
+            <div class="flex-1">
+              <div class="message-ai rounded-2xl p-4 shadow-lg">
+                <p class="text-sm mb-3">👋 <strong>Welcome to your AI Strategy Assistant!</strong></p>
+                <p class="text-sm mb-2">I'm here to help you with:</p>
+                <ul class="text-xs text-gray-600 space-y-1 ml-4">
+                  <li>• Strategic planning and analysis</li>
+                  <li>• Market research and competitor analysis</li>
+                  <li>• Business model development</li>
+                  <li>• Financial projections and planning</li>
+                  <li>• Risk assessment and mitigation</li>
+                </ul>
+                <p class="text-sm mt-3">Try our <strong>Strategy Templates</strong> tab for quick analysis frameworks, or ask me anything!</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="border-t border-white/20 p-6 bg-white/5">
+          <div class="flex items-end space-x-4">
+            <!-- File Upload -->
+            <label class="flex-shrink-0 cursor-pointer">
+              <input type="file" class="hidden" id="fileInput" multiple
+                     accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.xls,.xlsx,.ppt,.pptx">
+              <div class="w-11 h-11 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+                </svg>
+              </div>
+            </label>
+
+            <!-- Message Input -->
+            <div class="flex-1 relative">
+              <textarea id="messageInput" rows="1" maxlength="2000"
+                        placeholder="Ask me anything about strategy, analysis, or planning..."
+                        class="w-full bg-white/10 text-white placeholder-white/60 border border-white/20 rounded-xl
+                               px-4 py-3 pr-12 resize-none focus:outline-none focus:ring-2 focus:ring-white/30
+                               focus:border-white/40 transition-all"></textarea>
+              <div id="charCount" class="absolute bottom-2 right-2 text-xs text-white/50">0/2000</div>
+            </div>
+
+            <!-- Send Button -->
+            <button id="sendButton"
+                    class="btn-primary-chat flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center
+                           text-white disabled:opacity-50 disabled:cursor-not-allowed">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- File Preview -->
+          <div id="filePreview" class="hidden mt-4 p-3 bg-white/10 rounded-lg">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <span id="fileName" class="text-sm text-white">No files selected</span>
+              </div>
+              <button id="removeFile" class="text-white/60 hover:text-white">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Templates Section -->
+      <div id="templatesContent" class="hidden animate-fade-in">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          <!-- Left Column: Strategy Templates -->
+          <div class="lg:col-span-2 space-y-4">
+            <h2 class="text-2xl font-semibold text-white mb-6">Free Strategy Templates</h2>
+            <p class="text-white/80 mb-6">Try these professional analysis templates to see how our AI can help with your strategic planning.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- SWOT Analysis Template -->
+              <div class="template-card rounded-xl p-6" data-template="swot">
+                <div class="flex items-center space-x-3 mb-4">
+                  <div class="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                  </div>
+                  <h3 class="text-lg font-semibold text-white">SWOT Analysis</h3>
+                </div>
+                <p class="text-white/70 text-sm mb-4">Analyze your organization's Strengths, Weaknesses, Opportunities, and Threats with a comprehensive framework.</p>
+                <div class="text-xs text-white/60">
+                  <span class="bg-white/10 px-2 py-1 rounded">Strategic Planning</span>
+                  <span class="bg-white/10 px-2 py-1 rounded ml-2">Assessment</span>
+                </div>
+              </div>
+
+              <!-- Competitor Analysis Template -->
+              <div class="template-card rounded-xl p-6" data-template="competitor">
+                <div class="flex items-center space-x-3 mb-4">
+                  <div class="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                    </svg>
+                  </div>
+                  <h3 class="text-lg font-semibold text-white">Competitor Analysis</h3>
+                </div>
+                <p class="text-white/70 text-sm mb-4">Deep dive into competitor strategies, market positioning, and competitive advantages to inform your strategy.</p>
+                <div class="text-xs text-white/60">
+                  <span class="bg-white/10 px-2 py-1 rounded">Market Research</span>
+                  <span class="bg-white/10 px-2 py-1 rounded ml-2">Intelligence</span>
+                </div>
+              </div>
+
+              <!-- Market Entry Strategy -->
+              <div class="template-card rounded-xl p-6" data-template="market-entry">
+                <div class="flex items-center space-x-3 mb-4">
+                  <div class="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                  </div>
+                  <h3 class="text-lg font-semibold text-white">Market Entry Strategy</h3>
+                </div>
+                <p class="text-white/70 text-sm mb-4">Evaluate market opportunities, entry barriers, and develop a roadmap for successful market penetration.</p>
+                <div class="text-xs text-white/60">
+                  <span class="bg-white/10 px-2 py-1 rounded">Expansion</span>
+                  <span class="bg-white/10 px-2 py-1 rounded ml-2">Planning</span>
+                </div>
+              </div>
+
+              <!-- Financial Projections -->
+              <div class="template-card rounded-xl p-6" data-template="financial">
+                <div class="flex items-center space-x-3 mb-4">
+                  <div class="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                  </div>
+                  <h3 class="text-lg font-semibold text-white">Financial Projections</h3>
+                </div>
+                <p class="text-white/70 text-sm mb-4">Create comprehensive financial forecasts, budgets, and scenario planning for strategic decision-making.</p>
+                <div class="text-xs text-white/60">
+                  <span class="bg-white/10 px-2 py-1 rounded">Finance</span>
+                  <span class="bg-white/10 px-2 py-1 rounded ml-2">Forecasting</span>
+                </div>
+              </div>
+
+              <!-- Risk Assessment -->
+              <div class="template-card rounded-xl p-6" data-template="risk">
+                <div class="flex items-center space-x-3 mb-4">
+                  <div class="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-red-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                    </svg>
+                  </div>
+                  <h3 class="text-lg font-semibold text-white">Risk Assessment</h3>
+                </div>
+                <p class="text-white/70 text-sm mb-4">Identify, evaluate, and develop mitigation strategies for business risks across all operational areas.</p>
+                <div class="text-xs text-white/60">
+                  <span class="bg-white/10 px-2 py-1 rounded">Risk Management</span>
+                  <span class="bg-white/10 px-2 py-1 rounded ml-2">Mitigation</span>
+                </div>
+              </div>
+
+              <!-- Business Model Canvas -->
+              <div class="template-card rounded-xl p-6" data-template="business-model">
+                <div class="flex items-center space-x-3 mb-4">
+                  <div class="w-10 h-10 bg-indigo-500/20 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                    </svg>
+                  </div>
+                  <h3 class="text-lg font-semibold text-white">Business Model Canvas</h3>
+                </div>
+                <p class="text-white/70 text-sm mb-4">Design and analyze your business model using the proven 9-building-block framework for strategic clarity.</p>
+                <div class="text-xs text-white/60">
+                  <span class="bg-white/10 px-2 py-1 rounded">Business Model</span>
+                  <span class="bg-white/10 px-2 py-1 rounded ml-2">Innovation</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Book Recommendation -->
+          <div class="space-y-6">
+            <!-- Book Recommendation Card -->
+            <div class="book-card rounded-xl p-6 shadow-lg" onclick="window.open('https://www.amazon.ca/dp/199950836X?ref_=cb_interstitial_us_ca_desktop_unrec_location_unk_dp_dp', '_blank')">
+              <div class="flex items-center space-x-4 mb-4">
+                <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
+                  <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="text-lg font-semibold text-gray-800">Recommended Reading</h3>
+                  <p class="text-sm text-gray-600">Master the fundamentals</p>
+                </div>
+              </div>
+              
+              <div class="mb-4">
+                <h4 class="text-xl font-bold text-gray-900 mb-2">The Art of Strategy</h4>
+                <p class="text-sm text-gray-600 mb-3">A Game Theorist's Guide to Success in Business and Life</p>
+                <div class="flex items-center space-x-2 mb-3">
+                  <div class="flex text-yellow-400">
+                    <svg class="w-4 h-4 fill-current text-yellow-500" viewBox="0 0 24 24">
+  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+</svg>
+<!-- Full Star -->
+<svg class="w-4 h-4 fill-current text-yellow-500" viewBox="0 0 24 24">
+  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+</svg>
+<!-- Full Star -->
+<svg class="w-4 h-4 fill-current text-yellow-500" viewBox="0 0 24 24">
+  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+</svg>
+<!-- Half Star -->
+<svg class="w-4 h-4 fill-current text-yellow-500" viewBox="0 0 24 24">
+  <defs>
+    <linearGradient id="half">
+      <stop offset="50%" stop-color="currentColor"/>
+      <stop offset="50%" stop-color="transparent"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#half)" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+</svg>
+<!-- Empty Star -->
+<svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+</svg>
+                  </div>
+                  <span class="text-sm text-gray-600">3.6/5 (Amazon Reviews)</span>
+                </div>
+              </div>
+
+              <p class="text-sm text-gray-700 mb-4">
+                Learn strategic thinking from renowned game theorists. This comprehensive guide covers:
+              </p>
+              
+              <ul class="text-xs text-gray-600 space-y-1 mb-4">
+                <li>• Game theory applications in business</li>
+                <li>• Strategic decision-making frameworks</li>
+                <li>• Competitive dynamics and positioning</li>
+                <li>• Negotiation and cooperation strategies</li>
+                <li>• Real-world case studies and examples</li>
+              </ul>
+
+              <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+                <div>
+                  <span class="text-2xl font-bold text-green-600">$66.37</span>
+                  <span class="text-sm text-gray-500 ml-2">CAD on Amazon</span>
+                </div>
+                <div class="bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                  Buy on Amazon →
+                </div>
+              </div>
+            </div>
+
+            <!-- Pro Tip Card -->
+            <div class="glass rounded-xl p-6">
+              <div class="flex items-center space-x-3 mb-4">
+                <div class="w-8 h-8 bg-yellow-500/20 rounded-lg flex items-center justify-center">
+                  <svg class="w-4 h-4 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                  </svg>
+                </div>
+                <h4 class="text-lg font-semibold text-white">💡 Pro Tip</h4>
+              </div>
+              <p class="text-white/80 text-sm">
+                Try our free templates first to see how AI-powered strategy analysis works. Each template provides structured frameworks that you can customize for your specific situation.
+              </p>
+            </div>
+
+            <!-- Features Preview -->
+            <div class="glass rounded-xl p-6">
+              <h4 class="text-lg font-semibold text-white mb-4">🚀 Full Version Features</h4>
+              <ul class="space-y-3">
+                <li class="flex items-center space-x-3 text-white/80 text-sm">
+                  <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                  <span>Advanced AI analysis with industry-specific insights</span>
+                </li>
+                <li class="flex items-center space-x-3 text-white/80 text-sm">
+                  <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                  <span>Custom template creation and modification</span>
+                </li>
+                <li class="flex items-center space-x-3 text-white/80 text-sm">
+                  <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                  <span>Export to PDF, PowerPoint, and Excel</span>
+                </li>
+                <li class="flex items-center space-x-3 text-white/80 text-sm">
+                  <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                  <span>Collaboration tools for team planning</span>
+                </li>
+                <li class="flex items-center space-x-3 text-white/80 text-sm">
+                  <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                  <span>Priority support and consultation</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ========================================================= -->
+<!--  SCRIPT : auth, session, chat logic (webhooks unchanged)  -->
+<!-- ========================================================= -->
+<script>
+/* ----------  DOM helpers  ---------- */
+const $ = id => document.getElementById(id);
+
+/* ----------  Sections ---------- */
+const authSection = $('authSection');
+const chatSection = $('chatSection');
+
+/* ==========  LOGIN / REGISTER LOGIC  ========== */
+const loginForm      = $('loginForm');
+const registerForm   = $('registerForm');
+const showRegister   = $('showRegister');
+const showLogin      = $('showLogin');
+const loginBtn       = $('loginBtn');
+const registerBtn    = $('registerBtn');
+const loginBtnText   = $('loginBtnText');
+const loginSpinner   = $('loginSpinner');
+const registerBtnText= $('registerBtnText');
+const registerSpinner= $('registerSpinner');
+const loginMessage   = $('loginMessage');
+const registerMessage= $('registerMessage');
+
+showRegister.onclick = () => {loginForm.classList.add('hidden');registerForm.classList.remove('hidden');clearMessages();};
+showLogin.onclick    = () => {registerForm.classList.add('hidden');loginForm.classList.remove('hidden');clearMessages();};
+
+loginBtn.onclick     = handleLogin;
+$('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')handleLogin();});
+registerBtn.onclick  = handleRegister;
+$('registerConfirmPassword').addEventListener('keydown',e=>{if(e.key==='Enter')handleRegister();});
+
+function handleLogin(){
+  const email=$('loginEmail').value.trim();
+  const password=$('loginPassword').value;
+  if(!email||!password)return showMessage('loginMessage','Please fill in all fields','error');
+
+  setLoading('login',true);clearMessages();
+  fetch('https://n8n.data2int.com/webhook-test/Login1',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email,password})})
+    .then(r=>r.json())
+    .then(d=>{
+      if(d.success||d.status==='success'||d.authenticated||d.result==='success'||d.user||d.email||Array.isArray(d)){
+        showMessage('loginMessage','Login successful!','success');
+        localStorage.setItem('userSession',JSON.stringify({email,timestamp:Date.now()}));
+        enterChat();
+      }else{
+        showMessage('loginMessage',d.message||'Login failed.','error');
+      }})
+    .catch(()=>showMessage('loginMessage','Connection error.','error'))
+    .finally(()=>setLoading('login',false));
+}
+
+function handleRegister(){
+  const name=$('registerName').value.trim();
+  const email=$('registerEmail').value.trim();
+  const password=$('registerPassword').value;
+  const confirm=$('registerConfirmPassword').value;
+  if(!name||!email||!password||!confirm)return showMessage('registerMessage','Please fill in all fields','error');
+  if(password!==confirm)return showMessage('registerMessage','Passwords do not match','error');
+  if(password.length<6)return showMessage('registerMessage','Password must be at least 6 characters','error');
+
+  const [first_name,...rest]=name.split(' ');const last_name=rest.join(' ');
+  setLoading('register',true);clearMessages();
+  fetch('https://n8n.data2int.com/webhook-test/Create1',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({first_name,last_name,email,password})})
+    .then(r=>r.json())
+    .then(d=>{
+      if(d.success||d.status==='success'||d.created||d.result==='success'){
+        showMessage('registerMessage','Account created! Sign in now.','success');
+        setTimeout(()=>{registerForm.classList.add('hidden');loginForm.classList.remove('hidden');clearMessages();},1500);
+      }else{
+        showMessage('registerMessage',d.message||'Registration failed.','error');
+      }})
+    .catch(()=>showMessage('registerMessage','Connection error.','error'))
+    .finally(()=>setLoading('register',false));
+}
+
+function setLoading(type,on){
+  if(type==='login'){loginBtn.disabled=on;loginBtnText.textContent=on?'Signing In...':'Sign In';loginSpinner.classList.toggle('hidden',!on);}
+  else{registerBtn.disabled=on;registerBtnText.textContent=on?'Creating...':'Create Account';registerSpinner.classList.toggle('hidden',!on);}
+}
+
+function showMessage(id,msg,type){
+  const el=$(id);el.textContent=msg;el.className=type==='error'?'error-message':'success-message';el.classList.remove('hidden');
+}
+function clearMessages(){loginMessage.classList.add('hidden');registerMessage.classList.add('hidden');}
+
+/* ----------  session check ---------- */
+(function(){
+  const s=JSON.parse(localStorage.getItem('userSession')||'{}');
+  if(s.timestamp&&Date.now()-s.timestamp<86400000){enterChat();}
+})();
+
+/* ==========  TAB NAVIGATION  ========== */
+const chatTab = $('chatTab');
+const templatesTab = $('templatesTab');
+const chatContent = $('chatContent');
+const templatesContent = $('templatesContent');
+
+chatTab.onclick = () => {
+  chatTab.classList.add('active');
+  templatesTab.classList.remove('active');
+  chatContent.classList.remove('hidden');
+  templatesContent.classList.add('hidden');
+};
+
+templatesTab.onclick = () => {
+  templatesTab.classList.add('active');
+  chatTab.classList.remove('active');
+  templatesContent.classList.remove('hidden');
+  chatContent.classList.add('hidden');
+};
+
+/* ==========  TEMPLATE SELECTION  ========== */
+const templatePrompts = {
+  'swot': `Please conduct a comprehensive SWOT analysis for my organization. I need you to help me identify and analyze:
+
+STRENGTHS (Internal Positive Factors):
+- What advantages do we have over competitors?
+- What do we do well?
+- What unique resources or assets do we have?
+- What do others see as our strengths?
+
+WEAKNESSES (Internal Negative Factors):
+- What areas need improvement?
+- Where do we lack resources?
+- What do competitors do better?
+- What internal factors limit our performance?
+
+OPPORTUNITIES (External Positive Factors):
+- What market trends could benefit us?
+- What changes in technology, regulations, or society could we leverage?
+- What gaps exist in the market?
+- What partnerships or alliances could benefit us?
+
+THREATS (External Negative Factors):
+- What obstacles do we face?
+- What competitive threats exist?
+- What external changes could harm us?
+- What regulatory or economic challenges loom?
+
+Please provide a structured analysis with actionable insights and strategic recommendations based on the SWOT matrix. If you need specific information about my organization, please ask targeted questions.`,
+
+  'competitor': `I need a comprehensive competitor analysis. Please help me analyze my competitive landscape using this framework:
+
+COMPETITOR IDENTIFICATION:
+- Who are our direct competitors?
+- Who are our indirect competitors?
+- Who are potential future competitors?
+
+COMPETITIVE ANALYSIS FRAMEWORK:
+1. Market Position & Share
+2. Products/Services Comparison
+3. Pricing Strategies
+4. Marketing & Brand Positioning
+5. Strengths & Weaknesses
+6. Financial Performance (if available)
+7. Strategic Direction & Future Plans
+
+COMPETITIVE INTELLIGENCE:
+- What are competitors doing well that we should learn from?
+- Where are their vulnerabilities?
+- What opportunities exist due to competitor gaps?
+- How do customers perceive competitors vs. our brand?
+
+STRATEGIC IMPLICATIONS:
+- How should we position against competitors?
+- What competitive advantages can we develop?
+- What threats need immediate attention?
+- What partnership or acquisition opportunities exist?
+
+Please guide me through this analysis systematically. What industry or market should we focus on, and do you have specific competitors in mind?`,
+
+  'market-entry': `I need help developing a market entry strategy. Please guide me through a comprehensive analysis covering:
+
+MARKET ASSESSMENT:
+- Market size and growth potential
+- Customer segments and needs analysis
+- Market maturity and lifecycle stage
+- Regulatory environment and requirements
+
+COMPETITIVE LANDSCAPE:
+- Key players and their market positions
+- Competitive advantages and barriers
+- Pricing strategies and profit margins
+- Distribution channels and partnerships
+
+ENTRY BARRIERS ANALYSIS:
+- Capital requirements and financial barriers
+- Regulatory and legal obstacles
+- Technology and expertise requirements
+- Customer loyalty and switching costs
+- Brand recognition and marketing challenges
+
+ENTRY STRATEGY OPTIONS:
+1. Direct export/online sales
+2. Licensing or franchising
+3. Joint ventures or partnerships
+4. Acquisitions or mergers
+5. Greenfield investment (new operations)
+
+IMPLEMENTATION ROADMAP:
+- Timeline and milestones
+- Resource requirements
+- Risk assessment and mitigation
+- Success metrics and KPIs
+
+Please help me evaluate the best approach for my specific situation. What market or geographic region are you considering entering?`,
+
+  'financial': `I need help creating comprehensive financial projections and analysis. Please assist with:
+
+REVENUE PROJECTIONS:
+- Sales forecasting methodologies
+- Market size and penetration assumptions
+- Pricing strategy analysis
+- Revenue stream diversification
+- Seasonal and cyclical factors
+
+COST STRUCTURE ANALYSIS:
+- Fixed vs. variable cost breakdown
+- Cost of goods sold (COGS) analysis
+- Operating expense projections
+- Capital expenditure planning
+- Working capital requirements
+
+PROFITABILITY ANALYSIS:
+- Gross margin analysis
+- Operating margin projections
+- Net profit forecasting
+- Break-even analysis
+- Unit economics modeling
+
+CASH FLOW PROJECTIONS:
+- Operating cash flow analysis
+- Investment cash flow planning
+- Financing cash flow requirements
+- Cash flow timing and seasonality
+- Working capital impact
+
+SCENARIO PLANNING:
+- Best case scenario modeling
+- Worst case scenario analysis
+- Most likely case projections
+- Sensitivity analysis for key variables
+- Risk-adjusted projections
+
+FINANCIAL RATIOS & METRICS:
+- Profitability ratios
+- Liquidity ratios
+- Efficiency ratios
+- Growth metrics
+- Return on investment analysis
+
+What type of business or project are we creating financial projections for? What time horizon should we focus on (1, 3, or 5 years)?`,
+
+  'risk': `I need a comprehensive risk assessment and management strategy. Please help me analyze and address:
+
+RISK IDENTIFICATION:
+Strategic Risks:
+- Market and competitive threats
+- Technology disruption risks
+- Regulatory and compliance risks
+- Reputation and brand risks
+
+Operational Risks:
+- Supply chain vulnerabilities
+- Process and system failures
+- Human resource risks
+- Quality and safety issues
+
+Financial Risks:
+- Credit and counterparty risks
+- Liquidity and cash flow risks
+- Currency and interest rate risks
+- Investment and market risks
+
+External Risks:
+- Economic and political instability
+- Natural disasters and force majeure
+- Cybersecurity and data breaches
+- Industry-specific threats
+
+RISK ASSESSMENT MATRIX:
+For each identified risk:
+- Probability of occurrence (Low/Medium/High)
+- Impact severity (Low/Medium/High)
+- Risk priority ranking
+- Current control effectiveness
+
+RISK MITIGATION STRATEGIES:
+1. Risk Avoidance - Eliminate the risk
+2. Risk Reduction - Minimize probability/impact
+3. Risk Transfer - Insurance, contracts, outsourcing
+4. Risk Acceptance - Monitor and manage
+
+RISK MONITORING & REPORTING:
+- Key risk indicators (KRIs)
+- Regular assessment schedules
+- Escalation procedures
+- Board and management reporting
+
+BUSINESS CONTINUITY PLANNING:
+- Crisis response procedures
+- Backup systems and processes
+- Recovery time objectives
+- Communication plans
+
+What industry or type of organization should we focus this risk assessment on?`,
+
+  'business-model': `Let's design and analyze your business model using the Business Model Canvas framework. I'll guide you through each of the 9 building blocks:
+
+1. CUSTOMER SEGMENTS:
+- Who are your target customers?
+- What are the different customer groups?
+- Which segments are most important?
+
+2. VALUE PROPOSITIONS:
+- What value do you deliver to customers?
+- What customer problems are you solving?
+- What benefits do you provide?
+
+3. CHANNELS:
+- How do you reach and deliver to customers?
+- What channels work best?
+- How do you integrate your channels?
+
+4. CUSTOMER RELATIONSHIPS:
+- What type of relationship do you establish?
+- How do you maintain customer relationships?
+- What are the costs and benefits?
+
+5. REVENUE STREAMS:
+- How do you generate revenue?
+- What are customers willing to pay for?
+- What pricing strategies do you use?
+
+6. KEY RESOURCES:
+- What key resources do you need?
+- Physical, intellectual, human, financial resources?
+- What are your most important assets?
+
+7. KEY ACTIVITIES:
+- What key activities are required?
+- Production, problem-solving, platform management?
+- What activities are most important?
+
+8. KEY PARTNERSHIPS:
+- Who are your key partners and suppliers?
+- What key activities do partners perform?
+- What key resources do you acquire from partners?
+
+9. COST STRUCTURE:
+- What are the most important costs?
+- Which key resources/activities are most expensive?
+- Is your business cost-driven or value-driven?
+
+Let's work through this systematically. What type of business or venture are we analyzing? Are you looking to create a new business model or optimize an existing one?`
+};
+
+// Add click handlers for template cards
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.template-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const template = card.getAttribute('data-template');
+      const prompt = templatePrompts[template];
+      
+      if (prompt) {
+        // Switch to chat tab
+        chatTab.classList.add('active');
+        templatesTab.classList.remove('active');
+        chatContent.classList.remove('hidden');
+        templatesContent.classList.add('hidden');
+        
+        // Add template message to chat
+        addMessage(prompt, 'user');
+        
+        // Send to AI
+        sendTemplateMessage(prompt);
+      }
+    });
+  });
+});
+
+async function sendTemplateMessage(prompt) {
+  const typingId = addMessage('', 'ai', true);
+  
+  try {
+    const res = await fetch('https://n8n.data2int.com/webhook-test/analysis', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify([{
+        customerName: 'GUI User',
+        location: 'Browser - Template',
+        useCase: 'Strategy Template',
+        prompt: prompt
+      }])
+    });
+    
+    let txt;
+    const ct = res.headers.get('Content-Type') || '';
+    if (ct.includes('application/json')) txt = JSON.stringify(await res.json(), null, 2);
+    else txt = await res.text();
+    updateMessage(typingId, txt);
+  } catch (e) {
+    updateMessage(typingId, 'Error: ' + e.message);
+  }
+}
+
+/* ==========  CHAT LOGIC  (unchanged webhooks)  ========== */
+const messageInput  = $('messageInput');
+const charCount     = $('charCount');
+const sendButton    = $('sendButton');
+const fileInput     = $('fileInput');
+const filePreview   = $('filePreview');
+const fileName      = $('fileName');
+const removeFile    = $('removeFile');
+const chatMessages  = $('chatMessages');
+
+function enterChat(){
+  authSection.classList.add('hidden');
+  chatSection.classList.remove('hidden');
+  document.body.classList.add('chat-active');
+}
+
+/* --- chat textarea auto‑resize & char count --- */
+if(messageInput){
+  messageInput.addEventListener('input',()=>{
+    charCount.textContent=`${messageInput.value.length}/2000`;
+    messageInput.style.height='auto';
+    messageInput.style.height=Math.min(messageInput.scrollHeight,120)+'px';
+  });
+}
+
+/* --- file upload preview --- */
+fileInput?.addEventListener('change',()=>{
+  if(fileInput.files.length){
+    fileName.textContent=[...fileInput.files].map(f=>f.name).join(', ');
+    filePreview.classList.remove('hidden');filePreview.classList.add('animate-slide-up');
+  }
+});
+removeFile?.addEventListener('click',()=>{fileInput.value='';filePreview.classList.add('hidden');});
+
+/* --- send message --- */
+sendButton?.addEventListener('click',sendMessage);
+messageInput?.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}});
+
+function addMessage(content,sender,isTyping=false){
+  const id='msg_'+Date.now();
+  const div=document.createElement('div');
+  div.id=id;
+  div.className=`flex items-start space-x-4 ${sender==='user'?'justify-end animate-slide-left':'animate-slide-right'}`;
+
+  if(sender==='user'){
+    div.innerHTML=`
+      <div class="flex-1 max-w-xs sm:max-w-md">
+        <div class="message-user rounded-2xl px-4 py-3 shadow-lg">
+          <p class="text-sm whitespace-pre-wrap">${escapeHtml(content)}</p>
+        </div>
+      </div>
+      <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
+        <span class="text-white text-xs font-medium">You</span>
+      </div>`;
+  }else{
+    div.innerHTML=`
+      <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+        </svg>
+      </div>
+      <div class="flex-1">
+        <div class="message-ai rounded-2xl p-4 shadow-lg">${
+          isTyping?`<div class="typing-indicator">
+                      <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+                    </div><span class="text-sm text-gray-500 ml-2">AI is thinking...</span>`
+                   :`<p class="text-sm whitespace-pre-wrap">${escapeHtml(content)}</p>`}
+        </div>
+      </div>`;
+  }
+  chatMessages.appendChild(div);
+  chatMessages.scrollTop=chatMessages.scrollHeight;
+  return id;
+}
+function updateMessage(id,content){
+  const el=$(id);if(!el)return;
+  const box=el.querySelector('.message-ai');
+  if(box)box.innerHTML=`<p class="text-sm whitespace-pre-wrap">${escapeHtml(content)}</p>`;
+}
+function escapeHtml(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML;}
+
+async function sendMessage(){
+  const msg=messageInput.value.trim();if(!msg)return;
+  const aiId=addMessage(msg,'user'); // user message
+  messageInput.value='';messageInput.style.height='auto';charCount.textContent='0/2000';
+
+  // AI placeholder
+  const typingId=addMessage('', 'ai', true);
+
+  try{
+    const res=await fetch('https://n8n.data2int.com/webhook-test/analysis',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify([{customerName:'GUI User',location:'Browser',useCase:'General Prompt',prompt:msg}])
+    });
+    let txt;const ct=res.headers.get('Content-Type')||'';
+    if(ct.includes('application/json'))txt=JSON.stringify(await res.json(),null,2);
+    else txt=await res.text();
+    updateMessage(typingId,txt);
+  }catch(e){updateMessage(typingId,'Error: '+e.message);}
+}
+</script>
+</body>
+</html>
