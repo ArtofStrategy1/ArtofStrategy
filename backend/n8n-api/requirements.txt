@@ -1,0 +1,2 @@
+fastapi[standard] 	# Includes uvicorn for serving, and other necessary dependencies.
+uvicorn[standard] 	# Explicitly include uvicorn for production-ready ASGI server.
