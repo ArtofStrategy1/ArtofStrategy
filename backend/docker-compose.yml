@@ -73,6 +73,7 @@ services:
       - "8080:8080"
     networks:
       - data2int-net
+      - searxng-net
     environment:
       # Use internal Docker network URL for base URL
       - SEARXNG_BASE_URL=http://searxng:8080
@@ -93,24 +94,44 @@ services:
       retries: 3
       start_period: 40s
 
-  # data2int API service
-  data2int-api:
+  # n8n API service
+  n8n-api:
     build:
-      context: ./data2int-api/
+      context: ./n8n-api/
       dockerfile: Dockerfile
     restart: unless-stopped
-    container_name: data2int-api
+    container_name: n8n-api
     ports:
       - "8004:8000" # Map host port 8000 to container port 8000 (for direct testing if needed)
     networks:
       - data2int-net
       - npm_default # Connect to Nginx Proxy Manager network
     volumes:
-      - ./data2int-api/:/app/
+      - ./n8n-api/:/app/
+    
+  spacy-nlp:
+    build:
+      context: ./spacy-nlp
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    container_name: spacy-nlp
+    ports:
+      - "8007:8000" # Map host port 8007 to container port 8001
+    networks:
+      - data2int-net
+      - npm_default   # Connect to Nginx Proxy Manager network
+    environment:
+      - PYTHONUNBUFFERED=1  # Ensures Python output is unbuffered
+      - SPACY_MODEL=en_core_web_sm
+    volumes:
+      - ./spacy-nlp/spacy-nlp-app:/app/spacy-nlp-app
+    
 
 networks:
   default:
   data2int-net:
     external: true
   npm_default:
+    external: true
+  searxng-net:
     external: true

@@ -1,0 +1,23 @@
+# Virtual environment
+.venv
+
+# Git
+.git
+.gitignore
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.bak
+*.pyc
+__pycache__/
+
+# Docker specific
+Dockerfile
+docker-compose.yml
+
+# Logs and temporary files
+*.log
+tmp/
+temp/
