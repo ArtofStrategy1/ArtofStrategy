@@ -84,7 +84,7 @@ services:
     env_file:
       - ./.env
     volumes:
-      - ./searxng:/etc/searxng:rw
+      - ./searxng:/etc/searxng:ro
       - ./searxng/searxng-data:/var/cache/searxng
     # Add healthcheck
     healthcheck:
