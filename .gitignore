@@ -13,6 +13,8 @@ n8n-data
 searxng-data
 mongodb-data
 utility/
+.roo
+.rooignore
 
 # ===================================================================
 # Editor & IDE-specific files
@@ -108,3 +110,8 @@ yarn-error.log*
 # Debugging
 .pnp.*
 .pnp.js
+
+# ===================================================================
+# Docker
+# ===================================================================
+docker-compose.override.yml
