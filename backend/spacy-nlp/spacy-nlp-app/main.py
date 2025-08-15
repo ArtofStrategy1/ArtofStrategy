@@ -1,9 +1,9 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
+from contextlib import asynccontextmanager
+from typing import List, Dict, Any, Optional
 import spacy
 import networkx as nx
-from typing import List, Dict, Any, Optional
-
 from .models import (
     TextInput,
     ProcessedToken,
@@ -22,10 +22,10 @@ from .models import (
     PathResponse,
     LeveragePoint,
     LeveragePointsResponse,
+    PerformanceTestRequest,
+    PerformanceTestResult,
 )
 import time
-from .models import PerformanceTestRequest, PerformanceTestResult
-from contextlib import asynccontextmanager
 import logging
 import sys
 import os
