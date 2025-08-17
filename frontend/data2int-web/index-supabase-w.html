@@ -1775,89 +1775,41 @@ For each identified segment, provide:
                 const password = $('registerPassword').value;
                 const confirmPassword = $('registerConfirmPassword').value;
 
-                // Validation
                 if (!firstName || !lastName || !email || !password || !confirmPassword) {
                     showMessage('registerMessage', 'Please fill in all fields', 'error');
                     return;
                 }
-
                 if (password !== confirmPassword) {
                     showMessage('registerMessage', 'Passwords do not match', 'error');
-                    return;
-                }
-
-                // Basic email validation
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailRegex.test(email)) {
-                    showMessage('registerMessage', 'Please enter a valid email address', 'error');
-                    return;
-                }
-
-                // Password strength validation (optional)
-                if (password.length < 6) {
-                    showMessage('registerMessage', 'Password must be at least 6 characters long', 'error');
                     return;
                 }
 
                 setLoading('register', true);
 
                 try {
-                    // Create user via your Edge Function with separated names
-                    const { data: fnData, error: fnError } = await supabase.functions.invoke('create-user', {
-                        body: {
-                            email,
-                            password,
-                            metadata: {
+                    // Use Supabase Auth
+                    const { data, error } = await supabase.auth.signUp({
+                        email: email,
+                        password: password,
+                        options: {
+                            data: {
                                 first_name: firstName,
-                                last_name: lastName,
-                                role: 'basic'
+                                last_name: lastName
                             }
                         }
                     });
 
-                    if (fnError) {
-                        showMessage('registerMessage', fnError.message || 'Registration failed via Edge Function.', 'error');
+                    if (error) {
+                        showMessage('registerMessage', error.message, 'error');
                         return;
                     }
 
-                    if (!fnData || !fnData.success) {
-                        const msg = fnData?.error || 'Registration failed (unexpected response).';
-                        showMessage('registerMessage', msg, 'error');
-                        return;
-                    }
+                    showMessage('registerMessage', 'Account created successfully! Please check your email to confirm.', 'success');
+                    setTimeout(() => navigateTo('login'), 1500);
 
-                    // Try auto-login (your function sets email_confirm: true)
-                    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-                        email,
-                        password
-                    });
-
-                    if (signInError) {
-                        showMessage('registerMessage', 'Account created successfully! Please log in.', 'success');
-                        setTimeout(() => navigateTo('login'), 1500);
-                        return;
-                    }
-
-                    // Store token and update state
-                    if (signInData.session?.access_token) {
-                        localStorage.setItem('authToken', signInData.session.access_token);
-                        userLoggedIn = true;
-                        updateNavBar();
-
-                        // Store user info for display purposes (optional)
-                        localStorage.setItem('userInfo', JSON.stringify({
-                            email: signInData.user.email,
-                            first_name: firstName,
-                            last_name: lastName
-                        }));
-                    }
-
-                    showMessage('registerMessage', `Welcome ${firstName}! Account created successfully. Redirecting...`, 'success');
-                    setTimeout(() => navigateTo('templates'), 1500);
-
-                } catch (err) {
-                    console.error('Register error:', err);
+                } catch (error) {
                     showMessage('registerMessage', 'An error occurred during registration. Please try again.', 'error');
+                    console.error("Register error:", error);
                 } finally {
                     setLoading('register', false);
                 }
