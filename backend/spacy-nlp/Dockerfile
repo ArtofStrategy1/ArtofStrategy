@@ -14,7 +14,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY ./spacy_nlp/ /app/spacy_nlp
+COPY ./spacy-nlp-app/ /app/spacy-nlp-app
 
 # Expose the port the FastAPI app will run on inside the container.
 EXPOSE 8000
