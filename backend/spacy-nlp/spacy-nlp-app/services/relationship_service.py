@@ -13,6 +13,20 @@ from ..utils.graph_utils import find_lca
 logger = logging.getLogger(__name__)
 
 
+def get_networkx_graph_from_relationships(
+    relationships: List[RelationshipTriple],
+) -> nx.DiGraph:
+    """
+    Builds a NetworkX DiGraph from a list of RelationshipTriple objects.
+    """
+    graph = nx.DiGraph()
+    for triple in relationships:
+        graph.add_node(triple.subject)
+        graph.add_node(triple.object)
+        graph.add_edge(triple.subject, triple.object, relation=triple.relation)
+    return graph
+
+
 def extract_relationships_logic(nlp, text: str) -> ExtractedRelationships:
     """
     Extracts simple subject-verb-object (SVO) relationships from the input text
@@ -108,11 +122,7 @@ def build_knowledge_graph(relationships: List[RelationshipTriple]) -> KnowledgeG
     """
     Builds an in-memory NetworkX KnowledgeGraph from a list of RelationshipTriple objects.
     """
-    graph = nx.DiGraph()
-    for triple in relationships:
-        graph.add_node(triple.subject)
-        graph.add_node(triple.object)
-        graph.add_edge(triple.subject, triple.object, relation=triple.relation)
+    graph = get_networkx_graph_from_relationships(relationships)
 
     # Convert NetworkX graph nodes to GraphNode objects
     graph_nodes = []
