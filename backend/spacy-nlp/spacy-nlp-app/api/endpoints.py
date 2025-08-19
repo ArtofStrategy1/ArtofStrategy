@@ -24,7 +24,10 @@ from ..models import (
 from ..api.dependencies import get_nlp_model
 from ..core.processing import process_text_logic
 from ..services.swot_service import perform_swot_analysis
-from ..services.relationship_service import extract_relationships_logic
+from ..services.relationship_service import (
+    extract_relationships_logic,
+    get_networkx_graph_from_relationships,
+)
 from ..services.graph_query_service import (
     query_neighbors_logic,
     query_path_logic,
@@ -209,20 +212,14 @@ async def identify_leverage_points(
         )
 
     extracted_relationships = extract_relationships_logic(nlp, request_data.text)
-    # The graph conversion and centrality calculation should remain here as it's specific to this endpoint's logic
-    # and not a generic graph query.
-    graph = (
-        extracted_relationships.graph.to_networkx()
-    )  # Convert to NetworkX graph for centrality calculation
+    # Retrieves a NetworkX DiGraph object for centrality calculation.
+    graph = get_networkx_graph_from_relationships(extracted_relationships.relationships)
 
     # Calculate degree centrality
     centrality = nx.degree_centrality(graph)
 
     # Sort nodes by centrality score in descending order
-    sorted_centrality = sorted(
-        centrality.items(), key=lambda item: item, reverse=True
-    )  # Corrected sort key
-
+    sorted_centrality = sorted(centrality.items(), key=lambda item: item, reverse=True)
     # Identify top N leverage points (e.g., top 10)
     top_n = 10
     leverage_points = []
