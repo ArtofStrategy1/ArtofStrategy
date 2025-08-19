@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from .core.nlp_model import lifespan
 from .api.endpoints import nlp_router, analysis_router, graph_router, performance_router
-
 import logging
 
 logging.basicConfig(level=logging.INFO)
