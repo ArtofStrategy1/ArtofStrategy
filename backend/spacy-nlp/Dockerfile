@@ -13,6 +13,9 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Download the spaCy model.
+RUN python -m spacy download ${SPACY_MODEL}
+
 # Copy application code
 COPY ./spacy-nlp-app/ /app/spacy-nlp-app
 
