@@ -75,6 +75,8 @@ class GraphNode(BaseModel):
     id: str
     label: Optional[str] = None
     type: Optional[str] = None
+    source_document_id: Optional[str] = None
+    properties: Optional[Dict[str, Any]] = None
 
 
 class GraphEdge(BaseModel):
@@ -85,6 +87,9 @@ class GraphEdge(BaseModel):
     source: str
     target: str
     label: str
+    relation_type: Optional[str] = None
+    source_document_id: Optional[str] = None
+    properties: Optional[Dict[str, Any]] = None
 
 
 class KnowledgeGraph(BaseModel):
@@ -104,6 +109,7 @@ class RelationshipTriple(BaseModel):
     subject: str
     relation: str
     object: str
+    source_document_id: Optional[str] = None
 
 
 class ExtractedRelationships(BaseModel):
@@ -181,3 +187,56 @@ class LeveragePointsResponse(BaseModel):
     """
 
     leverage_points: List[LeveragePoint]
+
+
+class CentralityResponse(BaseModel):
+    """
+    Response model for centrality calculations.
+    """
+
+    degree_centrality: Dict[str, float]
+    betweenness_centrality: Dict[str, float]
+    eigenvector_centrality: Dict[str, float]
+
+
+class CommunityDetectionResponse(BaseModel):
+    """
+    Response model for community detection.
+    """
+
+    communities: List[List[str]]
+
+
+class GraphFilterRequest(BaseModel):
+    """
+    Request model for filtering graph data.
+    """
+
+    source_document_id: Optional[str] = None
+    node_type: Optional[str] = None
+    relation_type: Optional[str] = None
+
+
+class GraphNodesResponse(BaseModel):
+    """
+    Response model for retrieving a list of graph nodes.
+    """
+
+    nodes: List[GraphNode]
+
+
+class GraphEdgesResponse(BaseModel):
+    """
+    Response model for retrieving a list of graph edges.
+    """
+
+    edges: List[GraphEdge]
+
+
+class KnowledgeGraphQueryResponse(BaseModel):
+    """
+    Response model for querying the knowledge graph based on a text query.
+    """
+
+    nodes: List[GraphNode]
+    edges: List[GraphEdge]
