@@ -2,7 +2,7 @@ from typing import List, Optional, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete
 from sqlalchemy.dialects.postgresql import JSONB
-from backend.spacy_nlp.spacy_nlp_app.database.models import KGNode, KGEdge
+from .models import KGNode, KGEdge
 
 
 # CRUD operations for KGNode
@@ -124,6 +124,22 @@ async def get_kg_edge_by_id(session: AsyncSession, edge_id: int) -> Optional[KGE
     Retrieves a knowledge graph edge by its ID.
     """
     result = await session.execute(select(KGEdge).where(KGEdge.edge_id == edge_id))
+    return result.scalar_one_or_none()
+
+
+async def get_kg_edge_by_nodes_and_type(
+    session: AsyncSession, source_node_id: int, target_node_id: int, relation_type: str
+) -> Optional[KGEdge]:
+    """
+    Retrieves a knowledge graph edge by its source node ID, target node ID, and relation type.
+    """
+    result = await session.execute(
+        select(KGEdge).where(
+            KGEdge.source_node_id == source_node_id,
+            KGEdge.target_node_id == target_node_id,
+            KGEdge.relation_type == relation_type,
+        )
+    )
     return result.scalar_one_or_none()
 
 
