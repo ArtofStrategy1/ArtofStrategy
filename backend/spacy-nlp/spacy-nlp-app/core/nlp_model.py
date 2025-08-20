@@ -2,6 +2,7 @@ from fastapi import HTTPException
 from contextlib import asynccontextmanager
 import spacy
 import logging
+from ..database.database_setup import setup_database
 
 # Configure logging for the application.
 logging.basicConfig(level=logging.INFO)
@@ -20,6 +21,10 @@ async def lifespan(app):
     This ensures the model is available for all requests and resources are
     properly managed.
     """
+    # Run database setup
+    logger.info("Running database setup...")
+    await setup_database()
+    logger.info("Database setup complete.")
 
     try:
         # Define the spaCy model name to be loaded. 'en_core_web_sm' is a
