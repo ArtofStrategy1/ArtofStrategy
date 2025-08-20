@@ -8,6 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Three.js CDN for 3D animation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Cytoscape.js CDN for graph visualization -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
     <style>
         /* --- Base & Animated Background --- */
         body {
@@ -238,6 +240,15 @@
 			background: rgba(245, 158, 11, 0.8);
 			color: #fbbf24;
 		}
+		/* Cytoscape.js Graph Container Styling */
+		#graph-container {
+			width: 100%;
+			height: 600px; /* Adjust height as needed */
+			border: 1px solid rgba(255, 255, 255, 0.2);
+			border-radius: 1rem;
+			background-color: rgba(0, 0, 0, 0.1); /* Slightly transparent background */
+		}
+			
     </style>
 </head>
 <body class="min-h-screen">
@@ -256,6 +267,7 @@
                 <a href="#" class="text-white/80 hover:text-white px-3 py-2 rounded-md text-sm font-medium nav-link" data-page="home">Home</a>
                 <a href="#" class="text-white/80 hover:text-white px-3 py-2 rounded-md text-sm font-medium nav-link" data-page="templates">Templates</a>
                 <a href="#" class="text-white/80 hover:text-white px-3 py-2 rounded-md text-sm font-medium nav-link" data-page="login">Login</a>
+				<a href="#" class="text-white/80 hover:text-white px-3 py-2 rounded-md text-sm font-medium nav-link" data-page="graphPage">Knowledge Graph</a>
             </div>
         </div>
     </nav>
@@ -607,6 +619,15 @@
         <div class="text-center mt-12">
             <button class="btn btn-primary nav-link" data-page="templates">View Templates</button>
         </div>
+    <!-- ========================================================= -->
+    <!-- GRAPH VISUALIZATION PAGE (NEW)                            -->
+    <!-- ========================================================= -->
+    <div id="graphPage" class="page container mx-auto px-6 py-16">
+        <h1 class="text-4xl font-bold text-center mb-2">Knowledge Graph Visualization</h1>
+        <p class="text-lg text-white/80 text-center mb-12 max-w-2xl mx-auto">Explore the relationships between entities in an interactive knowledge graph.</p>
+        <div id="graph-container" class="glass-container"></div>
+    </div>
+
     </div>
 
 
@@ -1774,6 +1795,178 @@ For each identified segment, provide:
             showAnalysisExample(currentExampleIndex);
         }
     });
+
+	// --- Knowledge Graph Visualization Logic (NEW) ---
+	async function loadKnowledgeGraph() {
+		const graphContainer = document.getElementById('graph-container');
+		if (!graphContainer || typeof cytoscape === 'undefined') {
+			console.error('Cytoscape.js not loaded or graph container not found.');
+			return;
+		}
+
+		graphContainer.innerHTML = '<div class="text-white/60 p-8 text-center">Loading knowledge graph...</div>';
+
+		try {
+			const nodesResponse = await fetch('https://n8n-api.data2int.com/graph/nodes');
+			const edgesResponse = await fetch('https://n8n-api.data2int.com/graph/edges');
+
+			if (!nodesResponse.ok || !edgesResponse.ok) {
+				throw new Error(`HTTP error! nodes status: ${nodesResponse.status}, edges status: ${edgesResponse.status}`);
+			}
+
+			const nodesData = await nodesResponse.json();
+			const edgesData = await edgesResponse.json();
+
+			const elements = [];
+
+			// Transform nodes
+			nodesData.forEach(node => {
+				elements.push({
+					data: {
+						id: node.id,
+						label: node.text,
+						type: node.type,
+						properties: node.properties // Store all properties
+					},
+					group: 'nodes'
+				});
+			});
+
+			// Transform edges
+			edgesData.forEach(edge => {
+				elements.push({
+					data: {
+						id: edge.id,
+						source: edge.source_node_id,
+						target: edge.target_node_id,
+						label: edge.relationship_type,
+						properties: edge.properties // Store all properties
+					},
+					group: 'edges'
+				});
+			});
+
+			// Initialize Cytoscape.js
+			const cy = cytoscape({
+				container: graphContainer,
+				elements: elements,
+				style: [
+					{
+						selector: 'node',
+						style: {
+							'background-color': '#667eea', // Primary color
+							'label': 'data(label)',
+							'text-valign': 'center',
+							'color': '#fff',
+							'font-size': '10px',
+							'text-wrap': 'wrap',
+							'text-max-width': '80px',
+							'width': 'mapData(label, 1, 10, 20, 60)', // Dynamic width based on label length
+							'height': 'mapData(label, 1, 10, 20, 60)', // Dynamic height
+							'border-width': 2,
+							'border-color': '#4f46e5',
+							'text-outline-color': '#333',
+							'text-outline-width': 1
+						}
+					},
+					{
+						selector: 'node[type="PERSON"]',
+						style: {
+							'background-color': '#764ba2', // Different color for PERSON nodes
+							'shape': 'ellipse'
+						}
+					},
+					{
+						selector: 'node[type="ORGANIZATION"]',
+						style: {
+							'background-color': '#23a6d5', // Different color for ORGANIZATION nodes
+							'shape': 'rectangle'
+						}
+					},
+					{
+						selector: 'edge',
+						style: {
+							'width': 2,
+							'line-color': '#ccc',
+							'target-arrow-color': '#ccc',
+							'target-arrow-shape': 'triangle',
+							'curve-style': 'bezier',
+							'label': 'data(label)',
+							'font-size': '8px',
+							'color': '#fff',
+							'text-background-opacity': 0.7,
+							'text-background-color': '#333',
+							'text-background-padding': '3px',
+							'text-border-radius': '3px'
+						}
+					},
+					{
+						selector: 'edge[relationship_type="HAS_PROPERTY"]', // Example: style based on edge property
+						style: {
+							'line-color': '#ffcc00',
+							'target-arrow-color': '#ffcc00'
+						}
+					},
+					{
+						selector: '.highlighted', // For interactivity
+						style: {
+							'background-color': '#FFD700',
+							'line-color': '#FFD700',
+							'target-arrow-color': '#FFD700',
+							'transition-property': 'background-color, line-color, target-arrow-color',
+							'transition-duration': '0.5s'
+						}
+					}
+				],
+				layout: {
+					name: 'cose', // A force-directed layout
+					animate: true,
+					animationDuration: 500,
+					padding: 10
+				}
+			});
+
+			// Add interactivity: on tap, highlight node and its connected edges/nodes
+			cy.on('tap', 'node', function(evt){
+				const node = evt.target;
+				cy.elements().removeClass('highlighted');
+				node.addClass('highlighted');
+				node.connectedEdges().addClass('highlighted');
+				node.neighborhood().addClass('highlighted');
+			});
+
+			// On background tap, remove all highlights
+			cy.on('tap', function(evt){
+				if( evt.target === cy ){
+					cy.elements().removeClass('highlighted');
+				}
+			});
+
+			console.log('Cytoscape.js graph initialized successfully.');
+
+		} catch (error) {
+			console.error('Error loading knowledge graph:', error);
+			graphContainer.innerHTML = `<div class="p-8 text-center text-red-400">Failed to load knowledge graph: ${error.message}</div>`;
+		}
+	}
+
+	// Call loadKnowledgeGraph when the graphPage is navigated to
+	document.addEventListener('DOMContentLoaded', () => {
+		// Existing navigation logic...
+		const originalNavigateTo = navigateTo;
+		navigateTo = (pageId) => {
+			originalNavigateTo(pageId);
+			if (pageId === 'graphPage') {
+				loadKnowledgeGraph();
+			}
+		};
+
+		// Initial setup calls
+		populateTemplatesList();
+		updateNavBar();
+		navigateTo('home'); // Start on the home page
+		initThreeJS(); // Initialize Three.js animation
+	});
 
     // Initialize carousel on page load
     if (analysisExamples.length > 0) {
