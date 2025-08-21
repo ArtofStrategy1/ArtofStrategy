@@ -1667,13 +1667,17 @@ For each identified segment, provide:
 
                 setLoading('generate', true);
 
-                // Initial content for analysisResultContainer
+                // Single, clear message about processing time
                 analysisResultContainer.innerHTML = `
-			<div class="typing-indicator">
-				<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
-			</div>
-			<p class="text-center text-white/70 pb-8">Generating your analysis, please wait...</p>
-		`;
+        <div class="text-center text-white/70 p-8">
+            <div class="typing-indicator mb-6">
+                <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+            </div>
+            <h3 class="text-xl font-semibold text-white mb-4">Generating Your Strategic Analysis</h3>
+            <p class="text-white/80 mb-2">This comprehensive analysis may take 2-5 minutes to complete.</p>
+            <p class="text-white/60 text-sm">Please keep this page open while we process your request.</p>
+        </div>
+    `;
 
                 try {
                     const token = localStorage.getItem('authToken');
@@ -1688,30 +1692,55 @@ For each identified segment, provide:
                     // Store this request for WebSocket callback
                     pendingAnalysisRequests.set(messageId, analysisResultContainer);
 
-                    // Send to n8n with framework included
-                    const response = await fetch('https://n8n.data2int.com/webhook-test/analysis-s', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        },
-                        body: JSON.stringify({
-                            customerName: companyName,
-                            location: location,
-                            useCase: useCase,
-                            prompt: fullPrompt,
-                            framework: framework,  // Include framework
-                            templateId: currentTemplateId,
-                            messageId: messageId
-                        })
-                    });
+                    // Create an AbortController for timeout handling
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-                    if (response.ok) {
-                        const result = await response.json();
-                        console.log('Analysis request submitted successfully:', result);
-                        // The actual result will come via WebSocket
-                    } else {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    try {
+                        // Send to n8n with framework included
+                        const response = await fetch('https://n8n.data2int.com/webhook/analysis-s', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify({
+                                customerName: companyName,
+                                location: location,
+                                useCase: useCase,
+                                prompt: fullPrompt,
+                                framework: framework,
+                                templateId: currentTemplateId,
+                                messageId: messageId
+                            }),
+                            signal: controller.signal
+                        });
+
+                        clearTimeout(timeoutId); // Clear the abort timeout since fetch completed
+
+                        if (response.ok) {
+                            const result = await response.json();
+                            console.log('Analysis request submitted successfully:', result);
+
+                            // Keep the same message - no updates needed since WebSocket will handle the final result
+                            // The actual result will come via WebSocket
+                        } else {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+
+                    } catch (error) {
+                        clearTimeout(timeoutId);
+
+                        if (error.name === 'AbortError') {
+                            // Timeout occurred, but don't treat as error since WebSocket will handle response
+                            console.log('Fetch request timed out, but WebSocket will handle the response');
+
+                            // Keep the same processing message - no need to change it
+                            // The WebSocket will replace this when the result comes in
+                            return;
+                        } else {
+                            throw error; // Re-throw non-timeout errors
+                        }
                     }
 
                 } catch (error) {
@@ -1775,41 +1804,89 @@ For each identified segment, provide:
                 const password = $('registerPassword').value;
                 const confirmPassword = $('registerConfirmPassword').value;
 
+                // Validation
                 if (!firstName || !lastName || !email || !password || !confirmPassword) {
                     showMessage('registerMessage', 'Please fill in all fields', 'error');
                     return;
                 }
+
                 if (password !== confirmPassword) {
                     showMessage('registerMessage', 'Passwords do not match', 'error');
+                    return;
+                }
+
+                // Basic email validation
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    showMessage('registerMessage', 'Please enter a valid email address', 'error');
+                    return;
+                }
+
+                // Password strength validation (optional)
+                if (password.length < 6) {
+                    showMessage('registerMessage', 'Password must be at least 6 characters long', 'error');
                     return;
                 }
 
                 setLoading('register', true);
 
                 try {
-                    // Use Supabase Auth
-                    const { data, error } = await supabase.auth.signUp({
-                        email: email,
-                        password: password,
-                        options: {
-                            data: {
+                    // Create user via your Edge Function with separated names
+                    const { data: fnData, error: fnError } = await supabase.functions.invoke('create-user-v2', {
+                        body: {
+                            email,
+                            password,
+                            metadata: {
                                 first_name: firstName,
-                                last_name: lastName
+                                last_name: lastName,
+                                role: 'basic'
                             }
                         }
                     });
 
-                    if (error) {
-                        showMessage('registerMessage', error.message, 'error');
+                    if (fnError) {
+                        showMessage('registerMessage', fnError.message || 'Registration failed via Edge Function.', 'error');
                         return;
                     }
 
-                    showMessage('registerMessage', 'Account created successfully! Please check your email to confirm.', 'success');
-                    setTimeout(() => navigateTo('login'), 1500);
+                    if (!fnData || !fnData.success) {
+                        const msg = fnData?.error || 'Registration failed (unexpected response).';
+                        showMessage('registerMessage', msg, 'error');
+                        return;
+                    }
 
-                } catch (error) {
+                    // Try auto-login (your function sets email_confirm: true)
+                    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+                        email,
+                        password
+                    });
+
+                    if (signInError) {
+                        showMessage('registerMessage', 'Account created successfully! Please log in.', 'success');
+                        setTimeout(() => navigateTo('login'), 1500);
+                        return;
+                    }
+
+                    // Store token and update state
+                    if (signInData.session?.access_token) {
+                        localStorage.setItem('authToken', signInData.session.access_token);
+                        userLoggedIn = true;
+                        updateNavBar();
+
+                        // Store user info for display purposes (optional)
+                        localStorage.setItem('userInfo', JSON.stringify({
+                            email: signInData.user.email,
+                            first_name: firstName,
+                            last_name: lastName
+                        }));
+                    }
+
+                    showMessage('registerMessage', `Welcome ${firstName}! Account created successfully. Redirecting...`, 'success');
+                    setTimeout(() => navigateTo('templates'), 1500);
+
+                } catch (err) {
+                    console.error('Register error:', err);
                     showMessage('registerMessage', 'An error occurred during registration. Please try again.', 'error');
-                    console.error("Register error:", error);
                 } finally {
                     setLoading('register', false);
                 }
