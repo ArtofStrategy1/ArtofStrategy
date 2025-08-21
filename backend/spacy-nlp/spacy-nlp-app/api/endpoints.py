@@ -89,20 +89,6 @@ async def process_text(request_data: TextInput, nlp: Any = Depends(get_nlp_model
     return process_text_logic(nlp, request_data.text)
 
 
-@analysis_router.post("/analyze_swot", response_model=SWOTAnalysisResult)
-async def analyze_swot(request_data: TextInput, nlp: Any = Depends(get_nlp_model)):
-    """
-    Performs a basic SWOT (Strengths, Weaknesses, Opportunities, Threats)
-    analysis on the input text.
-    """
-    if not nlp:
-        # Ensure the spaCy model is loaded.
-        raise HTTPException(
-            status_code=503, detail="SpaCy model not loaded. Service is not ready."
-        )
-    return perform_swot_analysis(nlp, request_data.text)
-
-
 @graph_router.post("/extract_relationships", response_model=ExtractedRelationships)
 async def extract_relationships(
     request_data: TextInput,
@@ -157,22 +143,14 @@ async def query_graph_neighbors(
         raise HTTPException(status_code=404, detail=str(e))
 
 
-@graph_router.post("/query_graph_path", response_model=PathResponse)
-async def query_graph_path(
+@graph_router.post("/query_shortest_path", response_model=PathResponse)
+async def query_shortest_path(
     request_data: PathQueryRequest,
-    nlp: Any = Depends(get_nlp_model),
     db: AsyncSession = Depends(get_db_session),
 ):
     """
-    Finds a path between two nodes in the graph.
-    For demonstration, the graph is reconstructed from a dummy set of relationships.
-    In a production environment, the graph would be persisted and loaded efficiently.
+    Finds the shortest path between two nodes in the graph.
     """
-    if not nlp:
-        raise HTTPException(
-            status_code=503, detail="SpaCy model not loaded. Service is not ready."
-        )
-
     nodes_response = await get_all_nodes_logic(db, GraphFilterRequest())
     edges_response = await get_all_edges_logic(db, GraphFilterRequest())
 
@@ -206,26 +184,6 @@ async def get_edges(
     return await get_all_edges_logic(db, filters)
 
 
-@graph_router.post("/shortest-path", response_model=PathResponse)
-async def get_shortest_path(
-    request_data: PathQueryRequest, db: AsyncSession = Depends(get_db_session)
-):
-    """
-    Find the shortest path between two nodes.
-    """
-    nodes_response = await get_all_nodes_logic(db, GraphFilterRequest())
-    edges_response = await get_all_edges_logic(db, GraphFilterRequest())
-
-    graph = get_networkx_graph_from_db_data(nodes_response.nodes, edges_response.edges)
-
-    try:
-        return query_shortest_path_logic(
-            request_data.source_node_id, request_data.target_node_id, graph
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-
-
 @graph_router.post("/centrality", response_model=CentralityResponse)
 async def get_centrality(db: AsyncSession = Depends(get_db_session)):
     """
@@ -250,6 +208,57 @@ async def get_communities(db: AsyncSession = Depends(get_db_session)):
     return query_community_detection_logic_louvain(graph)
 
 
+@analysis_router.post("/analyze_swot", response_model=SWOTAnalysisResult)
+async def analyze_swot(request_data: TextInput, nlp: Any = Depends(get_nlp_model)):
+    """
+    Performs a basic SWOT (Strengths, Weaknesses, Opportunities, Threats)
+    analysis on the input text.
+    """
+    if not nlp:
+        # Ensure the spaCy model is loaded.
+        raise HTTPException(
+            status_code=503, detail="SpaCy model not loaded. Service is not ready."
+        )
+    return perform_swot_analysis(nlp, request_data.text)
+
+
+@analysis_router.post(
+    "/identify_leverage_points", response_model=LeveragePointsResponse
+)
+async def identify_leverage_points(
+    request_data: TextInput,
+    nlp: Any = Depends(get_nlp_model),
+    db: AsyncSession = Depends(get_db_session),
+):
+    """
+    Identifies leverage points in the text by constructing a knowledge graph
+    and calculating node centrality.
+    """
+    if not nlp:
+        raise HTTPException(
+            status_code=503, detail="SpaCy model not loaded. Service is not ready."
+        )
+
+    extracted_relationships = await extract_relationships_logic(
+        nlp, request_data.text, db
+    )
+    # Retrieves a NetworkX DiGraph object for centrality calculation.
+    graph = get_networkx_graph_from_relationships(extracted_relationships.relationships)
+
+    # Calculate degree centrality
+    centrality = nx.degree_centrality(graph)
+
+    # Sort nodes by centrality score in descending order
+    sorted_centrality = sorted(centrality.items(), key=lambda item: item, reverse=True)
+    # Identify top N leverage points (e.g., top 10)
+    top_n = 10
+    leverage_points = []
+    for node_id, score in sorted_centrality[:top_n]:
+        leverage_points.append(LeveragePoint(node_id=node_id, centrality_score=score))
+
+    return LeveragePointsResponse(leverage_points=leverage_points)
+
+
 @performance_router.post("/test_performance", response_model=PerformanceTestResult)
 async def test_performance(
     request_data: PerformanceTestRequest, nlp: Any = Depends(get_nlp_model)
@@ -271,43 +280,6 @@ async def test_performance(
         return run_performance_test(nlp, request_data.text, request_data.num_iterations)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-
-
-@analysis_router.post(
-    "/identify_leverage_points", response_model=LeveragePointsResponse
-)
-async def identify_leverage_points(
-    request_data: TextInput,
-    nlp: Any = Depends(get_nlp_model),
-    db: AsyncSession = Depends(get_db_session),
-):
-    """
-    Identifies leverage points in the text by constructing a knowledge graph
-    and calculating node centrality.
-    """
-    if not nlp:
-        raise HTTPException(
-            status_code=503, detail="SpaCy model not loaded. Service is not ready."
-        )
-
-    extracted_relationships = await extract_relationships_logic(
-        nlp, request_data.text, session=db
-    )
-    # Retrieves a NetworkX DiGraph object for centrality calculation.
-    graph = get_networkx_graph_from_relationships(extracted_relationships.relationships)
-
-    # Calculate degree centrality
-    centrality = nx.degree_centrality(graph)
-
-    # Sort nodes by centrality score in descending order
-    sorted_centrality = sorted(centrality.items(), key=lambda item: item, reverse=True)
-    # Identify top N leverage points (e.g., top 10)
-    top_n = 10
-    leverage_points = []
-    for node_id, score in sorted_centrality[:top_n]:
-        leverage_points.append(LeveragePoint(node_id=node_id, centrality_score=score))
-
-    return LeveragePointsResponse(leverage_points=leverage_points)
 
 
 @graph_router.post(
