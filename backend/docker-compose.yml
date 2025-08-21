@@ -10,6 +10,7 @@ services:
       - data2int-net
     environment:
       - OLLAMA_AUTH=false  # Disable authentication
+      - OLLAMA_MAX_LOADED_MODELS=3
     volumes:
       - ./ollama/ollama-data:/root/.ollama  # Persistent storage for models
   
