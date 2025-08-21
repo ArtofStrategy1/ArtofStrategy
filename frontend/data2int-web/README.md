@@ -5,3 +5,7 @@
 - Created a backup for the html page used by the "[Light] Postgres_V4" n8n workflow.
 
 - Created a backup for the html page used by the working version of supabase annotated with "supabase-w".
+
+[Elijah] (08/19):
+
+- Created another HTML page called `index-working-copy.html`, please do not remove this. This will only work with "DONT_USE Supabase_V1" n8n workflow.
