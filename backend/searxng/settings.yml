@@ -27,18 +27,18 @@ ui:
 engines:
   - name: google
     engine: google
-    categories: general
+    categories: general,news,science
     disabled: false
 
   - name: bing
     engine: bing
-    categories: general
-    disabled: false
+    categories: general,news,science
+    disabled: true
 
   - name: duckduckgo
     engine: duckduckgo
-    categories: general
-    disabled: false
+    categories: general,news,science
+    disabled: true
 
 # Disable bot detection for API access
 botdetection:
