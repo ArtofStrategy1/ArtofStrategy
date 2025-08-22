@@ -9,7 +9,8 @@
     <!-- Three.js CDN for 3D animation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <!-- Cytoscape.js CDN for graph visualization -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.33.1/cytoscape.min.js"></script>
+	
     <style>
         /* --- Base & Animated Background --- */
         body {
@@ -29,7 +30,7 @@
         .page.active { animation: fadeIn .5s ease-out; } 
         
         /* Specific display rules for active pages */
-        #home.active, #templates.active, #templateDetail.active, #examplesPage.active {
+        #home.active, #templates.active, #templateDetail.active, #examplesPage.active, #graphPage.active {
             display: block; /* Content pages */
         }
         #login.active, #signup.active {
@@ -41,8 +42,8 @@
         /* --- Glass & Card Effects --- */
         .glass-container {
             background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            /*backdrop-filter: blur(12px);*/
+            /*-webkit-backdrop-filter: blur(12px);*/
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 1rem;
             padding: 2.5rem;
@@ -242,17 +243,29 @@
 		}
 		/* Cytoscape.js Graph Container Styling */
 		#graph-container {
-			width: 100%;
+			position: relative;
+			width: 90%;
 			height: 600px; /* Adjust height as needed */
 			border: 1px solid rgba(255, 255, 255, 0.2);
-			border-radius: 1rem;
-			background-color: rgba(0, 0, 0, 0.1); /* Slightly transparent background */
+			border-radius: 1.5rem;	/* The amount of rounding you want to apply */
+			overflow: hidden; /* So content inside is also rounded */
+			box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+			background-color: rgba(30, 30, 30, 0.8); 	/* Slightly transparent background */
+			padding: 1.5rem;
 		}
-			
+
+		.graph-inner {
+			position: relative;
+			width: 100%;
+			height: 100%;
+			border: 1px solid rgba(255, 255, 255, 0.2);
+			border-radius: 1.5rem;	/* The amount of rounding you want to apply */
+			overflow: hidden; /* So content inside is also rounded */
+			margin: 0
+		}
     </style>
 </head>
 <body class="min-h-screen">
-
     <!-- Three.js Canvas for Animated Background -->
     <canvas id="threeJsCanvas"></canvas>
 	<div id="wsStatus" class="ws-status disconnected">Disconnected</div>
@@ -619,15 +632,16 @@
         <div class="text-center mt-12">
             <button class="btn btn-primary nav-link" data-page="templates">View Templates</button>
         </div>
+	</div>
     <!-- ========================================================= -->
     <!-- GRAPH VISUALIZATION PAGE (NEW)                            -->
     <!-- ========================================================= -->
     <div id="graphPage" class="page container mx-auto px-6 py-16">
         <h1 class="text-4xl font-bold text-center mb-2">Knowledge Graph Visualization</h1>
         <p class="text-lg text-white/80 text-center mb-12 max-w-2xl mx-auto">Explore the relationships between entities in an interactive knowledge graph.</p>
-        <div id="graph-container" class="glass-container"></div>
-    </div>
-
+        <div id="graph-container">
+			<div class="graph-inner"></div>
+		</div>
     </div>
 
 
@@ -1106,12 +1120,21 @@ For each identified segment, provide:
         if (targetPage) {
             targetPage.classList.add('active');
             // Set display based on the type of page
-            if (pageId === 'home' || pageId === 'templates' || pageId === 'templateDetail' || pageId === 'examplesPage') {
+            if (pageId === 'home' || pageId === 'templates' || pageId === 'templateDetail' || pageId === 'examplesPage' || pageId === `graphPage`) {
                 targetPage.style.display = 'block';
             } else if (pageId === 'login' || pageId === 'signup') {
                 targetPage.style.display = 'flex';
             }
-            window.scrollTo(0, 0);
+			window.scrollTo(0, 0);
+
+			// Call loadKnowledgeGraph when navigating to the graphPage
+			if (pageId === 'graphPage') { 
+				loadKnowledgeGraph()
+				// requestAnimationFrame(() => {
+				// 	loadKnowledgeGraph();
+				// });
+			}
+            
         }
     }
 
@@ -1168,6 +1191,12 @@ For each identified segment, provide:
             navigateTo('home'); // Or navigate to templates
             return;
         }
+
+		// Call loadKnowledgeGraph when navigating to the graphPage
+		if (pageId === 'graphPage') {
+			navigateTo('graphPage')
+			return;
+		}
         navigateTo(pageId);
     }
 
@@ -1798,17 +1827,18 @@ For each identified segment, provide:
 
 	// --- Knowledge Graph Visualization Logic (NEW) ---
 	async function loadKnowledgeGraph() {
-		const graphContainer = document.getElementById('graph-container');
+		const graphContainer = document.querySelector('.graph-inner')
+		
 		if (!graphContainer || typeof cytoscape === 'undefined') {
 			console.error('Cytoscape.js not loaded or graph container not found.');
 			return;
 		}
 
-		graphContainer.innerHTML = '<div class="text-white/60 p-8 text-center">Loading knowledge graph...</div>';
+		//graphContainer.innerHTML = '<div class="text-white/60 p-8 text-center">Loading knowledge graph...</div>';
 
 		try {
-			const nodesResponse = await fetch('https://n8n-api.data2int.com/graph/nodes');
-			const edgesResponse = await fetch('https://n8n-api.data2int.com/graph/edges');
+			const nodesResponse = await fetch('https://matt-nlp.data2int.com/graph/nodes');
+			const edgesResponse = await fetch('https://matt-nlp.data2int.com/graph/edges');
 
 			if (!nodesResponse.ok || !edgesResponse.ok) {
 				throw new Error(`HTTP error! nodes status: ${nodesResponse.status}, edges status: ${edgesResponse.status}`);
@@ -1817,70 +1847,116 @@ For each identified segment, provide:
 			const nodesData = await nodesResponse.json();
 			const edgesData = await edgesResponse.json();
 
+			console.log('Nodes Data (first element):', nodesData.nodes[0]);
+			console.log('Edges Data (first element):', edgesData.edges[0]);
+
 			const elements = [];
+			// To store all valid node IDs.
+			const nodeIds = new Set();
 
 			// Transform nodes
-			nodesData.forEach(node => {
+			nodesData.nodes.forEach(node => {
 				elements.push({
 					data: {
 						id: node.id,
-						label: node.text,
+						label: node.label,
 						type: node.type,
-						properties: node.properties // Store all properties
+						properties: node.properties, // Store all properties
+						labelLength: node.label.length,
+						labelLines: Math.ceil(node.label.length / 15)
 					},
 					group: 'nodes'
 				});
+				nodeIds.add(node.id); // Add node ID to the set
+				console.log('Added Node:', node.id, node.label); // Log added nodes
 			});
 
 			// Transform edges
-			edgesData.forEach(edge => {
+			edgesData.edges.forEach(edge => {
+				// Check if source and target nodes exist before adding the edge
+				if (!nodeIds.has(edge.source)) {
+					console.error('Missing Source Node for Edge:', edge.id, 'Source:', edge.source);
+					return; // Skip this edge if source node is missing
+				}
+				if (!nodeIds.has(edge.target)) {
+					console.error('Missing Target Node for Edge:', edge.id, 'Target:', edge.target);
+					return; // Skip this edge if target node is missing
+				}
 				elements.push({
 					data: {
 						id: edge.id,
-						source: edge.source_node_id,
-						target: edge.target_node_id,
-						label: edge.relationship_type,
+						source: edge.source,
+						target: edge.target,
+						label: edge.label,
 						properties: edge.properties // Store all properties
 					},
 					group: 'edges'
 				});
+				console.log(
+					'Added Edge:',
+					'Source:', edge.source, 
+					'Target:', edge.target, 
+					'Label:', edge.label); // Log added edges
 			});
 
+			
 			// Initialize Cytoscape.js
 			const cy = cytoscape({
 				container: graphContainer,
 				elements: elements,
+				zoom: 1, // Initial zoom level
+				minZoom: 0.1,
+				maxZoom: 50,
+				zoomingEnabled: true,
+				userZoomingEnabled: true,
+				//wheelSensitivity: 0.2, // Make zoom more gradual
+				panningEnabled: true,
+				userPanningEnabled: true,
+				boxSelectionEnabled: true,
+				selectionType: 'single',
+				pixelRatio: 10,
 				style: [
 					{
 						selector: 'node',
 						style: {
-							'background-color': '#667eea', // Primary color
 							'label': 'data(label)',
-							'text-valign': 'center',
-							'color': '#fff',
-							'font-size': '10px',
+							'shape': 'round-rectangle',
+							'width':  'mapData(labelLength, 0, 50, 60, 170)', // scale width based on label length
+							'height': 'mapData(labelLines, 1, 5, 30, 120)',
+							'padding': '10px',
+							'font-size': '14px',	// Increased font size for better readability
 							'text-wrap': 'wrap',
-							'text-max-width': '80px',
-							'width': 'mapData(label, 1, 10, 20, 60)', // Dynamic width based on label length
-							'height': 'mapData(label, 1, 10, 20, 60)', // Dynamic height
+							'text-max-width': '150px',
+							'text-valign': 'center',
+							'text-halign': 'center',
+							'text-outline-color': '#333',
+							'text-outline-width': 1,
+							'text-shadow-blur': 3, // Add text shadow for readability
+							'text-shadow-opacity': 0.8,
+							'text-shadow-color': 'rgba(0,0,0,0.5)',
+							'text-background-padding': '5px',
+							'text-scale-opacity': true, // Scale text opacity with zoom
+							'min-text-zoom': 0.1, // Ensure text is visible at lower zoom levels
+							'min-zoomed-font-size': '8px',
+							'color': '#fff',
+							'background-color': '#667eea', // Primary color					
 							'border-width': 2,
 							'border-color': '#4f46e5',
-							'text-outline-color': '#333',
-							'text-outline-width': 1
+							'texture-on-viewport': 'false',
 						}
 					},
 					{
 						selector: 'node[type="PERSON"]',
 						style: {
 							'background-color': '#764ba2', // Different color for PERSON nodes
-							'shape': 'ellipse'
+							//'shape': ''
 						}
 					},
 					{
 						selector: 'node[type="ORGANIZATION"]',
 						style: {
 							'background-color': '#23a6d5', // Different color for ORGANIZATION nodes
-							'shape': 'rectangle'
+							//'shape': ''
 						}
 					},
 					{
@@ -1892,16 +1968,15 @@ For each identified segment, provide:
 							'target-arrow-shape': 'triangle',
 							'curve-style': 'bezier',
 							'label': 'data(label)',
-							'font-size': '8px',
+							'font-size': '14px',
 							'color': '#fff',
 							'text-background-opacity': 0.7,
 							'text-background-color': '#333',
-							'text-background-padding': '3px',
-							'text-border-radius': '3px'
+							'text-background-padding': '5px',
 						}
 					},
 					{
-						selector: 'edge[relationship_type="HAS_PROPERTY"]', // Example: style based on edge property
+						selector: 'edge[relation_type="HAS_PROPERTY"]', // Example: style based on edge property
 						style: {
 							'line-color': '#ffcc00',
 							'target-arrow-color': '#ffcc00'
@@ -1916,15 +1991,27 @@ For each identified segment, provide:
 							'transition-property': 'background-color, line-color, target-arrow-color',
 							'transition-duration': '0.5s'
 						}
-					}
+					}					
 				],
 				layout: {
 					name: 'cose', // A force-directed layout
-					animate: true,
-					animationDuration: 500,
-					padding: 10
+					animate: 'false',
+					//animationDuration: 500,
+					padding: 50,
+					nodeRepulsion: 2000,  // Pushes nodes farther apart
+					idealEdgeLength: 80, // Increases preferred edge length
+					edgeElasticity: 80,  // Controls how tight edges are
+					nestingFactor: 0.5,   // Higher = more spread out
+					gravity: 4,        // Pulls disconnected components
+					numIter: 5000,        // More iterations = better layout
+    				randomize: false,
+					fit: true,
 				}
 			});
+
+			// Ensure Cytoscape.js correctly calculates its dimensions and positions
+			cy.resize();
+			cy.fit(); // Adjusts the viewport to fit all elements
 
 			// Add interactivity: on tap, highlight node and its connected edges/nodes
 			cy.on('tap', 'node', function(evt){
@@ -1950,23 +2037,6 @@ For each identified segment, provide:
 		}
 	}
 
-	// Call loadKnowledgeGraph when the graphPage is navigated to
-	document.addEventListener('DOMContentLoaded', () => {
-		// Existing navigation logic...
-		const originalNavigateTo = navigateTo;
-		navigateTo = (pageId) => {
-			originalNavigateTo(pageId);
-			if (pageId === 'graphPage') {
-				loadKnowledgeGraph();
-			}
-		};
-
-		// Initial setup calls
-		populateTemplatesList();
-		updateNavBar();
-		navigateTo('home'); // Start on the home page
-		initThreeJS(); // Initialize Three.js animation
-	});
 
     // Initialize carousel on page load
     if (analysisExamples.length > 0) {
@@ -1987,3 +2057,4 @@ window.addEventListener('beforeunload', () => {
 </script>
 </body>
 </html>
+
