@@ -4,7 +4,7 @@ import community as co
 from fastapi import HTTPException
 from typing import List, Dict, Optional, Any
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from itertools import combinations
 from collections import defaultdict
 from itertools import chain
@@ -28,18 +28,28 @@ logger = logging.getLogger(__name__)
 
 
 async def get_all_nodes_logic(
-    session: AsyncSession, filters: GraphFilterRequest
+    session: AsyncSession,
+    filters: GraphFilterRequest,
+    entity_texts: Optional[List[str]] = None,
 ) -> GraphNodesResponse:
-    logger.info(f"Executing get_all_nodes_logic with filters: {filters}")
+    logger.info(f"Executing get_all_nodes_logic with filters: {filters}, entities: {entity_texts}")
     logger.info(f"Database session in get_all_nodes_logic: {session}")
     """
-    Retrieves all nodes from the database, with optional filtering.
+    Retrieves all nodes from the database, with optional filtering by source_document_id, node_type, or entity_texts.
     """
     query = select(KGNode)
     if filters.source_document_id:
         query = query.where(KGNode.source_document_id == filters.source_document_id)
     if filters.node_type:
         query = query.where(KGNode.type == filters.node_type)
+    if entity_texts:
+        # Filter by entity_text or label containing any of the provided entity_texts
+        entity_conditions = []
+        for entity_text in entity_texts:
+            entity_conditions.append(KGNode.entity_text.ilike(f"%{entity_text}%"))
+            entity_conditions.append(KGNode.label.ilike(f"%{entity_text}%"))
+        if entity_conditions:
+            query = query.where(or_(*entity_conditions))
 
     result = await session.execute(query)
     kg_nodes = result.scalars().all()
@@ -60,18 +70,27 @@ async def get_all_nodes_logic(
 
 
 async def get_all_edges_logic(
-    session: AsyncSession, filters: GraphFilterRequest
+    session: AsyncSession,
+    filters: GraphFilterRequest,
+    node_ids: Optional[List[str]] = None,
 ) -> GraphEdgesResponse:
-    logger.info(f"Executing get_all_edges_logic with filters: {filters}")
+    logger.info(f"Executing get_all_edges_logic with filters: {filters}, node_ids: {node_ids}")
     logger.info(f"Database session in get_all_edges_logic: {session}")
     """
-    Retrieves all edges from the database, with optional filtering.
+    Retrieves all edges from the database, with optional filtering by source_document_id, relation_type, or connected node_ids.
     """
     query = select(KGEdge)
     if filters.source_document_id:
         query = query.where(KGEdge.source_document_id == filters.source_document_id)
     if filters.relation_type:
         query = query.where(KGEdge.relation_type == filters.relation_type)
+    if node_ids:
+        # Filter edges where either source_node_id or target_node_id is in the provided list
+        node_id_conditions = or_(
+            KGEdge.source_node_id.in_(node_ids),
+            KGEdge.target_node_id.in_(node_ids)
+        )
+        query = query.where(node_id_conditions)
 
     result = await session.execute(query)
     kg_edges = result.scalars().all()
