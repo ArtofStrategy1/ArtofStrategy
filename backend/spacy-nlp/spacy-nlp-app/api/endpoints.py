@@ -89,6 +89,55 @@ async def process_text(request_data: TextInput, nlp: Any = Depends(get_nlp_model
     return process_text_logic(nlp, request_data.text)
 
 
+@analysis_router.post("/analyze_swot", response_model=SWOTAnalysisResult)
+async def analyze_swot(request_data: TextInput, nlp: Any = Depends(get_nlp_model)):
+    """
+    Performs a basic SWOT (Strengths, Weaknesses, Opportunities, Threats)
+    analysis on the input text.
+    """
+    if not nlp:
+        # Ensure the spaCy model is loaded.
+        raise HTTPException(
+            status_code=503, detail="SpaCy model not loaded. Service is not ready."
+        )
+    return perform_swot_analysis(nlp, request_data.text)
+
+
+@analysis_router.post("/identify_leverage_points", response_model=LeveragePointsResponse)
+async def identify_leverage_points(
+    request_data: TextInput,
+    nlp: Any = Depends(get_nlp_model),
+    db: AsyncSession = Depends(get_db_session),
+):
+    """
+    Identifies leverage points in the text by constructing a knowledge graph
+    and calculating node centrality.
+    """
+    if not nlp:
+        raise HTTPException(
+            status_code=503, detail="SpaCy model not loaded. Service is not ready."
+        )
+
+    extracted_relationships = await extract_relationships_logic(
+        nlp, request_data.text, db
+    )
+    # Retrieves a NetworkX DiGraph object for centrality calculation.
+    graph = get_networkx_graph_from_relationships(extracted_relationships.relationships)
+
+    # Calculate degree centrality
+    centrality = nx.degree_centrality(graph)
+
+    # Sort nodes by centrality score in descending order
+    sorted_centrality = sorted(centrality.items(), key=lambda item: item, reverse=True)
+    # Identify top N leverage points (e.g., top 10)
+    top_n = 10
+    leverage_points = []
+    for node_id, score in sorted_centrality[:top_n]:
+        leverage_points.append(LeveragePoint(node_id=node_id, centrality_score=score))
+
+    return LeveragePointsResponse(leverage_points=leverage_points)
+
+
 @graph_router.post("/extract_relationships", response_model=ExtractedRelationships)
 async def extract_relationships(
     request_data: TextInput,
@@ -208,55 +257,51 @@ async def get_communities(db: AsyncSession = Depends(get_db_session)):
     return query_community_detection_logic_louvain(graph)
 
 
-@analysis_router.post("/analyze_swot", response_model=SWOTAnalysisResult)
-async def analyze_swot(request_data: TextInput, nlp: Any = Depends(get_nlp_model)):
-    """
-    Performs a basic SWOT (Strengths, Weaknesses, Opportunities, Threats)
-    analysis on the input text.
-    """
-    if not nlp:
-        # Ensure the spaCy model is loaded.
-        raise HTTPException(
-            status_code=503, detail="SpaCy model not loaded. Service is not ready."
-        )
-    return perform_swot_analysis(nlp, request_data.text)
-
-
-@analysis_router.post(
-    "/identify_leverage_points", response_model=LeveragePointsResponse
+@graph_router.post(
+    "/query_knowledge_graph_for_rag", response_model=KnowledgeGraphQueryResponse
 )
-async def identify_leverage_points(
+async def query_knowledge_graph_for_rag(
     request_data: TextInput,
     nlp: Any = Depends(get_nlp_model),
     db: AsyncSession = Depends(get_db_session),
 ):
     """
-    Identifies leverage points in the text by constructing a knowledge graph
-    and calculating node centrality.
+    Allows an external RAG system to query the knowledge graph for relevant context
+    based on a given text query.
     """
     if not nlp:
         raise HTTPException(
             status_code=503, detail="SpaCy model not loaded. Service is not ready."
         )
 
-    extracted_relationships = await extract_relationships_logic(
-        nlp, request_data.text, db
+    doc = nlp(request_data.text)
+    extracted_entities = [ent.text for ent in doc.ents]
+
+    # Query for nodes related to extracted entities using the updated logic
+    nodes_response = await get_all_nodes_logic(
+        db, GraphFilterRequest(), entity_texts=extracted_entities
     )
-    # Retrieves a NetworkX DiGraph object for centrality calculation.
-    graph = get_networkx_graph_from_relationships(extracted_relationships.relationships)
+    all_relevant_nodes = nodes_response.nodes
 
-    # Calculate degree centrality
-    centrality = nx.degree_centrality(graph)
+    # Extract node IDs from the relevant nodes to query for edges
+    # Convert node.id to int as the database expects bigint for node IDs
+    relevant_node_ids = [int(node.id) for node in all_relevant_nodes]
 
-    # Sort nodes by centrality score in descending order
-    sorted_centrality = sorted(centrality.items(), key=lambda item: item, reverse=True)
-    # Identify top N leverage points (e.g., top 10)
-    top_n = 10
-    leverage_points = []
-    for node_id, score in sorted_centrality[:top_n]:
-        leverage_points.append(LeveragePoint(node_id=node_id, centrality_score=score))
+    # Query for edges related to the identified nodes using the updated logic
+    edges_response = await get_all_edges_logic(
+        db, GraphFilterRequest(), node_ids=relevant_node_ids
+    )
+    all_relevant_edges = edges_response.edges
 
-    return LeveragePointsResponse(leverage_points=leverage_points)
+    # Remove duplicates (though the database queries should already handle much of this)
+    unique_nodes = {node.id: node for node in all_relevant_nodes}.values()
+    unique_edges = {
+        f"{edge.source}-{edge.target}-{edge.label}": edge for edge in all_relevant_edges
+    }.values()
+
+    return KnowledgeGraphQueryResponse(
+        nodes=list(unique_nodes), edges=list(unique_edges)
+    )
 
 
 @performance_router.post("/test_performance", response_model=PerformanceTestResult)
@@ -280,70 +325,3 @@ async def test_performance(
         return run_performance_test(nlp, request_data.text, request_data.num_iterations)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-
-
-@graph_router.post(
-    "/query_knowledge_graph_for_rag", response_model=KnowledgeGraphQueryResponse
-)
-async def query_knowledge_graph_for_rag(
-    request_data: TextInput,
-    nlp: Any = Depends(get_nlp_model),
-    db: AsyncSession = Depends(get_db_session),
-):
-    """
-    Allows an external RAG system to query the knowledge graph for relevant context
-    based on a given text query.
-    """
-    if not nlp:
-        raise HTTPException(
-            status_code=503, detail="SpaCy model not loaded. Service is not ready."
-        )
-
-    doc = nlp(request_data.text)
-    extracted_entities = [ent.text for ent in doc.ents]
-
-    # Initialize lists for nodes and edges
-    all_relevant_nodes = []
-    all_relevant_edges = []
-
-    # Query for nodes related to extracted entities
-    for entity_text in extracted_entities:
-        # For simplicity, we'll query nodes by label matching the entity text.
-        # In a more advanced scenario, you might need to resolve entities to canonical IDs.
-        nodes_response = await get_all_nodes_logic(
-            db, GraphFilterRequest(node_type=None, source_document_id=None)
-        )
-
-        # Filter nodes by label matching the entity text
-        relevant_nodes_for_entity = [
-            node
-            for node in nodes_response.nodes
-            if node.label and entity_text.lower() in node.label.lower()
-        ]
-        all_relevant_nodes.extend(relevant_nodes_for_entity)
-
-    # Query for edges related to the identified nodes
-    # This part might need more sophisticated logic depending on how "relevant" edges are defined.
-    # For now, we'll fetch all edges and filter them if their source or target is in our relevant nodes.
-    edges_response = await get_all_edges_logic(
-        db, GraphFilterRequest(relation_type=None, source_document_id=None)
-    )
-
-    relevant_node_ids = {node.id for node in all_relevant_nodes}
-
-    relevant_edges = [
-        edge
-        for edge in edges_response.edges
-        if edge.source in relevant_node_ids or edge.target in relevant_node_ids
-    ]
-    all_relevant_edges.extend(relevant_edges)
-
-    # Remove duplicates from nodes and edges
-    unique_nodes = {node.id: node for node in all_relevant_nodes}.values()
-    unique_edges = {
-        f"{edge.source}-{edge.target}-{edge.label}": edge for edge in all_relevant_edges
-    }.values()
-
-    return KnowledgeGraphQueryResponse(
-        nodes=list(unique_nodes), edges=list(unique_edges)
-    )
