@@ -21,7 +21,8 @@ origins = [
     "https://data2int.com",
     "https://n8n.data2int.com",  # n8n might send preflight OPTIONS requests
 	"https://matt.data2int.com",
-	"http://100.69.21.70:8102"
+	"http://100.69.21.70:8102",
+	"https://matt-nlp.data2int.com"
 ]
 
 app.add_middleware(
