@@ -9,6 +9,9 @@ ENV PYTHONUNBUFFERED=1 \
 # Set the working directory in the container
 WORKDIR /app
 
+# Install build dependencies that aren't included in Docker base image.
+RUN apt-get update && apt-get install -y build-essential
+
 # Copy the requirements file and install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
