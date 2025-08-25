@@ -110,6 +110,9 @@ class RelationshipTriple(BaseModel):
     relation: str
     object: str
     source_document_id: Optional[str] = None
+    relation_type: Optional[str] = None  # e.g., "CAUSAL", "TEMPORAL"
+    confidence: Optional[float] = None
+    metadata: Optional[Dict[str, Any]] = None
 
 
 class ExtractedRelationships(BaseModel):
