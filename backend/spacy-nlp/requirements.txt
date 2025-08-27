@@ -3,10 +3,12 @@ uvicorn[standard]==0.35.0 		# Uvicorn library for the ASGI server, [standard] in
 python-dotenv					# dotenv library for loading Environment Variables.
 spacy==3.8.7     				# spaCy python library for NLP operations.
 pydantic==2.11.7 				# FastAPI's dependency for data validation/serialization
-transformers==4.42.1			# Transoformers library for NLP operations.
-sentence-transformers==2.7.0 	# Sentence Transformers library for NLP operations.
+Transformers					# Transoformers library for NLP operations.
+sentence-transformers			# Sentence Transformers library for NLP operations.
 networkx						# NetworkX Python library for Knowledge Graph operations.
 asyncpg
 SQLAlchemy
 SQLAlchemy-Utils
 python-louvain
+spacy-transformers
+fastcoref
