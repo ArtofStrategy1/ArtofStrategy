@@ -1,5 +1,6 @@
 from sqlalchemy import (
-    Column,
+    Float,
+	Column,
     BigInteger,
     Text,
     VARCHAR,
@@ -51,7 +52,9 @@ class KGEdge(Base):
     edge_id = Column(BigInteger, primary_key=True, autoincrement=True)
     source_node_id = Column(BigInteger, ForeignKey("kg_nodes.node_id"), nullable=False)
     target_node_id = Column(BigInteger, ForeignKey("kg_nodes.node_id"), nullable=False)
-    relation_type = Column(VARCHAR(100), nullable=False)
+    relation_type = Column(VARCHAR(100), nullable=True) # Changed to nullable=True to allow for relationships without a specific type   
+    confidence = Column(Float, nullable=True)    
+    relation_metadata = Column(JSONB, nullable=True)
     source_sentence_id = Column(Text, nullable=True)
     source_document_id = Column(Text, nullable=True)
     weight = Column(Numeric(5, 2), default=1.0, nullable=True)
