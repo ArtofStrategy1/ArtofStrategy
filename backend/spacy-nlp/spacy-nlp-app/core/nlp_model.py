@@ -1,6 +1,7 @@
 from fastapi import HTTPException
 from contextlib import asynccontextmanager
 import spacy
+from fastcoref import spacy_component
 import logging
 from ..database.database_setup import setup_database
 
@@ -30,9 +31,11 @@ async def lifespan(app):
         # Define the spaCy model name to be loaded. 'en_core_web_sm' is a
         # small English model that includes tokenization, POS tagging,
         # dependency parsing, and named entity recognition.
-        model_name = "en_core_web_sm"
+        model_name = "en_core_web_trf" # Using a transformer-based model for better performance and compatibility with spacy-transformers
         logger.info(f"Attempting to load spaCy model: {model_name}")
         app.state.nlp = spacy.load(model_name)
+        app.state.nlp.add_pipe("fastcoref")
+        logger.info("Successfully added fastcoref to spaCy pipeline.")
         logger.info(f"Successfully loaded spaCy model: {model_name}")
     except OSError:
         # If the model is not found locally, attempt to download it.
@@ -41,6 +44,7 @@ async def lifespan(app):
         try:
             spacy.cli.download(model_name)
             app.state.nlp = spacy.load(model_name)
+            app.state.nlp.add_pipe("fastcoref")
             logger.info(f"Successfully downloaded and loaded spaCy model: {model_name}")
         except Exception as e:
             # Log and raise an HTTPException if model download or loading fails,
