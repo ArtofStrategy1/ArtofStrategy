@@ -89,13 +89,13 @@ async def delete_kg_node(session: AsyncSession, node_id: int) -> bool:
 
 
 # CRUD operations for KGEdge
-
-
 async def create_kg_edge(
     session: AsyncSession,
     source_node_id: int,
     target_node_id: int,
-    relation_type: str,
+    relation_type: Optional[str] = None,
+    confidence: Optional[float] = None,
+    relation_metadata: Optional[Dict[str, Any]] = None,
     source_sentence_id: Optional[str] = None,
     source_document_id: Optional[str] = None,
     weight: Optional[float] = None,
@@ -108,6 +108,8 @@ async def create_kg_edge(
         source_node_id=source_node_id,
         target_node_id=target_node_id,
         relation_type=relation_type,
+        confidence=confidence,
+        relation_metadata=relation_metadata,
         source_sentence_id=source_sentence_id,
         source_document_id=source_document_id,
         weight=weight,
@@ -183,6 +185,8 @@ async def update_kg_edge(
     session: AsyncSession,
     edge_id: int,
     relation_type: Optional[str] = None,
+    confidence: Optional[float] = None,
+    relation_metadata: Optional[Dict[str, Any]] = None,
     source_sentence_id: Optional[str] = None,
     source_document_id: Optional[str] = None,
     weight: Optional[float] = None,
@@ -196,6 +200,8 @@ async def update_kg_edge(
         .where(KGEdge.edge_id == edge_id)
         .values(
             relation_type=relation_type,
+            confidence=confidence,
+            relation_metadata=relation_metadata,
             source_sentence_id=source_sentence_id,
             source_document_id=source_document_id,
             weight=weight,
