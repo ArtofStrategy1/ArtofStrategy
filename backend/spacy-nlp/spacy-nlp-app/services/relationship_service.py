@@ -1,19 +1,18 @@
 import spacy
 from spacy.matcher import Matcher
-import networkx as nx
 from typing import List, Dict, Any, Optional
-from sqlalchemy.ext.asyncio import AsyncSession
+import logging
+
+from ..database.neo4j_crud import Neo4jCRUD
+from ..database.neo4j_models import Node, Relationship
 from ..models import (
     RelationshipTriple,
     ExtractedRelationships,
-    GraphNode,
-    GraphEdge,
-    KnowledgeGraph,
+    KnowledgeGraph, # Import KnowledgeGraph from models.py
+    GraphNode,      # Import GraphNode from models.py
+    GraphEdge,      # Import GraphEdge from models.py
 )
-import logging
 from ..utils.graph_utils import find_lca
-from ..database.crud import get_kg_edge_by_nodes_and_type
-from ..database.crud import create_kg_node, create_kg_edge, get_kg_node_by_text_and_type
 
 logger = logging.getLogger(__name__)
 
@@ -57,8 +56,7 @@ def resolve_coreferences(doc: spacy.tokens.Doc) -> spacy.tokens.Doc:
 
 async def extract_enhanced_relationships(
     doc: spacy.tokens.Doc,
-    session: AsyncSession,
-    get_or_create_node_func,
+    neo4j_crud: Neo4jCRUD,
     source_document_id: Optional[str] = None,
     source_sentence_id: Optional[str] = None,
 ) -> List[RelationshipTriple]:
@@ -177,24 +175,10 @@ async def extract_enhanced_relationships(
     return relationships
 
 
-def get_networkx_graph_from_relationships(
-    relationships: List[RelationshipTriple],
-) -> nx.DiGraph:
-    """
-    Builds a NetworkX DiGraph from a list of RelationshipTriple objects.
-    """
-    graph = nx.DiGraph()
-    for triple in relationships:
-        graph.add_node(triple.subject)
-        graph.add_node(triple.object)
-        graph.add_edge(triple.subject, triple.object, relation=triple.relation)
-    return graph
-
-
 async def extract_relationships_logic(
     nlp,
     text: str,
-    session: AsyncSession,
+    neo4j_crud: Neo4jCRUD,
     source_document_id: Optional[str] = None,
     source_sentence_id: Optional[str] = None,
 ) -> ExtractedRelationships:
@@ -209,24 +193,32 @@ async def extract_relationships_logic(
     doc = nlp(text)
     doc = resolve_coreferences(doc)
     all_extracted_relationships = []
-    persisted_nodes = {}  # Cache for already persisted nodes to avoid duplicates
+    persisted_nodes: Dict[str, Node] = {}  # Cache for already persisted nodes to avoid duplicates
 
-    async def get_or_create_node(entity_text: str, entity_type: str) -> int:
-        node_key = (entity_text, entity_type)
+    async def get_or_create_node(entity_text: str, entity_type: str) -> Node:
+        node_key = f"{entity_text}-{entity_type}"
         if node_key in persisted_nodes:
-            return persisted_nodes[node_key].node_id
+            return persisted_nodes[node_key]
 
-        node = await get_kg_node_by_text_and_type(session, entity_text, entity_type)
-        if not node:
-            node = await create_kg_node(
-                session,
-                entity_text=entity_text,
-                type=entity_type,
-                label=entity_text,
-                source_document_id=source_document_id,
-            )
-        persisted_nodes[node_key] = node
-        return node.node_id
+        # Try to get the node from Neo4j first
+        existing_node = neo4j_crud.get_node(node_id=entity_text, label=entity_type)
+        if existing_node:
+            persisted_nodes[node_key] = existing_node
+            return existing_node
+
+        # If not found, create a new node
+        new_node = Node(
+            id=entity_text,
+            label=entity_type,
+            properties={
+                "name": entity_text,
+                "source_document_id": source_document_id,
+                "source_sentence_id": source_sentence_id,
+            },
+        )
+        created_node = neo4j_crud.create_node(new_node)
+        persisted_nodes[node_key] = created_node
+        return created_node
 
     for sent in doc.sents:
         # Iterate through entities in the sentence to find relationships between them.
@@ -323,7 +315,7 @@ async def extract_relationships_logic(
 
     # Extract enhanced relationships
     enhanced_relationships = await extract_enhanced_relationships(
-        doc, session, get_or_create_node, source_document_id, source_sentence_id
+        doc, neo4j_crud, source_document_id, source_sentence_id
     )
     all_extracted_relationships.extend(enhanced_relationships)
 
@@ -348,26 +340,26 @@ async def extract_relationships_logic(
 
     # Persistence Update: Persist only deduplicated relationships
     for rel in deduplicated_relationships:
-        subject_node_id = await get_or_create_node(rel.subject, "ENTITY") # Assuming ENTITY type for now
-        object_node_id = await get_or_create_node(rel.object, "ENTITY") # Assuming ENTITY type for now
+        subject_node = await get_or_create_node(rel.subject, "ENTITY") # Assuming ENTITY type for now
+        object_node = await get_or_create_node(rel.object, "ENTITY") # Assuming ENTITY type for now
 
-        existing_edge = await get_kg_edge_by_nodes_and_type(
-            session, subject_node_id, object_node_id, rel.relation
+        # Prepare properties for Neo4j, flattening relation_metadata
+        neo4j_properties = {
+            "confidence": rel.confidence,
+            "source_document_id": source_document_id,
+            "source_sentence_id": source_sentence_id,
+        }
+        if rel.relation_metadata:
+            neo4j_properties.update(rel.relation_metadata) # Flatten relation_metadata
+
+        neo4j_crud.create_relationship(
+            Relationship(
+                source_id=subject_node.id,
+                target_id=object_node.id,
+                type=rel.relation,
+                properties=neo4j_properties, # Pass the flattened properties
+            )
         )
-        if not existing_edge:
-            await create_kg_edge(
-                session,
-                source_node_id=subject_node_id,
-                target_node_id=object_node_id,
-                relation_type=rel.relation,
-                source_document_id=source_document_id,
-                source_sentence_id=source_sentence_id,
-                properties={"confidence": rel.confidence, "relation_metadata": rel.relation_metadata}
-            )
-        else:
-            logger.info(
-                f"Skipping duplicate edge during persistence: ({rel.subject}, {rel.relation}, {rel.object})"
-            )
 
     knowledge_graph = build_knowledge_graph(deduplicated_relationships)
     # Return the extracted relationship triples and the knowledge graph.
@@ -376,26 +368,33 @@ async def extract_relationships_logic(
 
 def build_knowledge_graph(relationships: List[RelationshipTriple]) -> KnowledgeGraph:
     """
-    Builds an in-memory NetworkX KnowledgeGraph from a list of RelationshipTriple objects.
-    This function now primarily serves to construct the in-memory graph for immediate
-    return, as persistence is handled within extract_relationships_logic.
+    Builds a KnowledgeGraph object from a list of RelationshipTriple objects.
+    This function constructs the in-memory graph for immediate return,
+    using the API-facing models from ..models.
     """
-    graph = get_networkx_graph_from_relationships(relationships)
+    nodes_map: Dict[str, GraphNode] = {}
+    api_relationships: List[GraphEdge] = []
 
-    # Convert NetworkX graph nodes to GraphNode objects
-    graph_nodes = []
-    for node_id in graph.nodes():
-        # For now, using the node_id as both id and label.
-        # More sophisticated logic could extract type or additional properties if available.
-        graph_nodes.append(GraphNode(id=node_id, label=node_id))
-
-    # Convert NetworkX graph edges to GraphEdge objects
-    graph_edges = []
-    for source, target, data in graph.edges(data=True):
-        relation_label = data.get("relation", "unknown")
-        graph_edges.append(
-            GraphEdge(source=source, target=target, label=relation_label)
+    for triple in relationships:
+        # Create or retrieve subject GraphNode
+        if triple.subject not in nodes_map:
+            nodes_map[triple.subject] = GraphNode(id=triple.subject, label="ENTITY", properties={"name": triple.subject})
+        
+        # Create or retrieve object GraphNode
+        if triple.object not in nodes_map:
+            nodes_map[triple.object] = GraphNode(id=triple.object, label="ENTITY", properties={"name": triple.object})
+        
+        # Create relationship
+        api_relationships.append(
+            GraphEdge(
+                source_id=triple.subject,
+                target_id=triple.object,
+                type=triple.relation,
+                properties={
+                    "confidence": triple.confidence,
+                    "relation_metadata": triple.relation_metadata,
+                },
+            )
         )
-
-    # Create a KnowledgeGraph instance
-    return KnowledgeGraph(nodes=graph_nodes, edges=graph_edges)
+    
+    return KnowledgeGraph(nodes=list(nodes_map.values()), relationships=api_relationships)

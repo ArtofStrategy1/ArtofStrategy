@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
 
 
@@ -69,36 +69,32 @@ class SWOTAnalysisResult(BaseModel):
 
 class GraphNode(BaseModel):
     """
-    Model for a node in the knowledge graph.
+    Model for a node in the knowledge graph, aligned with Neo4j's structure.
     """
 
     id: str
-    label: Optional[str] = None
-    type: Optional[str] = None
-    source_document_id: Optional[str] = None
-    properties: Optional[Dict[str, Any]] = None
+    label: str
+    properties: Dict[str, Any] = Field(default_factory=dict)
 
 
 class GraphEdge(BaseModel):
     """
-    Model for an edge in the knowledge graph.
+    Model for an edge (relationship) in the knowledge graph, aligned with Neo4j's structure.
     """
 
-    source: str
-    target: str
-    label: str
-    relation_type: Optional[str] = None
-    source_document_id: Optional[str] = None
-    properties: Optional[Dict[str, Any]] = None
+    source_id: str
+    target_id: str
+    type: str
+    properties: Dict[str, Any] = Field(default_factory=dict)
 
 
 class KnowledgeGraph(BaseModel):
     """
-    Model for a knowledge graph, containing nodes and edges.
+    Model for a knowledge graph, containing nodes and relationships, aligned with Neo4j's structure.
     """
 
     nodes: List[GraphNode]
-    edges: List[GraphEdge]
+    relationships: List[GraphEdge]
 
 
 class RelationshipTriple(BaseModel):
