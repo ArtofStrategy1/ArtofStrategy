@@ -12,6 +12,8 @@ ollama-data
 n8n-data
 searxng-data
 mongodb-data
+neo4j/
+
 utility/
 .roo
 .rooignore
