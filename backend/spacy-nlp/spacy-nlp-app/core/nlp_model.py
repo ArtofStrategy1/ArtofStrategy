@@ -3,7 +3,8 @@ from contextlib import asynccontextmanager
 import spacy
 from fastcoref import spacy_component
 import logging
-from ..database.database_setup import setup_database
+
+from ..database.neo4j_connection import neo4j_connection
 
 # Configure logging for the application.
 logging.basicConfig(level=logging.INFO)
@@ -18,14 +19,18 @@ async def lifespan(app):
     """
     Manages the lifecycle of the FastAPI application, specifically handling
     startup and shutdown events. This context manager is used to load the
-    spaCy NLP model when the application starts and release it when it shuts down.
-    This ensures the model is available for all requests and resources are
-    properly managed.
+    spaCy NLP model and connect to Neo4j when the application starts,
+    and release resources when it shuts down.
+    This ensures models and database connections are available for all requests
+    and resources are properly managed.
     """
-    # Run database setup
-    logger.info("Running database setup...")
-    await setup_database()
-    logger.info("Database setup complete.")
+    # Connect to Neo4j database
+    logger.info("Attempting to connect to Neo4j database...")
+    neo4j_connection.connect()
+    if neo4j_connection.get_driver() is None:
+        logger.error("Failed to establish Neo4j connection during startup.")
+        raise HTTPException(status_code=500, detail="Failed to connect to Neo4j database.")
+    logger.info("Neo4j connection established successfully during startup.")
 
     try:
         # Define the spaCy model name to be loaded. 'en_core_web_sm' is a
@@ -63,6 +68,9 @@ async def lifespan(app):
     yield
 
     # This block executes when the application is shutting down.
-    # It releases the loaded spaCy model, freeing up resources.
+    # It releases the loaded spaCy model and closes the Neo4j connection,
+    # freeing up resources.
     logger.info("Application is shutting down.")
     nlp = None
+    logger.info("Closing Neo4j database connection.")
+    neo4j_connection.close()

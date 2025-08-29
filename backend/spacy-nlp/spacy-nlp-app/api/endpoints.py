@@ -1,8 +1,10 @@
 import logging
 from fastapi import APIRouter, HTTPException, Depends
 from typing import List, Dict, Any, Optional
-import networkx as nx
-from sqlalchemy.ext.asyncio import AsyncSession
+
+from ..database.neo4j_crud import Neo4jCRUD
+from ..database.neo4j_models import Node, Relationship # Import Node and Relationship from neo4j_models for internal use
+from ..api.dependencies import get_neo4j_crud
 
 from ..models import (
     TextInput,
@@ -13,7 +15,7 @@ from ..models import (
     GraphNode,
     GraphEdge,
     KnowledgeGraphQueryResponse,
-    KnowledgeGraph,
+    KnowledgeGraph, # This KnowledgeGraph is from models.py
     GraphQueryRequest,
     PathQueryRequest,
     NeighborsResponse,
@@ -29,12 +31,11 @@ from ..models import (
     GraphEdgesResponse,
 )
 
-from ..api.dependencies import get_nlp_model, get_db_session
+from ..api.dependencies import get_nlp_model
 from ..core.processing import process_text_logic
 from ..services.swot_service import perform_swot_analysis
 from ..services.relationship_service import (
     extract_relationships_logic,
-    get_networkx_graph_from_relationships,
 )
 from ..services.graph_query_service import (
     query_neighbors_logic,
@@ -44,8 +45,8 @@ from ..services.graph_query_service import (
     query_community_detection_logic_girvan_newman,
     get_all_nodes_logic,
     get_all_edges_logic,
+    identify_leverage_points_logic,
 )
-from ..utils.graph_utils import get_networkx_graph_from_db_data
 
 from ..services.performance_service import run_performance_test
 
@@ -107,154 +108,157 @@ async def analyze_swot(request_data: TextInput, nlp: Any = Depends(get_nlp_model
 async def identify_leverage_points(
     request_data: TextInput,
     nlp: Any = Depends(get_nlp_model),
-    db: AsyncSession = Depends(get_db_session),
+    neo4j_crud: Neo4jCRUD = Depends(get_neo4j_crud),
 ):
     """
     Identifies leverage points in the text by constructing a knowledge graph
-    and calculating node centrality.
+    and calculating node centrality using Neo4j.
     """
     if not nlp:
         raise HTTPException(
             status_code=503, detail="SpaCy model not loaded. Service is not ready."
         )
 
-    extracted_relationships = await extract_relationships_logic(
-        nlp, request_data.text, db
+    # Extract relationships and persist to Neo4j
+    await extract_relationships_logic(
+        nlp, request_data.text, neo4j_crud
     )
-    # Retrieves a NetworkX DiGraph object for centrality calculation.
-    graph = get_networkx_graph_from_relationships(extracted_relationships.relationships)
+    
+    # Calculate centrality measures using Neo4j GDS
+    centrality_response = query_centrality_measures_logic(neo4j_crud)
 
-    # Calculate degree centrality
-    centrality = nx.degree_centrality(graph)
-
-    # Sort nodes by centrality score in descending order
-    sorted_centrality = sorted(centrality.items(), key=lambda item: item, reverse=True)
-    # Identify top N leverage points (e.g., top 10)
-    top_n = 10
+    # Identify leverage points based on centrality
+    leverage_points_data = identify_leverage_points_logic(neo4j_crud, centrality_response)
+    
     leverage_points = []
-    for node_id, score in sorted_centrality[:top_n]:
-        leverage_points.append(LeveragePoint(node_id=node_id, centrality_score=score))
+    for node_id, data in leverage_points_data.get("leverage_points", {}).items():
+        leverage_points.append(LeveragePoint(node_id=node_id, centrality_score=data["combined_score"]))
 
     return LeveragePointsResponse(leverage_points=leverage_points)
 
+@graph_router.get("/knowledge-graph", response_model=KnowledgeGraph)
+async def get_full_knowledge_graph(neo4j_crud: Neo4jCRUD = Depends(get_neo4j_crud)):
+    # Retrieve nodes and relationships from Neo4j (these are database models)
+    db_nodes: List[Node] = neo4j_crud.get_all_nodes()
+    db_relationships: List[Relationship] = []
+    for node in db_nodes:
+        db_relationships.extend(neo4j_crud.get_relationships_for_node(node.id))
+        
+    # Deduplicate relationships if necessary
+    unique_db_relationships = {rel.id: rel for rel in db_relationships}.values()
+
+    # Convert database Node objects to API GraphNode objects
+    api_nodes: List[GraphNode] = [
+        GraphNode(
+            id=node.id,
+            label=node.label,
+            properties=node.properties
+        ) for node in db_nodes
+    ]
+
+    # Convert database Relationship objects to API GraphEdge objects
+    api_relationships: List[GraphEdge] = [
+        GraphEdge(
+            source_id=rel.source_id,
+            target_id=rel.target_id,
+            type=rel.type,
+            properties=rel.properties
+        ) for rel in unique_db_relationships
+    ]
+
+    # Return the KnowledgeGraph using API-facing models
+    return KnowledgeGraph(nodes=api_nodes, relationships=api_relationships)
 
 @graph_router.post("/extract_relationships", response_model=ExtractedRelationships)
 async def extract_relationships(
     request_data: TextInput,
     nlp: Any = Depends(get_nlp_model),
-    db: AsyncSession = Depends(get_db_session),
+    neo4j_crud: Neo4jCRUD = Depends(get_neo4j_crud),
 ):
     """
     Extracts simple subject-verb-object (SVO) relationships from the input text
-    using spaCy's dependency parsing. This endpoint was implemented as part of
-    "Knowledge Graph Foundation using spaCy extracted data" task.
+    using spaCy's dependency parsing and persists them to Neo4j.
     """
     if not nlp:
         # Ensure the spaCy model is loaded.
         raise HTTPException(
             status_code=503, detail="SpaCy model not loaded. Service is not ready."
         )
-    return await extract_relationships_logic(nlp, request_data.text, session=db)
+    return await extract_relationships_logic(nlp, request_data.text, neo4j_crud)
 
 
 @graph_router.post("/query_graph_neighbors", response_model=NeighborsResponse)
 async def query_graph_neighbors(
     request_data: GraphQueryRequest,
-    nlp: Any = Depends(get_nlp_model),
-    db: AsyncSession = Depends(get_db_session),
+    neo4j_crud: Neo4jCRUD = Depends(get_neo4j_crud),
 ):
     """
-    Queries the neighbors of a given node in the graph.
-    For demonstration, the graph is reconstructed from a dummy set of relationships.
-    In a production environment, the graph would be persisted and loaded efficiently.
+    Queries the neighbors of a given node in the Neo4j graph.
     """
     logger.info(f"Querying neighbors for node_id: {request_data.node_id}")
-    logger.info(f"Database session: {db}")
-    if not nlp:
-        raise HTTPException(
-            status_code=503, detail="SpaCy model not loaded. Service is not ready."
-        )
-
-    nodes_response = await get_all_nodes_logic(db, GraphFilterRequest())
-    edges_response = await get_all_edges_logic(db, GraphFilterRequest())
-
-    # Reconstruct the graph from database nodes and edges
-    graph = get_networkx_graph_from_db_data(nodes_response.nodes, edges_response.edges)
-
-    logger.info(f"Nodes from DB: {nodes_response.nodes}")
-    logger.info(f"Edges from DB: {edges_response.edges}")
-    logger.info(f"Reconstructed graph nodes: {graph.nodes}")
-    logger.info(f"Reconstructed graph edges: {graph.edges}")
-
+    
     try:
-        return query_neighbors_logic(request_data.node_id, graph)
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        return query_neighbors_logic(request_data.node_id, neo4j_crud)
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {e}")
 
 
 @graph_router.post("/query_shortest_path", response_model=PathResponse)
 async def query_shortest_path(
     request_data: PathQueryRequest,
-    db: AsyncSession = Depends(get_db_session),
+    neo4j_crud: Neo4jCRUD = Depends(get_neo4j_crud),
 ):
     """
-    Finds the shortest path between two nodes in the graph.
+    Finds the shortest path between two nodes in the Neo4j graph.
     """
-    nodes_response = await get_all_nodes_logic(db, GraphFilterRequest())
-    edges_response = await get_all_edges_logic(db, GraphFilterRequest())
-
-    graph = get_networkx_graph_from_db_data(nodes_response.nodes, edges_response.edges)
-
     try:
         return query_shortest_path_logic(
-            request_data.source_node_id, request_data.target_node_id, graph
+            request_data.source_node_id, request_data.target_node_id, neo4j_crud
         )
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {e}")
 
 
 @graph_router.get("/nodes", response_model=GraphNodesResponse)
 async def get_nodes(
-    filters: GraphFilterRequest = Depends(), db: AsyncSession = Depends(get_db_session)
+    filters: GraphFilterRequest = Depends(), neo4j_crud: Neo4jCRUD = Depends(get_neo4j_crud)
 ):
     """
-    Retrieve all nodes or filter by source_document_id and type.
+    Retrieve all nodes or filter by source_document_id and type from Neo4j.
     """
-    return await get_all_nodes_logic(db, filters)
+    # get_all_nodes_logic already returns GraphNodesResponse
+    return await get_all_nodes_logic(neo4j_crud, filters)
 
 
 @graph_router.get("/edges", response_model=GraphEdgesResponse)
 async def get_edges(
-    filters: GraphFilterRequest = Depends(), db: AsyncSession = Depends(get_db_session)
+    filters: GraphFilterRequest = Depends(), neo4j_crud: Neo4jCRUD = Depends(get_neo4j_crud)
 ):
     """
-    Retrieve all edges or filter by source_document_id and relation_type.
+    Retrieve all edges or filter by source_document_id and relation_type from Neo4j.
     """
-    return await get_all_edges_logic(db, filters)
+    # get_all_edges_logic already returns GraphEdgesResponse
+    return await get_all_edges_logic(neo4j_crud, filters)
 
 
 @graph_router.post("/centrality", response_model=CentralityResponse)
-async def get_centrality(db: AsyncSession = Depends(get_db_session)):
+async def get_centrality(neo4j_crud: Neo4jCRUD = Depends(get_neo4j_crud)):
     """
-    Calculate centrality measures for nodes.
+    Calculate centrality measures for nodes using Neo4j.
     """
-    nodes_response = await get_all_nodes_logic(db, GraphFilterRequest())
-    edges_response = await get_all_edges_logic(db, GraphFilterRequest())
-
-    graph = get_networkx_graph_from_db_data(nodes_response.nodes, edges_response.edges)
-    return query_centrality_measures_logic(graph)
+    return query_centrality_measures_logic(neo4j_crud)
 
 
 @graph_router.post("/communities", response_model=CommunityDetectionResponse)
-async def get_communities(db: AsyncSession = Depends(get_db_session)):
+async def get_communities(neo4j_crud: Neo4jCRUD = Depends(get_neo4j_crud)):
     """
-    Detect communities within the graph.
+    Detect communities within the graph using Neo4j.
     """
-    nodes_response = await get_all_nodes_logic(db, GraphFilterRequest())
-    edges_response = await get_all_edges_logic(db, GraphFilterRequest())
-
-    graph = get_networkx_graph_from_db_data(nodes_response.nodes, edges_response.edges)
-    return query_community_detection_logic_louvain(graph)
+    return query_community_detection_logic_louvain(neo4j_crud)
 
 
 @graph_router.post(
@@ -263,7 +267,7 @@ async def get_communities(db: AsyncSession = Depends(get_db_session)):
 async def query_knowledge_graph_for_rag(
     request_data: TextInput,
     nlp: Any = Depends(get_nlp_model),
-    db: AsyncSession = Depends(get_db_session),
+    neo4j_crud: Neo4jCRUD = Depends(get_neo4j_crud),
 ):
     """
     Allows an external RAG system to query the knowledge graph for relevant context
@@ -279,24 +283,23 @@ async def query_knowledge_graph_for_rag(
 
     # Query for nodes related to extracted entities using the updated logic
     nodes_response = await get_all_nodes_logic(
-        db, GraphFilterRequest(), entity_texts=extracted_entities
+        neo4j_crud, GraphFilterRequest(), entity_texts=extracted_entities
     )
     all_relevant_nodes = nodes_response.nodes
 
     # Extract node IDs from the relevant nodes to query for edges
-    # Convert node.id to int as the database expects bigint for node IDs
-    relevant_node_ids = [int(node.id) for node in all_relevant_nodes]
+    relevant_node_ids = [node.id for node in all_relevant_nodes]
 
     # Query for edges related to the identified nodes using the updated logic
     edges_response = await get_all_edges_logic(
-        db, GraphFilterRequest(), node_ids=relevant_node_ids
+        neo4j_crud, GraphFilterRequest(), node_ids=relevant_node_ids
     )
     all_relevant_edges = edges_response.edges
 
     # Remove duplicates (though the database queries should already handle much of this)
     unique_nodes = {node.id: node for node in all_relevant_nodes}.values()
     unique_edges = {
-        f"{edge.source}-{edge.target}-{edge.label}": edge for edge in all_relevant_edges
+        f"{edge.source_id}-{edge.type}-{edge.target_id}": edge for edge in all_relevant_edges
     }.values()
 
     return KnowledgeGraphQueryResponse(
