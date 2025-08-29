@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>S.A.G.E. - AI Strategy Assistant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+	<style>
+		html, body {
+			height: 100%;
+			margin: 0;
+			padding: 0;
+		}
+		#graph-container {
+			width: 100%;
+			height: 600px; /* Adjust height as needed */
+			border: 1px solid rgba(255, 255, 255, 0.2);
+			border-radius: 1rem;
+			background-color: rgba(0, 0, 0, 0.1); /* Slightly transparent background */
+		}
+	</style>
+</head>
+<body class="min-h-screen">
+	<h1>Knowledge Graph Visualization</h1>
+    <div id="graph-container"></div>
+
+    <!-- Include NVL JavaScript modules from local node_modules -->
+    <script type="module">
+		// Load NVL base library
+		import { NVL } from "https://esm.sh/@neo4j-nvl/base@0.3.9/es2022/base.mjs";
+		import { 
+			ClickInteraction,
+			ZoomInteraction,
+			PanInteraction,
+			DragNodeInteraction,
+			// BoxSelectInteraction,
+			HoverInteraction 
+		} from "https://esm.sh/@neo4j-nvl/interaction-handlers@0.3.9/es2022/interaction-handlers.mjs";
+
+
+        document.addEventListener('DOMContentLoaded', async () => {
+			const graphContainer = document.getElementById('graph-container');
+            
+            // Function to fetch data from your backend
+            async function fetchGraphData() {
+                try {
+                    const response = await fetch('https://matt-nlp.data2int.com/graph/knowledge-graph'); 
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const graphData = await response.json();
+                    console.log("Fetched graph data:", graphData);
+
+                    const transformedNodes = graphData.nodes.map(node => ({
+                        id: String(node.id), // Ensure ID is a string
+                        caption: node.properties.name || node.label,
+                        labels: [String(node.label)], // NVL expects an array of labels
+                        properties: node.properties ? { ...node.properties } : {} // Ensure properties is a plain object
+                    }));
+
+                    const transformedRelationships = graphData.relationships.map(rel => {
+                        const relId = rel.id ? String(rel.id) : `${rel.source_id}-${rel.type}-${rel.target_id}`;
+                        return {
+                            id: relId,
+                            from: String(rel.source_id), // Ensure IDs are strings
+                            to: String(rel.target_id),   // Ensure IDs are strings
+                            caption: String(rel.type),   // Ensure caption is a string
+                            type: String(rel.type),
+                            properties: rel.properties ? { ...rel.properties } : {} // Ensure properties is a plain object
+                        };
+                    });
+
+                    return {
+                        nodes: transformedNodes,
+                        relationships: transformedRelationships
+                    };
+
+                } catch (error) {
+                    console.error("Error fetching graph data:", error);
+                    graphContainer.innerHTML = `<p style='color: red;'>Error loading graph: ${error.message}</p>`;
+                    return null; // Return null on error
+                }
+            }
+
+            const initialGraphData = await fetchGraphData();
+			console.log("Graph data", initialGraphData);
+			const { nodes, relationships } = initialGraphData;
+            if (initialGraphData) {
+                // Pass the data to the NVL constructor
+                const visualization = new NVL(graphContainer, nodes, relationships, {
+					// Optionally specify a layout, e.g., 'forcedirected' or 'hierarchical'
+                    layout: 'forcedirected'
+				});
+				console.log("Visualization:", visualization);
+
+                // Instantiate and add interaction handlers
+                const clickInteraction = new ClickInteraction(visualization);
+                const zoomInteraction = new ZoomInteraction(visualization);
+                const panInteraction = new PanInteraction(visualization);
+                const dragNodeInteraction = new DragNodeInteraction(visualization);
+                //const boxSelectInteraction = new BoxSelectInteraction(visualization);
+                const hoverInteraction = new HoverInteraction(visualization);
+
+                // Example: Add callbacks to interaction handlers
+                clickInteraction.updateCallback('onNodeClick', (node) => {
+                    console.log('Node clicked', node);
+                });
+                // boxSelectInteraction.updateCallback('onBoxSelect', ({ nodes, rels }) => {
+                //     console.log('Selected elements:', nodes, rels);
+                // });
+                dragNodeInteraction.updateCallback('onDrag', (nodes) => {
+                    console.log('Dragged nodes:', nodes);
+                });
+                hoverInteraction.updateCallback('onHover', (element, hitElements, event) => {
+                    console.log('Hovered element:', element);
+                });
+                panInteraction.updateCallback('onPan', (panning) => {
+                    console.log('Panning:', panning);
+                });
+                zoomInteraction.updateCallback('onZoom', (zoomLevel) => {
+                    console.log('Zoom level:', zoomLevel);
+                });
+            }
+		});
+
+    </script>
+</body>
+</html>
