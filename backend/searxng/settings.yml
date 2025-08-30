@@ -13,7 +13,7 @@ server:
 
 search:
   safe_search: 1
-  autocomplete: "google"
+  autocomplete: "duckduckgo"
   default_lang: "en"
   formats:
     - html
@@ -27,17 +27,17 @@ ui:
 engines:
   - name: google
     engine: google
-    categories: general
-    disabled: false
+    categories: general,news,science
+    disabled: true
 
   - name: bing
     engine: bing
-    categories: general
+    categories: general,news,science
     disabled: false
 
   - name: duckduckgo
     engine: duckduckgo
-    categories: general
+    categories: general,news,science
     disabled: false
 
 # Disable bot detection for API access
