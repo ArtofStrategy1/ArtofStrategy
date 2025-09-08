@@ -13,6 +13,9 @@
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <!-- jsPDF for Save to PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Cytoscape.js CDN for graph visualization -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.33.1/cytoscape.min.js"></script>
+	
     <style>
         /* --- Base & Animated Background --- */
         body {
@@ -52,7 +55,7 @@
         #home.active,
         #templates.active,
         #templateDetail.active,
-        #examplesPage.active {
+        #examplesPage.active, #graphPage.active {
             display: block;
             /* Content pages */
         }
@@ -76,8 +79,8 @@
         /* --- Glass & Card Effects --- */
         .glass-container {
             background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            /*backdrop-filter: blur(12px);*/
+            /*-webkit-backdrop-filter: blur(12px);*/
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 1rem;
             padding: 2.5rem;
@@ -375,6 +378,28 @@
         .ws-status.connecting {
             background: rgba(245, 158, 11, 0.8);
             color: #fbbf24;
+		}
+		/* Cytoscape.js Graph Container Styling */
+		#graph-container {
+			position: relative;
+			width: 90%;
+			height: 600px; /* Adjust height as needed */
+			border: 1px solid rgba(255, 255, 255, 0.2);
+			border-radius: 1.5rem;	/* The amount of rounding you want to apply */
+			overflow: hidden; /* So content inside is also rounded */
+			box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+			background-color: rgba(30, 30, 30, 0.8); 	/* Slightly transparent background */
+			padding: 1.5rem;
+		}
+
+		.graph-inner {
+			position: relative;
+			width: 100%;
+			height: 100%;
+			border: 1px solid rgba(255, 255, 255, 0.2);
+			border-radius: 1.5rem;	/* The amount of rounding you want to apply */
+			overflow: hidden; /* So content inside is also rounded */
+			margin: 0
         }
 
 
@@ -404,7 +429,6 @@
         }
     </style>
 </head>
-
 <body class="min-h-screen">
 
     <!-- Three.js Canvas for Animated Background -->
@@ -418,13 +442,10 @@
         <div class="container mx-auto flex justify-between items-center">
             <a href="#" class="text-2xl font-bold text-white nav-link" data-page="home">S.A.G.E.</a>
             <div>
-                <a href="#" class="text-white/80 hover:text-white px-3 py-2 rounded-md text-sm font-medium nav-link"
-                    data-page="home">Home</a>
-                <a href="#"
-                    class="text-white/80 hover:text-white px-3 py-2 rounded-md text-sm font-medium nav-link hidden"
-                    data-page="templates">Templates</a>
-                <a href="#" class="text-white/80 hover:text-white px-3 py-2 rounded-md text-sm font-medium nav-link"
-                    data-page="login">Login</a>
+                <a href="#" class="text-white/80 hover:text-white px-3 py-2 rounded-md text-sm font-medium nav-link" data-page="home">Home</a>
+                <a href="#" class="text-white/80 hover:text-white px-3 py-2 rounded-md text-sm font-medium nav-link" data-page="templates">Templates</a>
+                <a href="#" class="text-white/80 hover:text-white px-3 py-2 rounded-md text-sm font-medium nav-link" data-page="login">Login</a>
+				<a href="#" class="text-white/80 hover:text-white px-3 py-2 rounded-md text-sm font-medium nav-link" data-page="graphPage">Knowledge Graph</a>
             </div>
         </div>
     </nav>
@@ -866,14 +887,33 @@
         <div class="text-center mt-12">
             <button class="btn btn-primary nav-link" data-page="templates">View Templates</button>
         </div>
+	</div>
+    <!-- ========================================================= -->
+    <!-- GRAPH VISUALIZATION PAGE (NEW)                            -->
+    <!-- ========================================================= -->
+    <div id="graphPage" class="page container mx-auto px-6 py-16">
+        <h1 class="text-4xl font-bold text-center mb-2">Knowledge Graph Visualization</h1>
+        <p class="text-lg text-white/80 text-center mb-12 max-w-2xl mx-auto">Explore the relationships between entities in an interactive knowledge graph.</p>
+        <div id="graph-container">
+			<div class="graph-inner"></div>
+		</div>
     </div>
 
 
-    <script>
+    <script type="module">
         // =========================================================
         // SCRIPT
         // =========================================================
-        document.addEventListener('DOMContentLoaded', () => {
+        	// Load NVL base library
+	import { NVL } from "https://esm.sh/@neo4j-nvl/base@0.3.9/es2022/base.mjs";
+	import { 
+		ClickInteraction,
+		ZoomInteraction,
+		PanInteraction,
+		DragNodeInteraction,
+		HoverInteraction 
+	} from "https://esm.sh/@neo4j-nvl/interaction-handlers@0.3.9/es2022/interaction-handlers.mjs";
+document.addEventListener('DOMContentLoaded', () => {
 
             // --- Supabase Configuration ---
             const SUPABASE_URL = 'https://supabase.data2int.com'
@@ -1429,18 +1469,27 @@ For each identified segment, provide:
                     page.style.display = 'none'; // Explicitly hide all pages
                 });
 
-                const targetPage = $(pageId);
-                if (targetPage) {
-                    targetPage.classList.add('active');
-                    // Set display based on the type of page
-                    if (pageId === 'home' || pageId === 'templates' || pageId === 'templateDetail' || pageId === 'examplesPage') {
-                        targetPage.style.display = 'block';
-                    } else if (pageId === 'login' || pageId === 'signup') {
-                        targetPage.style.display = 'flex';
-                    }
-                    window.scrollTo(0, 0);
-                }
+        const targetPage = $(pageId);
+        if (targetPage) {
+            targetPage.classList.add('active');
+            // Set display based on the type of page
+            if (pageId === 'home' || pageId === 'templates' || pageId === 'templateDetail' || pageId === 'examplesPage' || pageId === `graphPage`) {
+                targetPage.style.display = 'block';
+            } else if (pageId === 'login' || pageId === 'signup') {
+                targetPage.style.display = 'flex';
             }
+			window.scrollTo(0, 0);
+
+			// Call loadKnowledgeGraph when navigating to the graphPage
+			if (pageId === 'graphPage') { 
+				loadKnowledgeGraph()
+				// requestAnimationFrame(() => {
+				// 	loadKnowledgeGraph();
+				// });
+			}
+            
+        }
+    }
 
             // --- Update Navigation Bar Links ---
             function updateNavBar() {
@@ -1490,13 +1539,19 @@ For each identified segment, provide:
                     return;
                 }
 
-                if ((pageId === 'login' || pageId === 'signup') && userLoggedIn) {
-                    showMessage('loginMessage', 'You are already logged in.', 'success'); // Display message on login page
-                    navigateTo('home'); // Or navigate to templates
-                    return;
-                }
-                navigateTo(pageId);
-            }
+        if ((pageId === 'login' || pageId === 'signup') && userLoggedIn) {
+            showMessage('loginMessage', 'You are already logged in.', 'success'); // Display message on login page
+            navigateTo('home'); // Or navigate to templates
+            return;
+        }
+
+		// Call loadKnowledgeGraph when navigating to the graphPage
+		if (pageId === 'graphPage') {
+			navigateTo('graphPage')
+			return;
+		}
+        navigateTo(pageId);
+    }
 
             // --- Template Page Logic ---
             function populateTemplatesList() {
@@ -2334,6 +2389,97 @@ For each identified segment, provide:
                 }
             });
 
+	// --- Knowledge Graph Visualization Logic (NEW) ---
+	async function loadKnowledgeGraph() {
+		const graphContainer = document.querySelector('.graph-inner')
+		
+		if (!graphContainer || typeof NVL === 'undefined') {
+			console.error('NVL not loaded or graph container not found.');
+			return;
+		}
+
+		// Function to fetch data from your backend
+            async function fetchGraphData() {
+                try {
+                    const response = await fetch('https://matt-nlp.data2int.com/graph/knowledge-graph'); 
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const graphData = await response.json();
+                    console.log("Fetched graph data:", graphData);
+
+                    const transformedNodes = graphData.nodes.map(node => ({
+                        id: String(node.id), // Ensure ID is a string
+                        caption: node.properties.name || node.label,
+                        labels: [String(node.label)], // NVL expects an array of labels
+                        properties: node.properties ? { ...node.properties } : {} // Ensure properties is a plain object
+                    }));
+
+                    const transformedRelationships = graphData.relationships.map(rel => {
+                        const relId = rel.id ? String(rel.id) : `${rel.source_id}-${rel.type}-${rel.target_id}`;
+                        return {
+                            id: relId,
+                            from: String(rel.source_id), // Ensure IDs are strings
+                            to: String(rel.target_id),   // Ensure IDs are strings
+                            caption: String(rel.type),   // Ensure caption is a string
+                            type: String(rel.type),
+                            properties: rel.properties ? { ...rel.properties } : {} // Ensure properties is a plain object
+                        };
+                    });
+
+                    return {
+                        nodes: transformedNodes,
+                        relationships: transformedRelationships
+                    };
+
+                } catch (error) {
+                    console.error("Error fetching graph data:", error);
+                    graphContainer.innerHTML = `<p style='color: red;'>Error loading graph: ${error.message}</p>`;
+                    return null; // Return null on error
+                }
+            }
+
+            const initialGraphData = await fetchGraphData();
+			console.log("Graph data", initialGraphData);
+			const { nodes, relationships } = initialGraphData;
+            if (initialGraphData) {
+                // Pass the data to the NVL constructor
+                const visualization = new NVL(graphContainer, nodes, relationships, {
+					// Optionally specify a layout, e.g., 'forcedirected' or 'hierarchical'
+                    layout: 'forcedirected'
+				});
+				console.log("Visualization:", visualization);
+
+                // Instantiate and add interaction handlers
+                const clickInteraction = new ClickInteraction(visualization);
+                const zoomInteraction = new ZoomInteraction(visualization);
+                const panInteraction = new PanInteraction(visualization);
+                const dragNodeInteraction = new DragNodeInteraction(visualization);
+                //const boxSelectInteraction = new BoxSelectInteraction(visualization);
+                const hoverInteraction = new HoverInteraction(visualization);
+
+                // Example: Add callbacks to interaction handlers
+                clickInteraction.updateCallback('onNodeClick', (node) => {
+                    console.log('Node clicked', node);
+                });
+                // boxSelectInteraction.updateCallback('onBoxSelect', ({ nodes, rels }) => {
+                //     console.log('Selected elements:', nodes, rels);
+                // });
+                dragNodeInteraction.updateCallback('onDrag', (nodes) => {
+                    //console.log('Dragged nodes:', nodes);
+                });
+                hoverInteraction.updateCallback('onHover', (element, hitElements, event) => {
+                    //console.log('Hovered element:', element);
+                });
+                panInteraction.updateCallback('onPan', (panning) => {
+                    //console.log('Panning:', panning);
+                });
+                zoomInteraction.updateCallback('onZoom', (zoomLevel) => {
+                    //console.log('Zoom level:', zoomLevel);
+                });
+            }
+		}
+
             // Initialize carousel on page load
             if (analysisExamples.length > 0) {
                 showAnalysisExample(currentExampleIndex);
@@ -2355,5 +2501,6 @@ For each identified segment, provide:
         });
     </script>
 </body>
+
 
 </html>
