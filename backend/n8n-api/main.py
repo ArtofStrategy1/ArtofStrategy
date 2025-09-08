@@ -21,10 +21,15 @@ app = FastAPI(
 origins = [
     "https://data2int.com",
     "https://n8n.data2int.com",  # n8n might send preflight OPTIONS requests
+    "https://mohammed.data2int.com",
+    "https://matthew.data2int.com",
+    "https://khaled.data2int.com",
+    "https://elijah.data2int.com"
 ]
 
 app.add_middleware(
     CORSMiddleware,
+    allow_origin_regex=r"https://.*\.data2int\.com",   # # allow any subdomain of data2int.com
     allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],  # Allow all methods (GET, POST, OPTIONS, WebSocket)
