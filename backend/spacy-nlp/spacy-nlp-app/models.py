@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
 
 
@@ -69,31 +69,32 @@ class SWOTAnalysisResult(BaseModel):
 
 class GraphNode(BaseModel):
     """
-    Model for a node in the knowledge graph.
+    Model for a node in the knowledge graph, aligned with Neo4j's structure.
     """
 
     id: str
-    label: Optional[str] = None
-    type: Optional[str] = None
+    label: str
+    properties: Dict[str, Any] = Field(default_factory=dict)
 
 
 class GraphEdge(BaseModel):
     """
-    Model for an edge in the knowledge graph.
+    Model for an edge (relationship) in the knowledge graph, aligned with Neo4j's structure.
     """
 
-    source: str
-    target: str
-    label: str
+    source_id: str
+    target_id: str
+    type: str
+    properties: Dict[str, Any] = Field(default_factory=dict)
 
 
 class KnowledgeGraph(BaseModel):
     """
-    Model for a knowledge graph, containing nodes and edges.
+    Model for a knowledge graph, containing nodes and relationships, aligned with Neo4j's structure.
     """
 
     nodes: List[GraphNode]
-    edges: List[GraphEdge]
+    relationships: List[GraphEdge]
 
 
 class RelationshipTriple(BaseModel):
@@ -104,6 +105,10 @@ class RelationshipTriple(BaseModel):
     subject: str
     relation: str
     object: str
+    source_document_id: Optional[str] = None
+    relation_type: Optional[str] = None  # e.g., "CAUSAL", "TEMPORAL"
+    confidence: Optional[float] = None
+    relation_metadata: Optional[Dict[str, Any]] = None
 
 
 class ExtractedRelationships(BaseModel):
@@ -181,3 +186,56 @@ class LeveragePointsResponse(BaseModel):
     """
 
     leverage_points: List[LeveragePoint]
+
+
+class CentralityResponse(BaseModel):
+    """
+    Response model for centrality calculations.
+    """
+
+    degree_centrality: Dict[str, float]
+    betweenness_centrality: Dict[str, float]
+    eigenvector_centrality: Dict[str, float]
+
+
+class CommunityDetectionResponse(BaseModel):
+    """
+    Response model for community detection.
+    """
+
+    communities: List[List[str]]
+
+
+class GraphFilterRequest(BaseModel):
+    """
+    Request model for filtering graph data.
+    """
+
+    source_document_id: Optional[str] = None
+    node_type: Optional[str] = None
+    relation_type: Optional[str] = None
+
+
+class GraphNodesResponse(BaseModel):
+    """
+    Response model for retrieving a list of graph nodes.
+    """
+
+    nodes: List[GraphNode]
+
+
+class GraphEdgesResponse(BaseModel):
+    """
+    Response model for retrieving a list of graph edges.
+    """
+
+    edges: List[GraphEdge]
+
+
+class KnowledgeGraphQueryResponse(BaseModel):
+    """
+    Response model for querying the knowledge graph based on a text query.
+    """
+
+    nodes: List[GraphNode]
+    edges: List[GraphEdge]
