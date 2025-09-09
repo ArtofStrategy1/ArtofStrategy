@@ -99,11 +99,15 @@ async def get_all_edges_logic(
         if match:
             filtered_edges.append(
                 GraphEdge(
-                    source=rel.source_id,
-                    target=rel.target_id,
-                    label=rel.type,
-                    relation_type=rel.type,
-                    source_document_id=rel.properties.get("source_document_id"),
+                    source_id=rel.source_id,
+                    target_id=rel.target_id,
+                    type=rel.type,
+                    properties={
+                        "label": rel.type,
+                        "relation_type": rel.type,
+                        "source_document_id": rel.properties.get("source_document_id"),
+                        **rel.properties
+                    },
                 )
             )
     return GraphEdgesResponse(edges=filtered_edges)
@@ -178,13 +182,14 @@ def query_centrality_measures_logic(
         'knowledge_graph',
         ['ENTITY'], // Node labels to include
         {
-            RELATIONSHIP: {
+            TEMPORAL: {
                 orientation: 'UNDIRECTED' // Or 'NATURAL' if direction matters for centrality
             }
         }
     )
     """
     neo4j_crud._execute_query(project_query)
+    logger.info(f"Executing GDS project_query: {project_query}")
 
     degree_c_query = """
     CALL gds.degree.stream('knowledge_graph')

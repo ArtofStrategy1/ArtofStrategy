@@ -356,7 +356,7 @@ async def extract_relationships_logic(
             Relationship(
                 source_id=subject_node.id,
                 target_id=object_node.id,
-                type=rel.relation,
+                type=rel.relation_type,
                 properties=neo4j_properties, # Pass the flattened properties
             )
         )
@@ -389,7 +389,7 @@ def build_knowledge_graph(relationships: List[RelationshipTriple]) -> KnowledgeG
             GraphEdge(
                 source_id=triple.subject,
                 target_id=triple.object,
-                type=triple.relation,
+                type=triple.relation_type,
                 properties={
                     "confidence": triple.confidence,
                     "relation_metadata": triple.relation_metadata,
