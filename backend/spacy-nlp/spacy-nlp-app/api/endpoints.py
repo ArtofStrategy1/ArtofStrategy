@@ -77,7 +77,7 @@ async def health_check(nlp: Any = Depends(get_nlp_model)):
 
 
 @nlp_router.post("/process_text", response_model=ProcessedText)
-async def process_text(request_data: TextInput, nlp: Any = Depends(get_nlp_model)):
+async def process_text(request_data: TextInput, include_full_nlp_details: bool = False, nlp: Any = Depends(get_nlp_model)):
     """
     Processes input text using the loaded spaCy model to perform fundamental
     Natural Language Processing (NLP) tasks.
@@ -88,7 +88,7 @@ async def process_text(request_data: TextInput, nlp: Any = Depends(get_nlp_model
             status_code=503, detail="SpaCy model not loaded. Service is not ready."
         )
 
-    return process_text_logic(nlp, request_data.text)
+    return process_text_logic(nlp, request_data.text, include_full_nlp_details)
 
 
 @analysis_router.post("/analyze_swot", response_model=SWOTAnalysisResult)
@@ -175,6 +175,7 @@ async def extract_relationships(
     request_data: TextInput,
     nlp: Any = Depends(get_nlp_model),
     neo4j_crud: Neo4jCRUD = Depends(get_neo4j_crud),
+    min_confidence: float = 0.6, # New optional query parameter
 ):
     """
     Extracts simple subject-verb-object (SVO) relationships from the input text
@@ -185,7 +186,7 @@ async def extract_relationships(
         raise HTTPException(
             status_code=503, detail="SpaCy model not loaded. Service is not ready."
         )
-    return await extract_relationships_logic(nlp, request_data.text, neo4j_crud)
+    return await extract_relationships_logic(nlp, request_data.text, neo4j_crud, min_confidence)
 
 
 @graph_router.post("/query_graph_neighbors", response_model=NeighborsResponse)
