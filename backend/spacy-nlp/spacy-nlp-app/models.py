@@ -51,9 +51,9 @@ class ProcessedText(BaseModel):
 
     original_text: str
     entities: List[NamedEntity]
-    tokens: List[ProcessedToken]
+    tokens: Optional[List[ProcessedToken]] = None
     sentences: List[str]
-    dependencies: List[DependencyRelation]
+    dependencies: Optional[List[DependencyRelation]] = None
 
 
 class SWOTAnalysisResult(BaseModel):
