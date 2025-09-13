@@ -17,6 +17,4 @@ def find_lca(ent1_root, ent2_root):
             lca = ent1_root
         elif ent2_root.is_ancestor(ent1_root):
             lca = ent2_root
-        else:
-            lca = ent1_root
     return lca
