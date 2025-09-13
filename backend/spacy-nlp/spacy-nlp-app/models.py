@@ -239,3 +239,22 @@ class KnowledgeGraphQueryResponse(BaseModel):
 
     nodes: List[GraphNode]
     edges: List[GraphEdge]
+
+
+class GraphProjectionRequest(BaseModel):
+    """
+    Request model for specifying graph projection parameters for GDS algorithms.
+    """
+    node_labels: List[str] = Field(
+        #default=['ENTITY'],
+        description="List of node labels to include in the graph projection."
+    )
+    relationship_types: Dict[str, Dict[str, str]] = Field(
+        #default={'TEMPORAL': {'orientation': 'UNDIRECTED'}},
+        description="Dictionary of relationship types and their properties (e.g., orientation) for the graph projection."
+    )
+    graph_name: str = Field(
+        #default='knowledge_graph',
+        description="Name of the GDS in-memory graph projection."
+    )
+
