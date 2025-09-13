@@ -17,6 +17,7 @@ from ..models import (
     KnowledgeGraphQueryResponse,
     KnowledgeGraph, # This KnowledgeGraph is from models.py
     GraphQueryRequest,
+    GraphProjectionRequest,
     PathQueryRequest,
     NeighborsResponse,
     PathResponse,
@@ -125,10 +126,10 @@ async def identify_leverage_points(
     )
     
     # Calculate centrality measures using Neo4j GDS
-    centrality_response = query_centrality_measures_logic(neo4j_crud)
+    centrality_response = await query_centrality_measures_logic(neo4j_crud, 'lev_p', ['ENTITY'], {'TEMPORAL': {'orientation': 'UNDIRECTED'}})
 
     # Identify leverage points based on centrality
-    leverage_points_data = identify_leverage_points_logic(neo4j_crud, centrality_response)
+    leverage_points_data = await identify_leverage_points_logic(neo4j_crud, centrality_response)
     
     leverage_points = []
     for node_id, data in leverage_points_data.get("leverage_points", {}).items():
@@ -246,19 +247,35 @@ async def get_edges(
 
 
 @graph_router.post("/centrality", response_model=CentralityResponse)
-async def get_centrality(neo4j_crud: Neo4jCRUD = Depends(get_neo4j_crud)):
+async def get_centrality(
+    request_data: GraphProjectionRequest,
+    neo4j_crud: Neo4jCRUD = Depends(get_neo4j_crud)
+):
     """
-    Calculate centrality measures for nodes using Neo4j.
+    Calculate centrality measures for nodes using Neo4j, with configurable graph projection.
     """
-    return query_centrality_measures_logic(neo4j_crud)
+    return await query_centrality_measures_logic(
+        neo4j_crud,
+        graph_name=request_data.graph_name,
+        node_labels=request_data.node_labels,
+        relationship_types=request_data.relationship_types
+    )
 
 
 @graph_router.post("/communities", response_model=CommunityDetectionResponse)
-async def get_communities(neo4j_crud: Neo4jCRUD = Depends(get_neo4j_crud)):
+async def get_communities(
+    request_data: GraphProjectionRequest,
+    neo4j_crud: Neo4jCRUD = Depends(get_neo4j_crud)
+):
     """
     Detect communities within the graph using Neo4j.
     """
-    return query_community_detection_logic_louvain(neo4j_crud)
+    return await query_community_detection_logic_louvain(
+        neo4j_crud,
+        graph_name=request_data.graph_name,
+        node_labels=request_data.node_labels,
+        relationship_types=request_data.relationship_types
+    )
 
 
 @graph_router.post(
