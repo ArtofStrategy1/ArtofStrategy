@@ -135,7 +135,9 @@ def query_neighbors_logic(node_id: str, neo4j_crud: Neo4jCRUD) -> NeighborsRespo
         )
     return NeighborsResponse(neighbors=neighbors)
 
-
+# sourceNode: gds.util.asNode(source),
+# targetNode: gds.util.asNode(target),
+# relationshipWeightProperty: 'weight' // Assuming relationships have a 'weight' property
 def query_shortest_path_logic(
     source_node_id: str, target_node_id: str, neo4j_crud: Neo4jCRUD
 ) -> PathResponse:
@@ -145,9 +147,8 @@ def query_shortest_path_logic(
     query = """
     MATCH (source {id: $source_node_id}), (target {id: $target_node_id})
     CALL gds.shortestPath.dijkstra.stream('knowledge_graph', {
-        sourceNode: gds.util.asNode(source),
-        targetNode: gds.util.asNode(target),
-        relationshipWeightProperty: 'weight' // Assuming relationships have a 'weight' property
+        sourceNode: source,
+        targetNode: target
     })
     YIELD index, sourceNode, targetNode, totalCost, nodeIds, path
     RETURN
@@ -170,49 +171,49 @@ def query_shortest_path_logic(
     return PathResponse(path=[]) # No path found
 
 
-def query_centrality_measures_logic(
+async def query_centrality_measures_logic(
     neo4j_crud: Neo4jCRUD,
+    graph_name: str,
+    node_labels: List[str],
+    relationship_types: Dict[str, Dict[str, str]]
 ) -> CentralityResponse:
     """
     Calculates various centrality measures for the Neo4j graph using the Graph Data Science (GDS) library.
     """
-    # Project the graph into GDS in-memory graph
-    project_query = """
-    CALL gds.graph.project(
-        'knowledge_graph',
-        ['ENTITY'], // Node labels to include
-        {
-            TEMPORAL: {
-                orientation: 'UNDIRECTED' // Or 'NATURAL' if direction matters for centrality
-            }
-        }
+    # Call the helper function to project the graph
+    project_gds_graph(
+        neo4j_crud=neo4j_crud,
+        graph_name=graph_name,
+        node_labels=node_labels,
+        relationship_types=relationship_types
     )
-    """
-    neo4j_crud._execute_query(project_query)
-    logger.info(f"Executing GDS project_query: {project_query}")
+
+    parameters = {
+            "graphName": graph_name,
+    }
 
     degree_c_query = """
-    CALL gds.degree.stream('knowledge_graph')
+    CALL gds.degree.stream($graphName)
     YIELD nodeId, score
     RETURN gds.util.asNode(nodeId).id AS node_id, score
     """
-    degree_results = neo4j_crud._execute_query(degree_c_query)
+    degree_results = neo4j_crud._execute_query(degree_c_query, parameters)
     degree_centrality = {record["node_id"]: record["score"] for record in degree_results}
 
     betweenness_c_query = """
-    CALL gds.betweenness.stream('knowledge_graph')
+    CALL gds.betweenness.stream($graphName)
     YIELD nodeId, score
     RETURN gds.util.asNode(nodeId).id AS node_id, score
     """
-    betweenness_results = neo4j_crud._execute_query(betweenness_c_query)
+    betweenness_results = neo4j_crud._execute_query(betweenness_c_query, parameters)
     betweenness_centrality = {record["node_id"]: record["score"] for record in betweenness_results}
 
     eigenvector_c_query = """
-    CALL gds.eigenvector.stream('knowledge_graph')
+    CALL gds.eigenvector.stream($graphName)
     YIELD nodeId, score
     RETURN gds.util.asNode(nodeId).id AS node_id, score
     """
-    eigenvector_results = neo4j_crud._execute_query(eigenvector_c_query)
+    eigenvector_results = neo4j_crud._execute_query(eigenvector_c_query, parameters)
     eigenvector_centrality = {record["node_id"]: record["score"] for record in eigenvector_results}
 
     return CentralityResponse(
@@ -222,32 +223,33 @@ def query_centrality_measures_logic(
     )
 
 
-def query_community_detection_logic_louvain(
+async def query_community_detection_logic_louvain(
     neo4j_crud: Neo4jCRUD,
+    graph_name: str,
+    node_labels: List[str],
+    relationship_types: Dict[str, Dict[str, str]]
 ) -> CommunityDetectionResponse:
     """
     Performs community detection using the Louvain method with Neo4j's Graph Data Science (GDS) library.
     """
-    # Project the graph into GDS in-memory graph (if not already projected)
-    project_query = """
-    CALL gds.graph.project(
-        'knowledge_graph',
-        ['ENTITY'],
-        {
-            RELATIONSHIP: {
-                orientation: 'UNDIRECTED'
-            }
-        }
+    # Call the helper function to project the graph
+    project_gds_graph(
+        neo4j_crud=neo4j_crud,
+        graph_name=graph_name,
+        node_labels=node_labels,
+        relationship_types=relationship_types
     )
-    """
-    neo4j_crud._execute_query(project_query)
+
+    parameters = {
+            "graphName": graph_name,
+    }
 
     louvain_query = """
-    CALL gds.louvain.stream('knowledge_graph')
+    CALL gds.louvain.stream($graphName)
     YIELD nodeId, communityId
     RETURN gds.util.asNode(nodeId).id AS node_id, communityId
     """
-    results = neo4j_crud._execute_query(louvain_query)
+    results = neo4j_crud._execute_query(louvain_query, parameters)
 
     communities_dict = defaultdict(list)
     for record in results:
@@ -257,33 +259,33 @@ def query_community_detection_logic_louvain(
     return CommunityDetectionResponse(communities=communities)
 
 
-def query_community_detection_logic_girvan_newman(
+async def query_community_detection_logic_girvan_newman(
     neo4j_crud: Neo4jCRUD,
+    graph_name: str,
+    node_labels: List[str],
+    relationship_types: Dict[str, Dict[str, str]]
 ) -> CommunityDetectionResponse:
     """
     Performs community detection using the Girvan-Newman algorithm with Neo4j's Graph Data Science (GDS) library.
     """
-    # Project the graph into GDS in-memory graph (if not already projected)
-    project_query = """
-    CALL gds.graph.project(
-        'knowledge_graph',
-        ['ENTITY'],
-        {
-            RELATIONSHIP: {
-                orientation: 'UNDIRECTED'
-            }
-        }
+    # Call the helper function to project the graph
+    project_gds_graph(
+        neo4j_crud=neo4j_crud,
+        graph_name=graph_name,
+        node_labels=node_labels,
+        relationship_types=relationship_types
     )
-    """
-    neo4j_crud._execute_query(project_query)
 
+    parameters = {
+            "graphName": graph_name,
+    }
 
     girvan_newman_query = """
-    CALL gds.beta.community.girvanNewman.stream('knowledge_graph')
+    CALL gds.beta.community.girvanNewman.stream($graphName)
     YIELD communityId, nodeIds
     RETURN communityId, [nodeId IN nodeIds | gds.util.asNode(nodeId).id] AS node_ids
     """
-    results = neo4j_crud._execute_query(girvan_newman_query)
+    results = neo4j_crud._execute_query(girvan_newman_query, parameters)
 
     communities = []
     for record in results:
@@ -291,7 +293,7 @@ def query_community_detection_logic_girvan_newman(
     
     return CommunityDetectionResponse(communities=communities)
 
-def identify_leverage_points_logic(
+async def identify_leverage_points_logic(
     neo4j_crud: Neo4jCRUD,
     centrality_response: CentralityResponse,
     top_n: int = 5,
@@ -331,3 +333,74 @@ def identify_leverage_points_logic(
     }
 
     return {"leverage_points": top_leverage_points}
+
+
+
+def project_gds_graph(
+    neo4j_crud: Neo4jCRUD,
+    graph_name: str,
+    node_labels: List[str],
+    relationship_types: Dict[str, Dict[str, str]]
+):
+    """
+    Projects a graph into Neo4j's Graph Data Science (GDS) in-memory graph
+    with configurable node labels and relationship types.
+    """
+    # Input validation
+    if not graph_name or not node_labels:
+        raise ValueError("Graph name and node labels are required")
+    
+    # Validate node labels (basic sanitization)
+    validated_labels = []
+    for label in node_labels:
+        if not isinstance(label, str) or not label.isidentifier():
+            raise ValueError(f"Invalid node label: {label}")
+        validated_labels.append(label)
+    
+    # Validate and construct relationship types
+    validated_rel_types = {}
+    for rel_type, props in relationship_types.items():
+        if not isinstance(rel_type, str) or not rel_type:
+            raise ValueError(f"Invalid relationship type: {rel_type}")
+        
+        if not isinstance(props, dict):
+            raise ValueError(f"Relationship properties must be a dict for {rel_type}")
+        
+        # Validate property values are strings
+        validated_props = {}
+        for key, value in props.items():
+            if not isinstance(key, str) or not isinstance(value, str):
+                raise ValueError(f"Property key and value must be strings: {key}={value}")
+            validated_props[key] = value
+        
+        validated_rel_types[rel_type] = validated_props
+
+    try:
+        # Use parameterized query where possible
+        # Note: GDS projection requires literal values, so we still need some string construction
+        # but we validate inputs first
+        project_query = """
+        CALL gds.graph.project($graphName, $nodeLabels, $relationshipTypes)
+        """
+        
+        parameters = {
+            "graphName": graph_name,
+            "nodeLabels": validated_labels,
+            "relationshipTypes": validated_rel_types
+        }
+        
+        result = neo4j_crud._execute_query(project_query, parameters)
+        
+        logger.info(
+            f"GDS graph '{graph_name}' projected successfully with "
+            f"{len(validated_labels)} node labels and "
+            f"{len(validated_rel_types)} relationship types"
+        )
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Failed to project GDS graph '{graph_name}': {str(e)}")
+        raise
+
+    
