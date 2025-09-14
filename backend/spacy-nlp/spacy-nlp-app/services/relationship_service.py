@@ -31,15 +31,16 @@ def resolve_coreferences(doc: spacy.tokens.Doc) -> spacy.tokens.Doc:
     Returns:
         spacy.tokens.Doc: The Doc object with coreferences resolved and entity spans updated.
     """
-    if not hasattr(doc._, "fastcoref_clusters"):
+    logger.info("Trying to resolve coreferences.")
+    if not hasattr(doc._, "coref_clusters"):
         logger.warning("fastcoref pipeline component not found in spaCy model.")
         return doc
 
     # Create a mapping from coreferenced spans to their main mentions
     coref_map = {}
-    for cluster in doc._.fastcoref_clusters:
+    for cluster in doc._.coref_clusters:
         # The first mention in the cluster is typically the main mention
-        main_mention_span = cluster # Access the first span in the cluster
+        main_mention_span = cluster[0] # Access the first span in the cluster
         main_mention_text = main_mention_span.text # Extract text from the span
 
         for mention_span in cluster:
@@ -60,6 +61,7 @@ def resolve_coreferences(doc: spacy.tokens.Doc) -> spacy.tokens.Doc:
         else:
             new_ents.append(ent)
     doc.ents = spacy.tokens.Span.set_ents(doc, new_ents)
+    logger.info("Resolved coreferences.")
     return doc
 
 
@@ -238,40 +240,14 @@ async def extract_enhanced_relationships(
             )
     return relationships
 
-
-async def extract_relationships_logic(
-    nlp,
-    text: str,
-    neo4j_crud: Neo4jCRUD,
-    source_document_id: Optional[str] = None,
-    source_sentence_id: Optional[str] = None,
-    min_confidence: float = 0.6,
-) -> ExtractedRelationships:
-    """
-    Extracts relationships from the input text using spaCy's dependency parsing
-    and custom enhanced patterns. It focuses on identifying meaningful entities
-    and the relationships between them to build a knowledge graph.
-
-    Args:
-        nlp: The loaded spaCy NLP model.
-        text (str): The input text to process.
-        neo4j_crud (Neo4jCRUD): The Neo4j CRUD instance for database operations.
-        source_document_id (Optional[str]): ID of the source document.
-        source_sentence_id (Optional[str]): ID of the source sentence.
-
-    Returns:
-        ExtractedRelationships: An object containing the extracted relationship triples
-                                and the constructed knowledge graph.
-    """
-    doc = nlp(text)
-    doc = resolve_coreferences(doc)
-    all_extracted_relationships = []
-    persisted_nodes: Dict[str, Node] = {}  # Cache for already persisted nodes to avoid duplicates
-
-    # Extract meaningful entities once for the entire document to be used for relationship extraction
-    meaningful_entities = _extract_meaningful_entities(doc)
-
-    async def get_or_create_node(entity_text: str, entity_type: str) -> Node:
+async def get_or_create_node(
+        neo4j_crud: Neo4jCRUD,
+        entity_text: str, 
+        entity_type: str, 
+        persisted_nodes: Dict[str, Node],
+        source_document_id: Optional[str] = None,
+        source_sentence_id: Optional[str] = None,
+        ) -> Node:
         """
         Helper function to get an existing node from Neo4j or create a new one if it doesn't exist.
         Caches nodes to prevent redundant database calls within a single processing session.
@@ -299,6 +275,39 @@ async def extract_relationships_logic(
         created_node = neo4j_crud.create_node(new_node)
         persisted_nodes[node_key] = created_node
         return created_node
+
+async def extract_relationships_logic(
+    nlp,
+    text: str,
+    neo4j_crud: Neo4jCRUD,
+    source_document_id: Optional[str] = None,
+    source_sentence_id: Optional[str] = None,
+    min_confidence: float = 0.6,
+) -> ExtractedRelationships:
+    """
+    Extracts relationships from the input text using spaCy's dependency parsing
+    and custom enhanced patterns. It focuses on identifying meaningful entities
+    and the relationships between them to build a knowledge graph.
+
+    Args:
+        nlp: The loaded spaCy NLP model.
+        text (str): The input text to process.
+        neo4j_crud (Neo4jCRUD): The Neo4j CRUD instance for database operations.
+        source_document_id (Optional[str]): ID of the source document.
+        source_sentence_id (Optional[str]): ID of the source sentence.
+
+    Returns:
+        ExtractedRelationships: An object containing the extracted relationship triples
+                                and the constructed knowledge graph.
+    """
+    doc = nlp(text, component_cfg={"fastcoref": {'resolve_text': True}})
+    resolved_text = doc._.resolved_text
+    doc = nlp(resolved_text)
+    all_extracted_relationships = []
+    persisted_nodes: Dict[str, Node] = {}  # Cache for already persisted nodes to avoid duplicates
+
+    # Extract meaningful entities once for the entire document to be used for relationship extraction
+    meaningful_entities = _extract_meaningful_entities(doc)
 
     for sent in doc.sents:
         # Iterate through meaningful entities in the sentence to find relationships between them.
@@ -448,8 +457,22 @@ async def extract_relationships_logic(
     # Persistence Update: Persist only deduplicated relationships to Neo4j
     for rel in filtered_relationships:
         # Get or create subject and object nodes in Neo4j
-        subject_node = await get_or_create_node(rel.subject, "ENTITY") # Assuming ENTITY type for now
-        object_node = await get_or_create_node(rel.object, "ENTITY") # Assuming ENTITY type for now
+        subject_node = await get_or_create_node(
+            neo4j_crud, 
+            rel.subject, 
+            "ENTITY", # Assuming ENTITY type for now
+            persisted_nodes, 
+            source_document_id, 
+            source_sentence_id
+        ) 
+        object_node = await get_or_create_node(
+            neo4j_crud, 
+            rel.object, 
+            "ENTITY", # Assuming ENTITY type for now
+            persisted_nodes, 
+            source_document_id, 
+            source_sentence_id
+        ) 
 
         # Prepare properties for Neo4j, flattening relation_metadata
         neo4j_properties = {
