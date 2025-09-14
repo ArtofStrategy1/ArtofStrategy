@@ -26,10 +26,11 @@ class ProcessedToken(BaseModel):
     Model for a processed token.
     """
 
-    text: str
+    token: str
     lemma: str
     pos: str
     dep: str
+    head: str
     is_stop: bool
     is_alpha: bool
 
@@ -53,7 +54,6 @@ class ProcessedText(BaseModel):
     entities: List[NamedEntity]
     tokens: Optional[List[ProcessedToken]] = None
     sentences: List[str]
-    dependencies: Optional[List[DependencyRelation]] = None
 
 
 class SWOTAnalysisResult(BaseModel):
