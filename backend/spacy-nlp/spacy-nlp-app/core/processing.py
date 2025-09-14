@@ -69,8 +69,7 @@ def _extract_meaningful_entities(doc: spacy.tokens.Doc) -> List[NamedEntity]:
                 start_char=token.idx,
                 end_char=token.idx + len(token.text),
             )
-
-
+            
     return list(meaningful_entities.values())
 
 
@@ -93,10 +92,11 @@ def process_text_logic(nlp: Any, text: str, include_full_nlp_details: bool = Fal
     # and flags for stop words and alphabetic characters.
     processed_tokens = [
         ProcessedToken(
-            text=token.text,
+            token=token.text,
             lemma=token.lemma_,
             pos=token.pos_,
             dep=token.dep_,
+            head=token.head.text,
             is_stop=token.is_stop,
             is_alpha=token.is_alpha,
         )
@@ -112,20 +112,19 @@ def process_text_logic(nlp: Any, text: str, include_full_nlp_details: bool = Fal
 
     # Extract dependency relations for each token, showing its relationship
     # to its head token in the sentence.
-    dependency_relations = [
-        DependencyRelation(
-            token=token.text,
-            dependency=token.dep_,
-            head=token.head.text,
-        )
-        for token in doc
-    ]
+    # dependency_relations = [
+    #     DependencyRelation(
+    #         token=token.text,
+    #         dependency=token.dep_,
+    #         head=token.head.text,
+    #     )
+    #     for token in doc
+    # ]
 
     # Return the comprehensive processed text data.
     return ProcessedText(
         original_text=text,
-        entities=meaningful_entities, # Use the refined entities for graph construction
+        entities=meaningful_entities,
         tokens=processed_tokens if include_full_nlp_details else None,
         sentences=sentences,
-        dependencies=dependency_relations if include_full_nlp_details else None
     )
