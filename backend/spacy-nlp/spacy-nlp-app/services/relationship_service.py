@@ -101,7 +101,8 @@ def extract_lca_and_head_relationships(
         meaningful_entities: List[NamedEntity]
 ) -> List[RelationshipTriple]:
     """
-    Encapsulate the logic for extracting relationships based on LCA and common head dependencies, including span checks and weak verb filtering
+    Encapsulate the logic for extracting relationships based on LCA and common head dependencies, 
+    including span checks and weak verb filtering
     """
     lca_and_head_relationships = []
     # Get the lowest common ancestor (LCA) of the two entities' root tokens.
@@ -117,7 +118,8 @@ def extract_lca_and_head_relationships(
 
     # Filter out semantically weak verbs as relations
     if lca and lca.lemma_ in WEAK_VERBS:
-        logger.debug(f"Filtered out relationship due to weak LCA verb: '{ent1.text}' - '{lca.lemma_}' - '{ent2.text}'")
+        logger.debug(f"Filtered out relationship due to weak LCA verb: \
+                     '{ent1.text}' - '{lca.lemma_}' - '{ent2.text}'")
         return []
 
     # If the LCA is a verb or a preposition, it likely represents the relation.
@@ -179,7 +181,8 @@ def extract_svo_relationships_from_sentence(
             verb = token
             
             # Identify subjects (nominal subject, passive nominal subject, clausal subject)
-            subjects = [child for child in verb.children if child.dep_ in ("nsubj", "nsubjpass", "csubj", "csubjpass")]
+            subjects = [child for child in verb.children if child.dep_ in 
+                        ("nsubj", "nsubjpass", "csubj", "csubjpass")]
             
             # Identify direct objects, attributes, and objects of predicates
             objects = [child for child in verb.children if child.dep_ in ("dobj", "attr", "oprd")]
@@ -202,7 +205,8 @@ def extract_svo_relationships_from_sentence(
                             subject_span = chunk
                             break
                     if not subject_span:
-                        subject_span = doc[subject_token.i : subject_token.i + 1] # Fallback to single token span
+                        # Fallback to single token span
+                        subject_span = doc[subject_token.i : subject_token.i + 1] 
 
                     object_span = None
                     for chunk in sent.noun_chunks:
@@ -210,13 +214,15 @@ def extract_svo_relationships_from_sentence(
                             object_span = chunk
                             break
                     if not object_span:
-                        object_span = doc[object_token.i : object_token.i + 1] # Fallback to single token span
+                        # Fallback to single token span
+                        object_span = doc[object_token.i : object_token.i + 1] 
 
                     subject_text = get_entity_from_span(subject_span, meaningful_entities)
                     object_text = get_entity_from_span(object_span, meaningful_entities)
 
                     if subject_text and object_text:
-                        # Construct the relation text. If it's a prepositional object, include the preposition.
+                        # Construct the relation text. 
+                        # If it's a prepositional object, include the preposition.
                         relation_text = verb.lemma_
                         if object_token.dep_ == "pobj" and object_token.head.pos_ == "ADP":
                             relation_text = f"{verb.lemma_}_{object_token.head.lemma_}" # e.g., "works_at"
@@ -304,7 +310,8 @@ async def persist_relationship_to_neo4j(
         "source_sentence_id": source_sentence_id,
     }
     if relationship.relation_metadata:
-        neo4j_properties.update(relationship.relation_metadata) # Flatten relation_metadata into node properties
+        # Flatten relation_metadata into node properties
+        neo4j_properties.update(relationship.relation_metadata) 
 
     # Create the relationship in Neo4j
     neo4j_crud.create_relationship(
@@ -363,7 +370,8 @@ def extract_temporal_relationship(
         subject_text = get_entity_from_span(subject_span_temp, meaningful_entities)
         object_text = get_entity_from_span(object_span_temp, meaningful_entities)
         
-        relation_text = " ".join([token.text for token in span if token.lower_ in ["before", "after", "during", "when", "while"]])
+        relation_text = " ".join([token.text for token in span if token.lower_ in 
+                                  ["before", "after", "during", "when", "while"]])
         return subject_text, object_text, relation_text
     return "", "", ""
 
@@ -384,7 +392,7 @@ def extract_hierarchical_relationship(
 async def extract_enhanced_relationships(
         doc: spacy.tokens.Doc,
         neo4j_crud: Neo4jCRUD,
-        meaningful_entities: List[NamedEntity], # Pass meaningful entities to use for subject/object resolution
+        meaningful_entities: List[NamedEntity],
         source_document_id: Optional[str] = None,
         source_sentence_id: Optional[str] = None,
 ) -> List[RelationshipTriple]:
@@ -395,8 +403,10 @@ async def extract_enhanced_relationships(
 
     Args:
         doc (spacy.tokens.Doc): The spaCy Doc object for the text.
-        neo4j_crud (Neo4jCRUD): The Neo4j CRUD instance for database operations (though not used directly here).
-        meaningful_entities (List[NamedEntity]): A list of pre-extracted meaningful entities.
+        neo4j_crud (Neo4jCRUD): The Neo4j CRUD instance for database operations \
+            (though not used directly here).
+        meaningful_entities (List[NamedEntity]): A list of pre-extracted meaningful for \
+            entities subject/object resolution
         source_document_id (Optional[str]): ID of the source document.
         source_sentence_id (Optional[str]): ID of the source sentence.
 
@@ -411,7 +421,8 @@ async def extract_enhanced_relationships(
     # Pattern 1: Subject --verb--> object (causal verb)
     causal_pattern_1 = [
         {"DEP": "nsubj", "OP": "+"}, # Nominal subject
-        {"LEMMA": {"IN": ["cause", "lead", "result", "trigger", "effect", "impact"]}, "POS": "VERB"}, # Causal verb
+        {"LEMMA": {"IN": ["cause", "lead", "result", "trigger", "effect", "impact"]}, 
+                   "POS": "VERB"}, # Causal verb
         {"DEP": "dobj", "OP": "+"}, # Direct object
     ]
     matcher.add("CAUSAL_VERB", [causal_pattern_1])
@@ -428,7 +439,8 @@ async def extract_enhanced_relationships(
     # Temporal Relationship Pattern: [EVENT1] before/after [EVENT2]
     temporal_pattern = [
         {"POS": {"IN": ["NOUN", "PROPN", "VERB"]}, "OP": "+"}, # Event 1 (noun, proper noun, or verb)
-        {"LOWER": {"IN": ["before", "after", "during", "when", "while"]}, "POS": {"IN": ["ADP", "SCONJ"]}}, # Temporal connector
+        {"LOWER": {"IN": ["before", "after", "during", "when", "while"]}, 
+                   "POS": {"IN": ["ADP", "SCONJ"]}}, # Temporal connector
         {"POS": {"IN": ["NOUN", "PROPN", "VERB"]}, "OP": "+"}, # Event 2 (noun, proper noun, or verb)
     ]
     matcher.add("TEMPORAL", [temporal_pattern])
@@ -456,16 +468,20 @@ async def extract_enhanced_relationships(
         confidence = 0.8 # Assign a default confidence for enhanced relationships
 
         if rule_id == "CAUSAL_VERB":
-            subject_text, object_text, relation_text = extract_causal_verb_relationship(span, doc, meaningful_entities)
+            subject_text, object_text, relation_text = extract_causal_verb_relationship(
+                span, doc, meaningful_entities)
             relation_type = REL_TYPE_CAUSAL
         elif rule_id == "CAUSAL_PREPOSITION":
-            subject_text, object_text, relation_text = extract_causal_preposition_relationship(span, meaningful_entities)
+            subject_text, object_text, relation_text = extract_causal_preposition_relationship(
+                span, meaningful_entities)
             relation_type = REL_TYPE_CAUSAL
         elif rule_id == "TEMPORAL":
-            subject_text, object_text, relation_text = extract_temporal_relationship(span, doc, meaningful_entities)
+            subject_text, object_text, relation_text = extract_temporal_relationship(
+                span, doc, meaningful_entities)
             relation_type = REL_TYPE_TEMPORAL
         elif rule_id == "HIERARCHICAL":
-            subject_text, object_text, relation_text = extract_hierarchical_relationship(span, meaningful_entities)
+            subject_text, object_text, relation_text = extract_hierarchical_relationship(
+                span, meaningful_entities)
             relation_type = REL_TYPE_HIERARCHICAL
 
         if subject_text and object_text and relation_text:
@@ -579,7 +595,8 @@ async def extract_relationships_logic(
     #                 extract_lca_and_head_relationships(doc, ent1, ent2, meaningful_entities)
     #             )
 
-    #     # Retain the original SVO extraction for simpler sentences where entities might not be directly linked.
+    #     # Retain the original SVO extraction for simpler sentences where entities 
+    #     # might not be directly linked.
     #     # This part now also uses get_entity_from_span to ensure meaningful entities.
     #     svo_relationships = extract_svo_relationships_from_sentence(sent, doc, meaningful_entities)
     #     if svo_relationships:
@@ -640,11 +657,15 @@ def build_knowledge_graph(relationships: List[RelationshipTriple]) -> KnowledgeG
     for triple in relationships:
         # Create or retrieve subject GraphNode
         if triple.subject not in nodes_map:
-            nodes_map[triple.subject] = GraphNode(id=triple.subject, label="ENTITY", properties={"name": triple.subject})
+            nodes_map[triple.subject] = GraphNode(
+                id=triple.subject, label="ENTITY", properties={"name": triple.subject}
+            )
         
         # Create or retrieve object GraphNode
         if triple.object not in nodes_map:
-            nodes_map[triple.object] = GraphNode(id=triple.object, label="ENTITY", properties={"name": triple.object})
+            nodes_map[triple.object] = GraphNode(
+                id=triple.object, label="ENTITY", properties={"name": triple.object}
+            )
         
         # Create relationship (GraphRelationship)
         api_relationships.append(
