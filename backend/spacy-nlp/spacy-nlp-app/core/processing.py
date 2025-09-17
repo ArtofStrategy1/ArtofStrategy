@@ -1,12 +1,12 @@
 from typing import List, Dict, Any, Optional
-from ..models import ProcessedToken, NamedEntity, DependencyRelation, ProcessedText
+from ..models import ProcessedToken, NamedEntity, ProcessedText
 import spacy
 import logging
 
 logger = logging.getLogger(__name__)
 
 
-def _extract_meaningful_entities(doc: spacy.tokens.Doc) -> List[NamedEntity]:
+def extract_meaningful_entities(doc: spacy.tokens.Doc) -> List[NamedEntity]:
     """
     Extracts meaningful entities from a spaCy Doc object, prioritizing Named Entities
     and then significant noun chunks, while filtering out stop words and short tokens.
@@ -108,18 +108,7 @@ def process_text_logic(nlp: Any, text: str, include_full_nlp_details: bool = Fal
 
     # Extract meaningful entities using the new helper function,
     # which filters out semantically weak tokens for knowledge graph construction.
-    meaningful_entities = _extract_meaningful_entities(doc)
-
-    # Extract dependency relations for each token, showing its relationship
-    # to its head token in the sentence.
-    # dependency_relations = [
-    #     DependencyRelation(
-    #         token=token.text,
-    #         dependency=token.dep_,
-    #         head=token.head.text,
-    #     )
-    #     for token in doc
-    # ]
+    meaningful_entities = extract_meaningful_entities(doc)
 
     # Return the comprehensive processed text data.
     return ProcessedText(
