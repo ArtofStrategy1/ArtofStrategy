@@ -96,7 +96,7 @@ class RelationshipTriple(BaseModel):
     relation: str
     object: str
     source_document_id: Optional[str] = None
-    relation_type: Optional[str] = None  # e.g., "CAUSAL", "TEMPORAL"
+    relation_type: Optional[str] = None  # e.g., "CAUSAL", "TEMPORAL", etc.
     confidence: Optional[float] = None
     relation_metadata: Optional[Dict[str, Any]] = None
 
