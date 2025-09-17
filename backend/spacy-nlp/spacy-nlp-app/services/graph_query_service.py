@@ -12,10 +12,10 @@ from ..models import (
     CentralityResponse,
     CommunityDetectionResponse,
     GraphNode,
-    GraphEdge,
+    GraphRelationship,
     GraphFilterRequest,
     GraphNodesResponse,
-    GraphEdgesResponse,
+    GraphRelationshipsResponse,
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -59,15 +59,15 @@ async def get_all_nodes_logic(
     return GraphNodesResponse(nodes=filtered_nodes)
 
 
-async def get_all_edges_logic(
+async def get_all_relationships_logic(
     neo4j_crud: Neo4jCRUD,
     filters: GraphFilterRequest,
     node_ids: Optional[List[str]] = None,
-) -> GraphEdgesResponse:
+) -> GraphRelationshipsResponse:
     """
-    Retrieves all edges (relationships) from the Neo4j database, with optional filtering by source_document_id, relation_type, or connected node_ids.
+    Retrieves all relationships from the Neo4j database, with optional filtering by source_document_id, relation_type, or connected node_ids.
     """
-    logger.info(f"Executing get_all_edges_logic with filters: {filters}, node_ids: {node_ids}")
+    logger.info(f"Executing get_all_relationships_logic with filters: {filters}, node_ids: {node_ids}")
 
     # Fetch all relationships. This needs a new method in Neo4jCRUD or a direct Cypher query.
     # For now, we'll fetch relationships for each node_id if provided, or all relationships if not.
@@ -88,7 +88,7 @@ async def get_all_edges_logic(
         all_neo4j_relationships = list(unique_relationships)
 
 
-    filtered_edges = []
+    filtered_relationships = []
     for rel in all_neo4j_relationships:
         match = True
         if filters.source_document_id and rel.properties.get("source_document_id") != filters.source_document_id:
@@ -97,8 +97,8 @@ async def get_all_edges_logic(
             match = False
         
         if match:
-            filtered_edges.append(
-                GraphEdge(
+            filtered_relationships.append(
+                GraphRelationship(
                     source_id=rel.source_id,
                     target_id=rel.target_id,
                     type=rel.type,
@@ -110,7 +110,7 @@ async def get_all_edges_logic(
                     },
                 )
             )
-    return GraphEdgesResponse(edges=filtered_edges)
+    return GraphRelationshipsResponse(relationships=filtered_relationships)
 
 
 def query_neighbors_logic(node_id: str, neo4j_crud: Neo4jCRUD) -> NeighborsResponse:

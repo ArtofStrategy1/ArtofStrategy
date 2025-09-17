@@ -35,16 +35,6 @@ class ProcessedToken(BaseModel):
     is_alpha: bool
 
 
-class DependencyRelation(BaseModel):
-    """
-    Model for a dependency relation.
-    """
-
-    token: str
-    dependency: str
-    head: str
-
-
 class ProcessedText(BaseModel):
     """
     Response model for processed text.
@@ -77,9 +67,9 @@ class GraphNode(BaseModel):
     properties: Dict[str, Any] = Field(default_factory=dict)
 
 
-class GraphEdge(BaseModel):
+class GraphRelationship(BaseModel):
     """
-    Model for an edge (relationship) in the knowledge graph, aligned with Neo4j's structure.
+    Model for a relationship in the knowledge graph, aligned with Neo4j's structure.
     """
 
     source_id: str
@@ -94,7 +84,7 @@ class KnowledgeGraph(BaseModel):
     """
 
     nodes: List[GraphNode]
-    relationships: List[GraphEdge]
+    relationships: List[GraphRelationship]
 
 
 class RelationshipTriple(BaseModel):
@@ -224,12 +214,12 @@ class GraphNodesResponse(BaseModel):
     nodes: List[GraphNode]
 
 
-class GraphEdgesResponse(BaseModel):
+class GraphRelationshipsResponse(BaseModel):
     """
-    Response model for retrieving a list of graph edges.
+    Response model for retrieving a list of graph relationships.
     """
 
-    edges: List[GraphEdge]
+    relationships: List[GraphRelationship]
 
 
 class KnowledgeGraphQueryResponse(BaseModel):
@@ -238,7 +228,7 @@ class KnowledgeGraphQueryResponse(BaseModel):
     """
 
     nodes: List[GraphNode]
-    edges: List[GraphEdge]
+    relationships: List[GraphRelationship]
 
 
 class GraphProjectionRequest(BaseModel):
