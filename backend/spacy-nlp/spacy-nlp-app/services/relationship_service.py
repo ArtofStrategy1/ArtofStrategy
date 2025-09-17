@@ -10,62 +10,34 @@ from ..models import (
     ExtractedRelationships,
     KnowledgeGraph,
     GraphNode,
-    GraphEdge,
+    GraphRelationship,
     NamedEntity,
 )
 from ..utils.graph_utils import find_lca
-from ..core.processing import _extract_meaningful_entities # Import the new function
+from ..core.processing import extract_meaningful_entities # Import the new function
 
 logger = logging.getLogger(__name__)
 
+# Constants for relationship types and entity labels
+REL_TYPE_CAUSAL = "CAUSAL"
+REL_TYPE_TEMPORAL = "TEMPORAL"
+REL_TYPE_HIERARCHICAL = "HIERARCHICAL"
+REL_TYPE_LCA_DEPENDENCY = "LCA_DEPENDENCY"
+REL_TYPE_HEAD_DEPENDENCY = "HEAD_DEPENDENCY"
+REL_TYPE_SVO = "SVO"
 
-def resolve_coreferences(doc: spacy.tokens.Doc) -> spacy.tokens.Doc:
-    """
-    Applies coreference resolution to the doc object using fastcoref.
-    It iterates through coreference clusters and updates entity spans
-    to reflect the resolved coreferences.
+ENTITY_LABEL_DEFAULT = "ENTITY"
 
-    Args:
-        doc (spacy.tokens.Doc): The spaCy Doc object potentially containing coreference clusters.
+WEAK_VERBS = {"be", "have", "do", "say", "get", "make", "go", "know", "take", "see", 
+              "come", "think", "look", "want", "give", "use", "find", "tell", "ask", 
+              "work", "seem", "feel", "try", "leave", "call"}
 
-    Returns:
-        spacy.tokens.Doc: The Doc object with coreferences resolved and entity spans updated.
-    """
-    logger.info("Trying to resolve coreferences.")
-    if not hasattr(doc._, "coref_clusters"):
-        logger.warning("fastcoref pipeline component not found in spaCy model.")
-        return doc
+STRONG_ENTITY_LABELS = {
+    "ORG", "PERSON", "GPE", "LOC", "PRODUCT", "EVENT", "WORK_OF_ART", "LAW",
+    "LANGUAGE", "DATE", "TIME", "PERCENT", "MONEY", "QUANTITY", "ORDINAL", "CARDINAL"
+}
 
-    # Create a mapping from coreferenced spans to their main mentions
-    coref_map = {}
-    for cluster in doc._.coref_clusters:
-        # The first mention in the cluster is typically the main mention
-        main_mention_span = cluster[0] # Access the first span in the cluster
-        main_mention_text = main_mention_span.text # Extract text from the span
-
-        for mention_span in cluster:
-            # Only map if it's not the main mention itself
-            if mention_span != main_mention_span:
-                coref_map[mention_span.start] = main_mention_text # Use the start index of the mention span as the key
-
-    # Reconstruct entities with resolved coreferences
-    new_ents = []
-    for ent in doc.ents:
-        if ent.start in coref_map:
-            # Create a new span for the resolved entity
-            new_ents.append(
-                spacy.tokens.Span(doc, ent.start, ent.end, label=ent.label,
-                                  vector=ent.vector, vector_norm=ent.vector_norm,
-                                  text=coref_map[ent.start])
-            )
-        else:
-            new_ents.append(ent)
-    doc.ents = spacy.tokens.Span.set_ents(doc, new_ents)
-    logger.info("Resolved coreferences.")
-    return doc
-
-
-def _get_entity_from_span(span: spacy.tokens.Span, meaningful_entities: List[NamedEntity]) -> Optional[str]:
+def get_entity_from_span(span: spacy.tokens.Span, meaningful_entities: List[NamedEntity]) -> Optional[str]:
     """
     Attempts to find a meaningful entity that matches or is contained within the given spaCy span.
     Prioritizes exact matches, then contained entities. This helps in linking extracted
@@ -94,12 +66,327 @@ def _get_entity_from_span(span: spacy.tokens.Span, meaningful_entities: List[Nam
     return None
 
 
+def is_strong_named_entity(entity: NamedEntity) -> bool:
+    """
+    Checks if an entity's label is considered "strong" for relationship extraction.
+    """
+    return entity.label in STRONG_ENTITY_LABELS
+
+
+def is_valid_entity_pair_in_sentence(
+        ent1: NamedEntity, 
+        ent2: NamedEntity, 
+        sentence_span: spacy.tokens.Span
+) -> bool:
+    """
+    Checks if two entities are distinct and fall within the bounds of a given sentence.
+    """
+    return (
+        ent1.text != ent2.text and
+        sentence_span.start_char <= ent1.start_char < sentence_span.end_char and
+        sentence_span.start_char <= ent2.start_char < sentence_span.end_char
+    )
+
+
+def is_weak_verb(lemma: str) -> bool:
+    """
+    Checks if a given lemma is in the predefined set of weak verbs.
+    """
+    return lemma in WEAK_VERBS
+
+def extract_lca_and_head_relationships(
+        doc: spacy.tokens.Doc, 
+        ent1: NamedEntity, 
+        ent2: NamedEntity, 
+        meaningful_entities: List[NamedEntity]
+) -> List[RelationshipTriple]:
+    """
+    Encapsulate the logic for extracting relationships based on LCA and common head dependencies, including span checks and weak verb filtering
+    """
+    lca_and_head_relationships = []
+    # Get the lowest common ancestor (LCA) of the two entities' root tokens.
+    # The LCA is often a verb or a preposition that defines the relationship.
+    #lca = find_lca(doc[ent1.start_char].root, doc[ent2.start_char].root)
+    ent1_span = doc[ent1.start_char : ent1.end_char]
+    ent2_span = doc[ent2.start_char : ent2.end_char]
+    # Ensure spans are not empty before accessing .root
+    if not ent1_span or not ent2_span: 
+        logger.debug(f"Skipping relationship due to empty span: '{ent1.text}' and '{ent2.text}'")
+        return [] # Skip if either span is empty
+    lca = find_lca(ent1_span.root, ent2_span.root)
+
+    # Filter out semantically weak verbs as relations
+    if lca and lca.lemma_ in WEAK_VERBS:
+        logger.debug(f"Filtered out relationship due to weak LCA verb: '{ent1.text}' - '{lca.lemma_}' - '{ent2.text}'")
+        return []
+
+    # If the LCA is a verb or a preposition, it likely represents the relation.
+    if lca and lca.pos_ in ["VERB", "AUX", "ADP"]:
+        subject_text = ent1.text
+        relation_text = lca.lemma_
+        object_text = ent2.text
+
+        lca_and_head_relationships.append(
+            RelationshipTriple(
+                subject=subject_text,
+                relation=relation_text,
+                object=object_text,
+                relation_type="LCA_DEPENDENCY", # Default type for LCA-based relationships
+                confidence=0.7, # Default confidence
+            )
+        )
+    # Consider relationships where one entity is a child of the other's root,
+    # and the root itself is a verb or preposition.
+    elif ( # Check if entities share a common head that is a verb or preposition
+        ent1_span.root.head == ent2_span.root.head
+        and ent1_span.root.head.pos_ in ["VERB", "AUX", "ADP"]
+    ):
+        if ent1_span.root.head.lemma_ in WEAK_VERBS:
+            logger.debug(f"Filtered out relationship due to weak head verb: \
+                         '{ent1.text}' - '{ent1_span.root.head.lemma_}' - '{ent2.text}'")
+            return
+        subject_text = ent1.text
+        relation_text = ent1_span.root.head.lemma_
+        object_text = ent2.text
+
+        lca_and_head_relationships.append(
+            RelationshipTriple(
+                subject=subject_text,
+                relation=relation_text,
+                object=object_text,
+                relation_type="HEAD_DEPENDENCY", # Default type for Head Dependency relationships
+                confidence=0.6, # Default confidence
+            )
+        )
+    return lca_and_head_relationships
+
+
+def extract_svo_relationships_from_sentence(
+        sent: spacy.tokens.Span,
+        doc: spacy.tokens.Doc,
+        meaningful_entities: List[NamedEntity]
+) -> List[RelationshipTriple]:
+    """
+    Extracts Subject-Verb-Object relationships from a given sentence span,
+    considering direct objects, objects of prepositions, and attributes.
+    It also constructs a more descriptive relation text for prepositional objects.
+    """
+    svo_relationships: List[RelationshipTriple] = []
+
+    for token in sent:
+        # Look for verbs that could be the root of a relationship and are not weak verbs
+        if token.pos_ == "VERB" and not is_weak_verb(token.lemma_):
+            verb = token
+            
+            # Identify subjects (nominal subject, passive nominal subject, clausal subject)
+            subjects = [child for child in verb.children if child.dep_ in ("nsubj", "nsubjpass", "csubj", "csubjpass")]
+            
+            # Identify direct objects, attributes, and objects of predicates
+            objects = [child for child in verb.children if child.dep_ in ("dobj", "attr", "oprd")]
+            
+            # Handle prepositional phrases as objects (e.g., "works at Acme Corp")
+            prepositional_phrases = [child for child in verb.children if child.dep_ == "prep"]
+            for prep in prepositional_phrases:
+                pobj = [child for child in prep.children if child.dep_ == "pobj"]
+                if pobj:
+                    objects.extend(pobj) # Add prepositional objects to the list of objects
+
+            for subject_token in subjects:
+                for object_token in objects:
+                    # Map subject_token and object_token to meaningful entities.
+                    # For multi-word entities, try to get the full noun chunk or entity span.
+                    
+                    subject_span = None
+                    for chunk in sent.noun_chunks:
+                        if subject_token.i >= chunk.start and subject_token.i < chunk.end:
+                            subject_span = chunk
+                            break
+                    if not subject_span:
+                        subject_span = doc[subject_token.i : subject_token.i + 1] # Fallback to single token span
+
+                    object_span = None
+                    for chunk in sent.noun_chunks:
+                        if object_token.i >= chunk.start and object_token.i < chunk.end:
+                            object_span = chunk
+                            break
+                    if not object_span:
+                        object_span = doc[object_token.i : object_token.i + 1] # Fallback to single token span
+
+                    subject_text = get_entity_from_span(subject_span, meaningful_entities)
+                    object_text = get_entity_from_span(object_span, meaningful_entities)
+
+                    if subject_text and object_text:
+                        # Construct the relation text. If it's a prepositional object, include the preposition.
+                        relation_text = verb.lemma_
+                        if object_token.dep_ == "pobj" and object_token.head.pos_ == "ADP":
+                            relation_text = f"{verb.lemma_}_{object_token.head.lemma_}" # e.g., "works_at"
+
+                        svo_relationships.append(
+                            RelationshipTriple(
+                                subject=subject_text,
+                                relation=relation_text,
+                                object=object_text,
+                                relation_type=REL_TYPE_SVO, # Explicitly set relation type to SVO
+                                confidence=0.9, # Assign a higher confidence for direct SVO relationships
+                            )
+                        )
+    return svo_relationships
+
+
+def deduplicate_relationship_triples(relationships: List[RelationshipTriple]) -> List[RelationshipTriple]:
+    """
+    Removes duplicate relationship triples from a list.
+    """
+    unique_relationships = set()
+    deduplicated_relationships: List[RelationshipTriple] = []
+
+    for rel in relationships:
+        # Create a canonical representation for deduplication
+        # Using a tuple of (subject, relation, object, relation_type) for exact duplicates
+        canonical_representation = (
+            rel.subject.lower(),
+            rel.relation.lower(),
+            rel.object.lower(),
+            rel.relation_type.lower() if rel.relation_type else ""
+        )
+        if canonical_representation not in unique_relationships:
+            unique_relationships.add(canonical_representation)
+            deduplicated_relationships.append(rel)
+        else:
+            logger.info(f"Skipping duplicate relationship: ({rel.subject}, {rel.relation}, {rel.object})")
+        
+    return deduplicated_relationships
+
+def filter_relationships_by_confidence(
+        relationships: List[RelationshipTriple], 
+        min_confidence: float
+) -> List[RelationshipTriple]:
+    """
+    Filters a list of relationships based on a minimum confidence score.
+    """
+    return [rel for rel in relationships if rel.confidence >= min_confidence]
+
+
+async def persist_relationship_to_neo4j(
+        neo4j_crud: Neo4jCRUD, 
+        relationship: RelationshipTriple, 
+        persisted_nodes: Dict[str, Node], 
+        source_document_id: Optional[str], 
+        source_sentence_id: Optional[str]
+) -> None:
+    """
+    Handles the creation of nodes and relationships in Neo4j for a single RelationshipTriple.
+    """
+    # Persistence Update: Persist only deduplicated relationships to Neo4j
+    # Get or create subject and object nodes in Neo4j
+    subject_node = await get_or_create_node(
+        neo4j_crud, 
+        relationship.subject, 
+        "ENTITY", # Assuming ENTITY type for now
+        persisted_nodes, 
+        source_document_id, 
+        source_sentence_id
+    ) 
+
+    object_node = await get_or_create_node(
+        neo4j_crud, 
+        relationship.object, 
+        "ENTITY", # Assuming ENTITY type for now
+        persisted_nodes, 
+        source_document_id, 
+        source_sentence_id
+    ) 
+
+    # Prepare properties for Neo4j, flattening relation_metadata
+    neo4j_properties = {
+        "confidence": relationship.confidence,
+        "source_document_id": source_document_id,
+        "source_sentence_id": source_sentence_id,
+    }
+    if relationship.relation_metadata:
+        neo4j_properties.update(relationship.relation_metadata) # Flatten relation_metadata into node properties
+
+    # Create the relationship in Neo4j
+    neo4j_crud.create_relationship(
+        Relationship(
+            source_id=subject_node.id,
+            target_id=object_node.id,
+            type=relationship.relation,
+            properties=neo4j_properties, # Pass the flattened properties
+        )
+    )
+
+def extract_causal_verb_relationship(
+        span: spacy.tokens.Span, 
+        doc: spacy.tokens.Doc, 
+        meaningful_entities: List[NamedEntity]
+) -> tuple[str, str, str]:
+    """Helper to extract subject, object, and relation for CAUSAL_VERB pattern."""
+    subject_span_tokens = [token for token in span if token.dep_ == "nsubj"]
+    object_span_tokens = [token for token in span if token.dep_ == "dobj"]
+    verb_span_tokens = [token for token in span if token.pos_ == "VERB"]
+
+    if subject_span_tokens and object_span_tokens and verb_span_tokens:
+        subject_span_obj = doc[subject_span_tokens.i : subject_span_tokens[-1].i + 1]
+        object_span_obj = doc[object_span_tokens.i : object_span_tokens[-1].i + 1]
+
+        subject_text = get_entity_from_span(subject_span_obj, meaningful_entities)
+        object_text = get_entity_from_span(object_span_obj, meaningful_entities)
+        relation_text = verb_span_tokens.lemma_ if verb_span_tokens else ""
+        return subject_text, object_text, relation_text
+    return "", "", ""
+
+def extract_causal_preposition_relationship(
+        span: spacy.tokens.Span,
+        meaningful_entities: List[NamedEntity]
+) -> tuple[str, str, str]:
+    """Helper to extract subject, object, and relation for CAUSAL_PREPOSITION pattern."""
+    noun_phrases = [chunk for chunk in span.noun_chunks]
+    if len(noun_phrases) >= 2:
+        subject_text = get_entity_from_span(noun_phrases, meaningful_entities)
+        object_text = get_entity_from_span(noun_phrases[-1], meaningful_entities)
+        relation_text = "due to"
+        return subject_text, object_text, relation_text
+    return "", "", ""
+
+def extract_temporal_relationship(
+        span: spacy.tokens.Span, 
+        doc: spacy.tokens.Doc, 
+        meaningful_entities: List[NamedEntity]
+) -> tuple[str, str, str]:
+    """Helper to extract subject, object, and relation for TEMPORAL pattern."""
+    tokens_in_span = [token for token in span if token.pos_ in ["NOUN", "PROPN", "VERB"]]
+    if len(tokens_in_span) >= 2:
+        subject_span_temp = doc[tokens_in_span.i : tokens_in_span[-1].i + 1]
+        object_span_temp = doc[tokens_in_span[-1].i : tokens_in_span[-1].i + 1]
+
+        subject_text = get_entity_from_span(subject_span_temp, meaningful_entities)
+        object_text = get_entity_from_span(object_span_temp, meaningful_entities)
+        
+        relation_text = " ".join([token.text for token in span if token.lower_ in ["before", "after", "during", "when", "while"]])
+        return subject_text, object_text, relation_text
+    return "", "", ""
+
+def extract_hierarchical_relationship(
+        span: spacy.tokens.Span, 
+        meaningful_entities: List[NamedEntity]
+) -> tuple[str, str, str]:
+    """Helper to extract subject, object, and relation for HIERARCHICAL pattern."""
+    noun_phrases = [chunk for chunk in span.noun_chunks]
+    if len(noun_phrases) >= 2:
+        subject_text = get_entity_from_span(noun_phrases, meaningful_entities)
+        object_text = get_entity_from_span(noun_phrases[-1], meaningful_entities)
+        relation_text = "is a type of"
+        return subject_text, object_text, relation_text
+    return "", "", ""
+
+
 async def extract_enhanced_relationships(
-    doc: spacy.tokens.Doc,
-    neo4j_crud: Neo4jCRUD,
-    meaningful_entities: List[NamedEntity], # Pass meaningful entities to use for subject/object resolution
-    source_document_id: Optional[str] = None,
-    source_sentence_id: Optional[str] = None,
+        doc: spacy.tokens.Doc,
+        neo4j_crud: Neo4jCRUD,
+        meaningful_entities: List[NamedEntity], # Pass meaningful entities to use for subject/object resolution
+        source_document_id: Optional[str] = None,
+        source_sentence_id: Optional[str] = None,
 ) -> List[RelationshipTriple]:
     """
     Defines and applies custom spaCy Matcher patterns for enhanced relationship extraction.
@@ -169,63 +456,17 @@ async def extract_enhanced_relationships(
         confidence = 0.8 # Assign a default confidence for enhanced relationships
 
         if rule_id == "CAUSAL_VERB":
-            # Example: "Rain causes floods"
-            # Subject: Rain, Relation: causes, Object: floods
-            subject_span_tokens = [token for token in span if token.dep_ == "nsubj"]
-            object_span_tokens = [token for token in span if token.dep_ == "dobj"]
-            verb_span_tokens = [token for token in span if token.pos_ == "VERB"]
-
-            if subject_span_tokens and object_span_tokens and verb_span_tokens:
-                # Use _get_entity_from_span to ensure meaningful entities are used as subject and object
-                subject_span_obj = doc[subject_span_tokens[0].i : subject_span_tokens[-1].i + 1]
-                object_span_obj = doc[object_span_tokens[0].i : object_span_tokens[-1].i + 1]
-
-                subject_text = _get_entity_from_span(subject_span_obj, meaningful_entities)
-                object_text = _get_entity_from_span(object_span_obj, meaningful_entities)
-                relation_text = verb_span_tokens[0].lemma_ if verb_span_tokens else ""
-                relation_type = "CAUSAL"
-
+            subject_text, object_text, relation_text = extract_causal_verb_relationship(span, doc, meaningful_entities)
+            relation_type = REL_TYPE_CAUSAL
         elif rule_id == "CAUSAL_PREPOSITION":
-            # Example: "Floods due to rain"
-            # Subject: Floods, Relation: due to, Object: rain
-            # This pattern is more complex to extract subject/object directly from dependency.
-            # For simplicity, we'll take the first and last noun phrases and map them to meaningful entities.
-            noun_phrases = [chunk for chunk in span.noun_chunks]
-            if len(noun_phrases) >= 2:
-                # Pass the first noun phrase (which is a Span object) as the subject
-                subject_text = _get_entity_from_span(noun_phrases[0], meaningful_entities)
-                object_text = _get_entity_from_span(noun_phrases[-1], meaningful_entities)
-                relation_text = "due to"
-                relation_type = "CAUSAL"
-
+            subject_text, object_text, relation_text = extract_causal_preposition_relationship(span, meaningful_entities)
+            relation_type = REL_TYPE_CAUSAL
         elif rule_id == "TEMPORAL":
-            # Example: "He ate before he slept"
-            # Subject: He (ate), Relation: before, Object: he (slept)
-            # This requires more sophisticated entity linking. For now,
-            # we'll extract the main verbs/nouns around the temporal connector and map to meaningful entities.
-            tokens_in_span = [token for token in span if token.pos_ in ["NOUN", "PROPN", "VERB"]]
-            if len(tokens_in_span) >= 2:
-                # Attempt to get meaningful entities for the subject and object parts
-                # This is a simplification; a more robust solution would involve better span identification
-                subject_span_temp = doc[tokens_in_span[0].i : tokens_in_span[-1].i + 1]
-                object_span_temp = doc[tokens_in_span[-1].i : tokens_in_span[-1].i + 1]
-
-                subject_text = _get_entity_from_span(subject_span_temp, meaningful_entities)
-                object_text = _get_entity_from_span(object_span_temp, meaningful_entities)
-                
-                relation_text = " ".join([token.text for token in span if token.lower_ in ["before", "after", "during", "when", "while"]])
-                relation_type = "TEMPORAL"
-
+            subject_text, object_text, relation_text = extract_temporal_relationship(span, doc, meaningful_entities)
+            relation_type = REL_TYPE_TEMPORAL
         elif rule_id == "HIERARCHICAL":
-            # Example: "Apple is a type of fruit"
-            # Subject: Apple, Relation: is a type of, Object: fruit
-            noun_phrases = [chunk for chunk in span.noun_chunks]
-            if len(noun_phrases) >= 2:
-                # Pass the first noun phrase (which is a Span object) as the subject
-                subject_text = _get_entity_from_span(noun_phrases[0], meaningful_entities)
-                object_text = _get_entity_from_span(noun_phrases[-1], meaningful_entities)
-                relation_text = "is a type of"
-                relation_type = "HIERARCHICAL"
+            subject_text, object_text, relation_text = extract_hierarchical_relationship(span, meaningful_entities)
+            relation_type = REL_TYPE_HIERARCHICAL
 
         if subject_text and object_text and relation_text:
             relationships.append(
@@ -247,7 +488,7 @@ async def get_or_create_node(
         persisted_nodes: Dict[str, Node],
         source_document_id: Optional[str] = None,
         source_sentence_id: Optional[str] = None,
-        ) -> Node:
+) -> Node:
         """
         Helper function to get an existing node from Neo4j or create a new one if it doesn't exist.
         Caches nodes to prevent redundant database calls within a single processing session.
@@ -307,190 +548,72 @@ async def extract_relationships_logic(
     persisted_nodes: Dict[str, Node] = {}  # Cache for already persisted nodes to avoid duplicates
 
     # Extract meaningful entities once for the entire document to be used for relationship extraction
-    meaningful_entities = _extract_meaningful_entities(doc)
+    meaningful_entities = extract_meaningful_entities(doc)
 
+    logger.info(f"Meaningful Ents: {meaningful_entities}")
     for sent in doc.sents:
-        # Iterate through meaningful entities in the sentence to find relationships between them.
-        # This approach focuses on finding a verb or preposition that connects two entities.
-        for ent1 in meaningful_entities:
-            # Prioritize relationships between Named Entities
-            # if ent1.label not in ["ORG", "PERSON", "GPE", "LOC", "PRODUCT", "EVENT", "WORK_OF_ART", "LAW", "LANGUAGE", "DATE", "TIME", "PERCENT", "MONEY", "QUANTITY", "ORDINAL", "CARDINAL"]:
-            #     continue # Skip if ent1 is not a strong Named Entity type
+        # Extract Subject-Verb-Object relationships from each sentence using the enhanced logic.
+        # This function now handles direct objects, prepositional objects, and attributes.
+        svo_relationships = extract_svo_relationships_from_sentence(sent, doc, meaningful_entities)
+        logger.info(f"SVO Extracted Type: {(svo_relationships)}")
+        # logger.info(f"SVO Extracted Type: {type(svo_relationships)}, \
+        #                 Subject: {svo_relationships.subject}, \
+        #                 Relation: {svo_relationships.relation}, \
+        #                 Object: {svo_relationships.object}")
+        if svo_relationships:
+            # Use extend to add all relationships from the list returned by the SVO function
+            all_extracted_relationships.extend(svo_relationships)
+    # for sent in doc.sents:
+    #     # Iterate through meaningful entities in the sentence to find relationships between them.
+    #     # This approach focuses on finding a verb or preposition that connects two entities.
+    #     for ent1 in meaningful_entities:
+    #         # Prioritize relationships between Named Entities
+    #         if not is_strong_named_entity(ent1):
+    #             continue # Skip if ent1 is not a strong Named Entity type
 
-            for ent2 in meaningful_entities:
-                # Ensure entities are distinct and within the current sentence
-                if ent1.text != ent2.text and \
-                   sent.start_char <= ent1.start_char < sent.end_char and \
-                   sent.start_char <= ent2.start_char < sent.end_char:
-                    try:
-                        # Get the lowest common ancestor (LCA) of the two entities' root tokens.
-                        # The LCA is often a verb or a preposition that defines the relationship.
-                        #lca = find_lca(doc[ent1.start_char].root, doc[ent2.start_char].root)
-                        ent1_span = doc[ent1.start_char : ent1.end_char]
-                        ent2_span = doc[ent2.start_char : ent2.end_char]
-                        # Ensure spans are not empty before accessing .root
-                        if not ent1_span or not ent2_span: 
-                            logger.debug(f"Skipping relationship due to empty span: '{ent1.text}' and '{ent2.text}'")
-                            continue # Skip if either span is empty
-                        lca = find_lca(ent1_span.root, ent2_span.root)
+    #         for ent2 in meaningful_entities:
+    #             # Ensure entities are distinct and within the current sentence
+    #             if not is_valid_entity_pair_in_sentence(ent1, ent2, sent):
+    #                 continue
+    #             all_extracted_relationships.extend(
+    #                 extract_lca_and_head_relationships(doc, ent1, ent2, meaningful_entities)
+    #             )
 
-                        # Filter out semantically weak verbs as relations
-                        if lca and lca.lemma_ in ["be", "have", "do", "say", "get", "make", "go", "know", "take", "see", "come", "think", "look", "want", "give", "use", "find", "tell", "ask", "work", "seem", "feel", "try", "leave", "call"]:
-                            logger.debug(f"Filtered out relationship due to weak LCA verb: '{ent1.text}' - '{lca.lemma_}' - '{ent2.text}'")
-                            continue
+    #     # Retain the original SVO extraction for simpler sentences where entities might not be directly linked.
+    #     # This part now also uses get_entity_from_span to ensure meaningful entities.
+    #     svo_relationships = extract_svo_relationships_from_sentence(sent, doc, meaningful_entities)
+    #     if svo_relationships:
+    #         all_extracted_relationships.append(svo_relationships)
 
-                        # If the LCA is a verb or a preposition, it likely represents the relation.
-                        if lca and lca.pos_ in ["VERB", "AUX", "ADP"]:
-                            subject_text = ent1.text
-                            relation_text = lca.lemma_
-                            object_text = ent2.text
-
-                            all_extracted_relationships.append(
-                                RelationshipTriple(
-                                    subject=subject_text,
-                                    relation=relation_text,
-                                    object=object_text,
-                                    relation_type="LCA_DEPENDENCY", # Default type for LCA-based relationships
-                                    confidence=0.7, # Default confidence
-                                )
-                            )
-                        # Consider relationships where one entity is a child of the other's root,
-                        # and the root itself is a verb or preposition.
-                        elif ( # Check if entities share a common head that is a verb or preposition
-                            ent1_span.root.head == ent2_span.root.head
-                            and ent1_span.root.head.pos_ in ["VERB", "AUX", "ADP"]
-                        ):
-                            if ent1_span.root.head.lemma_ in ["be", "have", "do", "say", "get", "make", "go", "know", "take", "see", "come", "think", "look", "want", "give", "use", "find", "tell", "ask", "work", "seem", "feel", "try", "leave", "call"]:
-                                logger.debug(f"Filtered out relationship due to weak head verb: '{ent1.text}' - '{ent1_span.root.head.lemma_}' - '{ent2.text}'")
-                                continue
-                            subject_text = ent1.text
-                            relation_text = ent1_span.root.head.lemma_
-                            object_text = ent2.text
-
-                            all_extracted_relationships.append(
-                                RelationshipTriple(
-                                    subject=subject_text,
-                                    relation=relation_text,
-                                    object=object_text,
-                                    relation_type="HEAD_DEPENDENCY", # Default type for Head Dependency relationships
-                                    confidence=0.6, # Default confidence
-                                )
-                            )
-                    except Exception as e:
-                        logger.warning(
-                            f"Could not determine relationship between '{ent1.text}' and '{ent2.text}': {e}"
-                            f" (Entities: '{ent1.text}' (label: {ent1.label}), '{ent2.text}' (label: {ent2.label}))"
-                        )
-
-        # Retain the original SVO extraction for simpler sentences where entities might not be directly linked.
-        # This part now also uses _get_entity_from_span to ensure meaningful entities.
-        root = None
-        for token in sent:
-            if token.dep_ == "ROOT":
-                root = token
-                break
-
-        if root:
-            subject_token = None
-            object_token = None
-
-            # Find the nominal subject (nsubj) of the root verb.
-            for child in root.children:
-                if child.dep_ == "nsubj":
-                    subject_token = child
-                    break
-
-            # Find the direct object (dobj) of the root verb.
-            for child in root.children:
-                if child.dep_ == "dobj":
-                    object_token = child
-                    break
-
-            # If both a subject and an object are found, form a relationship triple.
-            if subject_token and object_token:
-                # Map subject_token and object_token to meaningful entities
-                subject_span_obj = doc[subject_token.i : subject_token.i + 1]
-                object_span_obj = doc[object_token.i : object_token.i + 1]
-
-                subject_text = _get_entity_from_span(subject_span_obj, meaningful_entities)
-                object_text = _get_entity_from_span(object_span_obj, meaningful_entities)
-
-                if subject_text and object_text: # Only add if both are meaningful entities
-                    all_extracted_relationships.append(
-                        RelationshipTriple(
-                            subject=subject_text,
-                            relation=root.lemma_,
-                            object=object_text,
-                            relation_type="SVO", # Default type for SVO
-                            confidence=0.5, # Default confidence
-                        )
-                    )
-
-    # Extract enhanced relationships using the custom Matcher patterns
-    enhanced_relationships = await extract_enhanced_relationships(
-        doc, neo4j_crud, meaningful_entities, source_document_id, source_sentence_id
-    )
-    all_extracted_relationships.extend(enhanced_relationships)
+    # # Extract enhanced relationships using the custom Matcher patterns
+    # enhanced_relationships = await extract_enhanced_relationships(
+    #     doc, neo4j_crud, meaningful_entities, source_document_id, source_sentence_id
+    # )
+    # all_extracted_relationships.extend(enhanced_relationships)
 
     # Deduplication Logic: Remove duplicate relationship triples
-    unique_relationships = set()
-    deduplicated_relationships = []
-
-    for rel in all_extracted_relationships:
-        # Create a canonical representation for deduplication
-        # Using a tuple of (subject, relation, object, relation_type) for exact duplicates
-        canonical_representation = (
-            rel.subject.lower(),
-            rel.relation.lower(),
-            rel.object.lower(),
-            rel.relation_type.lower() if rel.relation_type else ""
-        )
-        if canonical_representation not in unique_relationships:
-            unique_relationships.add(canonical_representation)
-            deduplicated_relationships.append(rel)
-        else:
-            logger.info(f"Skipping duplicate relationship: ({rel.subject}, {rel.relation}, {rel.object})")
-
+    deduplicated_relationships = deduplicate_relationship_triples(all_extracted_relationships)
+    for i, rel in enumerate(deduplicated_relationships):
+        logger.info(f"Deduplicated Rel {i} Type: {type(rel)}, \
+                    Subject: {rel.subject}, \
+                    Relation: {rel.relation}, \
+                    Object: {rel.object}")
     # Filter relationships by min_confidence before persistence and graph building
-    filtered_relationships = [rel for rel in deduplicated_relationships if rel.confidence >= min_confidence]
+    filtered_relationships = filter_relationships_by_confidence(deduplicated_relationships, min_confidence)
+    for i, rel in enumerate(filtered_relationships):
+        logger.info(f"Filtered Rel {i} Type: {type(rel)}, \
+                    Subject: {rel.subject}, \
+                    Relation: {rel.relation}, \
+                    Object: {rel.object}")
 
     # Persistence Update: Persist only deduplicated relationships to Neo4j
     for rel in filtered_relationships:
-        # Get or create subject and object nodes in Neo4j
-        subject_node = await get_or_create_node(
-            neo4j_crud, 
-            rel.subject, 
-            "ENTITY", # Assuming ENTITY type for now
-            persisted_nodes, 
-            source_document_id, 
-            source_sentence_id
-        ) 
-        object_node = await get_or_create_node(
-            neo4j_crud, 
-            rel.object, 
-            "ENTITY", # Assuming ENTITY type for now
-            persisted_nodes, 
-            source_document_id, 
-            source_sentence_id
-        ) 
-
-        # Prepare properties for Neo4j, flattening relation_metadata
-        neo4j_properties = {
-            "confidence": rel.confidence,
-            "source_document_id": source_document_id,
-            "source_sentence_id": source_sentence_id,
-        }
-        if rel.relation_metadata:
-            neo4j_properties.update(rel.relation_metadata) # Flatten relation_metadata into node properties
-
-        # Create the relationship in Neo4j
-        neo4j_crud.create_relationship(
-            Relationship(
-                source_id=subject_node.id,
-                target_id=object_node.id,
-                type=rel.relation_type,
-                properties=neo4j_properties, # Pass the flattened properties
-            )
+        logger.info(f"Persisting Rel Type: {type(rel)}, \
+                     Subject: {rel.subject}, \
+                     Relation: {rel.relation}, \
+                     Object: {rel.object}")
+        await persist_relationship_to_neo4j(
+            neo4j_crud, rel, persisted_nodes, source_document_id, source_sentence_id
         )
 
     # Build the in-memory knowledge graph for immediate API return
@@ -509,10 +632,10 @@ def build_knowledge_graph(relationships: List[RelationshipTriple]) -> KnowledgeG
         relationships (List[RelationshipTriple]): A list of extracted relationship triples.
 
     Returns:
-        KnowledgeGraph: A `KnowledgeGraph` object containing `GraphNode`s and `GraphEdge`s.
+        KnowledgeGraph: A `KnowledgeGraph` object containing `GraphNode`s and `GraphRelationship`s.
     """
     nodes_map: Dict[str, GraphNode] = {}
-    api_relationships: List[GraphEdge] = []
+    api_relationships: List[GraphRelationship] = []
 
     for triple in relationships:
         # Create or retrieve subject GraphNode
@@ -523,12 +646,12 @@ def build_knowledge_graph(relationships: List[RelationshipTriple]) -> KnowledgeG
         if triple.object not in nodes_map:
             nodes_map[triple.object] = GraphNode(id=triple.object, label="ENTITY", properties={"name": triple.object})
         
-        # Create relationship (GraphEdge)
+        # Create relationship (GraphRelationship)
         api_relationships.append(
-            GraphEdge(
+            GraphRelationship(
                 source_id=triple.subject,
                 target_id=triple.object,
-                type=triple.relation_type,
+                type=triple.relation,
                 properties={
                     "confidence": triple.confidence,
                     "relation_metadata": triple.relation_metadata,
