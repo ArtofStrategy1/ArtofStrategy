@@ -20,8 +20,9 @@ logger = logging.getLogger(__name__)
 
 # Constants for relationship types and entity labels
 REL_TYPE_CAUSAL = "CAUSAL"
-REL_TYPE_TEMPORAL = "TEMPORAL"
+REL_TYPE_STRUCTURAL = "STRUCTURAL"
 REL_TYPE_HIERARCHICAL = "HIERARCHICAL"
+REL_TYPE_TEMPORAL = "TEMPORAL"
 REL_TYPE_LCA_DEPENDENCY = "LCA_DEPENDENCY"
 REL_TYPE_HEAD_DEPENDENCY = "HEAD_DEPENDENCY"
 REL_TYPE_SVO = "SVO"
@@ -50,6 +51,7 @@ def get_entity_from_span(span: spacy.tokens.Span, meaningful_entities: List[Name
     Returns:
         Optional[str]: The text of the matched meaningful entity, or None if no suitable entity is found.
     """
+    logger.info(f"Span: {type(span)}")
     span_text_lower = span.text.lower()
 
     # Check for exact match
@@ -93,6 +95,45 @@ def is_weak_verb(lemma: str) -> bool:
     Checks if a given lemma is in the predefined set of weak verbs.
     """
     return lemma in WEAK_VERBS
+
+
+def classify_svo_relationship(triple: RelationshipTriple, doc: spacy.tokens.Doc) -> RelationshipTriple:
+    """
+    Classifies a generic SVO relationship into more specific types (CAUSAL, TEMPORAL, HIERARCHICAL, STRUCTURAL)
+    based on the verb and surrounding context.
+    """
+    # Convert relation to lowercase for case-insensitive matching
+    relation_lemma = triple.relation.lower()
+
+    # CAUSAL relationships: Look for verbs indicating cause or effect
+    causal_verbs = {"cause", "lead", "result", "trigger", "effect", "impact", "generate", "create", "drive", "contribute"}
+    if any(cv in relation_lemma for cv in causal_verbs):
+        triple.relation_type = REL_TYPE_CAUSAL
+        triple.confidence = min(1.0, (triple.confidence or 0.5) + 0.1) # Slightly increase confidence
+        return triple
+
+    # TEMPORAL relationships: Look for verbs indicating sequence or timing
+    temporal_verbs = {"precede", "follow", "start", "end", "begin", "conclude", "during", "after", "before"}
+    if any(tv in relation_lemma for tv in temporal_verbs):
+        triple.relation_type = REL_TYPE_TEMPORAL
+        triple.confidence = min(1.0, (triple.confidence or 0.5) + 0.05)
+        return triple
+
+    # HIERARCHICAL relationships: Often involve "is a" or verbs implying inclusion/composition
+    hierarchical_verbs = {"be", "include", "contain", "comprise", "consist", "part_of", "type_of"}
+    if any(hv in relation_lemma for hv in hierarchical_verbs):
+        # More sophisticated checks could involve entity types (e.g., if object is a broader category)
+        triple.relation_type = REL_TYPE_HIERARCHICAL
+        triple.confidence = min(1.0, (triple.confidence or 0.5) + 0.05)
+        return triple
+
+    # STRUCTURAL relationships: Default for many SVOs that describe how entities are connected or interact
+    # This catches relationships like "works_at", "collaborates_with", etc., if not already classified.
+    if triple.relation_type == REL_TYPE_SVO: # Only reclassify if it's still generic SVO
+        triple.relation_type = REL_TYPE_STRUCTURAL
+        triple.confidence = min(1.0, (triple.confidence or 0.5) + 0.02)
+
+    return triple
 
 def extract_lca_and_head_relationships(
         doc: spacy.tokens.Doc, 
@@ -227,15 +268,27 @@ def extract_svo_relationships_from_sentence(
                         if object_token.dep_ == "pobj" and object_token.head.pos_ == "ADP":
                             relation_text = f"{verb.lemma_}_{object_token.head.lemma_}" # e.g., "works_at"
 
-                        svo_relationships.append(
-                            RelationshipTriple(
-                                subject=subject_text,
-                                relation=relation_text,
-                                object=object_text,
-                                relation_type=REL_TYPE_SVO, # Explicitly set relation type to SVO
-                                confidence=0.9, # Assign a higher confidence for direct SVO relationships
-                            )
+                        new_triple = RelationshipTriple(
+                            subject=subject_text,
+                            relation=relation_text,
+                            object=object_text,
+                            relation_type=REL_TYPE_SVO, # Set relation type to SVO.
+                            confidence=0.9  # Assign a higher confidence for direct SVO relationships
                         )
+
+                        # Classify the SVO relationship into a more specific type
+                        classified_triple = classify_svo_relationship(new_triple, doc)
+                        svo_relationships.append(classified_triple)
+
+                        # svo_relationships.append(
+                        #     RelationshipTriple(
+                        #         subject=subject_text,
+                        #         relation=relation_text,
+                        #         object=object_text,
+                        #         relation_type=REL_TYPE_SVO, # Explicitly set relation type to SVO
+                        #         confidence=0.9, # Assign a higher confidence for direct SVO relationships
+                        #     )
+                        # )
     return svo_relationships
 
 
@@ -305,6 +358,7 @@ async def persist_relationship_to_neo4j(
 
     # Prepare properties for Neo4j, flattening relation_metadata
     neo4j_properties = {
+        "relation_type": relationship.relation_type,
         "confidence": relationship.confidence,
         "source_document_id": source_document_id,
         "source_sentence_id": source_sentence_id,
@@ -580,33 +634,26 @@ async def extract_relationships_logic(
             # Use extend to add all relationships from the list returned by the SVO function
             all_extracted_relationships.extend(svo_relationships)
     # for sent in doc.sents:
-    #     # Iterate through meaningful entities in the sentence to find relationships between them.
-    #     # This approach focuses on finding a verb or preposition that connects two entities.
-    #     for ent1 in meaningful_entities:
-    #         # Prioritize relationships between Named Entities
-    #         if not is_strong_named_entity(ent1):
-    #             continue # Skip if ent1 is not a strong Named Entity type
+        # Iterate through meaningful entities in the sentence to find relationships between them.
+        # This approach focuses on finding a verb or preposition that connects two entities.
+        for ent1 in meaningful_entities:
+            # Prioritize relationships between Named Entities
+            if not is_strong_named_entity(ent1):
+                continue # Skip if ent1 is not a strong Named Entity type
 
-    #         for ent2 in meaningful_entities:
-    #             # Ensure entities are distinct and within the current sentence
-    #             if not is_valid_entity_pair_in_sentence(ent1, ent2, sent):
-    #                 continue
-    #             all_extracted_relationships.extend(
-    #                 extract_lca_and_head_relationships(doc, ent1, ent2, meaningful_entities)
-    #             )
+            for ent2 in meaningful_entities:
+                # Ensure entities are distinct and within the current sentence
+                if not is_valid_entity_pair_in_sentence(ent1, ent2, sent):
+                    continue
+                all_extracted_relationships.extend(
+                    extract_lca_and_head_relationships(doc, ent1, ent2, meaningful_entities)
+                )
 
-    #     # Retain the original SVO extraction for simpler sentences where entities 
-    #     # might not be directly linked.
-    #     # This part now also uses get_entity_from_span to ensure meaningful entities.
-    #     svo_relationships = extract_svo_relationships_from_sentence(sent, doc, meaningful_entities)
-    #     if svo_relationships:
-    #         all_extracted_relationships.append(svo_relationships)
-
-    # # Extract enhanced relationships using the custom Matcher patterns
-    # enhanced_relationships = await extract_enhanced_relationships(
-    #     doc, neo4j_crud, meaningful_entities, source_document_id, source_sentence_id
-    # )
-    # all_extracted_relationships.extend(enhanced_relationships)
+    # Extract enhanced relationships using the custom Matcher patterns
+    enhanced_relationships = await extract_enhanced_relationships(
+        doc, neo4j_crud, meaningful_entities, source_document_id, source_sentence_id
+    )
+    all_extracted_relationships.extend(enhanced_relationships)
 
     # Deduplication Logic: Remove duplicate relationship triples
     deduplicated_relationships = deduplicate_relationship_triples(all_extracted_relationships)
