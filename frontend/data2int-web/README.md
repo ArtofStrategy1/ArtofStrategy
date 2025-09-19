@@ -9,3 +9,7 @@
 [Elijah] (08/19):
 
 - Created another HTML page called `index-working-copy.html`, please do not remove this. This will only work with "DONT_USE Supabase_V1" n8n workflow.
+
+[Elijah] (09/19):
+
+- Before the changes are committed here is the change.
