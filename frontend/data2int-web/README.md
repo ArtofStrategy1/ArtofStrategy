@@ -12,4 +12,14 @@
 
 [Elijah] (09/19):
 
+Before changes (v0.01):
+
 - Before the changes are committed here is the change.
+
+After changes (v0.02):
+
+- Created a simpliefied version of the website. It cuts down the amount of code lines from 2000+ to 800+ making for easier readability. Works with schema publicv2 use:
+
+login-user-v3
+create-user-v3
+validate-jwt-v2
