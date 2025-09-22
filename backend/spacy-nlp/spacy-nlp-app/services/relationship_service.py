@@ -1,4 +1,4 @@
-import spacy
+from spacy.tokens import Doc, Span, Token
 from spacy.matcher import Matcher
 from typing import List, Dict, Any, Optional
 import logging
@@ -38,14 +38,14 @@ STRONG_ENTITY_LABELS = {
     "LANGUAGE", "DATE", "TIME", "PERCENT", "MONEY", "QUANTITY", "ORDINAL", "CARDINAL"
 }
 
-def get_entity_from_span(span: spacy.tokens.Span, meaningful_entities: List[NamedEntity]) -> Optional[str]:
+def get_entity_from_span(span: Span, meaningful_entities: List[NamedEntity]) -> Optional[str]:
     """
     Attempts to find a meaningful entity that matches or is contained within the given spaCy span.
     Prioritizes exact matches, then contained entities. This helps in linking extracted
     relationship components (subjects, objects) to the refined list of meaningful entities.
 
     Args:
-        span (spacy.tokens.Span): The spaCy span to check for entity presence.
+        span (.Span): The spaCy span to check for entity presence.
         meaningful_entities (List[NamedEntity]): The pre-extracted list of meaningful entities.
 
     Returns:
@@ -78,7 +78,7 @@ def is_strong_named_entity(entity: NamedEntity) -> bool:
 def is_valid_entity_pair_in_sentence(
         ent1: NamedEntity, 
         ent2: NamedEntity, 
-        sentence_span: spacy.tokens.Span
+        sentence_span: Span
 ) -> bool:
     """
     Checks if two entities are distinct and fall within the bounds of a given sentence.
@@ -97,7 +97,7 @@ def is_weak_verb(lemma: str) -> bool:
     return lemma in WEAK_VERBS
 
 
-def classify_svo_relationship(triple: RelationshipTriple, doc: spacy.tokens.Doc) -> RelationshipTriple:
+def classify_svo_relationship(triple: RelationshipTriple, doc: Doc) -> RelationshipTriple:
     """
     Classifies a generic SVO relationship into more specific types (CAUSAL, TEMPORAL, HIERARCHICAL, STRUCTURAL)
     based on the verb and surrounding context.
@@ -136,7 +136,7 @@ def classify_svo_relationship(triple: RelationshipTriple, doc: spacy.tokens.Doc)
     return triple
 
 def extract_lca_and_head_relationships(
-        doc: spacy.tokens.Doc, 
+        doc: Doc, 
         ent1: NamedEntity, 
         ent2: NamedEntity, 
         meaningful_entities: List[NamedEntity]
@@ -187,7 +187,7 @@ def extract_lca_and_head_relationships(
         if ent1_span.root.head.lemma_ in WEAK_VERBS:
             logger.debug(f"Filtered out relationship due to weak head verb: \
                          '{ent1.text}' - '{ent1_span.root.head.lemma_}' - '{ent2.text}'")
-            return
+            return []
         subject_text = ent1.text
         relation_text = ent1_span.root.head.lemma_
         object_text = ent2.text
@@ -205,8 +205,8 @@ def extract_lca_and_head_relationships(
 
 
 def extract_svo_relationships_from_sentence(
-        sent: spacy.tokens.Span,
-        doc: spacy.tokens.Doc,
+        sent: Span,
+        doc: Doc,
         meaningful_entities: List[NamedEntity]
 ) -> List[RelationshipTriple]:
     """
@@ -378,8 +378,8 @@ async def persist_relationship_to_neo4j(
     )
 
 def extract_causal_verb_relationship(
-        span: spacy.tokens.Span, 
-        doc: spacy.tokens.Doc, 
+        span: Span, 
+        doc: Doc, 
         meaningful_entities: List[NamedEntity]
 ) -> tuple[str, str, str]:
     """Helper to extract subject, object, and relation for CAUSAL_VERB pattern."""
@@ -398,7 +398,7 @@ def extract_causal_verb_relationship(
     return "", "", ""
 
 def extract_causal_preposition_relationship(
-        span: spacy.tokens.Span,
+        span: Span,
         meaningful_entities: List[NamedEntity]
 ) -> tuple[str, str, str]:
     """Helper to extract subject, object, and relation for CAUSAL_PREPOSITION pattern."""
@@ -411,8 +411,8 @@ def extract_causal_preposition_relationship(
     return "", "", ""
 
 def extract_temporal_relationship(
-        span: spacy.tokens.Span, 
-        doc: spacy.tokens.Doc, 
+        span: Span, 
+        doc: Doc, 
         meaningful_entities: List[NamedEntity]
 ) -> tuple[str, str, str]:
     """Helper to extract subject, object, and relation for TEMPORAL pattern."""
@@ -430,7 +430,7 @@ def extract_temporal_relationship(
     return "", "", ""
 
 def extract_hierarchical_relationship(
-        span: spacy.tokens.Span, 
+        span: Span, 
         meaningful_entities: List[NamedEntity]
 ) -> tuple[str, str, str]:
     """Helper to extract subject, object, and relation for HIERARCHICAL pattern."""
@@ -444,7 +444,7 @@ def extract_hierarchical_relationship(
 
 
 async def extract_enhanced_relationships(
-        doc: spacy.tokens.Doc,
+        doc: Doc,
         neo4j_crud: Neo4jCRUD,
         meaningful_entities: List[NamedEntity],
         source_document_id: Optional[str] = None,
@@ -456,7 +456,7 @@ async def extract_enhanced_relationships(
     (e.g., causal, temporal, hierarchical) beyond simple SVO structures.
 
     Args:
-        doc (spacy.tokens.Doc): The spaCy Doc object for the text.
+        doc (Doc): The spaCy Doc object for the text.
         neo4j_crud (Neo4jCRUD): The Neo4j CRUD instance for database operations \
             (though not used directly here).
         meaningful_entities (List[NamedEntity]): A list of pre-extracted meaningful for \

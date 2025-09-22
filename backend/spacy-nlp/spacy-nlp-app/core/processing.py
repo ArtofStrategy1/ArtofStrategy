@@ -1,12 +1,12 @@
 from typing import List, Dict, Any, Optional
 from ..models import ProcessedToken, NamedEntity, ProcessedText
-import spacy
+from spacy.tokens import Doc, Span, Token
 import logging
 
 logger = logging.getLogger(__name__)
 
 
-def extract_meaningful_entities(doc: spacy.tokens.Doc) -> List[NamedEntity]:
+def extract_meaningful_entities(doc: Doc) -> List[NamedEntity]:
     """
     Extracts meaningful entities from a spaCy Doc object, prioritizing Named Entities
     and then significant noun chunks, while filtering out stop words and short tokens.
