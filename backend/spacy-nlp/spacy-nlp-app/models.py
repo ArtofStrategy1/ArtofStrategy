@@ -184,8 +184,8 @@ class CentralityResponse(BaseModel):
     """
 
     degree_centrality: Dict[str, float]
-    betweenness_centrality: Dict[str, float]
-    eigenvector_centrality: Dict[str, float]
+    betweenness_centrality: Optional[Dict[str, float]]
+    eigenvector_centrality: Optional[Dict[str, float]]
 
 
 class CommunityDetectionResponse(BaseModel):
@@ -235,16 +235,12 @@ class GraphProjectionRequest(BaseModel):
     """
     Request model for specifying graph projection parameters for GDS algorithms.
     """
-    node_labels: List[str] = Field(
-        #default=['ENTITY'],
-        description="List of node labels to include in the graph projection."
-    )
-    relationship_types: Dict[str, Dict[str, str]] = Field(
-        #default={'TEMPORAL': {'orientation': 'UNDIRECTED'}},
-        description="Dictionary of relationship types and their properties (e.g., orientation) for the graph projection."
-    )
     graph_name: str = Field(
         #default='knowledge_graph',
         description="Name of the GDS in-memory graph projection."
     )
+    relationship_property_filter: Dict[str, str] = Field(
+        description="Dictionary containing 'key' and 'value' to filter relationships for the graph projection."
+    )
+    
 
