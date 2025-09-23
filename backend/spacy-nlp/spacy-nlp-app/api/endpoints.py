@@ -126,7 +126,7 @@ async def identify_leverage_points(
     )
     
     # Calculate centrality measures using Neo4j GDS
-    centrality_response = await query_centrality_measures_logic(neo4j_crud, 'lev_p', ['ENTITY'], {'TEMPORAL': {'orientation': 'UNDIRECTED'}})
+    centrality_response = await query_centrality_measures_logic(neo4j_crud, 'lev_p', ['ENTITY'], {'*': {'orientation': 'UNDIRECTED'}})
 
     # Identify leverage points based on centrality
     leverage_points_data = await identify_leverage_points_logic(neo4j_crud, centrality_response)
@@ -258,8 +258,7 @@ async def get_centrality(
     return await query_centrality_measures_logic(
         neo4j_crud,
         graph_name=request_data.graph_name,
-        node_labels=request_data.node_labels,
-        relationship_types=request_data.relationship_types
+        relationship_property_filter=request_data.relationship_property_filter
     )
 
 

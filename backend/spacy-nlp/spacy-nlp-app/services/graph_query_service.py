@@ -174,8 +174,7 @@ def query_shortest_path_logic(
 async def query_centrality_measures_logic(
     neo4j_crud: Neo4jCRUD,
     graph_name: str,
-    node_labels: List[str],
-    relationship_types: Dict[str, Dict[str, str]]
+    relationship_property_filter: Dict[str, str]
 ) -> CentralityResponse:
     """
     Calculates various centrality measures for the Neo4j graph using the Graph Data Science (GDS) library.
@@ -184,14 +183,17 @@ async def query_centrality_measures_logic(
     project_gds_graph(
         neo4j_crud=neo4j_crud,
         graph_name=graph_name,
-        node_labels=node_labels,
-        relationship_types=relationship_types
+        relationship_property_filter=relationship_property_filter
     )
 
     parameters = {
             "graphName": graph_name,
     }
 
+    # logger.info(f"Graph Name: {graph_name}")
+    # logger.info(f"Node Labels: {node_labels}")
+    # logger.info(f"Rel Types: {relationship_types}")
+    
     degree_c_query = """
     CALL gds.degree.stream($graphName)
     YIELD nodeId, score
@@ -199,6 +201,8 @@ async def query_centrality_measures_logic(
     """
     degree_results = neo4j_crud._execute_query(degree_c_query, parameters)
     degree_centrality = {record["node_id"]: record["score"] for record in degree_results}
+
+    # logger.info(f"Degree Results: {degree_results}")
 
     betweenness_c_query = """
     CALL gds.betweenness.stream($graphName)
@@ -217,9 +221,11 @@ async def query_centrality_measures_logic(
     eigenvector_centrality = {record["node_id"]: record["score"] for record in eigenvector_results}
 
     return CentralityResponse(
-        degree_centrality=degree_centrality,
-        betweenness_centrality=betweenness_centrality,
-        eigenvector_centrality=eigenvector_centrality,
+        degree_centrality=degree_centrality, 
+        betweenness_centrality=betweenness_centrality, 
+        eigenvector_centrality=None
+        # betweenness_centrality=betweenness_centrality,
+        # eigenvector_centrality=eigenvector_centrality,
     )
 
 
@@ -336,71 +342,113 @@ async def identify_leverage_points_logic(
 
 
 
+
 def project_gds_graph(
     neo4j_crud: Neo4jCRUD,
     graph_name: str,
-    node_labels: List[str],
-    relationship_types: Dict[str, Dict[str, str]]
+    relationship_property_filter: Dict[str, str] # This is now the sole filter for the graph
 ):
     """
     Projects a graph into Neo4j's Graph Data Science (GDS) in-memory graph
-    with configurable node labels and relationship types.
+    using the updated Cypher Projection method (gds.graph.project).
+    The projection is filtered exclusively by a relationship property key.
+    Nodes included are those connected by the filtered relationships.
+    Node labels and relationship types are dynamically derived from the matched graph.
+    Relationship orientation defaults to 'DIRECTED'.
     """
-    # Input validation
-    if not graph_name or not node_labels:
-        raise ValueError("Graph name and node labels are required")
+    if not graph_name:
+        raise ValueError("Graph name is required for GDS projection.")
+    if not relationship_property_filter or not relationship_property_filter.get("key") or not relationship_property_filter.get("value"):
+        raise ValueError("relationship_property_filter with 'key' and 'value' is required for this projection type.")
+
+    prop_key = relationship_property_filter["key"]
+    prop_value = relationship_property_filter["value"]
+
+    # Ensure the property key is valid to prevent Cypher injection
+    if not isinstance(prop_key, str) or not prop_key.isidentifier():
+        raise ValueError(f"Invalid relationship property key: {prop_key}")
     
-    # Validate node labels (basic sanitization)
-    validated_labels = []
-    for label in node_labels:
-        if not isinstance(label, str) or not label.isidentifier():
-            raise ValueError(f"Invalid node label: {label}")
-        validated_labels.append(label)
-    
-    # Validate and construct relationship types
-    validated_rel_types = {}
-    for rel_type, props in relationship_types.items():
-        if not isinstance(rel_type, str) or not rel_type:
-            raise ValueError(f"Invalid relationship type: {rel_type}")
-        
-        if not isinstance(props, dict):
-            raise ValueError(f"Relationship properties must be a dict for {rel_type}")
-        
-        # Validate property values are strings
-        validated_props = {}
-        for key, value in props.items():
-            if not isinstance(key, str) or not isinstance(value, str):
-                raise ValueError(f"Property key and value must be strings: {key}={value}")
-            validated_props[key] = value
-        
-        validated_rel_types[rel_type] = validated_props
+    # --- Construct Node Projection Cypher String ---
+    # This query finds all nodes connected by relationships that match the property filter.
+    # It returns their IDs and labels for the projection.
+    node_projection_cypher = f"""
+    MATCH (a)-[r]->(b)
+    WHERE r.{prop_key} = $relationshipPropertyValue
+    RETURN id(a) AS id, labels(a) AS labels
+    UNION
+    MATCH (a)-[r]->(b)
+    WHERE r.{prop_key} = $relationshipPropertyValue
+    RETURN id(b) AS id, labels(b) AS labels
+    """
+
+    # --- Construct Relationship Projection Cypher String ---
+    # This query finds all relationships that match the property filter.
+    # It returns source, target, type, and all properties for the projection.
+    # Orientation defaults to 'DIRECTED' as no specific orientation rules are provided.
+    relationship_projection_cypher = f"""
+    MATCH (a)-[r]->(b)
+    WHERE r.{prop_key} = $relationshipPropertyValue
+    RETURN
+        id(a) AS source,
+        id(b) AS target,
+        type(r) AS type,
+        properties(r) AS properties,
+        'DIRECTED' AS orientation // Default to directed
+    """
+
+    # Define the configuration for gds.graph.project
+    # This map is passed as the fourth argument to gds.graph.project
+    configuration = {
+        "undirectedRelationshipTypes": [] # Default to empty, can be configured if needed
+    }
+
+    # Parameters for the gds.graph.project call itself.
+    # The relationshipPropertyValue is passed here, making it available to the
+    # node_projection_cypher and relationship_projection_cypher strings.
+    parameters_for_gds_call = {
+        "graphName": graph_name,
+        "nodeProjection": node_projection_cypher,
+        "relationshipProjection": relationship_projection_cypher,
+        "relationshipPropertyValue": prop_value # Parameter for the inner Cypher queries
+    }
 
     try:
-        # Use parameterized query where possible
-        # Note: GDS projection requires literal values, so we still need some string construction
-        # but we validate inputs first
-        project_query = """
-        CALL gds.graph.project($graphName, $nodeLabels, $relationshipTypes)
+        # It's good practice to drop any existing graph projection with the same name
+        # before creating a new one, to ensure a clean state and avoid conflicts.
+        drop_query = f"CALL gds.graph.drop('{graph_name}', false) YIELD graphName;"
+        neo4j_crud._execute_query(drop_query, {})
+        logger.info(f"Attempted to drop existing GDS graph '{graph_name}'.")
+    except Exception as e:
+        # Log a warning if the graph couldn't be dropped (e.g., it didn't exist or was in use)
+        logger.warning(f"Could not drop GDS graph '{graph_name}' (might not exist or be in use): {e}")
+
+    try:
+        # The full projection query using the updated gds.graph.project syntax
+        # Note: The parameters for the inner Cypher queries (like $relationshipPropertyValue)
+        # are passed as part of the overall CALL gds.graph.project parameters.
+        project_cypher_query = """
+        CALL gds.graph.project(
+            $graphName,
+            $nodeProjection,
+            $relationshipProjection,
+        )
+        YIELD graphName AS projectedGraphName, nodeCount, relationshipCount
+        RETURN projectedGraphName, nodeCount, relationshipCount
         """
         
-        parameters = {
-            "graphName": graph_name,
-            "nodeLabels": validated_labels,
-            "relationshipTypes": validated_rel_types
-        }
-        
-        result = neo4j_crud._execute_query(project_query, parameters)
+        result = neo4j_crud._execute_query(project_cypher_query, parameters_for_gds_call)
         
         logger.info(
-            f"GDS graph '{graph_name}' projected successfully with "
-            f"{len(validated_labels)} node labels and "
-            f"{len(validated_rel_types)} relationship types"
+            f"GDS graph '{graph_name}' projected successfully using updated Cypher Projection method."
         )
         
         return result
         
     except Exception as e:
-        logger.error(f"Failed to project GDS graph '{graph_name}': {str(e)}")
+        logger.error(f"Failed to project GDS graph '{graph_name}' using updated Cypher Projection method: {str(e)}")
         raise
+
+
+
 
     
