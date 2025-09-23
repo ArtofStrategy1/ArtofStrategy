@@ -4,7 +4,7 @@ FROM python:3.11-slim-bookworm
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
 	# Define model name as an env var
-    SPACY_MODEL="en_core_web_trf" 
+    SPACY_MODEL="en_core_web_md" 
 
 # Set the working directory in the container
 WORKDIR /app
