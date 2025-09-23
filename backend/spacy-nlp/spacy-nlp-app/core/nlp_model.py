@@ -36,7 +36,7 @@ async def lifespan(app):
         # Define the spaCy model name to be loaded. 'en_core_web_sm' is a
         # small English model that includes tokenization, POS tagging,
         # dependency parsing, and named entity recognition.
-        model_name = "en_core_web_trf" # Using a transformer-based model for better performance and compatibility with spacy-transformers
+        model_name = "en_core_web_md" # Using a transformer-based model for better performance and compatibility with spacy-transformers
         logger.info(f"Attempting to load spaCy model: {model_name}")
         app.state.nlp = spacy.load(model_name)
         app.state.nlp.add_pipe("fastcoref")
