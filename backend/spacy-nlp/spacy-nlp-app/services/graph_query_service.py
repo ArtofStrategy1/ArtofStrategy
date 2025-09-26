@@ -2,6 +2,7 @@ import logging
 from fastapi import HTTPException
 from typing import List, Dict, Optional, Any
 from collections import defaultdict
+from neo4j import Record
 
 from ..database.neo4j_crud import Neo4jCRUD
 from ..database.neo4j_models import Node, Relationship, KnowledgeGraph
@@ -174,7 +175,8 @@ def query_shortest_path_logic(
 async def query_centrality_measures_logic(
     neo4j_crud: Neo4jCRUD,
     graph_name: str,
-    relationship_property_filter: Dict[str, str]
+    relation_type: str
+    # relationship_property_filter: Dict[str, str]
 ) -> CentralityResponse:
     """
     Calculates various centrality measures for the Neo4j graph using the Graph Data Science (GDS) library.
@@ -183,7 +185,7 @@ async def query_centrality_measures_logic(
     project_gds_graph(
         neo4j_crud=neo4j_crud,
         graph_name=graph_name,
-        relationship_property_filter=relationship_property_filter
+        relation_type=relation_type
     )
 
     parameters = {
@@ -222,10 +224,8 @@ async def query_centrality_measures_logic(
 
     return CentralityResponse(
         degree_centrality=degree_centrality, 
-        betweenness_centrality=betweenness_centrality, 
-        eigenvector_centrality=None
-        # betweenness_centrality=betweenness_centrality,
-        # eigenvector_centrality=eigenvector_centrality,
+        betweenness_centrality=betweenness_centrality,
+        eigenvector_centrality=eigenvector_centrality,
     )
 
 
@@ -341,114 +341,63 @@ async def identify_leverage_points_logic(
     return {"leverage_points": top_leverage_points}
 
 
-
-
 def project_gds_graph(
     neo4j_crud: Neo4jCRUD,
     graph_name: str,
-    relationship_property_filter: Dict[str, str] # This is now the sole filter for the graph
-):
+    relation_type: str,
+) -> list[Record]:
     """
     Projects a graph into Neo4j's Graph Data Science (GDS) in-memory graph
-    using the updated Cypher Projection method (gds.graph.project).
-    The projection is filtered exclusively by a relationship property key.
-    Nodes included are those connected by the filtered relationships.
-    Node labels and relationship types are dynamically derived from the matched graph.
-    Relationship orientation defaults to 'DIRECTED'.
+    using a Cypher Projection for relationships with the given relation_type.
+    Nodes and relationships are projected with all their labels and properties.
     """
     if not graph_name:
         raise ValueError("Graph name is required for GDS projection.")
-    if not relationship_property_filter or not relationship_property_filter.get("key") or not relationship_property_filter.get("value"):
-        raise ValueError("relationship_property_filter with 'key' and 'value' is required for this projection type.")
-
-    prop_key = relationship_property_filter["key"]
-    prop_value = relationship_property_filter["value"]
-
-    # Ensure the property key is valid to prevent Cypher injection
-    if not isinstance(prop_key, str) or not prop_key.isidentifier():
-        raise ValueError(f"Invalid relationship property key: {prop_key}")
     
-    # --- Construct Node Projection Cypher String ---
-    # This query finds all nodes connected by relationships that match the property filter.
-    # It returns their IDs and labels for the projection.
-    node_projection_cypher = f"""
-    MATCH (a)-[r]->(b)
-    WHERE r.{prop_key} = $relationshipPropertyValue
-    RETURN id(a) AS id, labels(a) AS labels
-    UNION
-    MATCH (a)-[r]->(b)
-    WHERE r.{prop_key} = $relationshipPropertyValue
-    RETURN id(b) AS id, labels(b) AS labels
-    """
-
-    # --- Construct Relationship Projection Cypher String ---
-    # This query finds all relationships that match the property filter.
-    # It returns source, target, type, and all properties for the projection.
-    # Orientation defaults to 'DIRECTED' as no specific orientation rules are provided.
-    relationship_projection_cypher = f"""
-    MATCH (a)-[r]->(b)
-    WHERE r.{prop_key} = $relationshipPropertyValue
-    RETURN
-        id(a) AS source,
-        id(b) AS target,
-        type(r) AS type,
-        properties(r) AS properties,
-        'DIRECTED' AS orientation // Default to directed
-    """
-
-    # Define the configuration for gds.graph.project
-    # This map is passed as the fourth argument to gds.graph.project
-    configuration = {
-        "undirectedRelationshipTypes": [] # Default to empty, can be configured if needed
-    }
-
-    # Parameters for the gds.graph.project call itself.
-    # The relationshipPropertyValue is passed here, making it available to the
-    # node_projection_cypher and relationship_projection_cypher strings.
-    parameters_for_gds_call = {
-        "graphName": graph_name,
-        "nodeProjection": node_projection_cypher,
-        "relationshipProjection": relationship_projection_cypher,
-        "relationshipPropertyValue": prop_value # Parameter for the inner Cypher queries
-    }
+    if not relation_type:
+        raise ValueError("Relation type is required for GDS projection.")
 
     try:
-        # It's good practice to drop any existing graph projection with the same name
-        # before creating a new one, to ensure a clean state and avoid conflicts.
+        # Drop any existing graph projection with the same name before creating a new one
+        # to ensure a clean state and avoid conflicts.
         drop_query = f"CALL gds.graph.drop('{graph_name}', false) YIELD graphName;"
         neo4j_crud._execute_query(drop_query, {})
-        logger.info(f"Attempted to drop existing GDS graph '{graph_name}'.")
+        logger.info(f"Dropping existing GDS graph '{graph_name}'.")
     except Exception as e:
-        # Log a warning if the graph couldn't be dropped (e.g., it didn't exist or was in use)
         logger.warning(f"Could not drop GDS graph '{graph_name}' (might not exist or be in use): {e}")
 
     try:
-        # The full projection query using the updated gds.graph.project syntax
-        # Note: The parameters for the inner Cypher queries (like $relationshipPropertyValue)
-        # are passed as part of the overall CALL gds.graph.project parameters.
+        # Parameters for the gds.graph.project call
+        parameters = {
+            "graphName": graph_name,
+            "relationType": relation_type
+        }
+        
+        # Projection query using the proper gds.graph.project syntax.
+        # The gds.graph.project function is used as an aggregation function with `WITH`.
         project_cypher_query = """
-        CALL gds.graph.project(
+        MATCH (a)-[r]-(b)
+        WHERE r.relation_type = $relationType
+        WITH gds.graph.project(
             $graphName,
-            $nodeProjection,
-            $relationshipProjection,
-        )
-        YIELD graphName AS projectedGraphName, nodeCount, relationshipCount
-        RETURN projectedGraphName, nodeCount, relationshipCount
+            a,  // sourceNode as Node object
+            b,  // targetNode as Node object
+            {
+                sourceNodeLabels: labels(a),
+                targetNodeLabels: labels(b),
+                relationshipType: type(r)
+            }
+        ) AS g
+        RETURN g.graphName AS projectedGraphName, g.nodeCount AS nodeCount, g.relationshipCount AS relationshipCount
         """
+
+        result = neo4j_crud._execute_query(project_cypher_query, parameters)
         
-        result = neo4j_crud._execute_query(project_cypher_query, parameters_for_gds_call)
-        
-        logger.info(
-            f"GDS graph '{graph_name}' projected successfully using updated Cypher Projection method."
-        )
-        
+        logger.info(f"GDS graph '{graph_name}' projected successfully for CAUSAL relationships \
+                    using gds.graph.project.")
+
         return result
         
     except Exception as e:
-        logger.error(f"Failed to project GDS graph '{graph_name}' using updated Cypher Projection method: {str(e)}")
+        logger.error(f"Failed to project GDS graph '{graph_name}' for relation type '{relation_type}': {str(e)}")
         raise
-
-
-
-
-    

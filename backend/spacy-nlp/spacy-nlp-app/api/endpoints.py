@@ -29,7 +29,7 @@ from ..models import (
     CommunityDetectionResponse,
     GraphFilterRequest,
     GraphNodesResponse,
-    GraphRelationshipsResponse,
+    GraphRelationshipsResponse
 )
 
 from ..api.dependencies import get_nlp_model
@@ -46,7 +46,7 @@ from ..services.graph_query_service import (
     query_community_detection_logic_girvan_newman,
     get_all_nodes_logic,
     get_all_relationships_logic,
-    identify_leverage_points_logic,
+    identify_leverage_points_logic
 )
 
 from ..services.performance_service import run_performance_test
@@ -126,7 +126,10 @@ async def identify_leverage_points(
     )
     
     # Calculate centrality measures using Neo4j GDS
-    centrality_response = await query_centrality_measures_logic(neo4j_crud, 'lev_p', ['ENTITY'], {'*': {'orientation': 'UNDIRECTED'}})
+    centrality_response = await query_centrality_measures_logic(
+        neo4j_crud, 
+        'leverage_points_graph',
+        'STRUCTURAL')
 
     # Identify leverage points based on centrality
     leverage_points_data = await identify_leverage_points_logic(neo4j_crud, centrality_response)
@@ -258,7 +261,8 @@ async def get_centrality(
     return await query_centrality_measures_logic(
         neo4j_crud,
         graph_name=request_data.graph_name,
-        relationship_property_filter=request_data.relationship_property_filter
+        relation_type=request_data.relation_type
+        # relationship_property_filter=request_data.relationship_property_filter
     )
 
 
@@ -273,8 +277,7 @@ async def get_communities(
     return await query_community_detection_logic_louvain(
         neo4j_crud,
         graph_name=request_data.graph_name,
-        node_labels=request_data.node_labels,
-        relationship_types=request_data.relationship_types
+        relation_type=request_data.relation_type
     )
 
 
