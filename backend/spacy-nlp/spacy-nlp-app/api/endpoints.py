@@ -13,10 +13,11 @@ from ..models import (
     RelationshipTriple,
     ExtractedRelationships,
     GraphNode,
-    GraphEdge,
+    GraphRelationship,
     KnowledgeGraphQueryResponse,
     KnowledgeGraph, # This KnowledgeGraph is from models.py
     GraphQueryRequest,
+    GraphProjectionRequest,
     PathQueryRequest,
     NeighborsResponse,
     PathResponse,
@@ -28,7 +29,7 @@ from ..models import (
     CommunityDetectionResponse,
     GraphFilterRequest,
     GraphNodesResponse,
-    GraphEdgesResponse,
+    GraphRelationshipsResponse
 )
 
 from ..api.dependencies import get_nlp_model
@@ -44,8 +45,8 @@ from ..services.graph_query_service import (
     query_community_detection_logic_louvain,
     query_community_detection_logic_girvan_newman,
     get_all_nodes_logic,
-    get_all_edges_logic,
-    identify_leverage_points_logic,
+    get_all_relationships_logic,
+    identify_leverage_points_logic
 )
 
 from ..services.performance_service import run_performance_test
@@ -76,7 +77,7 @@ async def health_check(nlp: Any = Depends(get_nlp_model)):
 
 
 @nlp_router.post("/process_text", response_model=ProcessedText)
-async def process_text(request_data: TextInput, nlp: Any = Depends(get_nlp_model)):
+async def process_text(request_data: TextInput, include_full_nlp_details: bool = False, nlp: Any = Depends(get_nlp_model)):
     """
     Processes input text using the loaded spaCy model to perform fundamental
     Natural Language Processing (NLP) tasks.
@@ -87,7 +88,7 @@ async def process_text(request_data: TextInput, nlp: Any = Depends(get_nlp_model
             status_code=503, detail="SpaCy model not loaded. Service is not ready."
         )
 
-    return process_text_logic(nlp, request_data.text)
+    return process_text_logic(nlp, request_data.text, include_full_nlp_details)
 
 
 @analysis_router.post("/analyze_swot", response_model=SWOTAnalysisResult)
@@ -125,10 +126,13 @@ async def identify_leverage_points(
     )
     
     # Calculate centrality measures using Neo4j GDS
-    centrality_response = query_centrality_measures_logic(neo4j_crud)
+    centrality_response = await query_centrality_measures_logic(
+        neo4j_crud, 
+        'leverage_points_graph',
+        'STRUCTURAL')
 
     # Identify leverage points based on centrality
-    leverage_points_data = identify_leverage_points_logic(neo4j_crud, centrality_response)
+    leverage_points_data = await identify_leverage_points_logic(neo4j_crud, centrality_response)
     
     leverage_points = []
     for node_id, data in leverage_points_data.get("leverage_points", {}).items():
@@ -156,9 +160,9 @@ async def get_full_knowledge_graph(neo4j_crud: Neo4jCRUD = Depends(get_neo4j_cru
         ) for node in db_nodes
     ]
 
-    # Convert database Relationship objects to API GraphEdge objects
-    api_relationships: List[GraphEdge] = [
-        GraphEdge(
+    # Convert database Relationship objects to API GraphRelationship objects
+    api_relationships: List[GraphRelationship] = [
+        GraphRelationship(
             source_id=rel.source_id,
             target_id=rel.target_id,
             type=rel.type,
@@ -174,6 +178,7 @@ async def extract_relationships(
     request_data: TextInput,
     nlp: Any = Depends(get_nlp_model),
     neo4j_crud: Neo4jCRUD = Depends(get_neo4j_crud),
+    min_confidence: float = 0.6, # New optional query parameter
 ):
     """
     Extracts simple subject-verb-object (SVO) relationships from the input text
@@ -184,7 +189,7 @@ async def extract_relationships(
         raise HTTPException(
             status_code=503, detail="SpaCy model not loaded. Service is not ready."
         )
-    return await extract_relationships_logic(nlp, request_data.text, neo4j_crud)
+    return await extract_relationships_logic(nlp, request_data.text, neo4j_crud, min_confidence)
 
 
 @graph_router.post("/query_graph_neighbors", response_model=NeighborsResponse)
@@ -234,31 +239,46 @@ async def get_nodes(
     return await get_all_nodes_logic(neo4j_crud, filters)
 
 
-@graph_router.get("/edges", response_model=GraphEdgesResponse)
-async def get_edges(
+@graph_router.get("/relationships", response_model=GraphRelationshipsResponse)
+async def get_relationships(
     filters: GraphFilterRequest = Depends(), neo4j_crud: Neo4jCRUD = Depends(get_neo4j_crud)
 ):
     """
-    Retrieve all edges or filter by source_document_id and relation_type from Neo4j.
+    Retrieve all relationships or filter by source_document_id and relation_type from Neo4j.
     """
-    # get_all_edges_logic already returns GraphEdgesResponse
-    return await get_all_edges_logic(neo4j_crud, filters)
+    # get_all_relationships_logic already returns GraphRelationshipsResponse
+    return await get_all_relationships_logic(neo4j_crud, filters)
 
 
 @graph_router.post("/centrality", response_model=CentralityResponse)
-async def get_centrality(neo4j_crud: Neo4jCRUD = Depends(get_neo4j_crud)):
+async def get_centrality(
+    request_data: GraphProjectionRequest,
+    neo4j_crud: Neo4jCRUD = Depends(get_neo4j_crud)
+):
     """
-    Calculate centrality measures for nodes using Neo4j.
+    Calculate centrality measures for nodes using Neo4j, with configurable graph projection.
     """
-    return query_centrality_measures_logic(neo4j_crud)
+    return await query_centrality_measures_logic(
+        neo4j_crud,
+        graph_name=request_data.graph_name,
+        relation_type=request_data.relation_type
+        # relationship_property_filter=request_data.relationship_property_filter
+    )
 
 
 @graph_router.post("/communities", response_model=CommunityDetectionResponse)
-async def get_communities(neo4j_crud: Neo4jCRUD = Depends(get_neo4j_crud)):
+async def get_communities(
+    request_data: GraphProjectionRequest,
+    neo4j_crud: Neo4jCRUD = Depends(get_neo4j_crud)
+):
     """
     Detect communities within the graph using Neo4j.
     """
-    return query_community_detection_logic_louvain(neo4j_crud)
+    return await query_community_detection_logic_louvain(
+        neo4j_crud,
+        graph_name=request_data.graph_name,
+        relation_type=request_data.relation_type
+    )
 
 
 @graph_router.post(
@@ -287,23 +307,23 @@ async def query_knowledge_graph_for_rag(
     )
     all_relevant_nodes = nodes_response.nodes
 
-    # Extract node IDs from the relevant nodes to query for edges
+    # Extract node IDs from the relevant nodes to query for relationships
     relevant_node_ids = [node.id for node in all_relevant_nodes]
 
-    # Query for edges related to the identified nodes using the updated logic
-    edges_response = await get_all_edges_logic(
+    # Query for relationships related to the identified nodes using the updated logic
+    relationships_response = await get_all_relationships_logic(
         neo4j_crud, GraphFilterRequest(), node_ids=relevant_node_ids
     )
-    all_relevant_edges = edges_response.edges
+    all_relevant_relationships = relationships_response.relationships
 
     # Remove duplicates (though the database queries should already handle much of this)
     unique_nodes = {node.id: node for node in all_relevant_nodes}.values()
-    unique_edges = {
-        f"{edge.source_id}-{edge.type}-{edge.target_id}": edge for edge in all_relevant_edges
+    unique_relationships = {
+        f"{relationship.source_id}-{relationship.type}-{relationship.target_id}": relationship for relationship in all_relevant_relationships
     }.values()
 
     return KnowledgeGraphQueryResponse(
-        nodes=list(unique_nodes), edges=list(unique_edges)
+        nodes=list(unique_nodes), relationships=list(unique_relationships)
     )
 
 

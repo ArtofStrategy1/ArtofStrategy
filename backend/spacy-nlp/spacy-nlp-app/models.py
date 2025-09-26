@@ -26,22 +26,13 @@ class ProcessedToken(BaseModel):
     Model for a processed token.
     """
 
-    text: str
+    token: str
     lemma: str
     pos: str
     dep: str
+    head: str
     is_stop: bool
     is_alpha: bool
-
-
-class DependencyRelation(BaseModel):
-    """
-    Model for a dependency relation.
-    """
-
-    token: str
-    dependency: str
-    head: str
 
 
 class ProcessedText(BaseModel):
@@ -51,9 +42,8 @@ class ProcessedText(BaseModel):
 
     original_text: str
     entities: List[NamedEntity]
-    tokens: List[ProcessedToken]
+    tokens: Optional[List[ProcessedToken]] = None
     sentences: List[str]
-    dependencies: List[DependencyRelation]
 
 
 class SWOTAnalysisResult(BaseModel):
@@ -77,9 +67,9 @@ class GraphNode(BaseModel):
     properties: Dict[str, Any] = Field(default_factory=dict)
 
 
-class GraphEdge(BaseModel):
+class GraphRelationship(BaseModel):
     """
-    Model for an edge (relationship) in the knowledge graph, aligned with Neo4j's structure.
+    Model for a relationship in the knowledge graph, aligned with Neo4j's structure.
     """
 
     source_id: str
@@ -94,7 +84,7 @@ class KnowledgeGraph(BaseModel):
     """
 
     nodes: List[GraphNode]
-    relationships: List[GraphEdge]
+    relationships: List[GraphRelationship]
 
 
 class RelationshipTriple(BaseModel):
@@ -106,7 +96,7 @@ class RelationshipTriple(BaseModel):
     relation: str
     object: str
     source_document_id: Optional[str] = None
-    relation_type: Optional[str] = None  # e.g., "CAUSAL", "TEMPORAL"
+    relation_type: Optional[str] = None  # e.g., "CAUSAL", "TEMPORAL", etc.
     confidence: Optional[float] = None
     relation_metadata: Optional[Dict[str, Any]] = None
 
@@ -194,8 +184,8 @@ class CentralityResponse(BaseModel):
     """
 
     degree_centrality: Dict[str, float]
-    betweenness_centrality: Dict[str, float]
-    eigenvector_centrality: Dict[str, float]
+    betweenness_centrality: Optional[Dict[str, float]]
+    eigenvector_centrality: Optional[Dict[str, float]]
 
 
 class CommunityDetectionResponse(BaseModel):
@@ -224,12 +214,12 @@ class GraphNodesResponse(BaseModel):
     nodes: List[GraphNode]
 
 
-class GraphEdgesResponse(BaseModel):
+class GraphRelationshipsResponse(BaseModel):
     """
-    Response model for retrieving a list of graph edges.
+    Response model for retrieving a list of graph relationships.
     """
 
-    edges: List[GraphEdge]
+    relationships: List[GraphRelationship]
 
 
 class KnowledgeGraphQueryResponse(BaseModel):
@@ -238,4 +228,20 @@ class KnowledgeGraphQueryResponse(BaseModel):
     """
 
     nodes: List[GraphNode]
-    edges: List[GraphEdge]
+    relationships: List[GraphRelationship]
+
+
+class GraphProjectionRequest(BaseModel):
+    """
+    Request model for specifying graph projection parameters for GDS algorithms.
+    """
+    graph_name: str = Field(
+        #default='knowledge_graph',
+        description="Name of the GDS in-memory graph projection."
+    )
+    relation_type: str = Field(
+        description="Relation type to use for the graph projection."
+    )
+    # relationship_property_filter: Dict[str, str] = Field(
+    #     description="Dictionary containing 'key' and 'value' to filter relationships for the graph projection."
+    # )
