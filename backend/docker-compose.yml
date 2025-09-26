@@ -37,6 +37,9 @@ services:
       - "5678:5678"
     networks:
       - data2int-net
+      - npm_default
+    env_file:
+      - ./.env
     volumes:
       - ./n8n/n8n-data:/home/node/.n8n
     environment:
@@ -124,6 +127,8 @@ services:
     environment:
       - PYTHONUNBUFFERED=1  # Ensures Python output is unbuffered
       - SPACY_MODEL=en_core_web_trf
+    env_file:
+      - ./.env
     volumes:
       - ./spacy-nlp/spacy-nlp-app:/app/spacy-nlp-app
     
