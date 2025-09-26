@@ -239,8 +239,9 @@ class GraphProjectionRequest(BaseModel):
         #default='knowledge_graph',
         description="Name of the GDS in-memory graph projection."
     )
-    relationship_property_filter: Dict[str, str] = Field(
-        description="Dictionary containing 'key' and 'value' to filter relationships for the graph projection."
+    relation_type: str = Field(
+        description="Relation type to use for the graph projection."
     )
-    
-
+    # relationship_property_filter: Dict[str, str] = Field(
+    #     description="Dictionary containing 'key' and 'value' to filter relationships for the graph projection."
+    # )
