@@ -91,7 +91,7 @@ async def persist_relationship_to_neo4j(
     subject_node = await get_or_create_node(
         neo4j_crud, 
         relationship.subject, 
-        "ENTITY", # Assuming ENTITY type for now
+        relationship.subject_label or ENTITY_LABEL_DEFAULT,
         persisted_nodes, 
         source_document_id, 
         source_sentence_id
@@ -100,7 +100,7 @@ async def persist_relationship_to_neo4j(
     object_node = await get_or_create_node(
         neo4j_crud, 
         relationship.object, 
-        "ENTITY", # Assuming ENTITY type for now
+        relationship.object_label or ENTITY_LABEL_DEFAULT,
         persisted_nodes, 
         source_document_id, 
         source_sentence_id
@@ -121,7 +121,9 @@ async def persist_relationship_to_neo4j(
     neo4j_crud.create_relationship(
         Relationship(
             source_id=subject_node.id,
+            source_label=subject_node.label,
             target_id=object_node.id,
+            target_label=object_node.label,
             type=relationship.relation,
             properties=neo4j_properties, # Pass the flattened properties
         )
@@ -157,7 +159,7 @@ def is_weak_verb(lemma: str) -> bool:
     return lemma in WEAK_VERBS
 
 
-def get_entity_from_span(span: Span, meaningful_entities: List[NamedEntity]) -> Optional[str]:
+def get_entity_from_span(span: Span, meaningful_entities: List[NamedEntity]) -> Optional[tuple[str,str]]:
     """
     Attempts to find a meaningful entity that matches or is contained within the given spaCy span.
     Prioritizes exact matches, then contained entities. This helps in linking extracted
@@ -176,15 +178,15 @@ def get_entity_from_span(span: Span, meaningful_entities: List[NamedEntity]) -> 
     # Check for exact match
     for entity in meaningful_entities:
         if entity.text.lower() == span_text_lower:
-            return entity.text
+            return (entity.text, entity.label)
     
     # Check for contained entities (e.g., if span is "the big apple" and "apple" is a meaningful entity)
     for entity in meaningful_entities:
         if (entity.start_char >= span.start_char and entity.end_char <= span.end_char) or \
            (span.start_char >= entity.start_char and span.end_char <= entity.end_char):
-            return entity.text # Return the contained entity, or the containing entity
+            return (entity.text, entity.label) # Return the contained entity, or the containing entity
 
-    return None
+    return "", ""
 
 
 def classify_svo_relationship(triple: RelationshipTriple, doc: Doc) -> RelationshipTriple:
@@ -281,8 +283,11 @@ def extract_svo_relationships_from_sentence(
                         # Fallback to single token span
                         object_span = doc[object_token.i : object_token.i + 1] 
 
-                    subject_text = get_entity_from_span(subject_span, meaningful_entities)
-                    object_text = get_entity_from_span(object_span, meaningful_entities)
+                    subject_data = get_entity_from_span(subject_span, meaningful_entities)
+                    object_data = get_entity_from_span(object_span, meaningful_entities)
+
+                    subject_text, subject_label = subject_data
+                    object_text, object_label = object_data
 
                     if subject_text and object_text:
                         # Construct the relation text. 
@@ -293,8 +298,10 @@ def extract_svo_relationships_from_sentence(
                         
                         new_triple = RelationshipTriple(
                             subject=subject_text,
+                            subject_label=subject_label,
                             relation=relation_text,
                             object=object_text,
+                            object_label=object_label,
                             relation_type=REL_TYPE_SVO, # Set relation type to SVO.
                             confidence=0.9  # Assign a higher confidence for direct SVO relationships
                         )
@@ -338,14 +345,18 @@ def extract_lca_and_head_relationships(
     # If the LCA is a verb or a preposition, it likely represents the relation.
     if lca and lca.pos_ in ["VERB", "AUX", "ADP"]:
         subject_text = ent1.text
+        subject_label = ent1.label
         relation_text = lca.lemma_
         object_text = ent2.text
+        object_label = ent2.label
 
         lca_and_head_relationships.append(
             RelationshipTriple(
                 subject=subject_text,
+                subject_label=subject_label,
                 relation=relation_text,
                 object=object_text,
+                object_label=object_label,
                 relation_type="LCA_DEPENDENCY", # Default type for LCA-based relationships
                 confidence=0.7, # Default confidence
             )
@@ -363,14 +374,18 @@ def extract_lca_and_head_relationships(
             return []
         
         subject_text = ent1.text
+        subject_label = ent1.label
         relation_text = ent1_span.root.head.lemma_
         object_text = ent2.text
+        object_label = ent2.label
 
         lca_and_head_relationships.append(
             RelationshipTriple(
                 subject=subject_text,
+                subject_label=subject_label,
                 relation=relation_text,
                 object=object_text,
+                object_label=object_label,
                 relation_type="HEAD_DEPENDENCY", # Default type for Head Dependency relationships
                 confidence=0.6, # Default confidence
             )
@@ -383,7 +398,7 @@ def extract_causal_verb_relationship(
         span: Span, 
         doc: Doc, 
         meaningful_entities: List[NamedEntity]
-) -> tuple[str, str, str]:
+) -> tuple[str, str, str, str, str]:
     """Helper to extract subject, object, and relation for CAUSAL_VERB pattern."""
     subject_span_tokens = [token for token in span if token.dep_ == "nsubj"]
     object_span_tokens = [token for token in span if token.dep_ == "dobj"]
@@ -394,37 +409,41 @@ def extract_causal_verb_relationship(
         subject_span_obj = doc[subject_span_tokens[0].i : subject_span_tokens[-1].i + 1]
         object_span_obj = doc[object_span_tokens[0].i : object_span_tokens[-1].i + 1]
 
-        subject_text = get_entity_from_span(subject_span_obj, meaningful_entities)
-        object_text = get_entity_from_span(object_span_obj, meaningful_entities)
+        subject_data = get_entity_from_span(subject_span_obj, meaningful_entities)
+        object_data = get_entity_from_span(object_span_obj, meaningful_entities)
+        subject_text, subject_label = subject_data
+        object_text, object_label = object_data
         # Access the lemma of the first verb token in the list
         relation_text = verb_span_tokens[0].lemma_ if verb_span_tokens else ""
-        return subject_text, object_text, relation_text
+        return subject_text, subject_label, object_text, object_label, relation_text
     
-    return "", "", ""
+    return "", "", "", "", ""
 
 
 def extract_causal_preposition_relationship(
         span: Span,
         meaningful_entities: List[NamedEntity]
-) -> tuple[str, str, str]:
+) -> tuple[str, str, str, str, str]:
     """Helper to extract subject, object, and relation for CAUSAL_PREPOSITION pattern."""
     noun_phrases = [chunk for chunk in span.noun_chunks]
     if len(noun_phrases) >= 2:
         # Take the first noun phrase as subject
-        subject_text = get_entity_from_span(noun_phrases[0], meaningful_entities)
+        subject_data = get_entity_from_span(noun_phrases[0], meaningful_entities)
         # Take the last noun phrase as object
-        object_text = get_entity_from_span(noun_phrases[-1], meaningful_entities)
+        object_data = get_entity_from_span(noun_phrases[-1], meaningful_entities)
+        subject_text, subject_label = subject_data
+        object_text, object_label = object_data
         relation_text = "due to"
-        return subject_text, object_text, relation_text
+        return subject_text, subject_label, object_text, object_label, relation_text
     
-    return "", "", ""
+    return "", "", "", "", ""
 
 
 def extract_temporal_relationship(
         span: Span, 
         doc: Doc, 
         meaningful_entities: List[NamedEntity]
-) -> tuple[str, str, str]:
+) -> tuple[str, str, str, str, str]:
     """Helper to extract subject, object, and relation for TEMPORAL pattern."""
     # Find the temporal connector token within the matched span
     temporal_connector_token = None
@@ -439,31 +458,35 @@ def extract_temporal_relationship(
         # The object is the part of the span after the connector.
         object_span_temp = doc[temporal_connector_token.i + 1 : span.end]
 
-        subject_text = get_entity_from_span(subject_span_temp, meaningful_entities)
-        object_text = get_entity_from_span(object_span_temp, meaningful_entities)
+        subject_data = get_entity_from_span(subject_span_temp, meaningful_entities)
+        object_data = get_entity_from_span(object_span_temp, meaningful_entities)
+        subject_text, subject_label = subject_data
+        object_text, object_label = object_data
         relation_text = temporal_connector_token.text.lower()
 
         if subject_text and object_text and relation_text:
-            return subject_text, object_text, relation_text
+            return subject_text, subject_label, object_text, object_label, relation_text
         
-    return "", "", ""
+    return "", "", "", "", ""
 
 
 def extract_hierarchical_relationship(
         span: Span, 
         meaningful_entities: List[NamedEntity]
-) -> tuple[str, str, str]:
+) -> tuple[str, str, str, str, str]:
     """Helper to extract subject, object, and relation for HIERARCHICAL pattern."""
     noun_phrases = [chunk for chunk in span.noun_chunks]
     if len(noun_phrases) >= 2:
         # Take the first noun phrase as the subject.
-        subject_text = get_entity_from_span(noun_phrases[0], meaningful_entities)
+        subject_data = get_entity_from_span(noun_phrases[0], meaningful_entities)
         # Take the last noun phrase as the object.
-        object_text = get_entity_from_span(noun_phrases[-1], meaningful_entities)
+        object_data = get_entity_from_span(noun_phrases[-1], meaningful_entities)
+        subject_text, subject_label = subject_data
+        object_text, object_label = object_data
         relation_text = "is a type of"
-        return subject_text, object_text, relation_text
+        return subject_text, subject_label, object_text, object_label, relation_text
     
-    return "", "", ""
+    return "", "", "", "", ""
 
 
 async def extract_enhanced_relationships(
@@ -539,25 +562,27 @@ async def extract_enhanced_relationships(
         span = doc[start:end]
         rule_id = doc.vocab.strings[match_id]
         subject_text = ""
+        subject_label = ""
         object_text = ""
+        object_label = ""
         relation_text = ""
         relation_type = ""
         confidence = 0.8 # Assign a default confidence for enhanced relationships
 
         if rule_id == "CAUSAL_VERB":
-            subject_text, object_text, relation_text = extract_causal_verb_relationship(
+            subject_text, subject_label, object_text, object_label, relation_text = extract_causal_verb_relationship(
                 span, doc, meaningful_entities)
             relation_type = REL_TYPE_CAUSAL
         elif rule_id == "CAUSAL_PREPOSITION":
-            subject_text, object_text, relation_text = extract_causal_preposition_relationship(
+            subject_text, subject_label, object_text, object_label, relation_text = extract_causal_preposition_relationship(
                 span, meaningful_entities)
             relation_type = REL_TYPE_CAUSAL
         elif rule_id == "TEMPORAL":
-            subject_text, object_text, relation_text = extract_temporal_relationship(
+            subject_text, subject_label, object_text, object_label, relation_text = extract_temporal_relationship(
                 span, doc, meaningful_entities)
             relation_type = REL_TYPE_TEMPORAL
         elif rule_id == "HIERARCHICAL":
-            subject_text, object_text, relation_text = extract_hierarchical_relationship(
+            subject_text, subject_label, object_text, object_label, relation_text = extract_hierarchical_relationship(
                 span, meaningful_entities)
             relation_type = REL_TYPE_HIERARCHICAL
 
@@ -565,8 +590,10 @@ async def extract_enhanced_relationships(
             relationships.append(
                 RelationshipTriple(
                     subject=subject_text,
+                    subject_label=subject_label,
                     relation=relation_text,
                     object=object_text,
+                    object_label=object_label,
                     relation_type=relation_type,
                     confidence=confidence,
                     relation_metadata={"pattern_id": rule_id}
@@ -729,13 +756,17 @@ def build_knowledge_graph(relationships: List[RelationshipTriple]) -> KnowledgeG
         # Create or retrieve subject GraphNode
         if triple.subject not in nodes_map:
             nodes_map[triple.subject] = GraphNode(
-                id=triple.subject, label="ENTITY", properties={"name": triple.subject}
+                id=triple.subject, 
+                label=triple.subject_label or ENTITY_LABEL_DEFAULT, 
+                properties={"name": triple.subject}
             )
         
         # Create or retrieve object GraphNode
         if triple.object not in nodes_map:
             nodes_map[triple.object] = GraphNode(
-                id=triple.object, label="ENTITY", properties={"name": triple.object}
+                id=triple.object, 
+                label=triple.object_label or ENTITY_LABEL_DEFAULT, 
+                properties={"name": triple.object}
             )
         
         # Create relationship (GraphRelationship)
