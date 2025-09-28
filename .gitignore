@@ -6,12 +6,14 @@
 ._*
 
 *.pass.txt
-
+*-matt*
 open-webui-data
 ollama-data
 n8n-data
 searxng-data
 mongodb-data
+neo4j/
+
 utility/
 .roo
 .rooignore

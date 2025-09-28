@@ -1,8 +1,11 @@
 fastapi[standard]==0.116.1		# FastAPI library for API/HTTP Endpoint Operations.
 uvicorn[standard]==0.35.0 		# Uvicorn library for the ASGI server, [standard] includes uvloop for performance
 python-dotenv					# dotenv library for loading Environment Variables.
-spacy==3.8.7     				# spaCy python library for NLP operations.
+spacy[transformers]==3.8.7     	# spaCy python library for NLP operations.
+#torch==2.8.0					# Pytorch for Machine Learning tasks.
 pydantic==2.11.7 				# FastAPI's dependency for data validation/serialization
-transformers==4.42.1			# Transoformers library for NLP operations.
-sentence-transformers==2.7.0 	# Sentence Transformers library for NLP operations.
-networkx						# NetworkX Python library for Knowledge Graph operations.
+#transformers					# Transoformers library for NLP operations.
+#sentence-transformers			# Sentence Transformers library for NLP operations.
+neo4j==5.28.2					# Neo4j Python driver for Knowledge Graph operations.
+fastcoref		                # Fast Coreference Resolution for spaCy.
+#spacy-transformers				# spaCy Transformer integration.
