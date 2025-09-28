@@ -4,14 +4,20 @@ FROM python:3.11-slim-bookworm
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
 	# Define model name as an env var
-    SPACY_MODEL="en_core_web_sm" 
+    SPACY_MODEL="en_core_web_md" 
 
 # Set the working directory in the container
 WORKDIR /app
 
+# Install build dependencies that aren't included in Docker base image.
+RUN apt-get update && apt-get install -y build-essential
+
 # Copy the requirements file and install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Download the spaCy model.
+RUN python -m spacy download ${SPACY_MODEL}
 
 # Copy application code
 COPY ./spacy-nlp-app/ /app/spacy-nlp-app

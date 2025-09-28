@@ -37,6 +37,9 @@ services:
       - "5678:5678"
     networks:
       - data2int-net
+      - npm_default
+    env_file:
+      - ./.env
     volumes:
       - ./n8n/n8n-data:/home/node/.n8n
     environment:
@@ -123,10 +126,35 @@ services:
       - npm_default   # Connect to Nginx Proxy Manager network
     environment:
       - PYTHONUNBUFFERED=1  # Ensures Python output is unbuffered
-      - SPACY_MODEL=en_core_web_sm
+      - SPACY_MODEL=en_core_web_trf
+    env_file:
+      - ./.env
     volumes:
       - ./spacy-nlp/spacy-nlp-app:/app/spacy-nlp-app
     
+  neo4j:
+    image: neo4j:community-bullseye
+    container_name: neo4j
+    ports:
+      - "7474:7474" # Neo4j Browser and HTTP API
+      - "7687:7687" # Bolt protocol for drivers
+    networks:
+      - data2int-net
+    volumes:
+      - ./neo4j/data:/data # Persistent data storage
+      - ./neo4j/logs:/logs # Logs
+      - ./neo4j/conf:/conf # Configuration files
+      - ./neo4j/plugins:/plugins # Plugins
+      - ./neo4j/import:/import # Import directory for loading data
+    environment:
+      - NEO4J_AUTH=${NEO4J_AUTH}
+      - NEO4J_apoc_export_file_enabled=true
+      - NEO4J_apoc_import_file_enabled=true
+      - NEO4J_apoc_import_file_use__neo4j__config=true
+      - NEO4J_PLUGINS=["apoc", "graph-data-science"]
+    env_file:
+      - ./.env
+    restart: always
 
 networks:
   default:

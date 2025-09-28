@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
 
 
@@ -26,22 +26,13 @@ class ProcessedToken(BaseModel):
     Model for a processed token.
     """
 
-    text: str
+    token: str
     lemma: str
     pos: str
     dep: str
+    head: str
     is_stop: bool
     is_alpha: bool
-
-
-class DependencyRelation(BaseModel):
-    """
-    Model for a dependency relation.
-    """
-
-    token: str
-    dependency: str
-    head: str
 
 
 class ProcessedText(BaseModel):
@@ -51,9 +42,8 @@ class ProcessedText(BaseModel):
 
     original_text: str
     entities: List[NamedEntity]
-    tokens: List[ProcessedToken]
+    tokens: Optional[List[ProcessedToken]] = None
     sentences: List[str]
-    dependencies: List[DependencyRelation]
 
 
 class SWOTAnalysisResult(BaseModel):
@@ -69,31 +59,32 @@ class SWOTAnalysisResult(BaseModel):
 
 class GraphNode(BaseModel):
     """
-    Model for a node in the knowledge graph.
+    Model for a node in the knowledge graph, aligned with Neo4j's structure.
     """
 
     id: str
-    label: Optional[str] = None
-    type: Optional[str] = None
-
-
-class GraphEdge(BaseModel):
-    """
-    Model for an edge in the knowledge graph.
-    """
-
-    source: str
-    target: str
     label: str
+    properties: Dict[str, Any] = Field(default_factory=dict)
+
+
+class GraphRelationship(BaseModel):
+    """
+    Model for a relationship in the knowledge graph, aligned with Neo4j's structure.
+    """
+
+    source_id: str
+    target_id: str
+    type: str
+    properties: Dict[str, Any] = Field(default_factory=dict)
 
 
 class KnowledgeGraph(BaseModel):
     """
-    Model for a knowledge graph, containing nodes and edges.
+    Model for a knowledge graph, containing nodes and relationships, aligned with Neo4j's structure.
     """
 
     nodes: List[GraphNode]
-    edges: List[GraphEdge]
+    relationships: List[GraphRelationship]
 
 
 class RelationshipTriple(BaseModel):
@@ -104,6 +95,10 @@ class RelationshipTriple(BaseModel):
     subject: str
     relation: str
     object: str
+    source_document_id: Optional[str] = None
+    relation_type: Optional[str] = None  # e.g., "CAUSAL", "TEMPORAL", etc.
+    confidence: Optional[float] = None
+    relation_metadata: Optional[Dict[str, Any]] = None
 
 
 class ExtractedRelationships(BaseModel):
@@ -181,3 +176,72 @@ class LeveragePointsResponse(BaseModel):
     """
 
     leverage_points: List[LeveragePoint]
+
+
+class CentralityResponse(BaseModel):
+    """
+    Response model for centrality calculations.
+    """
+
+    degree_centrality: Dict[str, float]
+    betweenness_centrality: Optional[Dict[str, float]]
+    eigenvector_centrality: Optional[Dict[str, float]]
+
+
+class CommunityDetectionResponse(BaseModel):
+    """
+    Response model for community detection.
+    """
+
+    communities: List[List[str]]
+
+
+class GraphFilterRequest(BaseModel):
+    """
+    Request model for filtering graph data.
+    """
+
+    source_document_id: Optional[str] = None
+    node_type: Optional[str] = None
+    relation_type: Optional[str] = None
+
+
+class GraphNodesResponse(BaseModel):
+    """
+    Response model for retrieving a list of graph nodes.
+    """
+
+    nodes: List[GraphNode]
+
+
+class GraphRelationshipsResponse(BaseModel):
+    """
+    Response model for retrieving a list of graph relationships.
+    """
+
+    relationships: List[GraphRelationship]
+
+
+class KnowledgeGraphQueryResponse(BaseModel):
+    """
+    Response model for querying the knowledge graph based on a text query.
+    """
+
+    nodes: List[GraphNode]
+    relationships: List[GraphRelationship]
+
+
+class GraphProjectionRequest(BaseModel):
+    """
+    Request model for specifying graph projection parameters for GDS algorithms.
+    """
+    graph_name: str = Field(
+        #default='knowledge_graph',
+        description="Name of the GDS in-memory graph projection."
+    )
+    relation_type: str = Field(
+        description="Relation type to use for the graph projection."
+    )
+    # relationship_property_filter: Dict[str, str] = Field(
+    #     description="Dictionary containing 'key' and 'value' to filter relationships for the graph projection."
+    # )
