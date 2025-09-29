@@ -1814,7 +1814,7 @@ For each identified segment, provide:
 
                     try {
                         // Send to n8n with framework included
-                        const response = await fetch('https://n8n.data2int.com/webhook/analysis-s', {
+                        const response = await fetch('https://n8n.data2int.com/webhook/analysis-ev2', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -2030,7 +2030,7 @@ For each identified segment, provide:
 
                 try {
                     // Create user via your Edge Function with separated names
-                    const { data: fnData, error: fnError } = await supabase.functions.invoke('create-user-v2', {
+                    const { data: fnData, error: fnError } = await supabase.functions.invoke('create-user-v3', {
                         body: {
                             email,
                             password,
@@ -2401,7 +2401,7 @@ For each identified segment, provide:
 		// Function to fetch data from your backend
             async function fetchGraphData() {
                 try {
-                    const response = await fetch('https://matt-nlp.data2int.com/graph/knowledge-graph'); 
+                    const response = await fetch('https://nlp.data2int.com/graph/knowledge-graph'); 
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
