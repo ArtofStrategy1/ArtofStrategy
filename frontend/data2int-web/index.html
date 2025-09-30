@@ -18,13 +18,32 @@
     <!-- Cytoscape.js for Graph Visualization -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.min.js"></script>
     <style>
+        /* --- THEME COLORS (CSS VARIABLES) --- */
+        :root, [data-theme="celestial"] { --grad-1: #C33764; --grad-2: #1D2671; --primary: #8E2DE2; --primary-hover: #4A00E0; --accent: #C33764; --edge-color: #4A00E0; --node-color: #C33764; }
+        [data-theme="ocean-blue"] { --grad-1: #00c6ff; --grad-2: #0072ff; --primary: #0072ff; --primary-hover: #0052D4; --accent: #00c6ff; --edge-color: #0072ff; --node-color: #00c6ff; }
+        [data-theme="sanguine"] { --grad-1: #d4145a; --grad-2: #fbb03b; --primary: #d4145a; --primary-hover: #b3124c; --accent: #fbb03b; --edge-color: #d4145a; --node-color: #fbb03b; }
+        [data-theme="quepal"] { --grad-1: #11998e; --grad-2: #38ef7d; --primary: #11998e; --primary-hover: #0d7a71; --accent: #38ef7d; --edge-color: #11998e; --node-color: #38ef7d; }
+        [data-theme="blood-mary"] { --grad-1: #ff512f; --grad-2: #dd2476; --primary: #dd2476; --primary-hover: #c21865; --accent: #ff512f; --edge-color: #dd2476; --node-color: #ff512f; }
+        [data-theme="cactus"] { --grad-1: #3C3B3F; --grad-2: #605C3C; --primary: #556270; --primary-hover: #4ECDC4; --accent: #4ECDC4; --edge-color: #556270; --node-color: #4ECDC4; }
+        [data-theme="antarctica"] { --grad-1: #74ebd5; --grad-2: #acb6e5; --primary: #74ebd5; --primary-hover: #52d1b9; --accent: #acb6e5; --edge-color: #74ebd5; --node-color: #acb6e5; }
+        [data-theme="mountain-rock"] { --grad-1: #868f96; --grad-2: #596164; --primary: #596164; --primary-hover: #404547; --accent: #868f96; --edge-color: #596164; --node-color: #868f96; }
+        [data-theme="clean-mirror"] { --grad-1: #9796f0; --grad-2: #fbc7d4; --primary: #9796f0; --primary-hover: #7b79d8; --accent: #fbc7d4; --edge-color: #9796f0; --node-color: #fbc7d4; }
+        [data-theme="orbit"] { --grad-1: #0f2027; --grad-2: #203a43; --primary: #2c5364; --primary-hover: #1a3a47; --accent: #203a43; --edge-color: #2c5364; --node-color: #203a43; }
+        [data-theme="toxic"] { --grad-1: #333333; --grad-2: #dd1818; --primary: #dd1818; --primary-hover: #b31212; --accent: #dd1818; --edge-color: #dd1818; --node-color: #f2a6a6; }
+        [data-theme="exotic"] { --grad-1: #6a3093; --grad-2: #a044ff; --primary: #6a3093; --primary-hover: #532475; --accent: #a044ff; --edge-color: #6a3093; --node-color: #a044ff; }
+        [data-theme="eternal-constance"] { --grad-1: #09203f; --grad-2: #537895; --primary: #2b506e; --primary-hover: #09203f; --accent: #537895; --edge-color: #2b506e; --node-color: #537895; }
+        [data-theme="plum-plate"] { --grad-1: #667eea; --grad-2: #764ba2; --primary: #667eea; --primary-hover: #5265d6; --accent: #764ba2; --edge-color: #667eea; --node-color: #764ba2; }
+        [data-theme="winter-neva"] { --grad-1: #a1c4fd; --grad-2: #c2e9fb; --primary: #a1c4fd; --primary-hover: #83b2fb; --accent: #c2e9fb; --edge-color: #a1c4fd; --node-color: #c2e9fb; }
+        [data-theme="everlasting-sky"] { --grad-1: #fdfcfb; --grad-2: #e2d1c3; --primary: #c5b5a8; --primary-hover: #a18e7e; --accent: #fdfcfb; --edge-color: #c5b5a8; --node-color: #fdfcfb; }
+
+
         /* --- Base & Animated Background --- */
         html, body {
             min-height: 100%;
         }
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(-45deg, #667eea, #764ba2, #23a6d5, #23d5ab);
+            background: linear-gradient(-45deg, var(--grad-1), var(--grad-2));
             background-size: 400% 400%;
             animation: gradientBG 18s ease infinite;
             color: #f9fafb;
@@ -32,6 +51,10 @@
             display: flex;
             flex-direction: column;
         }
+        body.animation-paused {
+            animation-play-state: paused;
+        }
+
 
         .main-content {
             flex-grow: 1;
@@ -67,7 +90,7 @@
         #examplesPage.active,
         #myProjects.active,
         #adminDashboard.active,
-        #frameworks.active,
+        #frameworksPage.active,
         #about.active,
         #knowledgeGraph.active,
         #termsOfService.active,
@@ -110,7 +133,6 @@
             border-radius: 1rem;
             transition: all .3s ease;
             text-align: center;
-            /* Centered text within feature cards */
         }
 
         .feature-card:hover {
@@ -158,12 +180,12 @@
         }
 
         .btn-primary {
-            background: #4f46e5;
+            background: var(--primary);
             color: #fff;
         }
 
         .btn-primary:hover {
-            background: #4338ca;
+            background: var(--primary-hover);
         }
 
         .btn-secondary {
@@ -214,8 +236,8 @@
         .input-field:focus {
             outline: none;
             background: rgba(255, 255, 255, 0.2);
-            border-color: #a78bfa;
-            box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2);
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
         }
 
         .error-message {
@@ -246,6 +268,11 @@
             border-top-color: transparent;
             animation: spin 1s linear infinite;
         }
+        .light-theme .loading-spinner {
+             border: 2px solid #2d3748;
+             border-top-color: transparent;
+        }
+
 
         @keyframes spin {
             to {
@@ -265,7 +292,7 @@
             width: 12px;
             height: 12px;
             border-radius: 50%;
-            background: #a78bfa;
+            background: var(--accent);
             animation: typing 1.4s infinite ease-in-out
         }
 
@@ -304,10 +331,13 @@
             width: 100%;
             height: 100%;
             z-index: -2;
-            /* Ensure it's behind the gradient background */
             display: block;
-            /* Ensure canvas is block-level */
+            transition: opacity 0.5s ease-in-out;
         }
+        body.animation-paused #threeJsCanvas {
+            opacity: 0;
+        }
+
 
         /* Carousel specific styles */
         .carousel-button {
@@ -436,9 +466,9 @@
         }
 
         .method-checkbox:checked {
-            background: rgba(79, 70, 229, 0.8);
-            border-color: rgba(167, 139, 250, 0.9);
-            box-shadow: 0 0 10px rgba(167, 139, 250, 0.7);
+            background: color-mix(in srgb, var(--primary) 80%, transparent);
+            border-color: color-mix(in srgb, var(--accent) 90%, transparent);
+            box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 70%, transparent);
             transform: scale(1.15);
         }
 
@@ -453,7 +483,6 @@
             overflow: hidden;
             display: inline-block;
             width: 100%;
-            cursor: pointer;
         }
         .input-file {
             position: absolute;
@@ -463,62 +492,56 @@
             top: 0;
             cursor: pointer;
         }
-        .input-file-label {
-            display: block;
+        .input-file-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
             width: 100%;
             padding: 1rem;
             border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: .5rem;
             font-size: 1rem;
             transition: all .2s;
-            background: rgba(255, 255, 255, 0.15);
-            color: rgba(255, 255, 255, 0.6);
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.7);
             cursor: pointer;
+        }
+        .input-file-btn:hover {
+             background: rgba(255, 255, 255, 0.1);
+             border-color: var(--accent);
+        }
+        .input-file-btn.has-file {
+            color: white;
+            border-color: var(--accent);
+            background: color-mix(in srgb, var(--primary) 20%, transparent);
+        }
+        .file-name {
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-        }
-        .input-file-label.has-file {
-            color: white;
-            border-color: #a78bfa;
+            margin-left: 0.5rem;
         }
 
         /* --- Interactive Hover for Guide & Framework Cards --- */
         #about .glass-container,
-        #frameworks .glass-container,
+        #frameworksPage .glass-container,
         #termsOfService .glass-container,
         #privacyPolicy .glass-container {
             transition: all 0.3s ease-in-out;
         }
 
         #about .glass-container:hover,
-        #frameworks .glass-container:hover {
+        #frameworksPage .glass-container:hover {
             transform: translateY(-8px);
             box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.45);
             background: rgba(255, 255, 255, 0.15);
         }
         
-        /* Neo4j Visualization Library Styling */
-        #graph-container {
-			position: relative;
-			width: 90%;
-			height: 600px; /* Adjust height as needed */
-			border: 1px solid rgba(255, 255, 255, 0.2);
-			border-radius: 1.5rem;	/* The amount of rounding you want to apply */
-			overflow: hidden; /* So content inside is also rounded */
-			box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-			background-color: rgba(30, 30, 30, 0.8); 	/* Slightly transparent background */
-			padding: 1.5rem;
-		}
-
-		.graph-inner {
-			position: relative;
-			width: 100%;
-			height: 100%;
-			border: 1px solid rgba(255, 255, 255, 0.2);
-			border-radius: 1.5rem;	/* The amount of rounding you want to apply */
-			overflow: hidden; /* So content inside is also rounded */
-			margin: 0
+        /* Knowledge Graph Styling */
+        #cy {
+            width: 100%;
+            height: 100%;
+            display: block;
         }
 
         /* Footer Styling */
@@ -528,7 +551,132 @@
             -webkit-backdrop-filter: blur(10px);
         }
 
-    </style>
+        /* Settings Panel */
+        #settings-fab {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 100;
+        }
+        #settings-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 110;
+            display: hidden;
+        }
+        #settings-panel {
+           position: relative;
+           width: 320px;
+        }
+        .color-swatch {
+            width: 28px;
+            height: 28px;
+            border-radius: 9999px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .color-swatch.active {
+            border-color: white;
+            transform: scale(1.1);
+        }
+        .light-theme .color-swatch.active {
+            border-color: #1a202c;
+        }
+        .color-swatch svg {
+            opacity: 0;
+            transition: opacity 0.2s;
+            color: white;
+            width: 16px;
+            height: 16px;
+        }
+        .color-swatch.active svg {
+            opacity: 1;
+        }
+        /* Toggle Switch */
+        .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.2); transition: .4s; border-radius: 34px;}
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%;}
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        /* --- Home Page Tab Styling --- */
+        .home-tab-btn {
+            padding: 0.75rem 1rem;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.7);
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+            margin-bottom: -2px; /* Overlap with parent border */
+        }
+        .home-tab-btn:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .home-tab-btn.active {
+            color: white;
+            font-weight: 600;
+            border-bottom-color: var(--primary);
+        }
+        .home-tab-panel {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        .home-tab-panel.active {
+            display: grid; /* Changed to grid for consistency */
+        }
+
+        /* --- Light Theme Overrides --- */
+        .light-theme { color: #1a202c; }
+        .light-theme h1, .light-theme h2, .light-theme h3, .light-theme h4 { color: #1a202c; }
+        .light-theme p, .light-theme li, .light-theme span, .light-theme label { color: #2d3748; }
+        .light-theme .text-white, .light-theme .text-white\/90, .light-theme .text-white\/80, .light-theme .text-white\/70, .light-theme .text-white\/60 { color: #2d3748; }
+        .light-theme .text-lg, .light-theme .text-xl, .light-theme .text-sm { color: #4a5568; }
+        .light-theme .glass-container { background: rgba(255, 255, 255, 0.4); border-color: rgba(226, 232, 240, 0.8); }
+        .light-theme nav, .light-theme footer { background: rgba(255, 255, 255, 0.2); }
+        .light-theme .nav-link, .light-theme .text-2xl.font-bold { color: #2d3748; }
+        .light-theme .nav-link:hover, .light-theme .text-2xl.font-bold:hover { color: #1a202c; }
+        .light-theme .input-field { color: #1a202c; background: rgba(255, 255, 255, 0.5); border-color: rgba(0, 0, 0, 0.2); }
+        .light-theme .input-field::placeholder { color: #718096; }
+        .light-theme .input-file-btn { color: #4a5568; }
+        .light-theme .btn-secondary { background: rgba(0, 0, 0, 0.08); color: #1a202c; }
+        .light-theme .btn-secondary:hover { background: rgba(0, 0, 0, 0.15); }
+        .light-theme .btn-tertiary { color: var(--primary-hover); }
+        .light-theme .feature-card, .light-theme .template-card, .light-theme .project-card { background: rgba(255, 255, 255, 0.3); border-color: rgba(226, 232, 240, 0.7); }
+        .light-theme .method-checkbox { border-color: rgba(0,0,0,0.3); background: rgba(255,255,255,0.4); }
+        .light-theme #cy { background: rgba(255,255,255,0.3); border-color: rgba(0,0,0,0.1); }
+        .light-theme .home-tab-btn { color: #4a5568; }
+        .light-theme .home-tab-btn:hover { color: #1a202c; }
+        .light-theme .home-tab-btn.active { color: #1a202c; }
+        .light-theme .slider { background-color: rgba(0,0,0,0.1); }
+        .light-theme .slider:before { background-color: #e2e8f0; }
+
+    
+/* --- Sticky Footer Override (assistant) --- */
+html, body {
+    min-height: 100vh !important;
+}
+body {
+    display: flex !important;
+    flex-direction: column !important;
+}
+.main-content {
+    flex: 1 0 auto !important;
+}
+footer {
+    flex-shrink: 0 !important;
+    position: relative !important;
+}
+
+</style>
 </head>
 
 <body>
@@ -587,67 +735,99 @@
 
 
         <!-- ========================================================= -->
-        <!-- HOME PAGE                                                 -->
+        <!-- HOME PAGE (NEW TABBED LAYOUT)                             -->
         <!-- ========================================================= -->
-        <div id="home" class="page active container mx-auto px-6 py-16 text-center">
-            <h1 class="text-5xl md:text-6xl font-extrabold text-white leading-tight mb-4">Unlock Your Strategic Potential
-            </h1>
-            <p class="text-lg md:text-xl text-white/80 max-w-3xl mx-auto mb-8">
-                Transform your organization with comprehensive strategic planning tools and methodologies designed to drive
-                success and innovation.
-            </p>
-            <div class="flex justify-center space-x-4">
-                <button class="btn btn-primary nav-link" data-page="templates">Get Started</button>
-                <button class="btn btn-secondary nav-link" data-page="examplesPage">View Analysis</button>
+        <div id="home" class="page active container mx-auto px-6 py-16">
+            <div class="text-center">
+                <h1 class="text-5xl md:text-6xl font-extrabold text-white leading-tight mb-4">Unlock Your Strategic Potential</h1>
+                <p class="text-lg md:text-xl text-white/80 max-w-3xl mx-auto mb-8">
+                    Select a category to explore our comprehensive suite of strategic planning tools and methodologies.
+                </p>
+            </div>
+            
+            <!-- Tab Navigation -->
+            <div id="homeTabsNav" class="flex flex-wrap justify-center space-x-1 md:space-x-2 border-b-2 border-white/10 mt-16 mb-12">
+                <button class="home-tab-btn active" data-tab="strategicPlans">Strategic Plans</button>
+                <button class="home-tab-btn" data-tab="systemAnalysis">System Analysis</button>
+                <button class="home-tab-btn" data-tab="frameworks">Frameworks</button>
+                <button class="home-tab-btn" data-tab="dataAnalysis">Data Analysis</button>
+                <button class="home-tab-btn" data-tab="novelPlanning">Novel Strategic Planning</button>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-20">
-                <!-- Vision to Action -->
-                <div class="feature-card p-6" data-feature-id="vision">
-                    <h3 class="text-2xl font-bold mb-2">Vision</h3>
-                    <p class="text-white/70 mb-4 feature-description" data-state="short">We help you craft a clear vision with detailed strategic steps.</p>
-                    <a href="#" class="font-semibold text-indigo-300 hover:text-indigo-200 toggle-feature-btn" data-feature-id="vision">More &rarr;</a>
+            <!-- Tab Content -->
+            <div id="homeTabsContent">
+                <!-- Strategic Plans Panel -->
+                <div id="strategicPlans" class="home-tab-panel active grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="custom-template" data-pre-fill="Vision">
+                        <h3 class="text-2xl font-bold mb-2">Vision</h3><p class="text-white/70">Craft a clear, inspiring future state for your organization.</p>
+                    </div>
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="custom-template" data-pre-fill="Mission Or Aim">
+                        <h3 class="text-2xl font-bold mb-2">Mission or Aim</h3><p class="text-white/70">Define your organization's core purpose and principles.</p>
+                    </div>
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="custom-template" data-pre-fill="Goals">
+                        <h3 class="text-2xl font-bold mb-2">Goals</h3><p class="text-white/70">Set ambitious, achievable goals that align with your vision.</p>
+                    </div>
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="custom-template" data-pre-fill="Strategic Initiatives">
+                        <h3 class="text-2xl font-bold mb-2">Strategic Initiatives</h3><p class="text-white/70">Develop key initiatives to translate vision into action.</p>
+                    </div>
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="custom-template" data-pre-fill="Objectives">
+                        <h3 class="text-2xl font-bold mb-2">Objectives</h3><p class="text-white/70">Break down goals into specific, measurable objectives.</p>
+                    </div>
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="custom-template" data-pre-fill="Actions">
+                        <h3 class="text-2xl font-bold mb-2">Actions</h3><p class="text-white/70">Define concrete actions and tactics to drive achievement.</p>
+                    </div>
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="pareto-fishbone">
+                        <h3 class="text-2xl font-bold mb-2">Pareto & Fishbone Analysis</h3><p class="text-white/70">Identify root causes and prioritize impactful problems.</p>
+                    </div>
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="external-analysis">
+                        <h3 class="text-2xl font-bold mb-2">External Analysis</h3><p class="text-white/70">Assess market trends, competition, and opportunities.</p>
+                    </div>
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="internal-analysis">
+                        <h3 class="text-2xl font-bold mb-2">Internal Analysis</h3><p class="text-white/70">Evaluate your organization's strengths and weaknesses.</p>
+                    </div>
+                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="swot">
+                        <h3 class="text-2xl font-bold mb-2">SWOT Analysis</h3><p class="text-white/70">A structured review of Strengths, Weaknesses, Opportunities & Threats.</p>
+                    </div>
                 </div>
-                <div class="feature-card p-6" data-feature-id="mission">
-                    <h3 class="text-2xl font-bold mb-2">Mission or Aim</h3>
-                    <p class="text-white/70 mb-4 feature-description" data-state="short">Define your organization's core purpose and foundational principles.</p>
-                    <a href="#" class="font-semibold text-indigo-300 hover:text-indigo-200 toggle-feature-btn" data-feature-id="mission">More &rarr;</a>
+
+                <!-- System Analysis Panel -->
+                <div id="systemAnalysis" class="home-tab-panel grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="advanced-system-analysis">
+                        <h3 class="text-2xl font-bold mb-2">Advanced System Analysis</h3><p class="text-white/70">Understand complex interconnections and feedback loops.</p>
+                    </div>
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="archetype-analysis">
+                        <h3 class="text-2xl font-bold mb-2">Archetype Analysis</h3><p class="text-white/70">Identify recurring patterns of behavior within your system.</p>
+                    </div>
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="creative-dissonance">
+                        <h3 class="text-2xl font-bold mb-2">Creative Dissonance</h3><p class="text-white/70">Explore the gap between reality and vision to fuel innovation.</p>
+                    </div>
                 </div>
-                <div class="feature-card p-6" data-feature-id="goals">
-                    <h3 class="text-2xl font-bold mb-2">Goals</h3>
-                    <p class="text-white/70 mb-4 feature-description" data-state="short">Set ambitious yet achievable goals that align with your vision.</p>
-                    <a href="#" class="font-semibold text-indigo-300 hover:text-indigo-200 toggle-feature-btn" data-feature-id="goals">More &rarr;</a>
+                
+                <!-- Frameworks Panel -->
+                <div id="frameworks" class="home-tab-panel grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="reframing-thinking"><h3 class="text-2xl font-bold mb-2">Reframing Thinking</h3><p class="text-white/70">Shift perspective to view problems in a new light.</p></div>
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="delphi-method"><h3 class="text-2xl font-bold mb-2">Delphi Method</h3><p class="text-white/70">Leverage expert panels to achieve forecast consensus.</p></div>
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="blue-ocean"><h3 class="text-2xl font-bold mb-2">Blue Ocean Strategy</h3><p class="text-white/70">Create uncontested market space, making competition irrelevant.</p></div>
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="design-thinking"><h3 class="text-2xl font-bold mb-2">Design Thinking</h3><p class="text-white/70">A human-centered iterative process for innovation.</p></div>
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="thinking-hats"><h3 class="text-2xl font-bold mb-2">Thinking Hats</h3><p class="text-white/70">Explore issues from multiple perspectives for better decisions.</p></div>
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="business-model"><h3 class="text-2xl font-bold mb-2">Business Model Canvas</h3><p class="text-white/70">Visually map and innovate your business model.</p></div>
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="scamper"><h3 class="text-2xl font-bold mb-2">SCAMPER</h3><p class="text-white/70">A creative thinking technique to innovate products or services.</p></div>
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="triz"><h3 class="text-2xl font-bold mb-2">TRIZ</h3><p class="text-white/70">A systematic, patent-based approach for inventive problem-solving.</p></div>
                 </div>
-                <div class="feature-card p-6" data-feature-id="strategic-initiatives">
-                    <h3 class="text-2xl font-bold mb-2">Strategic Initiatives</h3>
-                    <p class="text-white/70 mb-4 feature-description" data-state="short">Develop initiatives that translate your vision into actionable plans.</p>
-                    <a href="#" class="font-semibold text-indigo-300 hover:text-indigo-200 toggle-feature-btn" data-feature-id="strategic-initiatives">More &rarr;</a>
+
+                <!-- Data Analysis Panel -->
+                <div id="dataAnalysis" class="home-tab-panel grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="regression-analysis"><h3 class="text-2xl font-bold mb-2">Regression Analysis</h3><p class="text-white/70">Model relationships between variables for predictive insights.</p></div>
+                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="pls-analysis"><h3 class="text-2xl font-bold mb-2">PLS Analysis</h3><p class="text-white/70">Apply Partial Least Squares for structural equation modeling.</p></div>
+                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="dematel-analysis"><h3 class="text-2xl font-bold mb-2">Dematel Analysis</h3><p class="text-white/70">Understand causal relationships between complex factors.</p></div>
                 </div>
-                <div class="feature-card p-6" data-feature-id="objectives">
-                    <h3 class="text-2xl font-bold mb-2">Objectives</h3>
-                    <p class="text-white/70 mb-4 feature-description" data-state="short">Break down goals into specific, measurable objectives for tracking.</p>
-                    <a href="#" class="font-semibold text-indigo-300 hover:text-indigo-200 toggle-feature-btn" data-feature-id="objectives">More &rarr;</a>
-                </div>
-                <div class="feature-card p-6" data-feature-id="actions">
-                    <h3 class="text-2xl font-bold mb-2">Actions</h3>
-                    <p class="text-white/70 mb-4 feature-description" data-state="short">Define specific actions and tactics to drive achievement.</p>
-                    <a href="#" class="font-semibold text-indigo-300 hover:text-indigo-200 toggle-feature-btn" data-feature-id="actions">More &rarr;</a>
-                </div>
-                <!-- New Sections -->
-                <div class="feature-card p-6" data-feature-id="internal-external-analysis">
-                    <h3 class="text-2xl font-bold mb-2">Factor Analysis</h3>
-                    <p class="text-white/70 mb-4 feature-description" data-state="short">Analyze internal and external factors to build a robust strategic position.</p>
-                    <a href="#" class="font-semibold text-indigo-300 hover:text-indigo-200 toggle-feature-btn" data-feature-id="internal-external-analysis">More &rarr;</a>
-                </div>
-                <div class="feature-card p-6" data-feature-id="system-analysis">
-                    <h3 class="text-2xl font-bold mb-2">System Analysis</h3>
-                    <p class="text-white/70 mb-4 feature-description" data-state="short">Understand complex interconnections to identify high-leverage intervention points.</p>
-                    <a href="#" class="font-semibold text-indigo-300 hover:text-indigo-200 toggle-feature-btn" data-feature-id="system-analysis">More &rarr;</a>
-                </div>
-                 <div class="feature-card p-6" data-feature-id="problem-solving">
-                    <h3 class="text-2xl font-bold mb-2">Problem Solving</h3>
-                    <p class="text-white/70 mb-4 feature-description" data-state="short">Apply structured frameworks to diagnose root causes and prioritize solutions.</p>
-                    <a href="#" class="font-semibold text-indigo-300 hover:text-indigo-200 toggle-feature-btn" data-feature-id="problem-solving">More &rarr;</a>
+
+                <!-- Novel Strategic Planning Panel -->
+                <div id="novelPlanning" class="home-tab-panel grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="competitor"><h3 class="text-2xl font-bold mb-2">Competitor Analysis</h3><p class="text-white/70">Deep dive into competitor strategies and market positioning.</p></div>
+                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="market-entry"><h3 class="text-2xl font-bold mb-2">Market Entry Strategy</h3><p class="text-white/70">Develop a roadmap for successful market penetration.</p></div>
+                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="risk"><h3 class="text-2xl font-bold mb-2">Risk Assessment</h3><p class="text-white/70">Identify, evaluate, and develop mitigation strategies for risks.</p></div>
+                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="digital-transformation"><h3 class="text-2xl font-bold mb-2">Digital Transformation</h3><p class="text-white/70">Plan your organization's journey towards digital maturity.</p></div>
                 </div>
             </div>
         </div>
@@ -667,7 +847,7 @@
                 <!-- Step 2 -->
                 <div class="glass-container">
                     <h3 class="text-2xl font-bold mb-2"><span class="text-indigo-300">Step 2:</span> Choose Your Template</h3>
-                    <p class="text-white/80">Once logged in, navigate to the "Templates" page. Here you'll find a variety of professionally designed strategic frameworks. Select the template that best fits your objective, whether it's a SWOT Analysis, a Market Entry Strategy, or a custom-built plan.</p>
+                    <p class="text-white/80">From the Home page, browse through the categories like "Strategic Plans" or "Frameworks". Select the template that best fits your objective by clicking on its card.</p>
                 </div>
                 <!-- Step 3 -->
                 <div class="glass-container">
@@ -676,8 +856,8 @@
                 </div>
                 <!-- Step 4 -->
                 <div class="glass-container">
-                    <h3 class="text-2xl font-bold mb-2"><span class="text-indigo-300">Step 4:</span> Provide Context & Select Frameworks</h3>
-                    <p class="text-white/80">On the template detail page, fill in the required information, such as your company name and upload your company documents. This context is crucial for the AI to generate a relevant analysis. Below the inputs, select your desired analytical framework(s) and report sections.</p>
+                    <h3 class="text-2xl font-bold mb-2"><span class="text-indigo-300">Step 4:</span> Provide Context & Select Options</h3>
+                    <p class="text-white/80">On the template detail page, fill in the required information, such as your company name and upload your company documents. This context is crucial for the AI to generate a relevant analysis. Below the inputs, select your desired analysis sections and analytical framework(s).</p>
                 </div>
                 <!-- Step 5 -->
                 <div class="glass-container">
@@ -695,7 +875,7 @@
         <!-- ========================================================= -->
         <!-- FRAMEWORKS PAGE                                           -->
         <!-- ========================================================= -->
-        <div id="frameworks" class="page container mx-auto px-6 py-16">
+        <div id="frameworksPage" class="page container mx-auto px-6 py-16">
             <h1 class="text-4xl font-bold text-center mb-2">Our Methodologies</h1>
             <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">S.A.G.E. integrates a diverse set of proven strategic frameworks to provide deep, multi-faceted insights. Hover over a card to learn more.</p>
             <div id="frameworksGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -704,14 +884,12 @@
         </div>
 
         <!-- ========================================================= -->
-        <!-- KNOWLEDGE GRAPH VISUALIZATION PAGE                        -->
+        <!-- KNOWLEDGE GRAPH PAGE                                      -->
         <!-- ========================================================= -->
         <div id="knowledgeGraph" class="page container mx-auto px-6 py-16">
-            <h1 class="text-4xl font-bold text-center mb-2">Knowledge Graph Visualization</h1>
-            <p class="text-lg text-white/80 text-center mb-12 max-w-2xl mx-auto">Explore the relationships between entities in an interactive knowledge graph.</p>
-            <div id="graph-container">
-                <div class="graph-inner"></div>
-            </div>
+            <h1 class="text-4xl font-bold text-center mb-2">Knowledge Graph</h1>
+            <p class="text-lg text-white/80 text-center mb-12 max-w-2xl mx-auto">Explore the relationships between different strategic concepts and frameworks in our interactive knowledge graph.</p>
+            <div id="cy" class="w-full h-[600px] bg-black/20 rounded-xl border border-white/20"></div>
         </div>
 
 
@@ -815,22 +993,17 @@
 
 
         <!-- ========================================================= -->
-        <!-- TEMPLATES LIST PAGE                                       -->
+        <!-- TEMPLATES LIST PAGE (DEPRECATED)                          -->
         <!-- ========================================================= -->
         <div id="templates" class="page container mx-auto px-6 py-16">
-            <h1 class="text-4xl font-bold text-center mb-2">Strategy Templates</h1>
-            <p class="text-lg text-white/80 text-center mb-12 max-w-2xl mx-auto">Select a professional analysis template to
-                begin. Our AI will guide you through a structured framework to generate powerful strategic insights.</p>
-            <div id="templatesList" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Template cards will be dynamically inserted here by JavaScript -->
-            </div>
+            <!-- This page is no longer in active use. The Home page serves as the template gallery. -->
         </div>
 
         <!-- ========================================================= -->
-        <!-- TEMPLATE DETAIL PAGE (Fixed: Checkboxes always visible)   -->
+        <!-- TEMPLATE DETAIL PAGE (SECTION ORDER CHANGED)              -->
         <!-- ========================================================= -->
         <div id="templateDetail" class="page container mx-auto px-6 py-16">
-            <button class="btn btn-secondary mb-8 nav-link" data-page="templates">&larr; Back to Templates</button>
+            <button class="btn btn-secondary mb-8 nav-link" data-page="home">&larr; Back to Home</button>
             <div class="grid lg:grid-cols-2 gap-12">
 
                 <!-- Left side: Form -->
@@ -840,6 +1013,25 @@
 
                     <div class="glass-container p-6">
                         <div id="templateFormFields" class="space-y-4"></div>
+
+                        <!-- Analysis Sections (NOW FIRST) -->
+                        <div id="analysisSectionsContainer" class="glass-container mt-8">
+                            <h4 class="text-xl font-bold mb-2 text-white text-center">Select Your Analysis Sections</h4>
+                            <p class="text-white/70 text-center mb-4">Choose the components for your report.</p>
+                            <ul id="analysisList" class="list-none text-white/70 text-left mx-auto max-w-sm">
+                                <li class="flex items-center mb-2"><input type="checkbox" class="method-checkbox w-5 h-5 mr-2"><span>Introduction</span></li>
+                                <li class="flex items-center mb-2"><input type="checkbox" class="method-checkbox w-5 h-5 mr-2"><span>Overview of business</span></li>
+                                <li class="flex items-center mb-2"><input type="checkbox" class="method-checkbox w-5 h-5 mr-2"><span>process overview</span></li>
+                                <li class="flex items-center mb-2"><input type="checkbox" class="method-checkbox w-5 h-5 mr-2"><span>mission statement</span></li>
+                                <li class="flex items-center mb-2"><input type="checkbox" class="method-checkbox w-5 h-5 mr-2"><span>vision analysis</span></li>
+                                <li class="flex items-center mb-2"><input type="checkbox" class="method-checkbox w-5 h-5 mr-2"><span>vision statement 2</span></li>
+                                <li class="flex items-center mb-2"><input type="checkbox" class="method-checkbox w-5 h-5 mr-2"><span>novel strategy part 1</span></li>
+                                <li class="flex items-center mb-2"><input type="checkbox" class="method-checkbox w-5 h-5 mr-2"><span>novel strategy part 2</span></li>
+                                <li class="flex items-center mb-2"><input type="checkbox" class="method-checkbox w-5 h-5 mr-2"><span>novel strategy part 3</span></li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Frameworks (NOW SECOND) -->
                         <div id="methodsConsideredContainer" class="glass-container mt-8">
                             <h4 class="text-xl font-bold mb-2 text-white text-center">Select Your Frameworks</h4>
                             <p id="selectionCounter" class="text-white/70 text-center mb-4">Selected: 0 / 3</p>
@@ -879,21 +1071,6 @@
                             </ul>
                         </div>
 
-                        <div id="analysisSectionsContainer" class="glass-container mt-8">
-                            <h4 class="text-xl font-bold mb-2 text-white text-center">Select Your Analysis Sections</h4>
-                            <p class="text-white/70 text-center mb-4">Choose the components for your report.</p>
-                            <ul id="analysisList" class="list-none text-white/70 text-left mx-auto max-w-sm">
-                                <li class="flex items-center mb-2"><input type="checkbox" class="method-checkbox w-5 h-5 mr-2"><span>Introduction</span></li>
-                                <li class="flex items-center mb-2"><input type="checkbox" class="method-checkbox w-5 h-5 mr-2"><span>Overview of business</span></li>
-                                <li class="flex items-center mb-2"><input type="checkbox" class="method-checkbox w-5 h-5 mr-2"><span>process overview</span></li>
-                                <li class="flex items-center mb-2"><input type="checkbox" class="method-checkbox w-5 h-5 mr-2"><span>mission statement</span></li>
-                                <li class="flex items-center mb-2"><input type="checkbox" class="method-checkbox w-5 h-5 mr-2"><span>vision analysis</span></li>
-                                <li class="flex items-center mb-2"><input type="checkbox" class="method-checkbox w-5 h-5 mr-2"><span>vision statement 2</span></li>
-                                <li class="flex items-center mb-2"><input type="checkbox" class="method-checkbox w-5 h-5 mr-2"><span>novel strategy part 1</span></li>
-                                <li class="flex items-center mb-2"><input type="checkbox" class="method-checkbox w-5 h-5 mr-2"><span>novel strategy part 2</span></li>
-                                <li class="flex items-center mb-2"><input type="checkbox" class="method-checkbox w-5 h-5 mr-2"><span>novel strategy part 3</span></li>
-                            </ul>
-                        </div>
 
                         <button id="generateBtn" class="btn btn-primary w-full mt-4">
                             <span id="generateBtnText">Generate Analysis</span>
@@ -953,7 +1130,7 @@
                     <h1 class="text-4xl font-bold mb-2">My Projects</h1>
                     <p class="text-lg text-white/80">View, edit, or delete your saved strategic analyses.</p>
                 </div>
-                <button class="btn btn-primary nav-link" data-page="templates">
+                <button class="btn btn-primary nav-link" data-page="home">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                         class="bi bi-plus-lg mr-2" viewBox="0 0 16 16">
                         <path fill-rule="evenodd"
@@ -968,27 +1145,28 @@
             <div id="noProjectsMessage" class="hidden text-center glass-container py-12">
                 <h3 class="text-2xl font-bold mb-2">No Projects Yet</h3>
                 <p class="text-white/70 mb-6">You haven't saved any analyses. Get started by selecting a template.</p>
-                <button class="btn btn-primary nav-link" data-page="templates">Create First Analysis</button>
+                <button class="btn btn-primary nav-link" data-page="home">Create First Analysis</button>
             </div>
         </div>
 
         <!-- ========================================================= -->
-        <!-- ADMIN DASHBOARD PAGE (Restored)                           -->
+        <!-- ADMIN DASHBOARD PAGE (UPDATED)                            -->
         <!-- ========================================================= -->
         <div id="adminDashboard" class="page container mx-auto px-6 py-16">
             <h1 class="text-4xl font-bold text-center mb-2">Admin Dashboard</h1>
-            <p class="text-lg text-white/80 text-center mb-12 max-w-2xl mx-auto">Live analytics for S.A.G.E. (visible to
-                everyone for now).</p>
+            <p class="text-lg text-white/80 text-center mb-12 max-w-2xl mx-auto">Live analytics for S.A.G.E.</p>
+            
+            <!-- Simple Stats -->
             <div class="grid md:grid-cols-3 gap-6">
                 <div class="glass-container">
                     <h3 class="text-xl font-semibold mb-2">Users Online</h3>
                     <p id="dashUsersOnline" class="text-4xl font-bold">—</p>
-                    <p class="text-white/60 text-sm mt-2">Approximate active visitors (tab-based).</p>
+                    <p class="text-white/60 text-sm mt-2">Approximate active visitors.</p>
                 </div>
                 <div class="glass-container">
-                    <h3 class="text-xl font-semibold mb-2">Queries (this browser)</h3>
+                    <h3 class="text-xl font-semibold mb-2">Total Queries</h3>
                     <p id="dashQueryCount" class="text-4xl font-bold">0</p>
-                    <p class="text-white/60 text-sm mt-2">Increments each time you click "Generate Analysis".</p>
+                    <p class="text-white/60 text-sm mt-2">From live database stats.</p>
                 </div>
                 <div class="glass-container">
                     <h3 class="text-xl font-semibold mb-2">Server Status</h3>
@@ -996,15 +1174,47 @@
                         <span id="dashServerDot" class="inline-block w-3 h-3 rounded-full bg-yellow-400"></span>
                         <span id="dashServerText">Checking…</span>
                     </div>
-                    <p class="text-white/60 text-sm mt-2">Reflects WebSocket connection state.</p>
+                    <p class="text-white/60 text-sm mt-2">Reflects WebSocket connection.</p>
                 </div>
             </div>
+
+            <!-- Detailed Stats Section -->
             <div class="glass-container mt-8">
-                <h3 class="text-xl font-semibold mb-2">Details</h3>
-                <ul class="list-disc ml-6 space-y-1 text-white/90">
-                    <li><strong>WebSocket:</strong> <span id="dashWsDetail">—</span></li>
-                    <li><strong>Last Update:</strong> <span id="dashUpdatedAt">—</span></li>
-                </ul>
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-2xl font-bold">Live Database Statistics</h3>
+                    <button id="refreshStatsBtn" class="btn btn-primary">
+                        <span id="refreshStatsBtnText">Refresh Stats</span>
+                        <span id="refreshStatsSpinner" class="loading-spinner hidden ml-2"></span>
+                    </button>
+                </div>
+
+                <div id="statisticsContainer" class="grid md:grid-cols-2 gap-x-8 gap-y-4 text-white/90">
+                    <!-- Database Stats Column -->
+                    <div>
+                        <h4 class="text-xl font-semibold mb-3 border-b border-white/20 pb-2">Database Status</h4>
+                        <ul class="space-y-2">
+                            <li><strong>Total Users:</strong> <span id="statTotalUsers">—</span></li>
+                            <li><strong>Active Users (1h):</strong> <span id="statActiveUsers">—</span></li>
+                            <li><strong>Total Queries:</strong> <span id="statTotalQueries">—</span></li>
+                            <li><strong>Database Size:</strong> <span id="statDbSize">—</span></li>
+                            <li><strong>Avg. Processing Time:</strong> <span id="statAvgTime">—</span></li>
+                            <li><strong>Last Recorded:</strong> <span id="statRecordedAt">—</span></li>
+                        </ul>
+                    </div>
+                    <!-- Pinecone Stats Column -->
+                    <div id="pineconeStatsContainer" class="hidden">
+                        <h4 class="text-xl font-semibold mb-3 border-b border-white/20 pb-2">Vector Store Status</h4>
+                        <ul class="space-y-2">
+                            <li><strong>Index Name:</strong> <span id="statPineconeName">—</span></li>
+                            <li><strong>Total Vectors:</strong> <span id="statTotalVectors">—</span></li>
+                            <li><strong>Book Vectors:</strong> <span id="statBookVectors">—</span></li>
+                            <li><strong>Dimension:</strong> <span id="statPineconeDimension">—</span></li>
+                            <li><strong>Status:</strong> <span id="statPineconeStatus">—</span></li>
+                            <li><strong>Cloud/Region:</strong> <span id="statPineconeCloud">—</span></li>
+                        </ul>
+                    </div>
+                </div>
+                <div id="statsMessage" class="hidden mt-4"></div>
             </div>
         </div>
 
@@ -1201,7 +1411,7 @@
             </div>
 
             <div class="text-center mt-12">
-                <button class="btn btn-primary nav-link" data-page="templates">View Templates</button>
+                 <button class="btn btn-primary nav-link" data-page="home">Back to Tools</button>
             </div>
         </div>
         
@@ -1256,6 +1466,56 @@
         </div>
 
     </div><!-- End Main Content -->
+    
+    <!-- ========================================================= -->
+    <!-- SETTINGS FAB & PANEL                                      -->
+    <!-- ========================================================= -->
+    <div id="settings-fab">
+        <button id="settings-fab-btn" class="btn btn-primary rounded-full p-4 shadow-lg">
+          <svg width="64px" height="64px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <circle cx="12" cy="12" r="3" stroke="#1C274C" stroke-width="1.5"></circle> <path d="M3.66122 10.6392C4.13377 10.9361 4.43782 11.4419 4.43782 11.9999C4.43781 12.558 4.13376 13.0638 3.66122 13.3607C3.33966 13.5627 3.13248 13.7242 2.98508 13.9163C2.66217 14.3372 2.51966 14.869 2.5889 15.3949C2.64082 15.7893 2.87379 16.1928 3.33973 16.9999C3.80568 17.8069 4.03865 18.2104 4.35426 18.4526C4.77508 18.7755 5.30694 18.918 5.83284 18.8488C6.07287 18.8172 6.31628 18.7185 6.65196 18.5411C7.14544 18.2803 7.73558 18.2699 8.21895 18.549C8.70227 18.8281 8.98827 19.3443 9.00912 19.902C9.02332 20.2815 9.05958 20.5417 9.15224 20.7654C9.35523 21.2554 9.74458 21.6448 10.2346 21.8478C10.6022 22 11.0681 22 12 22C12.9319 22 13.3978 22 13.7654 21.8478C14.2554 21.6448 14.6448 21.2554 14.8478 20.7654C14.9404 20.5417 14.9767 20.2815 14.9909 19.9021C15.0117 19.3443 15.2977 18.8281 15.7811 18.549C16.2644 18.27 16.8545 18.2804 17.3479 18.5412C17.6837 18.7186 17.9271 18.8173 18.1671 18.8489C18.693 18.9182 19.2249 18.7756 19.6457 18.4527C19.9613 18.2106 20.1943 17.807 20.6603 17C20.8677 16.6407 21.029 16.3614 21.1486 16.1272M20.3387 13.3608C19.8662 13.0639 19.5622 12.5581 19.5621 12.0001C19.5621 11.442 19.8662 10.9361 20.3387 10.6392C20.6603 10.4372 20.8674 10.2757 21.0148 10.0836C21.3377 9.66278 21.4802 9.13092 21.411 8.60502C21.3591 8.2106 21.1261 7.80708 20.6601 7.00005C20.1942 6.19301 19.9612 5.7895 19.6456 5.54732C19.2248 5.22441 18.6929 5.0819 18.167 5.15113C17.927 5.18274 17.6836 5.2814 17.3479 5.45883C16.8544 5.71964 16.2643 5.73004 15.781 5.45096C15.2977 5.1719 15.0117 4.6557 14.9909 4.09803C14.9767 3.71852 14.9404 3.45835 14.8478 3.23463C14.6448 2.74458 14.2554 2.35523 13.7654 2.15224C13.3978 2 12.9319 2 12 2C11.0681 2 10.6022 2 10.2346 2.15224C9.74458 2.35523 9.35523 2.74458 9.15224 3.23463C9.05958 3.45833 9.02332 3.71848 9.00912 4.09794C8.98826 4.65566 8.70225 5.17191 8.21891 5.45096C7.73557 5.73002 7.14548 5.71959 6.65205 5.4588C6.31633 5.28136 6.0729 5.18269 5.83285 5.15108C5.30695 5.08185 4.77509 5.22436 4.35427 5.54727C4.03866 5.78945 3.80569 6.19297 3.33974 7C3.13231 7.35929 2.97105 7.63859 2.85138 7.87273" stroke="#1C274C" stroke-width="1.5" stroke-linecap="round"></path> </g></svg>
+        </button>
+    </div>
+    <div id="settings-overlay" class="hidden items-center justify-center">
+        <div id="settings-panel" class="glass-container p-6">
+            <button id="settings-close-btn" class="absolute top-4 right-4 text-white/70 hover:text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">
+                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
+                </svg>
+            </button>
+            <h3 class="text-xl font-bold mb-4 text-center">Settings</h3>
+            <!-- Animation Toggle -->
+            <div class="flex items-center justify-between mb-6">
+                <label for="animationToggle" class="text-white/80">Background Animation</label>
+                <label class="switch">
+                    <input type="checkbox" id="animationToggle" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <!-- Color Theme Selector -->
+            <div>
+                <label class="block text-white/80 mb-3 text-center">Color Theme</label>
+                <div class="grid grid-cols-4 gap-4">
+                    <div class="color-swatch" data-theme="celestial" style="background: conic-gradient(from 45deg, #C33764, #1D2671);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
+                    <div class="color-swatch" data-theme="ocean-blue" style="background: conic-gradient(from 45deg, #2E3192, #1BFFFF);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
+                    <div class="color-swatch" data-theme="sanguine" style="background: conic-gradient(from 45deg, #D4145A, #FBB03B);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
+                    <div class="color-swatch" data-theme="quepal" style="background: conic-gradient(from 45deg, #38ef7d, #11998e);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
+                    <div class="color-swatch" data-theme="blood-mary" style="background: conic-gradient(from 45deg, #ff512f, #dd2476);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
+                    <div class="color-swatch" data-theme="cactus" style="background: conic-gradient(from 45deg, #556270, #4ECDC4);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
+                    <div class="color-swatch" data-theme="antarctica" style="background: conic-gradient(from 45deg, #B2FEFA, #0ED2F7);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
+                    <div class="color-swatch" data-theme="mountain-rock" style="background: conic-gradient(from 45deg, #8E9EAB, #EEF2F3);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
+                    <div class="color-swatch" data-theme="clean-mirror" style="background: conic-gradient(from 45deg, #93a5cf, #e4efe9);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
+                    <div class="color-swatch" data-theme="orbit" style="background: conic-gradient(from 45deg, #0f2027, #2c5364);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
+                    <div class="color-swatch" data-theme="toxic" style="background: conic-gradient(from 45deg, #61ff20, #dd1818);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
+                    <div class="color-swatch" data-theme="exotic" style="background: conic-gradient(from 45deg, #6a3093, #a044ff);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
+                    <div class="color-swatch" data-theme="eternal-constance" style="background: conic-gradient(from 45deg, #09203F, #537895);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
+                    <div class="color-swatch" data-theme="plum-plate" style="background: conic-gradient(from 45deg, #667eea, #764ba2);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
+                    <div class="color-swatch" data-theme="winter-neva" style="background: conic-gradient(from 45deg, #a1c4fd, #c2e9fb);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
+                    <div class="color-swatch" data-theme="everlasting-sky" style="background: conic-gradient(from 45deg, #fdfcfb, #e2d1c3);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- ========================================================= -->
     <!-- FOOTER                                                    -->
@@ -1264,7 +1524,7 @@
         <div class="container mx-auto text-center text-white/70">
             <div class="flex justify-center space-x-6 mb-4">
                 <a href="#" class="hover:text-white nav-link" data-page="about">About</a>
-                <a href="#" class="hover:text-white nav-link" data-page="frameworks">Frameworks</a>
+                <a href="#" class="hover:text-white nav-link" data-page="frameworksPage">Frameworks</a>
                 <a href="#" class="hover:text-white nav-link" data-page="adminDashboard">Admin Dashboard</a>
                  <a href="#" class="hover:text-white nav-link" data-page="termsOfService">Terms of Service</a>
                 <a href="#" class="hover:text-white nav-link" data-page="privacyPolicy">Privacy Policy</a>
@@ -1274,19 +1534,10 @@
     </footer>
 
 
-    <script type="module">
+    <script>
         // =========================================================
         // SCRIPT
         // =========================================================
-        // Load NVL base library
-        import { NVL } from "https://esm.sh/@neo4j-nvl/base@0.3.9/es2022/base.mjs";
-        import { 
-            ClickInteraction,
-            ZoomInteraction,
-            PanInteraction,
-            DragNodeInteraction,
-            HoverInteraction 
-        } from "https://esm.sh/@neo4j-nvl/interaction-handlers@0.3.9/es2022/interaction-handlers.mjs";
         document.addEventListener('DOMContentLoaded', () => {
 
             // --- Supabase Configuration ---
@@ -1298,7 +1549,6 @@
             // --- DOM Element References ---
             const $ = id => document.getElementById(id);
             const pages = document.querySelectorAll('.page');
-            const templatesListContainer = $('templatesList');
             let currentTemplateId = null; 
             let currentProjectId = null; 
             let websocket = null;
@@ -1315,9 +1565,10 @@
             // --- Version Control State ---
             let currentSelectionLimit = 3; // Default to paid
             let selectedTemplateForModal = null;
+            let preFillData = ''; // Used to pass context from home card to template detail
 
 
-            // --- Template Data (Prompts Removed) ---
+            // --- Template Data ---
             const templates = {
                 'custom-template': {
                     title: 'Custom Strategy Generator',
@@ -1328,61 +1579,21 @@
                     title: 'SWOT Analysis',
                     description: "Analyze your organization's Strengths, Weaknesses, Opportunities, and Threats.",
                 },
-                'competitor': {
-                    title: 'Competitor Analysis',
-                    description: 'Deep dive into competitor strategies, market positioning, and competitive advantages.',
+                'pareto-fishbone': {
+                    title: 'Pareto & Fishbone Analysis',
+                    description: 'A combined approach to identify the root causes of problems (Fishbone) and prioritize them based on impact (Pareto).'
                 },
-                'market-entry': {
-                    title: 'Market Entry Strategy',
-                    description: 'Evaluate market opportunities, entry barriers, and develop a roadmap for market penetration.',
+                'external-analysis': {
+                    title: 'External Analysis',
+                    description: 'Analyze the external environment (market, competition, trends) to identify opportunities and threats.'
                 },
-                'financial': {
-                    title: 'Financial Projections',
-                    description: 'Create comprehensive financial forecasts, budgets, and scenario planning.',
+                'internal-analysis': {
+                    title: 'Internal Analysis',
+                    description: 'Evaluate your organization\'s internal strengths and weaknesses in resources, capabilities, and core competencies.'
                 },
-                'risk': {
-                    title: 'Risk Assessment',
-                    description: 'Identify, evaluate, and develop mitigation strategies for business risks.',
-                },
-                'business-model': {
-                    title: 'Business Model Canvas',
-                    description: 'Design and analyze your business model using the proven 9-building-block framework.',
-                },
-                'marketing-plan': {
-                    title: 'Marketing Plan Development',
-                    description: 'Craft a detailed marketing strategy, including target audience, channels, and campaigns.',
-                },
-                'product-launch': {
-                    title: 'Product Launch Strategy',
-                    description: 'Plan a successful product launch from pre-launch to post-launch activities.',
-                },
-                'customer-segmentation': {
-                    title: 'Customer Segmentation Analysis',
-                    description: 'Identify and analyze distinct customer groups to tailor marketing efforts.',
-                },
-                'supply-chain-opt': {
-                    title: 'Supply Chain Optimization',
-                    description: 'Identify inefficiencies to streamline your supply chain for cost savings.',
-                },
-                'hr-strategy': {
-                    title: 'Human Resources Strategy',
-                    description: 'Develop an HR strategy aligned with business goals, covering talent acquisition and retention.',
-                },
-                'digital-transformation': {
-                    title: 'Digital Transformation Roadmap',
-                    description: 'Plan your organization\'s journey towards digital maturity.',
-                },
-                'dematel-analysis': {
-                    title: 'Dematel Analysis',
-                    description: 'Understand causal relationships between complex factors to identify core problems and effective leverage points.'
-                },
-                'data-analysis': {
-                    title: 'Data Analysis',
-                    description: 'Leverage quantitative data to uncover trends, patterns, and insights that inform strategic decisions.'
-                },
-                'sem-analysis': {
-                    title: 'SEM Analysis',
-                    description: 'Apply Structural Equation Modeling to test and validate complex theoretical models and causal relationships.'
+                 'advanced-system-analysis': { 
+                    title: 'Advanced System Analysis', 
+                    description: 'Model complex systems to understand interdependencies, feedback loops, and high-leverage intervention points.' 
                 },
                 'archetype-analysis': {
                     title: 'Archetype Analysis',
@@ -1392,10 +1603,66 @@
                     title: 'Creative Dissonance Analysis',
                     description: 'Explore the gap between your current reality and desired future to fuel innovation and strategic change.'
                 },
-                'strategic-alignment': {
-                    title: 'Strategic Alignment Analysis',
-                    description: 'Ensure all parts of your organization are working in unison towards common strategic goals.'
-                }
+                'reframing-thinking': {
+                    title: 'Reframing Thinking Analysis',
+                    description: 'Apply the reframing technique to look at problems from new perspectives and unlock creative solutions.'
+                },
+                'delphi-method': {
+                    title: 'Delphi Method Analysis',
+                    description: 'Utilize the Delphi method to gather and synthesize expert opinions for forecasting and decision-making.'
+                },
+                'blue-ocean': {
+                    title: 'Blue Ocean Strategy',
+                    description: 'Focuses on creating uncontested market space rather than competing in existing industries.'
+                },
+                'design-thinking': {
+                    title: 'Design Thinking',
+                    description: 'A human-centered, iterative process for creative problem-solving and innovation.'
+                },
+                'thinking-hats': {
+                    title: 'Thinking Hats Analysis',
+                    description: 'Apply Edward de Bono\'s system for parallel thinking to explore an issue comprehensively.'
+                },
+                 'scamper': {
+                    title: 'SCAMPER Analysis',
+                    description: 'A creative thinking technique using seven prompts (Substitute, Combine, Adapt, Modify, Put to another use, Eliminate, Reverse) to innovate.'
+                },
+                'triz': {
+                    title: 'TRIZ Analysis',
+                    description: 'A systematic approach based on the study of global patent patterns to find innovative solutions to technical problems.'
+                },
+                'regression-analysis': { 
+                    title: 'Regression Analysis', 
+                    description: 'Use statistical regression to model and analyze the relationships between variables for predictive insights.' 
+                },
+                'pls-analysis': { 
+                    title: 'PLS Analysis', 
+                    description: 'Apply Partial Least Squares (PLS) for structural equation modeling, especially with complex models and non-normal data.' 
+                },
+                'dematel-analysis': {
+                    title: 'Dematel Analysis',
+                    description: 'Understand causal relationships between complex factors to identify core problems and effective leverage points.'
+                },
+                'competitor': {
+                    title: 'Competitor Analysis',
+                    description: 'Deep dive into competitor strategies, market positioning, and competitive advantages.',
+                },
+                'market-entry': {
+                    title: 'Market Entry Strategy',
+                    description: 'Evaluate market opportunities, entry barriers, and develop a roadmap for market penetration.',
+                },
+                'risk': {
+                    title: 'Risk Assessment',
+                    description: 'Identify, evaluate, and develop mitigation strategies for business risks.',
+                },
+                'business-model': {
+                    title: 'Business Model Canvas',
+                    description: 'Design and analyze your business model using the proven 9-building-block framework.',
+                },
+                'digital-transformation': {
+                    title: 'Digital Transformation Roadmap',
+                    description: 'Plan your organization\'s journey towards digital maturity.',
+                },
             };
             
             // --- Frameworks Data ---
@@ -1459,107 +1726,6 @@
                     title: 'Pareto Analysis',
                     short: 'Focus on the vital few causes that create the majority of problems (80/20 rule).',
                     long: 'A decision-making technique based on the 80/20 rule (Pareto Principle), which states that for many events, roughly 80% of the effects come from 20% of the causes.'
-                }
-            };
-
-            // --- Feature Content Data ---
-            const featureContent = {
-                'vision': {
-                    short: "We help you craft a clear vision with detailed strategic steps.",
-                    long: `<strong>Our Vision Framework</strong>
-            <p style="text-align: center;">Our comprehensive vision development process includes stakeholder alignment, future scenario planning, and measurable outcome definition. We work with your team to create a vision that inspires action and provides clear direction for organizational growth.</p>
-            <ul class="list-disc list-inside mt-2 text-white/70" style="text-align: center;">
-                <li style="text-align: center;">Stakeholder engagement and alignment</li>
-                <li style="text-align: center;">Market trend analysis and future forecasting</li>
-                <li style="text-align: center;">Vision statement development and refinement</li>
-                <li style="text-align: center;">Implementation roadmap creation</li>
-            </ul>`
-                },
-                'mission': {
-                    short: "Define your organization's core purpose and foundational principles.",
-                    long: `<strong>Mission Development Process</strong>
-            <p style="text-align: center;">We facilitate workshops to help you articulate your organization's fundamental purpose, core values, and primary objectives. This process ensures alignment across all levels of your organization.</p>
-            <ul class="list-disc list-inside mt-2 text-white/70" style="text-align: center;">
-                <li style="text-align: center;">Purpose clarification sessions</li>
-                <li style="text-align: center;">Value proposition development</li>
-                <li style="text-align: center;">Mission statement crafting</li>
-                <li style="text-align: center;">Organizational alignment verification</li>
-            </ul>`
-                },
-                'goals': {
-                    short: "Set ambitious yet achievable goals that align with your vision.",
-                    long: `<strong>SMART Goals Framework</strong>
-            <p style="text-align: center;">Our goal-setting methodology ensures your objectives are Specific, Measurable, Achievable, Relevant, and Time-bound. We help you create both short-term and long-term goals that drive meaningful progress.</p>
-            <ul class="list-disc list-inside mt-2 text-white/70" style="text-align: center;">
-                <li style="text-align: center;">Strategic objective identification</li>
-                <li style="text-align: center;">KPI and metric development</li>
-                <li style="text-align: center;">Timeline and milestone planning</li>
-                <li style="text-align: center;">Resource allocation planning</li>
-            </ul>`
-                },
-                'strategic-initiatives': {
-                    short: "Develop initiatives that translate your vision into actionable plans.",
-                    long: `<strong>Initiative Development</strong>
-            <p style="text-align: center;">We help you identify and prioritize strategic initiatives that will have the greatest impact on achieving your organizational goals. Each initiative includes detailed planning, resource requirements, and success metrics.</p>
-            <ul class="list-disc list-inside mt-2 text-white/70" style="text-align: center;">
-                <li style="text-align: center;">Initiative prioritization matrix</li>
-                <li style="text-align: center;">Resource requirement analysis</li>
-                <li style="text-align: center;">Risk assessment and mitigation</li>
-                <li style="text-align: center;">Implementation timeline development</li>
-            </ul>`
-                },
-                'objectives': {
-                    short: "Break down goals into specific, measurable objectives for tracking.",
-                    long: `<strong>Objective Setting Framework</strong>
-            <p style="text-align: center;">Our systematic approach to objective setting ensures alignment with strategic goals while maintaining flexibility for changing market conditions and organizational needs.</p>
-            <ul class="list-disc list-inside mt-2 text-white/70" style="text-align: center;">
-                <li style="text-align: center;">Objective hierarchy development</li>
-                <li style="text-align: center;">Performance indicator definition</li>
-                <li style="text-align: center;">Progress tracking systems</li>
-                <li style="text-align: center;">Review and adjustment protocols</li>
-            </ul>`
-                },
-                'actions': {
-                    short: "Define specific actions and tactics to drive achievement.",
-                    long: `<strong>Action Planning</strong>
-            <p style="text-align: center;">We help you create detailed action plans that specify who, what, when, and how for each strategic initiative, ensuring nothing falls through the cracks.</p>
-            <ul class="list-disc list-inside mt-2 text-white/70" style="text-align: center;">
-                <li style="text-align: center;">Task breakdown and assignment</li>
-                <li style="text-align: center;">Timeline and dependency mapping</li>
-                <li style="text-align: center;">Resource allocation and budgeting</li>
-                <li style="text-align: center;">Progress monitoring systems</li>
-            </ul>`
-                },
-                'internal-external-analysis': {
-                    short: "Analyze internal and external factors to build a robust strategic position.",
-                    long: `<strong>Factor Analysis Techniques</strong>
-                    <p style="text-align: center;">Utilize established frameworks to evaluate your organization's landscape, identifying key variables that can influence your strategy and decision-making.</p>
-                    <ul class="list-disc list-inside mt-2 text-white/70" style="text-align: center;">
-                        <li style="text-align: center;">SWOT Analysis</li>
-                        <li style="text-align: center;">TOWS Matrix</li>
-                        <li style="text-align: center;">DEMATEL Method</li>
-                    </ul>`
-                },
-                'system-analysis': {
-                    short: "Understand complex interconnections to identify high-leverage intervention points.",
-                    long: `<strong>Systems Thinking Tools</strong>
-                    <p style="text-align: center;">Go beyond linear cause-and-effect to see the patterns, structures, and feedback loops that drive behavior in your organization and market.</p>
-                    <ul class="list-disc list-inside mt-2 text-white/70" style="text-align: center;">
-                        <li style="text-align: center;">System Mapping</li>
-                        <li style="text-align: center;">Levels of Thinking</li>
-                        <li style="text-align: center;">Leverage Points</li>
-                        <li style="text-align: center;">System Archetypes</li>
-                        <li style="text-align: center;">Dissonance Analysis</li>
-                    </ul>`
-                },
-                'problem-solving': {
-                    short: "Apply structured frameworks to diagnose root causes and prioritize solutions.",
-                    long: `<strong>Root Cause Analysis</strong>
-                    <p style="text-align: center;">Move past symptoms to address the fundamental issues, ensuring your solutions are effective and long-lasting.</p>
-                    <ul class="list-disc list-inside mt-2 text-white/70" style="text-align: center;">
-                         <li style="text-align: center;">Fishbone (Ishikawa) Diagram</li>
-                         <li style="text-align: center;">Pareto Analysis (80/20 Rule)</li>
-                    </ul>`
                 }
             };
 
@@ -1704,7 +1870,7 @@
                 const targetPage = $(pageId);
                 if (targetPage) {
                     targetPage.classList.add('active');
-                    if (['home', 'templates', 'templateDetail', 'examplesPage', 'myProjects', 'adminDashboard', 'frameworks', 'about', 'knowledgeGraph', 'termsOfService', 'privacyPolicy'].includes(pageId)) {
+                    if (['home', 'templates', 'templateDetail', 'examplesPage', 'myProjects', 'adminDashboard', 'frameworksPage', 'about', 'knowledgeGraph', 'termsOfService', 'privacyPolicy'].includes(pageId)) {
                         targetPage.style.display = 'block';
                     } else {
                         targetPage.style.display = 'flex';
@@ -1713,11 +1879,15 @@
                     if (pageId === 'myProjects' && userLoggedIn) {
                         loadProjectsForUser(); 
                     }
-                    if(pageId === 'frameworks'){
+                    if(pageId === 'frameworksPage'){
                         populateFrameworksPage();
                     }
                     if (pageId === 'knowledgeGraph') {
-                        loadKnowledgeGraph();
+                        initializeKnowledgeGraph();
+                    }
+                    if (pageId === 'adminDashboard') {
+                        // Automatically fetch stats when navigating to dashboard
+                        fetchAndDisplayStatistics();
                     }
                     window.scrollTo(0, 0);
                 }
@@ -1734,7 +1904,7 @@
                         loginLink.textContent = 'Logout';
                         loginLink.setAttribute('data-page', 'logout');
                     }
-                    if (templatesLink) templatesLink.classList.remove('hidden');
+                    if (templatesLink) templatesLink.classList.add('hidden'); // Always hide old templates link
                     if (myProjectsLink) myProjectsLink.classList.remove('hidden');
                 } else {
                     if (loginLink) {
@@ -1765,7 +1935,13 @@
                     return;
                 }
 
-                const needsAuth = ['templates', 'myProjects', 'knowledgeGraph'];
+                // Prevent access to old templates page via nav
+                if (pageId === 'templates') {
+                    navigateTo('home');
+                    return;
+                }
+
+                const needsAuth = ['myProjects', 'knowledgeGraph'];
                 if (needsAuth.includes(pageId) && !userLoggedIn) {
                     showMessage('loginMessage', `Please log in to access ${pageId}.`, 'error');
                     navigateTo('login');
@@ -1776,51 +1952,117 @@
                     navigateTo('myProjects');
                     return;
                 }
-
-                // Call loadKnowledgeGraph when navigating to the knowledgeGraph
-                if (pageId === 'knowledgeGraph') {
-                    navigateTo('knowledgeGraph')
-                    return;
-                }
                 navigateTo(pageId);
             }
+            
+            // --- Admin Dashboard Stats Logic ---
+            const refreshStatsBtn = $('refreshStatsBtn');
+            if (refreshStatsBtn) {
+                refreshStatsBtn.addEventListener('click', fetchAndDisplayStatistics);
+            }
 
-            // --- Template Page & Modal Logic ---
-            function populateTemplatesList() {
-                templatesListContainer.innerHTML = '';
-                const templateArray = Object.keys(templates).map(key => ({
-                    id: key,
-                    ...templates[key]
-                }));
+            async function fetchAndDisplayStatistics() {
+                if (!userLoggedIn) {
+                    showMessage('statsMessage', 'You must be logged in to refresh statistics.', 'error');
+                    return;
+                }
 
-                templateArray.sort((a, b) => {
-                    if (a.id === 'custom-template') return -1;
-                    if (b.id === 'custom-template') return 1;
-                    return 0;
+                const btn = $('refreshStatsBtn');
+                const textEl = $('refreshStatsBtnText');
+                const spinner = $('refreshStatsSpinner');
+                
+                btn.disabled = true;
+                spinner.classList.remove('hidden');
+                textEl.textContent = 'Loading...';
+                showMessage('statsMessage', '', 'success'); // Clear previous messages
+
+                try {
+                    const { data, error } = await supabase.functions.invoke('statistics', {
+                        body: { update: true },
+                    });
+
+                    if (error) {
+                        throw error;
+                    }
+
+                    if (data && data.success) {
+                        // Update Database Stats
+                        const dbStatus = data.database_status;
+                        if (dbStatus) {
+                            $('statTotalUsers').textContent = dbStatus.total_users ?? 'N/A';
+                            $('statActiveUsers').textContent = dbStatus.log_in_users ?? 'N/A';
+                            $('statTotalQueries').textContent = dbStatus.total_queries ?? 'N/A';
+                            $('dashQueryCount').textContent = dbStatus.total_queries ?? '0'; // Update simple stat too
+                            $('statDbSize').textContent = dbStatus.database_size ?? 'N/A';
+                            $('statAvgTime').textContent = dbStatus.avg_p_time ? parseFloat(dbStatus.avg_p_time).toFixed(2) + ' ms' : 'N/A';
+                            $('statRecordedAt').textContent = dbStatus.recorded_at ? new Date(dbStatus.recorded_at).toLocaleString() : 'N/A';
+                        }
+
+                        // Update Pinecone Stats
+                        const pineconeStatus = data.pinecone_status;
+                        const pineconeContainer = $('pineconeStatsContainer');
+                        if (pineconeStatus && pineconeStatus.status) {
+                            pineconeContainer.classList.remove('hidden');
+                            $('statPineconeName').textContent = pineconeStatus.name ?? 'N/A';
+                            $('statTotalVectors').textContent = pineconeStatus.total_vectors ?? 'N/A';
+                            $('statBookVectors').textContent = pineconeStatus.book_namespace_vectors ?? 'N/A';
+                            $('statPineconeDimension').textContent = pineconeStatus.dimension ?? 'N/A';
+                            $('statPineconeStatus').textContent = pineconeStatus.status ?? 'N/A';
+                            $('statPineconeCloud').textContent = `${pineconeStatus.cloud_provider ?? ''} (${pineconeStatus.region ?? ''})`;
+                        } else {
+                            pineconeContainer.classList.add('hidden');
+                        }
+                        showMessage('statsMessage', 'Statistics updated successfully!', 'success');
+                    } else {
+                         throw new Error(data.error || 'Failed to fetch statistics.');
+                    }
+
+                } catch (error) {
+                    console.error("Error fetching statistics:", error);
+                    showMessage('statsMessage', `Error: ${error.message}`, 'error');
+                } finally {
+                    btn.disabled = false;
+                    spinner.classList.add('hidden');
+                    textEl.textContent = 'Refresh Stats';
+                }
+            }
+
+
+            // --- Home Page Card & Tab Logic ---
+            function setupHomeTabs() {
+                const tabsNav = $('homeTabsNav');
+                const tabPanels = document.querySelectorAll('.home-tab-panel');
+                const tabBtns = document.querySelectorAll('.home-tab-btn');
+
+                tabsNav.addEventListener('click', (e) => {
+                    if (e.target.tagName !== 'BUTTON') return;
+
+                    const targetTab = e.target.dataset.tab;
+
+                    tabBtns.forEach(btn => {
+                        btn.classList.toggle('active', btn.dataset.tab === targetTab);
+                    });
+
+                    tabPanels.forEach(panel => {
+                        panel.classList.toggle('active', panel.id === targetTab);
+                    });
                 });
+            }
 
-                templateArray.forEach(template => {
-                    const card = document.createElement('div');
-                    card.className = 'template-card p-6' + (template.isPremium ? ' relative' : '');
-                    card.setAttribute('data-template-id', template.id);
-                    card.innerHTML = `
-                <h3 class="text-2xl font-bold mb-2">${template.title}</h3>
-                <p class="text-white/70">${template.description}</p>
-                ${template.isPremium ? '<span class="absolute top-4 right-4 bg-yellow-500 text-yellow-900 text-xs font-semibold px-2.5 py-0.5 rounded-full">Premium</span>' : ''}
-            `;
+            function attachHomeCardListeners() {
+                document.querySelectorAll('.home-template-link').forEach(card => {
                     card.addEventListener('click', () => {
-                        if (template.isPremium && !userLoggedIn) {
-                            showMessage('loginMessage', 'Please log in to access premium templates.', 'error');
-                            navigateTo('login');
-                        } else if (!userLoggedIn) {
-                            showMessage('loginMessage', 'Please log in to use templates.', 'error');
+                        const templateId = card.dataset.templateId;
+                        preFillData = card.dataset.preFill || ''; // Set global pre-fill context
+
+                        if (!userLoggedIn) {
+                            showMessage('loginMessage', 'Please log in to use the analysis tools.', 'error');
                             navigateTo('login');
                         } else {
-                            selectedTemplateForModal = template.id;
+                            selectedTemplateForModal = templateId;
                             $('versionChoiceModal').classList.remove('hidden');
                         }
                     });
-                    templatesListContainer.appendChild(card);
                 });
             }
 
@@ -1834,7 +2076,10 @@
             function showTemplateDetail(templateId) {
                 currentTemplateId = templateId;
                 const template = templates[templateId];
-                if (!template) return;
+                if (!template) {
+                    console.error("Template not found:", templateId);
+                    return;
+                }
 
                 $('templateTitle').textContent = template.title;
                 $('templateDescription').textContent = template.description;
@@ -1843,10 +2088,10 @@
 
                 if (templateId === 'custom-template') {
                     templateFormFields.innerHTML += `
-                <div>
-                    <label for="typeOfStrategy" class="block text-sm font-medium text-gray-200 mb-2">Type of Strategy</label>
-                    <input type="text" id="typeOfStrategy" class="input-field" placeholder="e.g., Market Expansion Strategy" required>
-                </div>`;
+                    <div>
+                        <label for="typeOfStrategy" class="block text-sm font-medium text-gray-200 mb-2">Type of Strategy</label>
+                        <input type="text" id="typeOfStrategy" class="input-field" placeholder="e.g., Market Expansion Strategy" required>
+                    </div>`;
                 }
 
                 templateFormFields.innerHTML += `
@@ -1854,20 +2099,37 @@
                     <div>
                         <label for="companyDocumentsFile" class="block text-sm font-medium text-gray-200 mb-2">Upload Company Documents</label>
                         <div class="input-file-wrapper">
-                             <label for="companyDocumentsFile" id="companyDocumentsFileLabel" class="input-file-label">Click to select a file...</label>
+                             <label for="companyDocumentsFile" id="companyDocumentsFileLabel" class="input-file-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16">
+                                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+                                    <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/>
+                                </svg>
+                                <span class="file-name">Click to select a file...</span>
+                             </label>
                              <input type="file" id="companyDocumentsFile" class="input-file" required>
                         </div>
                     </div>
                     <div><label for="location" class="block text-sm font-medium text-gray-200 mb-2">Location</label><input type="text" id="location" class="input-field" placeholder="e.g., Global" required></div>
                 `;
 
+                // After adding the fields, pre-fill if data exists
+                if (templateId === 'custom-template') {
+                    const strategyInput = $('typeOfStrategy');
+                    if (strategyInput && preFillData) {
+                        strategyInput.value = `${preFillData} Strategy`;
+                    }
+                }
+                preFillData = ''; // Clear after use
+
+
                 $('companyDocumentsFile').addEventListener('change', (e) => {
                     const label = $('companyDocumentsFileLabel');
+                    const fileNameSpan = label.querySelector('.file-name');
                     if (e.target.files.length > 0) {
-                        label.textContent = e.target.files[0].name;
+                        fileNameSpan.textContent = e.target.files[0].name;
                         label.classList.add('has-file');
                     } else {
-                        label.textContent = 'Click to select a file...';
+                        fileNameSpan.textContent = 'Click to select a file...';
                          label.classList.remove('has-file');
                     }
                 });
@@ -1963,11 +2225,6 @@
             async function handleGenerate() {
                 if (!currentTemplateId) return;
 
-                try {
-                    const currentCount = Number(localStorage.getItem('sage_query_count') || '0');
-                    localStorage.setItem('sage_query_count', String(currentCount + 1));
-                } catch (e) { console.error("Could not update query count", e); }
-
                 setLoading('generate', true);
                 $('analysisActions').classList.add('hidden');
 
@@ -1980,9 +2237,16 @@
                 const sections = getSelectedSections();
                 const checkedFrameworks = Array.from(document.querySelectorAll('#frameworkList .method-checkbox:checked'));
 
-                if (checkedFrameworks.length < 1 || checkedFrameworks.length > currentSelectionLimit) {
+                if (checkedFrameworks.length < 1) {
+                     analysisResultContainer.innerHTML =
+                        `<div class="p-4 text-center text-red-400">Please select at least one framework.</div>`;
+                    setLoading('generate', false);
+                    return;
+                }
+                
+                if (checkedFrameworks.length > currentSelectionLimit) {
                     analysisResultContainer.innerHTML =
-                        `<div class="p-4 text-center text-red-400">Please select between 1 and ${currentSelectionLimit} frameworks.</div>`;
+                        `<div class="p-4 text-center text-red-400">You can select a maximum of ${currentSelectionLimit} frameworks.</div>`;
                     setLoading('generate', false);
                     return;
                 }
@@ -2250,7 +2514,10 @@
                 setTimeout(() => {
                     $('templateTitle').textContent = project.project_title;
                     $('companyName').value = project.inputs.companyName || '';
-                    if ($('companyDocumentsFileLabel')) $('companyDocumentsFileLabel').textContent = "Previous documents not stored.";
+                    if ($('companyDocumentsFileLabel')) {
+                        const fileNameSpan = $('companyDocumentsFileLabel').querySelector('.file-name');
+                        fileNameSpan.textContent = "Previous documents not stored.";
+                    }
                     $('location').value = project.inputs.location || '';
                     if ($('typeOfStrategy')) $('typeOfStrategy').value = project.inputs.typeOfStrategy || '';
 
@@ -2368,10 +2635,17 @@
 
             function showMessage(id, msg, type) {
                 const el = $(id);
+                if (!el) return;
                 el.textContent = msg;
                 el.className = type === 'error' ? 'error-message' : 'success-message';
-                el.classList.remove('hidden');
-                setTimeout(() => el.classList.add('hidden'), 4000);
+                if (msg) {
+                    el.classList.remove('hidden');
+                } else {
+                    el.classList.add('hidden');
+                }
+                if (type === 'success' && msg) {
+                    setTimeout(() => el.classList.add('hidden'), 4000);
+                }
             }
 
             // --- Three.js Animation Logic ---
@@ -2382,6 +2656,8 @@
             let pointCloud;
             let particlePositions;
             let linesMesh;
+            let isAnimationPaused = false;
+            let animationFrameId;
 
             const NUM_PARTICLES = 1000;
             const AREA_SIZE = 3000;
@@ -2482,10 +2758,23 @@
                 });
                 renderer.setPixelRatio(window.devicePixelRatio);
                 renderer.setSize(window.innerWidth, window.innerHeight);
-                renderer.setAnimationLoop(animateThreeJS);
+                
+                startAnimationLoop();
 
                 window.addEventListener('resize', onWindowResize);
                 window.addEventListener('mousemove', onDocumentMouseMove);
+            }
+
+            function startAnimationLoop() {
+                if(animationFrameId) cancelAnimationFrame(animationFrameId);
+
+                function loop() {
+                    if (!isAnimationPaused) {
+                        animateThreeJS();
+                    }
+                    animationFrameId = requestAnimationFrame(loop);
+                }
+                loop();
             }
 
             function onDocumentMouseMove(event) {
@@ -2562,27 +2851,6 @@
                 renderer.setSize(window.innerWidth, window.innerHeight);
             }
 
-            // --- Feature Toggle Logic ---
-            document.querySelectorAll('.toggle-feature-btn').forEach(button => {
-                button.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    const featureId = this.getAttribute('data-feature-id');
-                    const featureDescriptionElement = this.closest('.feature-card').querySelector(
-                        '.feature-description');
-                    const currentState = featureDescriptionElement.getAttribute('data-state');
-
-                    if (currentState === 'short') {
-                        featureDescriptionElement.innerHTML = featureContent[featureId].long;
-                        featureDescriptionElement.setAttribute('data-state', 'long');
-                        this.innerHTML = 'Less &rarr;';
-                    } else {
-                        featureDescriptionElement.innerHTML = featureContent[featureId].short;
-                        featureDescriptionElement.setAttribute('data-state', 'short');
-                        this.innerHTML = 'More &rarr;';
-                    }
-                });
-            });
-
             // --- AI Analysis Examples Carousel Logic ---
             let currentExampleIndex = 0;
             const analysisExamples = document.querySelectorAll('.analysis-example-item');
@@ -2655,96 +2923,156 @@
                 });
             }
 
-            // --- Knowledge Graph Visualization Logic ---
-            async function loadKnowledgeGraph() {
-                const graphContainer = document.querySelector('.graph-inner')
-                
-                if (!graphContainer || typeof NVL === 'undefined') {
-                    console.error('NVL not loaded or graph container not found.');
-                    return;
-                }
+            // --- Knowledge Graph Logic ---
+            let cy; // Keep a reference to the Cytoscape instance
+            async function initializeKnowledgeGraph() {
+                const container = $('cy');
+                if (!container || container.dataset.initialized) return;
 
-                // Function to fetch data from your backend
-                async function fetchGraphData() {
-                    try {
-                        const response = await fetch('https://nlp.data2int.com/graph/knowledge-graph'); 
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
+                container.innerHTML = '<div class="flex items-center justify-center h-full"><span class="loading-spinner"></span><p class="ml-4">Loading Graph...</p></div>';
+
+                try {
+                    const response = await fetch('https://matt-nlp.data2int.com/graph/knowledge-graph');
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    
+                    const graphData = await response.json();
+
+                    const elements = [
+                        ...graphData.nodes.map(node => ({
+                            data: { id: String(node.id), label: node.properties.name || node.label, type: node.label }
+                        })),
+                        ...graphData.relationships.map(rel => ({
+                            data: { id: `e${rel.id}`, source: String(rel.source_id), target: String(rel.target_id), label: rel.type }
+                        }))
+                    ];
+                    
+                    container.innerHTML = ''; // Clear loading indicator
+                    
+                    const isLightTheme = document.body.classList.contains('light-theme');
+                    const labelColor = isLightTheme ? '#1a202c' : '#fff';
+                    const textBgColor = isLightTheme ? 'rgba(255,255,255,0.7)' : '#1f2937';
+
+                    cy = cytoscape({
+                        container: container,
+                        elements: elements,
+                        style: [
+                            {
+                                selector: 'node',
+                                style: {
+                                    'background-color': 'var(--node-color)',
+                                    'label': 'data(label)',
+                                    'color': '#fff', // Node labels on colored bg should be white
+                                    'text-outline-color': 'var(--node-color)',
+                                    'text-outline-width': 2,
+                                    'font-size': '12px'
+                                }
+                            },
+                             {
+                                selector: 'edge',
+                                style: {
+                                    'width': 2,
+                                    'line-color': 'var(--edge-color)',
+                                    'target-arrow-color': 'var(--edge-color)',
+                                    'target-arrow-shape': 'triangle',
+                                    'curve-style': 'bezier',
+                                    'label': 'data(label)',
+                                    'color': labelColor,
+                                    'font-size': '10px',
+                                    'text-rotation': 'autorotate',
+                                    'text-background-opacity': 1,
+                                    'text-background-color': textBgColor
+                                }
+                            }
+                        ],
+                        layout: {
+                            name: 'cose',
+                            animate: true,
+                            padding: 10
                         }
-                        const graphData = await response.json();
-                        console.log("Fetched graph data:", graphData);
-
-                        const transformedNodes = graphData.nodes.map(node => ({
-                            id: String(node.id), // Ensure ID is a string
-                            caption: node.properties.name || node.label,
-                            labels: [String(node.label)], // NVL expects an array of labels
-                            properties: node.properties ? { ...node.properties } : {} // Ensure properties is a plain object
-                        }));
-
-                        const transformedRelationships = graphData.relationships.map(rel => {
-                            const relId = rel.id ? String(rel.id) : `${rel.source_id}-${rel.type}-${rel.target_id}`;
-                            return {
-                                id: relId,
-                                from: String(rel.source_id), // Ensure IDs are strings
-                                to: String(rel.target_id),   // Ensure IDs are strings
-                                caption: String(rel.type),   // Ensure caption is a string
-                                type: String(rel.type),
-                                properties: rel.properties ? { ...rel.properties } : {} // Ensure properties is a plain object
-                            };
-                        });
-
-                        return {
-                            nodes: transformedNodes,
-                            relationships: transformedRelationships
-                        };
-
-                    } catch (error) {
-                        console.error("Error fetching graph data:", error);
-                        graphContainer.innerHTML = `<p style='color: red;'>Error loading graph: ${error.message}</p>`;
-                        return null; // Return null on error
-                    }
-                }
-
-                const initialGraphData = await fetchGraphData();
-                console.log("Graph data", initialGraphData);
-                const { nodes, relationships } = initialGraphData;
-                if (initialGraphData) {
-                    // Pass the data to the NVL constructor
-                    const visualization = new NVL(graphContainer, nodes, relationships, {
-                        // Optionally specify a layout, e.g., 'forcedirected' or 'hierarchical'
-                        layout: 'forcedirected'
                     });
-                    console.log("Visualization:", visualization);
 
-                    // Instantiate and add interaction handlers
-                    const clickInteraction = new ClickInteraction(visualization);
-                    const zoomInteraction = new ZoomInteraction(visualization);
-                    const panInteraction = new PanInteraction(visualization);
-                    const dragNodeInteraction = new DragNodeInteraction(visualization);
-                    //const boxSelectInteraction = new BoxSelectInteraction(visualization);
-                    const hoverInteraction = new HoverInteraction(visualization);
+                    container.dataset.initialized = 'true';
 
-                    // Example: Add callbacks to interaction handlers
-                    clickInteraction.updateCallback('onNodeClick', (node) => {
-                        console.log('Node clicked', node);
-                    });
-                    // boxSelectInteraction.updateCallback('onBoxSelect', ({ nodes, rels }) => {
-                    //     console.log('Selected elements:', nodes, rels);
-                    // });
-                    dragNodeInteraction.updateCallback('onDrag', (nodes) => {
-                        //console.log('Dragged nodes:', nodes);
-                    });
-                    hoverInteraction.updateCallback('onHover', (element, hitElements, event) => {
-                        //console.log('Hovered element:', element);
-                    });
-                    panInteraction.updateCallback('onPan', (panning) => {
-                        //console.log('Panning:', panning);
-                    });
-                    zoomInteraction.updateCallback('onZoom', (zoomLevel) => {
-                        //console.log('Zoom level:', zoomLevel);
-                    });
+                } catch (error) {
+                    console.error("Error fetching or initializing graph:", error);
+                    container.innerHTML = `<p class="text-red-400 text-center">${error.message}</p>`;
                 }
             }
+            
+            // --- Settings Logic ---
+            const settingsFabBtn = $('settings-fab-btn');
+            const settingsOverlay = $('settings-overlay');
+            const settingsPanel = $('settings-panel');
+            const settingsCloseBtn = $('settings-close-btn');
+            const animationToggle = $('animationToggle');
+            const colorSwatches = document.querySelectorAll('.color-swatch');
+
+            function applySettings() {
+                const lightThemes = ['winter-neva', 'everlasting-sky', 'clean-mirror', 'antarctica'];
+                
+                // Apply theme
+                const savedTheme = localStorage.getItem('sage-theme') || 'celestial';
+                document.documentElement.setAttribute('data-theme', savedTheme);
+                document.body.classList.toggle('light-theme', lightThemes.includes(savedTheme));
+
+                colorSwatches.forEach(swatch => {
+                    swatch.classList.toggle('active', swatch.dataset.theme === savedTheme);
+                });
+
+                // Apply animation preference
+                const animationPaused = localStorage.getItem('sage-animation-paused') === 'true';
+                isAnimationPaused = animationPaused;
+                document.body.classList.toggle('animation-paused', animationPaused);
+                if (animationToggle) animationToggle.checked = !animationPaused;
+            }
+
+            settingsFabBtn.addEventListener('click', () => {
+                settingsOverlay.classList.remove('hidden');
+                settingsOverlay.classList.add('flex');
+            });
+            
+            const closeSettings = () => {
+                settingsOverlay.classList.add('hidden');
+                settingsOverlay.classList.remove('flex');
+            }
+
+            settingsCloseBtn.addEventListener('click', closeSettings);
+
+            settingsOverlay.addEventListener('click', (e) => {
+                if (e.target === settingsOverlay) {
+                    closeSettings();
+                }
+            });
+
+            animationToggle.addEventListener('change', () => {
+                isAnimationPaused = !animationToggle.checked;
+                document.body.classList.toggle('animation-paused', isAnimationPaused);
+                localStorage.setItem('sage-animation-paused', isAnimationPaused);
+            });
+            
+            colorSwatches.forEach(swatch => {
+                swatch.addEventListener('click', () => {
+                    const theme = swatch.dataset.theme;
+                    document.documentElement.setAttribute('data-theme', theme);
+                    localStorage.setItem('sage-theme', theme);
+
+                    const lightThemes = ['winter-neva', 'everlasting-sky', 'clean-mirror', 'antarctica'];
+                    document.body.classList.toggle('light-theme', lightThemes.includes(theme));
+                    
+                    colorSwatches.forEach(s => s.classList.remove('active'));
+                    swatch.classList.add('active');
+                    
+                    // Re-initialize graph if it exists to apply new colors
+                    if (cy) {
+                        const container = $('cy');
+                        if(container) {
+                            cy.destroy();
+                            container.dataset.initialized = '';
+                        }
+                        initializeKnowledgeGraph();
+                    }
+                });
+            });
 
 
             // --- Initial Setup ---
@@ -2783,9 +3111,12 @@
             } else {
                  navigateTo('home');
             }
-
-            populateTemplatesList();
+            
+            setupHomeTabs();
+            attachHomeCardListeners();
+            
             initThreeJS();
+            applySettings();
         });
 
         window.addEventListener('beforeunload', () => {
@@ -2880,6 +3211,7 @@
                         detailText = 'Attempting to connect...';
                     }
                 }
+                
                 if (serverText) serverText.textContent = statusText;
                 if (serverDot) serverDot.className = 'inline-block w-3 h-3 rounded-full ' + statusClass;
                 if (wsDetail) wsDetail.textContent = detailText;
@@ -2889,8 +3221,48 @@
             updateDashboard();
         })();
     </script>
+
+    <script>
+        function $(id) { return document.getElementById(id); }
+
+        function setupHomeTabs() {
+            const tabsNav = $('homeTabsNav');
+            const tabPanels = document.querySelectorAll('.home-tab-panel');
+            const tabBtns = document.querySelectorAll('.home-tab-btn');
+
+            // Ensure only the active panel is visible on load
+            tabPanels.forEach(panel => {
+                if (panel.classList.contains('active')) {
+                    panel.style.display = 'grid';
+                } else {
+                    panel.style.display = 'none';
+                }
+            });
+
+            tabsNav.addEventListener('click', (e) => {
+                if (e.target.tagName !== 'BUTTON') return;
+                const targetTab = e.target.dataset.tab;
+
+                tabBtns.forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.tab === targetTab);
+                });
+
+                tabPanels.forEach(panel => {
+                    if (panel.id === targetTab) {
+                        panel.classList.add('active');
+                        panel.style.display = 'grid';
+                    } else {
+                        panel.classList.remove('active');
+                        panel.style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setupHomeTabs();
+        });
+    </script>
 </body>
 
 </html>
-
-
