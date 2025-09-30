@@ -2047,7 +2047,7 @@
                     formData.append('file', companyDocumentsFile); // Append the actual file data
 
 
-                    const response = await fetch('https://n8n.data2int.com/webhook-test/analysis-ev2', {
+                    const response = await fetch('https://n8n.data2int.com/webhook/analysis-ev2', {
                         method: 'POST',
                         headers: {
                             'Authorization': `Bearer ${session.access_token}`
