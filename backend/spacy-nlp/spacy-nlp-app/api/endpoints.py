@@ -44,6 +44,7 @@ from ..services.graph_query_service import (
     query_centrality_measures_logic,
     query_community_detection_logic_louvain,
     query_community_detection_logic_girvan_newman,
+    query_knowledge_graph_for_rag,
     get_all_nodes_logic,
     get_all_relationships_logic,
     identify_leverage_points_logic
@@ -189,7 +190,10 @@ async def extract_relationships(
         raise HTTPException(
             status_code=503, detail="SpaCy model not loaded. Service is not ready."
         )
-    return await extract_relationships_logic(nlp, request_data.text, neo4j_crud, min_confidence)
+    return await extract_relationships_logic(nlp=nlp, 
+                                             text=request_data.text, 
+                                             neo4j_crud=neo4j_crud, 
+                                             min_confidence=min_confidence)
 
 
 @graph_router.post("/query_graph_neighbors", response_model=NeighborsResponse)
@@ -282,9 +286,9 @@ async def get_communities(
 
 
 @graph_router.post(
-    "/query_knowledge_graph_for_rag", response_model=KnowledgeGraphQueryResponse
+    "/get_knowledge_graph_context", response_model=KnowledgeGraphQueryResponse
 )
-async def query_knowledge_graph_for_rag(
+async def get_knowledge_graph_context(
     request_data: TextInput,
     nlp: Any = Depends(get_nlp_model),
     neo4j_crud: Neo4jCRUD = Depends(get_neo4j_crud),
@@ -298,32 +302,10 @@ async def query_knowledge_graph_for_rag(
             status_code=503, detail="SpaCy model not loaded. Service is not ready."
         )
 
-    doc = nlp(request_data.text)
-    extracted_entities = [ent.text for ent in doc.ents]
-
-    # Query for nodes related to extracted entities using the updated logic
-    nodes_response = await get_all_nodes_logic(
-        neo4j_crud, GraphFilterRequest(), entity_texts=extracted_entities
-    )
-    all_relevant_nodes = nodes_response.nodes
-
-    # Extract node IDs from the relevant nodes to query for relationships
-    relevant_node_ids = [node.id for node in all_relevant_nodes]
-
-    # Query for relationships related to the identified nodes using the updated logic
-    relationships_response = await get_all_relationships_logic(
-        neo4j_crud, GraphFilterRequest(), node_ids=relevant_node_ids
-    )
-    all_relevant_relationships = relationships_response.relationships
-
-    # Remove duplicates (though the database queries should already handle much of this)
-    unique_nodes = {node.id: node for node in all_relevant_nodes}.values()
-    unique_relationships = {
-        f"{relationship.source_id}-{relationship.type}-{relationship.target_id}": relationship for relationship in all_relevant_relationships
-    }.values()
-
-    return KnowledgeGraphQueryResponse(
-        nodes=list(unique_nodes), relationships=list(unique_relationships)
+    return await query_knowledge_graph_for_rag(
+        nlp=nlp,
+        neo4j_crud=neo4j_crud,
+        text=request_data.text
     )
 
 
