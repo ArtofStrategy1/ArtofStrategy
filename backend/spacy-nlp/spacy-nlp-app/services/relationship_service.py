@@ -778,7 +778,7 @@ def build_knowledge_graph(relationships: List[RelationshipTriple]) -> KnowledgeG
                 properties={
                     "confidence": triple.confidence,
                     "relation_metadata": triple.relation_metadata,
-                },
+                }
             )
         )
     
