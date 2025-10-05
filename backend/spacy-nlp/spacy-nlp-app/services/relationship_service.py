@@ -14,7 +14,8 @@ from ..models import (
     NamedEntity,
 )
 from ..utils.graph_utils import find_lca
-from ..core.processing import extract_meaningful_entities # Import the new function
+from ..core.processing import extract_meaningful_entities
+from ..core.processing import clean_text
 
 logger = logging.getLogger(__name__)
 
