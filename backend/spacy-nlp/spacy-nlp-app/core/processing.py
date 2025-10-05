@@ -1,10 +1,22 @@
 from typing import List, Dict, Any, Optional
 from ..models import ProcessedToken, NamedEntity, ProcessedText
 from spacy.tokens import Doc, Span, Token
+import re
 import logging
 
 logger = logging.getLogger(__name__)
 
+def clean_text(text: str) -> str:
+    """
+    Cleans the input text by removing markdown headers, excessive newlines,
+    and other non-content elements that can interfere with NLP processing.
+    """
+    # Remove markdown headers (e.g., ### Business Overview)
+    text = re.sub(r'#+\s*([^\n]+)', r'\1', text)
+    # Replace multiple newlines with a single space or newline, then strip leading/trailing whitespace
+    text = re.sub(r'\n\s*\n', '\n', text).strip()
+    text = re.sub(r'\s+', ' ', text) # Replace multiple spaces with a single space
+    return text
 
 def extract_meaningful_entities(doc: Doc) -> List[NamedEntity]:
     """
