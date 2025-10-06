@@ -17,6 +17,7 @@ from ..models import (
     GraphFilterRequest,
     GraphNodesResponse,
     GraphRelationshipsResponse,
+    KnowledgeGraphQueryResponse
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -35,7 +36,7 @@ async def get_all_nodes_logic(
 
     # Fetch all nodes first, then apply Python-side filtering for simplicity
     # For large graphs, this should be optimized with Cypher queries in neo4j_crud
-    all_neo4j_nodes = neo4j_crud.get_all_nodes(label=filters.node_type)
+    all_neo4j_nodes = neo4j_crud.get_all_nodes(label=filters.node_label)
 
     filtered_nodes = []
     for node in all_neo4j_nodes:
@@ -43,7 +44,7 @@ async def get_all_nodes_logic(
         if filters.source_document_id and node.properties.get("source_document_id") != filters.source_document_id:
             match = False
         if entity_texts:
-            node_text = node.properties.get("name", "").lower()
+            node_text = node.properties.get("id").lower()
             if not any(et.lower() in node_text for et in entity_texts):
                 match = False
         
@@ -51,10 +52,9 @@ async def get_all_nodes_logic(
             filtered_nodes.append(
                 GraphNode(
                     id=node.id,
-                    label=node.properties.get("name", node.label),
-                    type=node.label, # Using Neo4j label as type
+                    label=node.label,
                     source_document_id=node.properties.get("source_document_id"),
-                    properties=node.properties,
+                    properties=node.properties
                 )
             )
     return GraphNodesResponse(nodes=filtered_nodes)
@@ -94,7 +94,7 @@ async def get_all_relationships_logic(
         match = True
         if filters.source_document_id and rel.properties.get("source_document_id") != filters.source_document_id:
             match = False
-        if filters.relation_type and rel.type != filters.relation_type:
+        if filters.relation_type and rel.properties.get("relation_type") != filters.relation_type:
             match = False
         
         if match:
@@ -104,11 +104,10 @@ async def get_all_relationships_logic(
                     target_id=rel.target_id,
                     type=rel.type,
                     properties={
-                        "label": rel.type,
-                        "relation_type": rel.type,
+                        "relation_type": rel.properties.get("relation_type"),
                         "source_document_id": rel.properties.get("source_document_id"),
                         **rel.properties
-                    },
+                    }
                 )
             )
     return GraphRelationshipsResponse(relationships=filtered_relationships)
@@ -339,6 +338,85 @@ async def identify_leverage_points_logic(
     }
 
     return {"leverage_points": top_leverage_points}
+
+
+async def query_knowledge_graph_for_rag(
+    neo4j_crud: Neo4jCRUD,
+    nlp: Any,
+    text: str
+) -> KnowledgeGraphQueryResponse:
+    """
+    Allows an external RAG system to query the knowledge graph for relevant context
+    based on a given text query using hybrid search (full-text + graph traversal).
+    """
+    # 1. Use full-text search to get initial seed nodes
+    logger.info(f"Performing full-text search for query: {text}")
+    fulltext_results = neo4j_crud.search_nodes_fulltext(text, limit=5)
+
+    seed_node_ids = []
+    all_relevant_nodes: Dict[str, GraphNode] = {}
+    all_relevant_relationships: Dict[str, GraphRelationship] = {}
+
+    for result in fulltext_results:
+        node_props = result["node_properties"]
+        node_id = node_props.get("id")
+        if node_id:
+            seed_node_ids.append(node_id)
+            # Convert Neo4j node properties to GraphNode model
+            all_relevant_nodes[node_id] = GraphNode(
+                id=node_id,
+                label=node_props.get("label", "ENTITY"), # Assuming 'label' property exists or default
+                properties=node_props
+            )
+
+    # 2. Expand from seed nodes to get their neighbors and relationships
+    for node_id in seed_node_ids:
+        # Get the node itself (if not already added from full-text search)
+        if node_id not in all_relevant_nodes:
+            db_node = neo4j_crud.get_node(node_id)
+            if db_node:
+                all_relevant_nodes[db_node.id] = GraphNode(
+                    id=db_node.id,
+                    label=db_node.label,
+                    properties=db_node.properties
+                )
+
+        # Get relationships for the current seed node
+        db_relationships = neo4j_crud.get_relationships_for_node(node_id)
+        for rel in db_relationships:
+            rel_key = f"{rel.source_id}-{rel.type}-{rel.target_id}"
+            if rel_key not in all_relevant_relationships:
+                all_relevant_relationships[rel_key] = GraphRelationship(
+                    source_id=rel.source_id,
+                    target_id=rel.target_id,
+                    type=rel.type,
+                    properties=rel.properties
+                )
+            
+            # Also add the connected neighbor node if not already in all_relevant_nodes
+            # Source node of relationship
+            if rel.source_id not in all_relevant_nodes:
+                source_db_node = neo4j_crud.get_node(rel.source_id)
+                if source_db_node:
+                    all_relevant_nodes[source_db_node.id] = GraphNode(
+                        id=source_db_node.id,
+                        label=source_db_node.label,
+                        properties=source_db_node.properties
+                    )
+            # Target node of relationship
+            if rel.target_id not in all_relevant_nodes:
+                target_db_node = neo4j_crud.get_node(rel.target_id)
+                if target_db_node:
+                    all_relevant_nodes[target_db_node.id] = GraphNode(
+                        id=target_db_node.id,
+                        label=target_db_node.label,
+                        properties=target_db_node.properties
+                    )
+
+    return KnowledgeGraphQueryResponse(
+        nodes=list(all_relevant_nodes.values()),
+        relationships=list(all_relevant_relationships.values())
+    )
 
 
 def project_gds_graph(
