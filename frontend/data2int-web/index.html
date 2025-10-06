@@ -7,15 +7,12 @@
     <title>S.A.G.E. - AI Strategy Assistant</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Three.js CDN for 3D animation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <!-- Supabase Client -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <!-- jsPDF for Save to PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <!-- FileSaver.js for DOCX export -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://unpkg.com/docx@8.5.0/build/index.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <!-- Cytoscape.js for Graph Visualization -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.min.js"></script>
     <style>
         /* --- THEME COLORS (CSS VARIABLES) --- */
@@ -426,8 +423,8 @@
 
         /* WebSocket connection status indicator */
         .ws-status {
-            position: static;
-            top: 20px;
+            position: fixed; /* Changed to fixed to be visible */
+            top: 100px; /* Adjusted position */
             right: 20px;
             padding: 0.5rem;
             border-radius: 0.5rem;
@@ -464,6 +461,14 @@
             cursor: pointer;
             transition: all 0.3s ease;
         }
+        .method-checkbox:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .method-checkbox:disabled + span {
+            opacity: 0.5;
+        }
 
         .method-checkbox:checked {
             background: color-mix(in srgb, var(--primary) 80%, transparent);
@@ -472,7 +477,7 @@
             transform: scale(1.15);
         }
 
-        .method-checkbox:hover {
+        .method-checkbox:hover:not(:disabled) {
             transform: scale(1.1);
             border-color: rgba(255, 255, 255, 0.7);
         }
@@ -565,7 +570,6 @@
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
             z-index: 110;
-            display: hidden;
         }
         #settings-panel {
            position: relative;
@@ -660,23 +664,23 @@
         .light-theme .slider:before { background-color: #e2e8f0; }
 
     
-/* --- Sticky Footer Override (assistant) --- */
-html, body {
-    min-height: 100vh !important;
-}
-body {
-    display: flex !important;
-    flex-direction: column !important;
-}
-.main-content {
-    flex: 1 0 auto !important;
-}
-footer {
-    flex-shrink: 0 !important;
-    position: relative !important;
-}
+        /* --- Sticky Footer Override (assistant) --- */
+        html, body {
+            min-height: 100vh !important;
+        }
+        body {
+            display: flex !important;
+            flex-direction: column !important;
+        }
+        .main-content {
+            flex: 1 0 auto !important;
+        }
+        footer {
+            flex-shrink: 0 !important;
+            position: relative !important;
+        }
 
-</style>
+    </style>
 </head>
 
 <body>
@@ -747,87 +751,95 @@ footer {
             
             <!-- Tab Navigation -->
             <div id="homeTabsNav" class="flex flex-wrap justify-center space-x-1 md:space-x-2 border-b-2 border-white/10 mt-16 mb-12">
-                <button class="home-tab-btn active" data-tab="strategicPlans">Strategic Plans</button>
-                <button class="home-tab-btn" data-tab="systemAnalysis">System Analysis</button>
-                <button class="home-tab-btn" data-tab="frameworks">Frameworks</button>
+                <button class="home-tab-btn active" data-tab="strategicPlanning">Strategic Planning</button>
+                <button class="home-tab-btn" data-tab="systemThinking">System Thinking</button>
+                <button class="home-tab-btn" data-tab="novelStrategies">Novel Strategies</button>
                 <button class="home-tab-btn" data-tab="dataAnalysis">Data Analysis</button>
-                <button class="home-tab-btn" data-tab="novelPlanning">Novel Strategic Planning</button>
             </div>
 
             <!-- Tab Content -->
             <div id="homeTabsContent">
-                <!-- Strategic Plans Panel -->
-                <div id="strategicPlans" class="home-tab-panel active grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="custom-template" data-pre-fill="Vision">
-                        <h3 class="text-2xl font-bold mb-2">Vision</h3><p class="text-white/70">Craft a clear, inspiring future state for your organization.</p>
+                <div id="strategicPlanning" class="home-tab-panel active grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="mission-vision">
+                        <h3 class="text-xl font-bold mb-2">Mission Vision</h3><p class="text-white/70 text-sm">Define your organization's core purpose and future aspirations.</p>
                     </div>
-                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="custom-template" data-pre-fill="Mission Or Aim">
-                        <h3 class="text-2xl font-bold mb-2">Mission or Aim</h3><p class="text-white/70">Define your organization's core purpose and principles.</p>
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="factor-analysis">
+                        <h3 class="text-xl font-bold mb-2">Factor Analysis</h3><p class="text-white/70 text-sm">Assess internal strengths and weaknesses & external opportunities and threats.</p>
                     </div>
-                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="custom-template" data-pre-fill="Goals">
-                        <h3 class="text-2xl font-bold mb-2">Goals</h3><p class="text-white/70">Set ambitious, achievable goals that align with your vision.</p>
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="swot-tows">
+                        <h3 class="text-xl font-bold mb-2">Swot/Tows Analysis</h3><p class="text-white/70 text-sm">Develop strategies by matching internal factors to external factors.</p>
                     </div>
-                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="custom-template" data-pre-fill="Strategic Initiatives">
-                        <h3 class="text-2xl font-bold mb-2">Strategic Initiatives</h3><p class="text-white/70">Develop key initiatives to translate vision into action.</p>
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="goals-initiatives">
+                        <h3 class="text-xl font-bold mb-2">Goals & Strategic Initiatives</h3><p class="text-white/70 text-sm">Set high-level goals and the key initiatives to achieve them.</p>
                     </div>
-                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="custom-template" data-pre-fill="Objectives">
-                        <h3 class="text-2xl font-bold mb-2">Objectives</h3><p class="text-white/70">Break down goals into specific, measurable objectives.</p>
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="objectives">
+                        <h3 class="text-xl font-bold mb-2">Objectives</h3><p class="text-white/70 text-sm">Formulate specific, measurable, achievable, relevant, and time-bound objectives.</p>
                     </div>
-                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="custom-template" data-pre-fill="Actions">
-                        <h3 class="text-2xl font-bold mb-2">Actions</h3><p class="text-white/70">Define concrete actions and tactics to drive achievement.</p>
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="action-plans">
+                        <h3 class="text-xl font-bold mb-2">Action Plans</h3><p class="text-white/70 text-sm">Detail the resources, tasks, and timelines required for execution.</p>
                     </div>
-                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="pareto-fishbone">
-                        <h3 class="text-2xl font-bold mb-2">Pareto & Fishbone Analysis</h3><p class="text-white/70">Identify root causes and prioritize impactful problems.</p>
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="kpi-events">
+                        <h3 class="text-xl font-bold mb-2">KPI & Critical Events</h3><p class="text-white/70 text-sm">Define key performance indicators and track critical milestones.</p>
                     </div>
-                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="external-analysis">
-                        <h3 class="text-2xl font-bold mb-2">External Analysis</h3><p class="text-white/70">Assess market trends, competition, and opportunities.</p>
-                    </div>
-                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="internal-analysis">
-                        <h3 class="text-2xl font-bold mb-2">Internal Analysis</h3><p class="text-white/70">Evaluate your organization's strengths and weaknesses.</p>
-                    </div>
-                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="swot">
-                        <h3 class="text-2xl font-bold mb-2">SWOT Analysis</h3><p class="text-white/70">A structured review of Strengths, Weaknesses, Opportunities & Threats.</p>
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="misc-summary">
+                        <h3 class="text-xl font-bold mb-2">Misc</h3><p class="text-white/70 text-sm">Compile summaries, risk assessments, governance, and conclusions.</p>
                     </div>
                 </div>
 
-                <!-- System Analysis Panel -->
-                <div id="systemAnalysis" class="home-tab-panel grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="advanced-system-analysis">
-                        <h3 class="text-2xl font-bold mb-2">Advanced System Analysis</h3><p class="text-white/70">Understand complex interconnections and feedback loops.</p>
+                <div id="systemThinking" class="home-tab-panel grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="process-mapping">
+                        <h3 class="text-xl font-bold mb-2">Process Mapping</h3><p class="text-white/70 text-sm">Visualize and analyze the flow of activities in a process.</p>
+                    </div>
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="pareto-fishbone">
+                        <h3 class="text-xl font-bold mb-2">Fishbone/Pareto Analysis</h3><p class="text-white/70 text-sm">Identify root causes and prioritize the most significant issues.</p>
+                    </div>
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="system-thinking-analysis">
+                        <h3 class="text-xl font-bold mb-2">System Thinking Analysis</h3><p class="text-white/70 text-sm">Understand the complex interconnections within your organization.</p>
+                    </div>
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="leverage-points">
+                        <h3 class="text-xl font-bold mb-2">Leverage Points</h3><p class="text-white/70 text-sm">Identify areas where small changes can yield significant results.</p>
                     </div>
                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="archetype-analysis">
-                        <h3 class="text-2xl font-bold mb-2">Archetype Analysis</h3><p class="text-white/70">Identify recurring patterns of behavior within your system.</p>
+                        <h3 class="text-xl font-bold mb-2">Archetypes Analysis</h3><p class="text-white/70 text-sm">Recognize and address recurring patterns of behavior in your system.</p>
                     </div>
-                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="creative-dissonance">
-                        <h3 class="text-2xl font-bold mb-2">Creative Dissonance</h3><p class="text-white/70">Explore the gap between reality and vision to fuel innovation.</p>
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="system-goals-initiatives">
+                        <h3 class="text-xl font-bold mb-2">Goals/Strategic Initiatives</h3><p class="text-white/70 text-sm">Align system-level goals with broader strategic initiatives.</p>
+                    </div>
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="system-objectives">
+                        <h3 class="text-xl font-bold mb-2">Objectives</h3><p class="text-white/70 text-sm">Define clear objectives for improving system performance.</p>
+                    </div>
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="system-actions">
+                        <h3 class="text-xl font-bold mb-2">Actions</h3><p class="text-white/70 text-sm">Outline concrete actions to implement system-level changes.</p>
                     </div>
                 </div>
                 
-                <!-- Frameworks Panel -->
-                <div id="frameworks" class="home-tab-panel grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="reframing-thinking"><h3 class="text-2xl font-bold mb-2">Reframing Thinking</h3><p class="text-white/70">Shift perspective to view problems in a new light.</p></div>
-                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="delphi-method"><h3 class="text-2xl font-bold mb-2">Delphi Method</h3><p class="text-white/70">Leverage expert panels to achieve forecast consensus.</p></div>
-                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="blue-ocean"><h3 class="text-2xl font-bold mb-2">Blue Ocean Strategy</h3><p class="text-white/70">Create uncontested market space, making competition irrelevant.</p></div>
-                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="design-thinking"><h3 class="text-2xl font-bold mb-2">Design Thinking</h3><p class="text-white/70">A human-centered iterative process for innovation.</p></div>
-                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="thinking-hats"><h3 class="text-2xl font-bold mb-2">Thinking Hats</h3><p class="text-white/70">Explore issues from multiple perspectives for better decisions.</p></div>
-                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="business-model"><h3 class="text-2xl font-bold mb-2">Business Model Canvas</h3><p class="text-white/70">Visually map and innovate your business model.</p></div>
-                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="scamper"><h3 class="text-2xl font-bold mb-2">SCAMPER</h3><p class="text-white/70">A creative thinking technique to innovate products or services.</p></div>
-                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="triz"><h3 class="text-2xl font-bold mb-2">TRIZ</h3><p class="text-white/70">A systematic, patent-based approach for inventive problem-solving.</p></div>
+                <div id="novelStrategies" class="home-tab-panel grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="novel-goals-initiatives">
+                        <h3 class="text-2xl font-bold mb-2">Goals & Strategic Initiatives</h3><p class="text-white/70">Define ambitious goals and innovative initiatives.</p>
+                    </div>
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="all-framework">
+                        <h3 class="text-2xl font-bold mb-2">All Framework</h3><p class="text-white/70">Access a comprehensive suite of strategic frameworks.</p>
+                    </div>
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="creative-dissonance">
+                        <h3 class="text-2xl font-bold mb-2">Creative Dissonance</h3><p class="text-white/70">Leverage the gap between vision and reality to spark innovation.</p>
+                    </div>
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="living-system">
+                        <h3 class="text-2xl font-bold mb-2">Living System</h3><p class="text-white/70">Apply principles of living systems to foster organizational adaptability.</p>
+                    </div>
+                    <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="thinking-system">
+                        <h3 class="text-2xl font-bold mb-2">Thinking System</h3><p class="text-white/70">Develop a holistic approach to problem-solving and decision-making.</p>
+                    </div>
                 </div>
 
-                <!-- Data Analysis Panel -->
-                <div id="dataAnalysis" class="home-tab-panel grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="regression-analysis"><h3 class="text-2xl font-bold mb-2">Regression Analysis</h3><p class="text-white/70">Model relationships between variables for predictive insights.</p></div>
-                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="pls-analysis"><h3 class="text-2xl font-bold mb-2">PLS Analysis</h3><p class="text-white/70">Apply Partial Least Squares for structural equation modeling.</p></div>
-                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="dematel-analysis"><h3 class="text-2xl font-bold mb-2">Dematel Analysis</h3><p class="text-white/70">Understand causal relationships between complex factors.</p></div>
-                </div>
-
-                <!-- Novel Strategic Planning Panel -->
-                <div id="novelPlanning" class="home-tab-panel grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="competitor"><h3 class="text-2xl font-bold mb-2">Competitor Analysis</h3><p class="text-white/70">Deep dive into competitor strategies and market positioning.</p></div>
-                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="market-entry"><h3 class="text-2xl font-bold mb-2">Market Entry Strategy</h3><p class="text-white/70">Develop a roadmap for successful market penetration.</p></div>
-                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="risk"><h3 class="text-2xl font-bold mb-2">Risk Assessment</h3><p class="text-white/70">Identify, evaluate, and develop mitigation strategies for risks.</p></div>
-                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="digital-transformation"><h3 class="text-2xl font-bold mb-2">Digital Transformation</h3><p class="text-white/70">Plan your organization's journey towards digital maturity.</p></div>
+                <div id="dataAnalysis" class="home-tab-panel grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="descriptive-analysis"><h3 class="text-xl font-bold mb-2">Descriptive</h3><p class="text-white/70 text-sm">Summarize historical data to understand what has happened.</p></div>
+                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="predictive-analysis"><h3 class="text-xl font-bold mb-2">Predictive</h3><p class="text-white/70 text-sm">Use statistical models to forecast future outcomes.</p></div>
+                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="prescriptive-analysis"><h3 class="text-xl font-bold mb-2">Prescriptive</h3><p class="text-white/70 text-sm">Advise on possible outcomes and recommend actions.</p></div>
+                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="visualization"><h3 class="text-xl font-bold mb-2">Visualization</h3><p class="text-white/70 text-sm">Create graphical representations of data for insights.</p></div>
+                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="regression-analysis"><h3 class="text-xl font-bold mb-2">Regression</h3><p class="text-white/70 text-sm">Model relationships between variables for prediction.</p></div>
+                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="pls-analysis"><h3 class="text-xl font-bold mb-2">PLS</h3><p class="text-white/70 text-sm">Apply Partial Least Squares for structural equation modeling.</p></div>
+                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="sem-analysis"><h3 class="text-xl font-bold mb-2">SEM</h3><p class="text-white/70 text-sm">Structural Equation Modeling for complex variable relationships.</p></div>
+                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="dematel-analysis"><h3 class="text-xl font-bold mb-2">DEMATEL</h3><p class="text-white/70 text-sm">Understand causal relationships between complex factors.</p></div>
                 </div>
             </div>
         </div>
@@ -839,32 +851,26 @@ footer {
             <h1 class="text-4xl font-bold text-center mb-2">How to Use S.A.G.E.</h1>
             <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">A Step-by-Step Guide to Unleashing Your Strategic Potential</p>
             <div class="max-w-4xl mx-auto space-y-8">
-                <!-- Step 1 -->
                 <div class="glass-container">
                     <h3 class="text-2xl font-bold mb-2"><span class="text-indigo-300">Step 1:</span> Get Started (Login/Sign Up)</h3>
                     <p class="text-white/80">To unlock the full power of S.A.G.E., including saving your projects and using premium templates, you'll need an account. Click the "Login" button in the navigation bar. If you're new, you can create an account in just a few clicks.</p>
                 </div>
-                <!-- Step 2 -->
                 <div class="glass-container">
                     <h3 class="text-2xl font-bold mb-2"><span class="text-indigo-300">Step 2:</span> Choose Your Template</h3>
                     <p class="text-white/80">From the Home page, browse through the categories like "Strategic Plans" or "Frameworks". Select the template that best fits your objective by clicking on its card.</p>
                 </div>
-                <!-- Step 3 -->
                 <div class="glass-container">
                     <h3 class="text-2xl font-bold mb-2"><span class="text-indigo-300">Step 3:</span> Select Your Version</h3>
                     <p class="text-white/80">After choosing a template, a modal will appear. You can select the "Free Version" for a basic analysis using one framework, or the "Paid Version" to conduct a more comprehensive analysis with up to three different frameworks.</p>
                 </div>
-                <!-- Step 4 -->
                 <div class="glass-container">
                     <h3 class="text-2xl font-bold mb-2"><span class="text-indigo-300">Step 4:</span> Provide Context & Select Options</h3>
                     <p class="text-white/80">On the template detail page, fill in the required information, such as your company name and upload your company documents. This context is crucial for the AI to generate a relevant analysis. Below the inputs, select your desired analysis sections and analytical framework(s).</p>
                 </div>
-                <!-- Step 5 -->
                 <div class="glass-container">
                     <h3 class="text-2xl font-bold mb-2"><span class="text-indigo-300">Step 5:</span> Generate & Review Your Analysis</h3>
                     <p class="text-white/80">Click the "Generate Analysis" button. S.A.G.E.'s AI will process your inputs and selected frameworks, which may take a few minutes. The complete, structured analysis will appear in the results panel on the right side of the screen.</p>
                 </div>
-                <!-- Step 6 -->
                 <div class="glass-container">
                     <h3 class="text-2xl font-bold mb-2"><span class="text-indigo-300">Step 6:</span> Save & Export Your Work</h3>
                     <p class="text-white/80">Once your analysis is generated, action buttons will appear below the result. You can "Save Project" to your personal dashboard ("My Projects"), or export the analysis as a PDF or DOCX file for easy sharing and integration into your reports.</p>
@@ -879,8 +885,7 @@ footer {
             <h1 class="text-4xl font-bold text-center mb-2">Our Methodologies</h1>
             <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">S.A.G.E. integrates a diverse set of proven strategic frameworks to provide deep, multi-faceted insights. Hover over a card to learn more.</p>
             <div id="frameworksGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Framework cards will be dynamically inserted here by JavaScript -->
-            </div>
+                </div>
         </div>
 
         <!-- ========================================================= -->
@@ -996,8 +1001,7 @@ footer {
         <!-- TEMPLATES LIST PAGE (DEPRECATED)                          -->
         <!-- ========================================================= -->
         <div id="templates" class="page container mx-auto px-6 py-16">
-            <!-- This page is no longer in active use. The Home page serves as the template gallery. -->
-        </div>
+            </div>
 
         <!-- ========================================================= -->
         <!-- TEMPLATE DETAIL PAGE (SECTION ORDER CHANGED)              -->
@@ -1006,7 +1010,6 @@ footer {
             <button class="btn btn-secondary mb-8 nav-link" data-page="home">&larr; Back to Home</button>
             <div class="grid lg:grid-cols-2 gap-12">
 
-                <!-- Left side: Form -->
                 <div>
                     <h1 id="templateTitle" class="text-4xl font-bold mb-4">Template Title</h1>
                     <p id="templateDescription" class="text-white/80 mb-8">Template description goes here.</p>
@@ -1014,7 +1017,6 @@ footer {
                     <div class="glass-container p-6">
                         <div id="templateFormFields" class="space-y-4"></div>
 
-                        <!-- Analysis Sections (NOW FIRST) -->
                         <div id="analysisSectionsContainer" class="glass-container mt-8">
                             <h4 class="text-xl font-bold mb-2 text-white text-center">Select Your Analysis Sections</h4>
                             <p class="text-white/70 text-center mb-4">Choose the components for your report.</p>
@@ -1031,41 +1033,40 @@ footer {
                             </ul>
                         </div>
                         
-                        <!-- Frameworks (NOW SECOND) -->
                         <div id="methodsConsideredContainer" class="glass-container mt-8">
                             <h4 class="text-xl font-bold mb-2 text-white text-center">Select Your Frameworks</h4>
                             <p id="selectionCounter" class="text-white/70 text-center mb-4">Selected: 0 / 3</p>
                             <ul id="frameworkList" class="list-none text-white/70 text-left mx-auto max-w-sm">
                                 <li class="flex items-center mb-2">
-                                    <input type="checkbox" class="method-checkbox w-5 h-5 mr-2 accent-indigo-500">
+                                    <input type="checkbox" class="method-checkbox w-5 h-5 mr-2 accent-indigo-500" data-framework="Reframing Thinking">
                                     <span>Reframing Thinking</span>
                                 </li>
                                 <li class="flex items-center mb-2">
-                                    <input type="checkbox" class="method-checkbox w-5 h-5 mr-2 accent-indigo-500">
+                                    <input type="checkbox" class="method-checkbox w-5 h-5 mr-2 accent-indigo-500" data-framework="Delphi Method">
                                     <span>Delphi Method</span>
                                 </li>
                                 <li class="flex items-center mb-2">
-                                    <input type="checkbox" class="method-checkbox w-5 h-5 mr-2 accent-indigo-500">
+                                    <input type="checkbox" class="method-checkbox w-5 h-5 mr-2 accent-indigo-500" data-framework="Blue Ocean Strategy">
                                     <span>Blue Ocean Strategy</span>
                                 </li>
                                 <li class="flex items-center mb-2">
-                                    <input type="checkbox" class="method-checkbox w-5 h-5 mr-2 accent-indigo-500">
+                                    <input type="checkbox" class="method-checkbox w-5 h-5 mr-2 accent-indigo-500" data-framework="Design Thinking">
                                     <span>Design Thinking</span>
                                 </li>
                                 <li class="flex items-center mb-2">
-                                    <input type="checkbox" class="method-checkbox w-5 h-5 mr-2 accent-indigo-500">
+                                    <input type="checkbox" class="method-checkbox w-5 h-5 mr-2 accent-indigo-500" data-framework="Thinking Hats">
                                     <span>Thinking Hats</span>
                                 </li>
                                 <li class="flex items-center mb-2">
-                                    <input type="checkbox" class="method-checkbox w-5 h-5 mr-2 accent-indigo-500">
+                                    <input type="checkbox" class="method-checkbox w-5 h-5 mr-2 accent-indigo-500" data-framework="Business Model Canvas">
                                     <span>Business Model Canvas</span>
                                 </li>
                                 <li class="flex items-center mb-2">
-                                    <input type="checkbox" class="method-checkbox w-5 h-5 mr-2 accent-indigo-500">
+                                    <input type="checkbox" class="method-checkbox w-5 h-5 mr-2 accent-indigo-500" data-framework="SCAMPER">
                                     <span>SCAMPER</span>
                                 </li>
                                 <li class="flex items-center mb-2">
-                                    <input type="checkbox" class="method-checkbox w-5 h-5 mr-2 accent-indigo-500">
+                                    <input type="checkbox" class="method-checkbox w-5 h-5 mr-2 accent-indigo-500" data-framework="TRIZ (Theory of Inventive Problem Solving)">
                                     <span>TRIZ (Theory of Inventive Problem Solving)</span>
                                 </li>
                             </ul>
@@ -1079,13 +1080,11 @@ footer {
                     </div>
                 </div>
 
-                <!-- Right side: Result and actions -->
                 <div>
                     <h2 class="text-3xl font-bold mb-4">Generated Analysis</h2>
                     <div id="analysisResult" class="glass-container min-h-[300px] whitespace-pre-wrap overflow-x-auto">
                         <div class="text-white/60 p-8 text-center">Your generated analysis will appear here.</div>
                     </div>
-                    <!-- Action buttons will appear here -->
                     <div id="analysisActions" class="text-center mt-4 space-x-2 hidden">
                         <button id="saveProjectBtn" class="btn btn-primary">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
@@ -1140,8 +1139,7 @@ footer {
                 </button>
             </div>
             <div id="projectsList" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Project cards will be dynamically inserted here -->
-            </div>
+                </div>
             <div id="noProjectsMessage" class="hidden text-center glass-container py-12">
                 <h3 class="text-2xl font-bold mb-2">No Projects Yet</h3>
                 <p class="text-white/70 mb-6">You haven't saved any analyses. Get started by selecting a template.</p>
@@ -1464,15 +1462,15 @@ footer {
                 </div>
             </div>
         </div>
-
-    </div><!-- End Main Content -->
-    
+    </div>
     <!-- ========================================================= -->
     <!-- SETTINGS FAB & PANEL                                      -->
     <!-- ========================================================= -->
     <div id="settings-fab">
-        <button id="settings-fab-btn" class="btn btn-primary rounded-full p-4 shadow-lg">
-          <svg width="64px" height="64px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <circle cx="12" cy="12" r="3" stroke="#1C274C" stroke-width="1.5"></circle> <path d="M3.66122 10.6392C4.13377 10.9361 4.43782 11.4419 4.43782 11.9999C4.43781 12.558 4.13376 13.0638 3.66122 13.3607C3.33966 13.5627 3.13248 13.7242 2.98508 13.9163C2.66217 14.3372 2.51966 14.869 2.5889 15.3949C2.64082 15.7893 2.87379 16.1928 3.33973 16.9999C3.80568 17.8069 4.03865 18.2104 4.35426 18.4526C4.77508 18.7755 5.30694 18.918 5.83284 18.8488C6.07287 18.8172 6.31628 18.7185 6.65196 18.5411C7.14544 18.2803 7.73558 18.2699 8.21895 18.549C8.70227 18.8281 8.98827 19.3443 9.00912 19.902C9.02332 20.2815 9.05958 20.5417 9.15224 20.7654C9.35523 21.2554 9.74458 21.6448 10.2346 21.8478C10.6022 22 11.0681 22 12 22C12.9319 22 13.3978 22 13.7654 21.8478C14.2554 21.6448 14.6448 21.2554 14.8478 20.7654C14.9404 20.5417 14.9767 20.2815 14.9909 19.9021C15.0117 19.3443 15.2977 18.8281 15.7811 18.549C16.2644 18.27 16.8545 18.2804 17.3479 18.5412C17.6837 18.7186 17.9271 18.8173 18.1671 18.8489C18.693 18.9182 19.2249 18.7756 19.6457 18.4527C19.9613 18.2106 20.1943 17.807 20.6603 17C20.8677 16.6407 21.029 16.3614 21.1486 16.1272M20.3387 13.3608C19.8662 13.0639 19.5622 12.5581 19.5621 12.0001C19.5621 11.442 19.8662 10.9361 20.3387 10.6392C20.6603 10.4372 20.8674 10.2757 21.0148 10.0836C21.3377 9.66278 21.4802 9.13092 21.411 8.60502C21.3591 8.2106 21.1261 7.80708 20.6601 7.00005C20.1942 6.19301 19.9612 5.7895 19.6456 5.54732C19.2248 5.22441 18.6929 5.0819 18.167 5.15113C17.927 5.18274 17.6836 5.2814 17.3479 5.45883C16.8544 5.71964 16.2643 5.73004 15.781 5.45096C15.2977 5.1719 15.0117 4.6557 14.9909 4.09803C14.9767 3.71852 14.9404 3.45835 14.8478 3.23463C14.6448 2.74458 14.2554 2.35523 13.7654 2.15224C13.3978 2 12.9319 2 12 2C11.0681 2 10.6022 2 10.2346 2.15224C9.74458 2.35523 9.35523 2.74458 9.15224 3.23463C9.05958 3.45833 9.02332 3.71848 9.00912 4.09794C8.98826 4.65566 8.70225 5.17191 8.21891 5.45096C7.73557 5.73002 7.14548 5.71959 6.65205 5.4588C6.31633 5.28136 6.0729 5.18269 5.83285 5.15108C5.30695 5.08185 4.77509 5.22436 4.35427 5.54727C4.03866 5.78945 3.80569 6.19297 3.33974 7C3.13231 7.35929 2.97105 7.63859 2.85138 7.87273" stroke="#1C274C" stroke-width="1.5" stroke-linecap="round"></path> </g></svg>
+        <button id="settings-fab-btn" class="btn btn-primary rounded-full p-3 shadow-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-gear-fill" viewBox="0 0 16 16">
+                <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311a1.464 1.464 0 0 1-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413-1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.858 2.929 2.929 0 0 1 0 5.858"/>
+            </svg>
         </button>
     </div>
     <div id="settings-overlay" class="hidden items-center justify-center">
@@ -1494,23 +1492,23 @@ footer {
             <!-- Color Theme Selector -->
             <div>
                 <label class="block text-white/80 mb-3 text-center">Color Theme</label>
-                <div class="grid grid-cols-4 gap-4">
-                    <div class="color-swatch" data-theme="celestial" style="background: conic-gradient(from 45deg, #C33764, #1D2671);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
-                    <div class="color-swatch" data-theme="ocean-blue" style="background: conic-gradient(from 45deg, #2E3192, #1BFFFF);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
-                    <div class="color-swatch" data-theme="sanguine" style="background: conic-gradient(from 45deg, #D4145A, #FBB03B);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
-                    <div class="color-swatch" data-theme="quepal" style="background: conic-gradient(from 45deg, #38ef7d, #11998e);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
-                    <div class="color-swatch" data-theme="blood-mary" style="background: conic-gradient(from 45deg, #ff512f, #dd2476);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
-                    <div class="color-swatch" data-theme="cactus" style="background: conic-gradient(from 45deg, #556270, #4ECDC4);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
-                    <div class="color-swatch" data-theme="antarctica" style="background: conic-gradient(from 45deg, #B2FEFA, #0ED2F7);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
-                    <div class="color-swatch" data-theme="mountain-rock" style="background: conic-gradient(from 45deg, #8E9EAB, #EEF2F3);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
-                    <div class="color-swatch" data-theme="clean-mirror" style="background: conic-gradient(from 45deg, #93a5cf, #e4efe9);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
-                    <div class="color-swatch" data-theme="orbit" style="background: conic-gradient(from 45deg, #0f2027, #2c5364);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
-                    <div class="color-swatch" data-theme="toxic" style="background: conic-gradient(from 45deg, #61ff20, #dd1818);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
-                    <div class="color-swatch" data-theme="exotic" style="background: conic-gradient(from 45deg, #6a3093, #a044ff);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
-                    <div class="color-swatch" data-theme="eternal-constance" style="background: conic-gradient(from 45deg, #09203F, #537895);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
-                    <div class="color-swatch" data-theme="plum-plate" style="background: conic-gradient(from 45deg, #667eea, #764ba2);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
-                    <div class="color-swatch" data-theme="winter-neva" style="background: conic-gradient(from 45deg, #a1c4fd, #c2e9fb);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
-                    <div class="color-swatch" data-theme="everlasting-sky" style="background: conic-gradient(from 45deg, #fdfcfb, #e2d1c3);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
+                <div class="grid grid-cols-4 gap-4 max-h-48 overflow-y-auto">
+                    <div class="color-swatch" data-theme="celestial" style="background: linear-gradient(45deg, #C33764, #1D2671);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
+                    <div class="color-swatch" data-theme="ocean-blue" style="background: linear-gradient(45deg, #00c6ff, #0072ff);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
+                    <div class="color-swatch" data-theme="sanguine" style="background: linear-gradient(45deg, #d4145a, #fbb03b);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
+                    <div class="color-swatch" data-theme="quepal" style="background: linear-gradient(45deg, #11998e, #38ef7d);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
+                    <div class="color-swatch" data-theme="blood-mary" style="background: linear-gradient(45deg, #ff512f, #dd2476);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
+                    <div class="color-swatch" data-theme="cactus" style="background: linear-gradient(45deg, #3C3B3F, #605C3C);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
+                    <div class="color-swatch" data-theme="antarctica" style="background: linear-gradient(45deg, #74ebd5, #acb6e5);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
+                    <div class="color-swatch" data-theme="mountain-rock" style="background: linear-gradient(45deg, #868f96, #596164);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
+                    <div class="color-swatch" data-theme="clean-mirror" style="background: linear-gradient(45deg, #9796f0, #fbc7d4);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
+                    <div class="color-swatch" data-theme="orbit" style="background: linear-gradient(45deg, #0f2027, #2c5364);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
+                    <div class="color-swatch" data-theme="toxic" style="background: linear-gradient(45deg, #333333, #dd1818);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
+                    <div class="color-swatch" data-theme="exotic" style="background: linear-gradient(45deg, #6a3093, #a044ff);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
+                    <div class="color-swatch" data-theme="eternal-constance" style="background: linear-gradient(45deg, #09203F, #537895);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
+                    <div class="color-swatch" data-theme="plum-plate" style="background: linear-gradient(45deg, #667eea, #764ba2);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
+                    <div class="color-swatch" data-theme="winter-neva" style="background: linear-gradient(45deg, #a1c4fd, #c2e9fb);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
+                    <div class="color-swatch" data-theme="everlasting-sky" style="background: linear-gradient(45deg, #fdfcfb, #e2d1c3);"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg></div>
                 </div>
             </div>
         </div>
@@ -1574,6 +1572,10 @@ footer {
                     title: 'Custom Strategy Generator',
                     description: 'Design your own strategic analysis by defining the type of strategy, company, and location.',
                     isPremium: true,
+                },
+                'vision-mission-goals': {
+                    title: 'Vision & Mission Planning',
+                    description: 'A unified tool to define your organization\'s guiding purpose, future state, and core goals.',
                 },
                 'swot': {
                     title: 'SWOT Analysis',
@@ -1664,6 +1666,34 @@ footer {
                     description: 'Plan your organization\'s journey towards digital maturity.',
                 },
             };
+
+            // --- Template UI Rules ---
+            const templateRules = {
+                'swot': { hideAnalysisSection: true },
+                'competitor': { hideAnalysisSection: true },
+                'market-entry': { hideAnalysisSection: true },
+                'risk': { hideAnalysisSection: true },
+                'pareto-fishbone': { hideAnalysisSection: true, hideFrameworks: true },
+                'external-analysis': { hideAnalysisSection: true },
+                'internal-analysis': { hideAnalysisSection: true },
+                'advanced-system-analysis': { hideAnalysisSection: true },
+                'archetype-analysis': { hideAnalysisSection: true },
+                'creative-dissonance': { hideAnalysisSection: true },
+                'regression-analysis': { hideAnalysisSection: true },
+                'pls-analysis': { hideAnalysisSection: true },
+                'dematel-analysis': { hideAnalysisSection: true },
+                'digital-transformation': { hideAnalysisSection: true },
+                
+                'delphi-method': { preselectFramework: 'Delphi Method', hideAnalysisSection: true },
+                'blue-ocean': { preselectFramework: 'Blue Ocean Strategy', hideAnalysisSection: true },
+                'design-thinking': { preselectFramework: 'Design Thinking', hideAnalysisSection: true },
+                'thinking-hats': { preselectFramework: 'Thinking Hats', hideAnalysisSection: true },
+                'business-model': { preselectFramework: 'Business Model Canvas', hideAnalysisSection: true },
+                'scamper': { preselectFramework: 'SCAMPER', hideAnalysisSection: true },
+                'triz': { preselectFramework: 'TRIZ (Theory of Inventive Problem Solving)', hideAnalysisSection: true },
+                'reframing-thinking': { preselectFramework: 'Reframing Thinking', hideAnalysisSection: true },
+            };
+
             
             // --- Frameworks Data ---
             const frameworksData = {
@@ -1786,18 +1816,64 @@ footer {
                     wsStatus.className = 'ws-status disconnected';
                 }
             }
+            
+            // --- DOCX Export Logic (NEW) ---
+            async function handleSaveAsDocx(filename = "SAGE_Analysis.docx") {
+                const { Document, Packer, Paragraph, TextRun, ImageRun } = window.docx;
 
-            // --- DOCX Export Logic ---
-            function handleSaveAsDocx() {
-                const content = $('analysisResult').innerText;
-                if (!content || content.includes("Your generated analysis will appear here.")) {
+                const analysisResult = $('analysisResult');
+                if (!analysisResult || analysisResult.innerText.includes("Your generated analysis will appear here.")) {
                     alert("No analysis to save.");
                     return;
                 }
-                const blob = new Blob([content], {
-                    type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+
+                const paragraphs = [];
+                
+                // Get text content
+                const textContentEl = analysisResult.querySelector("#analysisContent");
+                if (textContentEl) {
+                    textContentEl.innerText.split('\n').forEach(line => {
+                         paragraphs.push(new Paragraph({ children: [new TextRun(line)] }));
+                    });
+                } else { // Fallback for old format
+                     analysisResult.innerText.split('\n').forEach(line => {
+                         paragraphs.push(new Paragraph({ children: [new TextRun(line)] }));
+                    });
+                }
+                
+                const children = [...paragraphs];
+
+                // Get Fishbone image
+                const fishboneImgEl = document.getElementById("fishbone_img");
+                if (fishboneImgEl && fishboneImgEl.src.startsWith('data:image')) {
+                    const base64Data = fishboneImgEl.src.split(",")[1];
+                    children.push(new Paragraph({ children: [new ImageRun({ 
+                        data: Uint8Array.from(atob(base64Data), c => c.charCodeAt(0)), 
+                        transformation: { width: 600, height: 400 } 
+                    })] }));
+                }
+
+                // Get Pareto chart image (Plotly can export this)
+                const paretoChartEl = document.getElementById("paretoChartContainer");
+                if (paretoChartEl && window.Plotly) {
+                    try {
+                        const dataUrl = await Plotly.toImage(paretoChartEl, {format: 'png', width: 800, height: 500});
+                        const base64Data = dataUrl.split(",")[1];
+                        children.push(new Paragraph({ children: [new ImageRun({ 
+                            data: Uint8Array.from(atob(base64Data), c => c.charCodeAt(0)), 
+                            transformation: { width: 600, height: 375 } 
+                        })] }));
+                    } catch(e) {
+                        console.error("Could not export Plotly chart to image:", e);
+                    }
+                }
+                
+                const doc = new Document({
+                    sections: [{ properties: {}, children: children }]
                 });
-                saveAs(blob, "SAGE_Analysis.docx");
+
+                const blob = await Packer.toBlob(doc);
+                saveAs(blob, filename);
             }
 
 
@@ -2034,9 +2110,17 @@ footer {
                 const tabPanels = document.querySelectorAll('.home-tab-panel');
                 const tabBtns = document.querySelectorAll('.home-tab-btn');
 
+                // Ensure only the active panel is visible on load
+                tabPanels.forEach(panel => {
+                    if (panel.classList.contains('active')) {
+                        panel.style.display = 'grid';
+                    } else {
+                        panel.style.display = 'none';
+                    }
+                });
+
                 tabsNav.addEventListener('click', (e) => {
                     if (e.target.tagName !== 'BUTTON') return;
-
                     const targetTab = e.target.dataset.tab;
 
                     tabBtns.forEach(btn => {
@@ -2044,7 +2128,13 @@ footer {
                     });
 
                     tabPanels.forEach(panel => {
-                        panel.classList.toggle('active', panel.id === targetTab);
+                        if (panel.id === targetTab) {
+                            panel.classList.add('active');
+                            panel.style.display = 'grid';
+                        } else {
+                            panel.classList.remove('active');
+                            panel.style.display = 'none';
+                        }
                     });
                 });
             }
@@ -2077,7 +2167,15 @@ footer {
                 currentTemplateId = templateId;
                 const template = templates[templateId];
                 if (!template) {
-                    console.error("Template not found:", templateId);
+                     // Fallback for new template IDs from the updated homepage
+                    const card = document.querySelector(`.home-template-link[data-template-id="${templateId}"]`);
+                    if (card) {
+                        const title = card.querySelector('h3').innerText;
+                        templates[templateId] = { title: title, description: `Generate a detailed analysis for ${title}.` };
+                        showTemplateDetail(templateId); // Retry with the new template object
+                    } else {
+                        console.error("Template not found and could not be created:", templateId);
+                    }
                     return;
                 }
 
@@ -2138,6 +2236,28 @@ footer {
                 $('analysisActions').classList.add('hidden');
                 currentProjectId = null;
                 
+                // Apply template-specific UI rules
+                const rule = templateRules[templateId] || {};
+                
+                $('analysisSectionsContainer').style.display = rule.hideAnalysisSection ? 'none' : 'block';
+                $('methodsConsideredContainer').style.display = rule.hideFrameworks ? 'none' : 'block';
+
+                const frameworkCheckboxes = document.querySelectorAll('#frameworkList .method-checkbox');
+                frameworkCheckboxes.forEach(cb => {
+                    cb.disabled = false;
+                    cb.checked = false;
+                });
+                
+                if (rule.preselectFramework) {
+                    frameworkCheckboxes.forEach(cb => {
+                        const frameworkName = cb.dataset.framework;
+                        if (frameworkName === rule.preselectFramework) {
+                            cb.checked = true;
+                        }
+                        cb.disabled = true; // Disable all checkboxes if one is pre-selected
+                    });
+                }
+
                 configureFrameworkSelector(currentSelectionLimit);
                 navigateTo('templateDetail');
             }
@@ -2160,9 +2280,14 @@ footer {
                 const checkboxes = document.querySelectorAll('#frameworkList .method-checkbox');
 
                 selectionCounter.textContent = `Selected: 0 / ${limit}`;
-                checkboxes.forEach(cb => {
-                    cb.checked = false;
-                });
+                
+                const rule = templateRules[currentTemplateId] || {};
+                if (!rule.preselectFramework) {
+                     checkboxes.forEach(cb => {
+                        cb.checked = false;
+                    });
+                }
+                 frameworkCheckboxChangeHandler(); // Update count based on any pre-selection
             }
 
             // Get selected frameworks from checkboxes and map to n8n values
@@ -2182,7 +2307,7 @@ footer {
                 };
 
                 checkedBoxes.forEach(checkbox => {
-                    const methodText = checkbox.nextElementSibling.textContent.trim();
+                    const methodText = checkbox.dataset.framework;
                     if (frameworkMap[methodText]) {
                         selectedMethods.push(frameworkMap[methodText]);
                     }
@@ -2193,8 +2318,6 @@ footer {
             // Get selected analysis sections
             function getSelectedSections() {
                 const checkedBoxes = document.querySelectorAll('#analysisList .method-checkbox:checked');
-                const selectedSections = [];
-
                 const sectionMap = {
                     'Introduction': 'introduction',
                     'Overview of business': 'overview_of_business',
@@ -2207,6 +2330,12 @@ footer {
                     'novel strategy part 3': 'novel_strategy_part_3'
                 };
 
+                // If no specific sections are checked, default to sending all sections.
+                if (checkedBoxes.length === 0) {
+                    return Object.values(sectionMap).join(',');
+                }
+
+                const selectedSections = [];
                 checkedBoxes.forEach(checkbox => {
                     const sectionText = checkbox.nextElementSibling.textContent.trim();
                     if (sectionMap[sectionText]) {
@@ -2237,14 +2366,14 @@ footer {
                 const sections = getSelectedSections();
                 const checkedFrameworks = Array.from(document.querySelectorAll('#frameworkList .method-checkbox:checked'));
 
-                if (checkedFrameworks.length < 1) {
+                if (currentTemplateId !== 'pareto-fishbone' && checkedFrameworks.length < 1) {
                      analysisResultContainer.innerHTML =
                         `<div class="p-4 text-center text-red-400">Please select at least one framework.</div>`;
                     setLoading('generate', false);
                     return;
                 }
                 
-                if (checkedFrameworks.length > currentSelectionLimit) {
+                if (currentTemplateId !== 'pareto-fishbone' && checkedFrameworks.length > currentSelectionLimit) {
                     analysisResultContainer.innerHTML =
                         `<div class="p-4 text-center text-red-400">You can select a maximum of ${currentSelectionLimit} frameworks.</div>`;
                     setLoading('generate', false);
@@ -2252,9 +2381,12 @@ footer {
                 }
 
                 let fullPrompt = '';
-                if (currentTemplateId === 'custom-template') {
-                    const typeOfStrategy = $('typeOfStrategy').value.trim();
-                    if (!typeOfStrategy || !companyName || !companyDocumentsFile || !location) {
+                if (currentTemplateId === 'custom-template' || currentTemplateId === 'vision-mission-goals') {
+                    const typeOfStrategy = (currentTemplateId === 'custom-template') 
+                        ? $('typeOfStrategy').value.trim() 
+                        : templates[currentTemplateId].title;
+
+                    if ((currentTemplateId === 'custom-template' && !typeOfStrategy) || !companyName || !companyDocumentsFile || !location) {
                         analysisResultContainer.innerHTML =
                             `<div class="p-4 text-center text-red-400">Please fill out all fields and upload a file for your custom strategy.</div>`;
                         setLoading('generate', false);
@@ -2342,41 +2474,131 @@ footer {
                     setLoading('generate', false);
                 }
             }
+            
+            function createParetoChartJS(paretoData, containerId) {
+                const allCauses = (paretoData.vital_few || []).concat(paretoData.useful_many || []);
+                if (allCauses.length === 0) return;
+
+                allCauses.sort((a, b) => b.impact_score - a.impact_score);
+
+                const causes = allCauses.map(item => item.cause);
+                const impacts = allCauses.map(item => item.impact_score);
+                const categories = allCauses.map(item => item.category);
+
+                let cumulative = 0;
+                const cumulativePct = impacts.map(impact => {
+                    cumulative += impact;
+                    return (cumulative / impacts.reduce((a, b) => a + b, 0)) * 100;
+                });
+                
+                const trace1 = {
+                    x: causes,
+                    y: impacts,
+                    name: 'Impact Score',
+                    type: 'bar',
+                    text: impacts.map(imp => `${imp}%`),
+                    textposition: 'outside',
+                    marker: { color: 'var(--primary)'},
+                    hovertemplate: '<b>%{x}</b><br>Impact: %{y}%<br>Category: %{customdata}<extra></extra>',
+                    customdata: categories
+                };
+
+                const trace2 = {
+                    x: causes,
+                    y: cumulativePct,
+                    name: 'Cumulative %',
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: { color: 'var(--accent)', width: 3 },
+                    marker: { size: 8 },
+                    yaxis: 'y2',
+                    hovertemplate: '<b>%{x}</b><br>Cumulative: %{y:.1f}%<extra></extra>'
+                };
+
+                const layout = {
+                    title: 'Pareto Analysis - 80/20 Root Cause Impact',
+                    xaxis: { title: 'Root Causes', tickangle: -45 },
+                    yaxis: { title: 'Impact Score (%)' },
+                    yaxis2: {
+                        title: 'Cumulative Impact (%)',
+                        overlaying: 'y',
+                        side: 'right',
+                        range: [0, 101]
+                    },
+                    shapes: [{
+                        type: 'line',
+                        xref: 'paper', x0: 0, x1: 1,
+                        yref: 'y2', y0: 80, y1: 80,
+                        line: { color: 'orange', width: 2, dash: 'dash' }
+                    }],
+                    showlegend: true,
+                    height: 500,
+                    hovermode: 'x unified',
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    font: { color: document.body.classList.contains('light-theme') ? '#1a202c' : 'white' }
+                };
+
+                Plotly.newPlot(containerId, [trace1, trace2], layout);
+            }
+
 
             function handleWebSocketMessage(data) {
-                if (data.messageId && data.result) {
-                    const container = pendingAnalysisRequests.get(parseInt(data.messageId));
-                    if (container) {
-                        container.innerHTML = `<div class="whitespace-pre-wrap">${data.result}</div>`;
-                        $('analysisActions').classList.remove('hidden'); // Show all action buttons
-                        pendingAnalysisRequests.delete(parseInt(data.messageId));
-                        setLoading('generate', false);
-                    }
+                const container = pendingAnalysisRequests.get(parseInt(data.messageId));
+                if (!container) return;
+
+                if (data.error) {
+                    container.innerHTML = `<div class="p-4 text-center text-red-400">Workflow error: ${data.error}</div>`;
+                    pendingAnalysisRequests.delete(parseInt(data.messageId));
+                    setLoading('generate', false);
+                    return;
                 }
 
-                if (data.messageId && data.progress && !data.result) {
-                    const container = pendingAnalysisRequests.get(parseInt(data.messageId));
-                    if (container) {
-                        container.innerHTML = `
-                <div class="text-center text-white/70 p-4">
-                    <div class="typing-indicator mb-4">
-                        <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
-                    </div>
-                    <p class="mb-2">🔄 ${data.progress}</p>
-                    <p class="text-sm text-white/50">Analysis in progress...</p>
-                </div>`;
+                if (data.progress && !data.result) {
+                    container.innerHTML = `
+                    <div class="text-center text-white/70 p-4">
+                        <div class="typing-indicator mb-4">
+                            <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+                        </div>
+                        <p class="mb-2">🔄 ${data.progress}</p>
+                        <p class="text-sm text-white/50">Analysis in progress...</p>
+                    </div>`;
+                    return;
+                }
+                
+                // Handle complex data for pareto-fishbone
+                if (data.templateId === 'pareto-fishbone' && (data.result || data.fishbone_image || data.pareto_data)) {
+                    container.innerHTML = ''; // Clear loading
+                    
+                    if (data.result) {
+                        const textEl = document.createElement('div');
+                        textEl.id = "analysisContent"; // For DOCX export
+                        textEl.className = "whitespace-pre-wrap mb-8";
+                        textEl.innerText = data.result;
+                        container.appendChild(textEl);
                     }
+                    if (data.fishbone_image) {
+                        const imgEl = document.createElement('img');
+                        imgEl.id = 'fishbone_img';
+                        imgEl.src = `data:image/png;base64,${data.fishbone_image}`;
+                        imgEl.className = "w-full h-auto rounded-lg mt-4";
+                        container.appendChild(imgEl);
+                    }
+                    if (data.pareto_data) {
+                         const chartContainer = document.createElement('div');
+                         chartContainer.id = 'paretoChartContainer';
+                         chartContainer.className = 'mt-8';
+                         container.appendChild(chartContainer);
+                         createParetoChartJS(data.pareto_data, 'paretoChartContainer');
+                    }
+
+                } else if (data.result) { // Handle simple text result for other templates
+                    container.innerHTML = `<div id="analysisContent" class="whitespace-pre-wrap">${data.result}</div>`;
                 }
 
-                if (data.messageId && data.error) {
-                    const container = pendingAnalysisRequests.get(parseInt(data.messageId));
-                    if (container) {
-                        container.innerHTML =
-                            `<div class="p-4 text-center text-red-400">Workflow error: ${data.error}</div>`;
-                        pendingAnalysisRequests.delete(parseInt(data.messageId));
-                        setLoading('generate', false);
-                    }
-                }
+                $('analysisActions').classList.remove('hidden');
+                pendingAnalysisRequests.delete(parseInt(data.messageId));
+                setLoading('generate', false);
             }
 
             // --- Project Management (Supabase) ---
@@ -2782,7 +3004,7 @@ footer {
                 mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
             }
 
-            function animateThreeJS() {
+             function animateThreeJS() {
                 let vertexpos = 0;
                 let colorpos = 0;
                 let numConnected = 0;
@@ -2923,7 +3145,7 @@ footer {
                 });
             }
 
-            // --- Knowledge Graph Logic ---
+             // --- Knowledge Graph Logic ---
             let cy; // Keep a reference to the Cytoscape instance
             async function initializeKnowledgeGraph() {
                 const container = $('cy');
@@ -3117,152 +3339,95 @@ footer {
             
             initThreeJS();
             applySettings();
-        });
 
-        window.addEventListener('beforeunload', () => {
-            if (window.websocket && window.websocket.readyState === WebSocket.OPEN) {
-                window.websocket.close(1000, 'Page unloading');
-            }
-        });
-    </script>
-    <script>
-        // Dashboard updater: presence + query counter + server status
-        (function initDashboardWidget() {
-            const PRESENCE_PREFIX = 'sage_presence_';
-            const HEARTBEAT_MS = 10000;
-            const STALE_MS = 30000;
-            const TAB_ID = (crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now() + '-' + Math.random());
+            // --- Dashboard Widget (Merged) ---
+            (function initDashboardWidget() {
+                const PRESENCE_PREFIX = 'sage_presence_';
+                const HEARTBEAT_MS = 10000;
+                const STALE_MS = 30000;
+                const TAB_ID = (crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now() + '-' + Math.random());
 
-            function heartbeat() {
-                try {
-                    localStorage.setItem(PRESENCE_PREFIX + TAB_ID, String(Date.now()));
-                } catch (e) {}
-            }
+                function heartbeat() {
+                    try {
+                        localStorage.setItem(PRESENCE_PREFIX + TAB_ID, String(Date.now()));
+                    } catch (e) {}
+                }
 
-            function cleanupStale() {
-                const now = Date.now();
-                try {
-                    for (let i = 0; i < localStorage.length; i++) {
-                        const k = localStorage.key(i);
-                        if (k && k.startsWith(PRESENCE_PREFIX)) {
-                            const ts = Number(localStorage.getItem(k) || '0');
-                            if (!ts || (now - ts) > STALE_MS) localStorage.removeItem(k);
+                function cleanupStale() {
+                    const now = Date.now();
+                    try {
+                        for (let i = 0; i < localStorage.length; i++) {
+                            const k = localStorage.key(i);
+                            if (k && k.startsWith(PRESENCE_PREFIX)) {
+                                const ts = Number(localStorage.getItem(k) || '0');
+                                if (!ts || (now - ts) > STALE_MS) localStorage.removeItem(k);
+                            }
                         }
-                    }
-                } catch (e) {}
-            }
+                    } catch (e) {}
+                }
 
-            function countOnline() {
-                const now = Date.now();
-                let cnt = 0;
-                try {
-                    for (let i = 0; i < localStorage.length; i++) {
-                        const k = localStorage.key(i);
-                        if (k && k.startsWith(PRESENCE_PREFIX)) {
-                            const ts = Number(localStorage.getItem(k) || '0');
-                            if (ts && (now - ts) <= STALE_MS) cnt++;
+                function countOnline() {
+                    const now = Date.now();
+                    let cnt = 0;
+                    try {
+                        for (let i = 0; i < localStorage.length; i++) {
+                            const k = localStorage.key(i);
+                            if (k && k.startsWith(PRESENCE_PREFIX)) {
+                                const ts = Number(localStorage.getItem(k) || '0');
+                                if (ts && (now - ts) <= STALE_MS) cnt++;
+                            }
                         }
-                    }
-                } catch (e) {}
-                return cnt;
-            }
+                    } catch (e) {}
+                    return cnt;
+                }
 
-            heartbeat();
-            const hb = setInterval(() => {
                 heartbeat();
-                cleanupStale();
-            }, HEARTBEAT_MS);
-            window.addEventListener('beforeunload', () => {
-                try {
-                    localStorage.removeItem(PRESENCE_PREFIX + TAB_ID);
-                } catch (e) {};
-                clearInterval(hb);
-            });
+                const hb = setInterval(() => {
+                    heartbeat();
+                    cleanupStale();
+                }, HEARTBEAT_MS);
+                window.addEventListener('beforeunload', () => {
+                    try {
+                        localStorage.removeItem(PRESENCE_PREFIX + TAB_ID);
+                    } catch (e) {};
+                    clearInterval(hb);
+                });
 
-            function updateDashboard() {
-                const usersEl = document.getElementById('dashUsersOnline');
-                const queriesEl = document.getElementById('dashQueryCount');
-                const serverDot = document.getElementById('dashServerDot');
-                const serverText = document.getElementById('dashServerText');
-                const wsDetail = document.getElementById('dashWsDetail');
-                const wsStatusEl = document.getElementById('wsStatus');
-                const updatedAt = document.getElementById('dashUpdatedAt');
+                function updateDashboard() {
+                    const usersEl = document.getElementById('dashUsersOnline');
+                    const serverDot = document.getElementById('dashServerDot');
+                    const serverText = document.getElementById('dashServerText');
+                    const wsStatusEl = document.getElementById('wsStatus');
+                    
+                    if (usersEl) usersEl.textContent = String(countOnline());
 
-                if (usersEl) usersEl.textContent = String(countOnline());
-                if (queriesEl) queriesEl.textContent = String(Number(localStorage.getItem('sage_query_count') ||
-                    '0'));
-
-                let statusText = 'Unknown',
-                    statusClass = 'bg-yellow-400',
-                    detailText = '—';
-                if (wsStatusEl) {
-                    const t = wsStatusEl.textContent.trim().toLowerCase();
-                    if (t.includes('connected')) {
-                        statusText = 'Connected';
-                        statusClass = 'bg-green-400';
-                        detailText = window.websocket ? window.websocket.url : 'Connected';
-                    } else if (t.includes('disconnected') || t.includes('failed') || t.includes('error')) {
-                        statusText = 'Disconnected';
-                        statusClass = 'bg-red-400';
-                        detailText = 'Connection failed or closed.';
-                    } else if (t.includes('connecting')) {
-                        statusText = 'Connecting';
-                        statusClass = 'bg-yellow-400';
-                        detailText = 'Attempting to connect...';
+                    let statusText = 'Unknown', statusClass = 'bg-yellow-400';
+                    if (wsStatusEl) {
+                        const t = wsStatusEl.textContent.trim().toLowerCase();
+                        if (t.includes('connected')) {
+                            statusText = 'Connected';
+                            statusClass = 'bg-green-400';
+                        } else if (t.includes('disconnected') || t.includes('failed') || t.includes('error')) {
+                            statusText = 'Disconnected';
+                            statusClass = 'bg-red-400';
+                        } else if (t.includes('connecting')) {
+                            statusText = 'Connecting';
+                            statusClass = 'bg-yellow-400';
+                        }
                     }
+                    
+                    if (serverText) serverText.textContent = statusText;
+                    if (serverDot) serverDot.className = 'inline-block w-3 h-3 rounded-full ' + statusClass;
                 }
-                
-                if (serverText) serverText.textContent = statusText;
-                if (serverDot) serverDot.className = 'inline-block w-3 h-3 rounded-full ' + statusClass;
-                if (wsDetail) wsDetail.textContent = detailText;
-                if (updatedAt) updatedAt.textContent = new Date().toLocaleString();
-            }
-            setInterval(updateDashboard, 2000);
+                setInterval(updateDashboard, 2000);
             updateDashboard();
-        })();
-    </script>
+            }
+        )();
+    
+});
+</script>
 
-    <script>
-        function $(id) { return document.getElementById(id); }
 
-        function setupHomeTabs() {
-            const tabsNav = $('homeTabsNav');
-            const tabPanels = document.querySelectorAll('.home-tab-panel');
-            const tabBtns = document.querySelectorAll('.home-tab-btn');
-
-            // Ensure only the active panel is visible on load
-            tabPanels.forEach(panel => {
-                if (panel.classList.contains('active')) {
-                    panel.style.display = 'grid';
-                } else {
-                    panel.style.display = 'none';
-                }
-            });
-
-            tabsNav.addEventListener('click', (e) => {
-                if (e.target.tagName !== 'BUTTON') return;
-                const targetTab = e.target.dataset.tab;
-
-                tabBtns.forEach(btn => {
-                    btn.classList.toggle('active', btn.dataset.tab === targetTab);
-                });
-
-                tabPanels.forEach(panel => {
-                    if (panel.id === targetTab) {
-                        panel.classList.add('active');
-                        panel.style.display = 'grid';
-                    } else {
-                        panel.classList.remove('active');
-                        panel.style.display = 'none';
-                    }
-                });
-            });
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            setupHomeTabs();
-        });
-    </script>
 </body>
 
 </html>
