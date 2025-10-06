@@ -174,18 +174,36 @@ def get_entity_from_span(span: Span, meaningful_entities: List[NamedEntity]) -> 
         Optional[str]: The text of the matched meaningful entity, or None if no suitable entity is found.
     """
     logger.info(f"Span: {type(span)}")
-    span_text_lower = span.text.lower()
 
-    # Check for exact match
+    span_text_lower = span.text.lower()
+    
+    # Prioritize exact matches with specific NER labels
+    for entity in meaningful_entities:
+        if entity.text.lower() == span_text_lower and entity.label != "NOUN_CHUNK":
+            return (entity.text, entity.label)
+
+    # Fallback to exact matches including NOUN_CHUNK
     for entity in meaningful_entities:
         if entity.text.lower() == span_text_lower:
             return (entity.text, entity.label)
-    
-    # Check for contained entities (e.g., if span is "the big apple" and "apple" is a meaningful entity)
+
+    # Check for contained entities, prioritizing specific NER labels
+    # This handles cases where the span is larger than the actual entity
+    best_match = None
     for entity in meaningful_entities:
         if (entity.start_char >= span.start_char and entity.end_char <= span.end_char) or \
            (span.start_char >= entity.start_char and span.end_char <= entity.end_char):
-            return (entity.text, entity.label) # Return the contained entity, or the containing entity
+            if not best_match or (entity.label != "NOUN_CHUNK" and best_match.label == "NOUN_CHUNK"):
+                best_match = entity
+            elif entity.label != "NOUN_CHUNK" and best_match.label != "NOUN_CHUNK" and \
+                 len(entity.text) > len(best_match.text): # Prefer longer NER matches
+                best_match = entity
+            elif entity.label == "NOUN_CHUNK" and best_match.label == "NOUN_CHUNK" and \
+                 len(entity.text) > len(best_match.text): # Prefer longer NOUN_CHUNK matches
+                best_match = entity
+
+    if best_match:
+        return (best_match.text, best_match.label)
 
     return "", ""
 
@@ -663,7 +681,9 @@ async def extract_relationships_logic(
         ExtractedRelationships: An object containing the extracted relationship triples
                                 and the constructed knowledge graph.
     """
-    doc = nlp(text, component_cfg={"fastcoref": {'resolve_text': True}})
+    # Clean the input text before processing with spaCy
+    cleaned_text = clean_text(text)
+    doc = nlp(cleaned_text, component_cfg={"fastcoref": {'resolve_text': True}})
     resolved_text = doc._.resolved_text
     doc = nlp(resolved_text)
     all_extracted_relationships = []
