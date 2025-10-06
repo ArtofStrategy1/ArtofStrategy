@@ -204,7 +204,7 @@ class GraphFilterRequest(BaseModel):
     """
 
     source_document_id: Optional[str] = None
-    node_type: Optional[str] = None
+    node_label: Optional[str] = None
     relation_type: Optional[str] = None
 
 

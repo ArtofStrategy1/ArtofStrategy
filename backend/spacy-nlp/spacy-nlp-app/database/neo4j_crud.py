@@ -114,6 +114,23 @@ class Neo4jCRUD:
             ))
         return relationships
 
+    def search_nodes_fulltext(self, query_text: str, limit: int = 5) -> List[Dict[str, Any]]:
+        """
+        Performs a full-text search on nodes using the 'entityTextIndex'.
+        Returns a list of dictionaries, each containing the node's properties and its search score.
+        This method will execute a Cypher query that uses the `entityTextIndex` to find nodes matching 
+        the `query_text` and return their properties along with a relevance score.
+        """
+        cypher = """
+        CALL db.index.fulltext.queryNodes("entityTextIndex", $query) YIELD node, score
+        RETURN properties(node) AS node_properties, score
+        ORDER BY score DESC
+        LIMIT $limit
+        """
+        parameters = {"query": query_text, "limit": limit}
+        results = self._execute_query(cypher, parameters)
+        return [{"node_properties": record["node_properties"], "score": record["score"]} for record in results]
+
     def create_knowledge_graph(self, graph: KnowledgeGraph):
         for node in graph.nodes:
             self.create_node(node)
