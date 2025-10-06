@@ -1,8 +1,12 @@
+import logging
 from neo4j import GraphDatabase
 from typing import List, Dict, Any, Optional
 
 from ..database.neo4j_connection import get_neo4j_driver
 from ..database.neo4j_models import Node, Relationship, KnowledgeGraph
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class Neo4jCRUD:
     def __init__(self):
@@ -34,8 +38,8 @@ class Neo4jCRUD:
     def create_relationship(self, relationship: Relationship) -> Relationship:
         # Optimized query to avoid Cartesian product and use dynamic relationship type
         query = (
-            f"MATCH (a {{id: $source_id}}) "
-            f"MATCH (b {{id: $target_id}}) "
+            f"MATCH (a:`{relationship.source_label}` {{id: $source_id}}) "
+            f"MATCH (b:`{relationship.target_label}` {{id: $target_id}}) "
             f"MERGE (a)-[r:`{relationship.type}`]->(b) " # Use backticks for dynamic relationship type
             "ON CREATE SET r += $properties "
             "ON MATCH SET r += $properties "
@@ -46,7 +50,14 @@ class Neo4jCRUD:
             "target_id": relationship.target_id,
             "properties": relationship.properties,
         }
+        # logger.info(f"SourceLabel: {relationship.source_label}")
+        # logger.info(f"TargetLabel: {relationship.target_label}")
+        # logger.info(f"RelationshipType: {relationship.type}")
+        # logger.info(f"Parameters: {parameters}")
+
         result = self._execute_query(query, parameters)
+        # logger.info(f"Relationship Result: {result}")
+
         if result: # Check if result is not empty
             created_relationship_data = result[0]["r"]
         else:

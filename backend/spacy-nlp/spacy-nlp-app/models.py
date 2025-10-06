@@ -93,8 +93,10 @@ class RelationshipTriple(BaseModel):
     """
 
     subject: str
+    subject_label: Optional[str] = None
     relation: str
     object: str
+    object_label: Optional[str] = None
     source_document_id: Optional[str] = None
     relation_type: Optional[str] = None  # e.g., "CAUSAL", "TEMPORAL", etc.
     confidence: Optional[float] = None
