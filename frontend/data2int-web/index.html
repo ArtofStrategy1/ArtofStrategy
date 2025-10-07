@@ -2670,6 +2670,7 @@
             async function handleLogin() {
                 const email = $('loginEmail').value.trim();
                 const password = $('loginPassword').value;
+                const loginMessageEl = $('loginMessage');
 
                 if (!email || !password) {
                     showMessage('loginMessage', 'Please fill in all fields', 'error');
