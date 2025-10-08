@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -12,7 +13,7 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://unpkg.com/docx@8.5.0/build/index.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.min.js"></script> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.min.js"></script>
     <style>
         /* --- THEME COLORS (CSS VARIABLES) --- */
         :root, [data-theme="celestial"] { --grad-1: #C33764; --grad-2: #1D2671; --primary: #8E2DE2; --primary-hover: #4A00E0; --accent: #C33764; --edge-color: #4A00E0; --node-color: #C33764; }
@@ -74,6 +75,7 @@
             display: none;
         }
 
+        /* Hide all pages by default */
         .page.active {
             animation: fadeIn .5s ease-out;
         }
@@ -91,14 +93,27 @@
         #termsOfService.active,
         #privacyPolicy.active {
             display: block;
+            /* Content pages */
         }
 
         #login.active,
         #signup.active,
         #emailVerification.active {
             display: flex;
+            /* Centered pages */
         }
 
+        @keyframes fadeIn {
+            from {
+                opacity: 0
+            }
+
+            to {
+                opacity: 1
+            }
+        }
+
+        /* --- Glass & Card Effects --- */
         .glass-container {
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(12px);
@@ -154,7 +169,7 @@
             border-radius: 0.5rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all .2s;
             text-align: center;
             display: inline-flex;
             align-items: center;
@@ -204,7 +219,9 @@
             width: 100%;
             padding: 1rem;
             border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 0.5rem;
+            border-radius: .5rem;
+            font-size: 1rem;
+            transition: all .2s;
             background: rgba(255, 255, 255, 0.15);
             color: white;
         }
@@ -222,20 +239,23 @@
 
         .error-message {
             color: #fca5a5;
+            font-size: .875rem;
+            margin-top: .5rem;
             background: rgba(220, 38, 38, 0.3);
             padding: 0.5rem;
             border-radius: 0.5rem;
-            margin-top: 0.5rem;
         }
 
         .success-message {
             color: #a7f3d0;
+            font-size: .875rem;
+            margin-top: .5rem;
             background: rgba(5, 150, 105, 0.3);
             padding: 0.5rem;
             border-radius: 0.5rem;
-            margin-top: 0.5rem;
         }
 
+        /* --- Loading Spinners --- */
         .loading-spinner {
             display: inline-block;
             width: 16px;
@@ -252,7 +272,9 @@
 
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         .typing-indicator {
@@ -326,13 +348,80 @@
             /* Full circle */
             font-size: 1.5rem;
             cursor: pointer;
-            transition: all 0.3s ease;
+            z-index: 10;
+            transition: background 0.3s ease;
+            border: none;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
         }
 
-        .template-card:hover {
-            background: rgba(0, 0, 0, 0.3);
+        .carousel-button:hover {
+            background: rgba(0, 0, 0, 0.6);
         }
 
+        .carousel-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Increased distance from the edge of the glass-container */
+        .carousel-button.left {
+            left: -6rem;
+        }
+
+        .carousel-button.right {
+            right: -6rem;
+        }
+
+        /* Adjust for smaller screens if needed */
+        @media (max-width: 768px) {
+            .carousel-button.left {
+                left: 0.5rem;
+            }
+
+            .carousel-button.right {
+                right: 0.5rem;
+            }
+        }
+
+        /* Style for the example content within the carousel */
+        .analysis-example-item {
+            padding: 2.5rem;
+            /* Match glass-container padding */
+            margin-bottom: 0;
+            /* Remove space-y-12 from individual items */
+        }
+
+        .analysis-example-item h3 {
+            font-size: 1.5rem;
+            /* Tailwind text-2xl equivalent */
+            font-weight: 700;
+            /* Tailwind font-bold equivalent */
+            margin-bottom: 0.5rem;
+            /* Tailwind mb-2 equivalent */
+        }
+
+        .analysis-example-item ul,
+        .analysis-example-item ol {
+            list-style-position: inside;
+            margin-left: 1.25rem;
+            /* Indent lists */
+            margin-bottom: 1rem;
+            /* Space after lists */
+        }
+
+        .analysis-example-item li {
+            margin-bottom: 0.5rem;
+            /* Space between list items */
+        }
+
+        /* Explicitly center list items and paragraphs in long descriptions */
+        .feature-card .feature-description ul,
+        .feature-card .feature-description ol,
+        .feature-card .feature-description p {
+            text-align: center;
+        }
+
+        /* WebSocket connection status indicator */
         .ws-status {
             position: fixed; /* Changed to fixed to be visible */
             top: 100px; /* Adjusted position */
@@ -341,6 +430,7 @@
             border-radius: 0.5rem;
             font-size: 0.875rem;
             z-index: 1000;
+            transition: all 0.3s ease;
         }
 
         .ws-status.connected {
@@ -452,27 +542,11 @@
             background: rgba(255, 255, 255, 0.15);
         }
         
-        /* Neo4j Visualization Library Styling */
-        #graph-container {
-			position: relative;
-			width: 90%;
-			height: 600px; /* Adjust height as needed */
-			border: 1px solid rgba(255, 255, 255, 0.2);
-			border-radius: 1.5rem;	/* The amount of rounding you want to apply */
-			overflow: hidden; /* So content inside is also rounded */
-			box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-			background-color: rgba(30, 30, 30, 0.8); 	/* Slightly transparent background */
-			padding: 1.5rem;
-		}
-
-		.graph-inner {
-			position: relative;
-			width: 100%;
-			height: 100%;
-			border: 1px solid rgba(255, 255, 255, 0.2);
-			border-radius: 1.5rem;	/* The amount of rounding you want to apply */
-			overflow: hidden; /* So content inside is also rounded */
-			margin: 0
+        /* Knowledge Graph Styling */
+        #cy {
+            width: 100%;
+            height: 100%;
+            display: block;
         }
 
         /* Footer Styling */
@@ -582,7 +656,7 @@
         .light-theme .btn-tertiary { color: var(--primary-hover); }
         .light-theme .feature-card, .light-theme .template-card, .light-theme .project-card { background: rgba(255, 255, 255, 0.3); border-color: rgba(226, 232, 240, 0.7); }
         .light-theme .method-checkbox { border-color: rgba(0,0,0,0.3); background: rgba(255,255,255,0.4); }
-        .light-theme #graph-container { background: rgba(255,255,255,0.3); border-color: rgba(0,0,0,0.1); }
+        .light-theme #cy { background: rgba(255,255,255,0.3); border-color: rgba(0,0,0,0.1); }
         .light-theme .home-tab-btn { color: #4a5568; }
         .light-theme .home-tab-btn:hover { color: #1a202c; }
         .light-theme .home-tab-btn.active { color: #1a202c; }
@@ -606,18 +680,43 @@
             position: relative !important;
         }
 
+        /* --- Analysis Results Tab Styling --- */
+        .analysis-tab-btn {
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.6);
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .analysis-tab-btn:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .analysis-tab-btn.active {
+            color: white;
+            font-weight: 600;
+            border-bottom-color: var(--accent);
+        }
+        .analysis-tab-panel {
+            display: none;
+            padding-top: 1.5rem;
+            animation: fadeIn 0.5s;
+        }
+        .analysis-tab-panel.active {
+            display: block;
+        }
+        .light-theme .analysis-tab-btn { color: #4a5568; }
+        .light-theme .analysis-tab-btn:hover { color: #1a202c; }
+        .light-theme .analysis-tab-btn.active { color: #1a202c; }
+
     </style>
 </head>
 
 <body>
     <div class="main-content">
-        <!-- Three.js Canvas for Animated Background -->
         <canvas id="threeJsCanvas"></canvas>
         <div id="wsStatus" class="ws-status disconnected">Disconnected</div>
 
-        <!-- ========================================================= -->
-        <!-- NAVIGATION BAR                                            -->
-        <!-- ========================================================= -->
         <nav class="bg-black/10 backdrop-blur-sm p-4 sticky top-0 z-50">
             <div class="container mx-auto flex justify-between items-center">
                 <a href="#" class="text-2xl font-bold text-white nav-link" data-page="home">S.A.G.E.</a>
@@ -636,9 +735,6 @@
             </div>
         </nav>
 
-        <!-- ========================================================= -->
-        <!-- VERSION CHOICE MODAL                                      -->
-        <!-- ========================================================= -->
         <div id="versionChoiceModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] hidden">
             <div class="glass-container w-full max-w-lg text-center">
                 <h2 class="text-3xl font-bold mb-4">Choose Your Version</h2>
@@ -664,9 +760,6 @@
         </div>
 
 
-        <!-- ========================================================= -->
-        <!-- HOME PAGE (NEW TABBED LAYOUT)                             -->
-        <!-- ========================================================= -->
         <div id="home" class="page active container mx-auto px-6 py-16">
             <div class="text-center">
                 <h1 class="text-5xl md:text-6xl font-extrabold text-white leading-tight mb-4">Unlock Your Strategic Potential</h1>
@@ -675,7 +768,6 @@
                 </p>
             </div>
             
-            <!-- Tab Navigation -->
             <div id="homeTabsNav" class="flex flex-wrap justify-center space-x-1 md:space-x-2 border-b-2 border-white/10 mt-16 mb-12">
                 <button class="home-tab-btn active" data-tab="strategicPlanning">Strategic Planning</button>
                 <button class="home-tab-btn" data-tab="systemThinking">System Thinking</button>
@@ -683,7 +775,6 @@
                 <button class="home-tab-btn" data-tab="dataAnalysis">Data Analysis</button>
             </div>
 
-            <!-- Tab Content -->
             <div id="homeTabsContent">
                 <div id="strategicPlanning" class="home-tab-panel active grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="mission-vision">
@@ -770,9 +861,6 @@
             </div>
         </div>
         
-        <!-- ========================================================= -->
-        <!-- ABOUT PAGE                                                -->
-        <!-- ========================================================= -->
         <div id="about" class="page container mx-auto px-6 py-16">
             <h1 class="text-4xl font-bold text-center mb-2">How to Use S.A.G.E.</h1>
             <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">A Step-by-Step Guide to Unleashing Your Strategic Potential</p>
@@ -804,9 +892,6 @@
             </div>
         </div>
 
-        <!-- ========================================================= -->
-        <!-- FRAMEWORKS PAGE                                           -->
-        <!-- ========================================================= -->
         <div id="frameworksPage" class="page container mx-auto px-6 py-16">
             <h1 class="text-4xl font-bold text-center mb-2">Our Methodologies</h1>
             <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">S.A.G.E. integrates a diverse set of proven strategic frameworks to provide deep, multi-faceted insights. Hover over a card to learn more.</p>
@@ -814,21 +899,13 @@
                 </div>
         </div>
 
-        <!-- ========================================================= -->
-        <!-- KNOWLEDGE GRAPH VISUALIZATION PAGE                        -->
-        <!-- ========================================================= -->
         <div id="knowledgeGraph" class="page container mx-auto px-6 py-16">
-            <h1 class="text-4xl font-bold text-center mb-2">Knowledge Graph Visualization</h1>
-            <p class="text-lg text-white/80 text-center mb-12 max-w-2xl mx-auto">Explore the relationships between entities in an interactive knowledge graph.</p>
-            <div id="graph-container">
-                <div class="graph-inner"></div>
-            </div>
+            <h1 class="text-4xl font-bold text-center mb-2">Knowledge Graph</h1>
+            <p class="text-lg text-white/80 text-center mb-12 max-w-2xl mx-auto">Explore the relationships between different strategic concepts and frameworks in our interactive knowledge graph.</p>
+            <div id="cy" class="w-full h-[600px] bg-black/20 rounded-xl border border-white/20"></div>
         </div>
 
 
-        <!-- ========================================================= -->
-        <!-- LOGIN PAGE                                                -->
-        <!-- ========================================================= -->
         <div id="login" class="page flex items-center justify-center min-h-[80vh]">
             <div class="w-full max-w-md">
                 <div class="glass-container">
@@ -857,9 +934,6 @@
             </div>
         </div>
 
-        <!-- ========================================================= -->
-        <!-- SIGNUP PAGE                                               -->
-        <!-- ========================================================= -->
         <div id="signup" class="page flex items-center justify-center min-h-[80vh]">
             <div class="w-full max-w-md">
                 <div class="glass-container">
@@ -908,9 +982,6 @@
             </div>
         </div>
         
-        <!-- ========================================================= -->
-        <!-- EMAIL VERIFICATION PAGE                                   -->
-        <!-- ========================================================= -->
         <div id="emailVerification" class="page flex-col items-center justify-center min-h-[80vh]">
             <div class="w-full max-w-md">
                 <div class="glass-container text-center">
@@ -925,15 +996,9 @@
         </div>
 
 
-        <!-- ========================================================= -->
-        <!-- TEMPLATES LIST PAGE (DEPRECATED)                          -->
-        <!-- ========================================================= -->
         <div id="templates" class="page container mx-auto px-6 py-16">
             </div>
 
-        <!-- ========================================================= -->
-        <!-- TEMPLATE DETAIL PAGE (SECTION ORDER CHANGED)              -->
-        <!-- ========================================================= -->
         <div id="templateDetail" class="page container mx-auto px-6 py-16">
             <button class="btn btn-secondary mb-8 nav-link" data-page="home">&larr; Back to Home</button>
             <div class="grid lg:grid-cols-2 gap-12">
@@ -1048,9 +1113,6 @@
             </div>
         </div>
 
-        <!-- ========================================================= -->
-        <!-- MY PROJECTS PAGE                                          -->
-        <!-- ========================================================= -->
         <div id="myProjects" class="page container mx-auto px-6 py-16">
             <div class="flex justify-between items-center mb-12">
                 <div>
@@ -1075,14 +1137,10 @@
             </div>
         </div>
 
-        <!-- ========================================================= -->
-        <!-- ADMIN DASHBOARD PAGE (UPDATED)                            -->
-        <!-- ========================================================= -->
         <div id="adminDashboard" class="page container mx-auto px-6 py-16">
             <h1 class="text-4xl font-bold text-center mb-2">Admin Dashboard</h1>
             <p class="text-lg text-white/80 text-center mb-12 max-w-2xl mx-auto">Live analytics for S.A.G.E.</p>
             
-            <!-- Simple Stats -->
             <div class="grid md:grid-cols-3 gap-6">
                 <div class="glass-container">
                     <h3 class="text-xl font-semibold mb-2">Users Online</h3>
@@ -1104,7 +1162,6 @@
                 </div>
             </div>
 
-            <!-- Detailed Stats Section -->
             <div class="glass-container mt-8">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-2xl font-bold">Live Database Statistics</h3>
@@ -1115,7 +1172,6 @@
                 </div>
 
                 <div id="statisticsContainer" class="grid md:grid-cols-2 gap-x-8 gap-y-4 text-white/90">
-                    <!-- Database Stats Column -->
                     <div>
                         <h4 class="text-xl font-semibold mb-3 border-b border-white/20 pb-2">Database Status</h4>
                         <ul class="space-y-2">
@@ -1127,7 +1183,6 @@
                             <li><strong>Last Recorded:</strong> <span id="statRecordedAt">—</span></li>
                         </ul>
                     </div>
-                    <!-- Pinecone Stats Column -->
                     <div id="pineconeStatsContainer" class="hidden">
                         <h4 class="text-xl font-semibold mb-3 border-b border-white/20 pb-2">Vector Store Status</h4>
                         <ul class="space-y-2">
@@ -1145,16 +1200,12 @@
         </div>
 
 
-        <!-- ========================================================= -->
-        <!-- AI EXAMPLES PAGE (NEW)                                    -->
-        <!-- ========================================================= -->
         <div id="examplesPage" class="page container mx-auto px-6 py-16">
             <h1 class="text-4xl font-bold text-center mb-2">AI Analysis Examples</h1>
             <p class="text-lg text-white/80 text-center mb-12 max-w-2xl mx-auto">See how S.A.G.E. can transform complex data
                 into actionable strategic insights with these example outputs.</p>
 
             <div id="analysisCarousel" class="relative max-w-4xl mx-auto glass-container p-0">
-                <!-- Example 1: SWOT Analysis -->
                 <div class="analysis-example-item">
                     <h2 class="text-3xl font-bold mb-4">Example: SWOT Analysis for "GlobalTech Solutions"</h2>
                     <div class="text-white/70">
@@ -1210,7 +1261,6 @@
                     </div>
                 </div>
 
-                <!-- Example 2: Market Entry Strategy for "EcoCycle Innovations" -->
                 <div class="analysis-example-item hidden">
                     <h2 class="text-3xl font-bold mb-4">Example: Market Entry Strategy for "EcoCycle Innovations" into
                         Southeast Asia</h2>
@@ -1267,7 +1317,6 @@
                     </div>
                 </div>
 
-                <!-- Example 3: Digital Transformation Roadmap for "RetailX" -->
                 <div class="analysis-example-item hidden">
                     <h2 class="text-3xl font-bold mb-4">Example: Digital Transformation Roadmap for "RetailX"</h2>
                     <div class="text-white/70">
@@ -1328,7 +1377,6 @@
                     </div>
                 </div>
 
-                <!-- Carousel Navigation Buttons -->
                 <button id="prevExampleBtn" class="carousel-button left">&larr;</button>
                 <button id="nextExampleBtn" class="carousel-button right">&rarr;</button>
             </div>
@@ -1341,9 +1389,6 @@
             </div>
         </div>
         
-        <!-- ========================================================= -->
-        <!-- TERMS OF SERVICE PAGE                                     -->
-        <!-- ========================================================= -->
         <div id="termsOfService" class="page container mx-auto px-6 py-16">
             <div class="max-w-4xl mx-auto glass-container">
                 <h1 class="text-3xl font-bold mb-6">Terms of Service</h1>
@@ -1366,9 +1411,6 @@
             </div>
         </div>
 
-        <!-- ========================================================= -->
-        <!-- PRIVACY POLICY PAGE                                       -->
-        <!-- ========================================================= -->
         <div id="privacyPolicy" class="page container mx-auto px-6 py-16">
             <div class="max-w-4xl mx-auto glass-container">
                 <h1 class="text-3xl font-bold mb-6">Privacy Policy</h1>
@@ -1390,11 +1432,8 @@
                 </div>
             </div>
         </div>
-    </div>
-    <!-- ========================================================= -->
-    <!-- SETTINGS FAB & PANEL                                      -->
-    <!-- ========================================================= -->
-    <div id="settings-fab">
+
+    </div><div id="settings-fab">
         <button id="settings-fab-btn" class="btn btn-primary rounded-full p-3 shadow-lg">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-gear-fill" viewBox="0 0 16 16">
                 <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311a1.464 1.464 0 0 1-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413-1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.858 2.929 2.929 0 0 1 0 5.858"/>
@@ -1409,7 +1448,6 @@
                 </svg>
             </button>
             <h3 class="text-xl font-bold mb-4 text-center">Settings</h3>
-            <!-- Animation Toggle -->
             <div class="flex items-center justify-between mb-6">
                 <label for="animationToggle" class="text-white/80">Background Animation</label>
                 <label class="switch">
@@ -1417,7 +1455,6 @@
                     <span class="slider"></span>
                 </label>
             </div>
-            <!-- Color Theme Selector -->
             <div>
                 <label class="block text-white/80 mb-3 text-center">Color Theme</label>
                 <div class="grid grid-cols-4 gap-4 max-h-48 overflow-y-auto">
@@ -1443,9 +1480,6 @@
     </div>
 
 
-    <!-- ========================================================= -->
-    <!-- FOOTER                                                    -->
-    <!-- ========================================================= -->
     <footer class="mt-auto py-8">
         <div class="container mx-auto text-center text-white/70">
             <div class="flex justify-center space-x-6 mb-4">
@@ -1460,27 +1494,19 @@
     </footer>
 
 
-    <script type="module">
+    <script>
         // =========================================================
         // SCRIPT
         // =========================================================
-        // Load NVL base library
-        import { NVL } from "https://esm.sh/@neo4j-nvl/base@0.3.9/es2022/base.mjs";
-        import { 
-            ClickInteraction,
-            ZoomInteraction,
-            PanInteraction,
-            DragNodeInteraction,
-            HoverInteraction 
-        } from "https://esm.sh/@neo4j-nvl/interaction-handlers@0.3.9/es2022/interaction-handlers.mjs";
         document.addEventListener('DOMContentLoaded', () => {
 
             // --- Supabase Configuration ---
             const SUPABASE_URL = 'https://supabase.data2int.com'
             const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNjQwOTk1MjAwLCJleHAiOjE5NTYzNTUyMDB9.KHXKQpsN6MNB08H_IPxP4Gh0gjcsvXG9IeJuK3XpnAU'
+
             const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
-            // DOM Elements
+            // --- DOM Element References ---
             const $ = id => document.getElementById(id);
             const pages = document.querySelectorAll('.page');
             let currentTemplateId = null; 
@@ -1502,7 +1528,7 @@
             let preFillData = ''; // Used to pass context from home card to template detail
 
 
-            // Template Data
+            // --- Template Data ---
             const templates = {
                 'custom-template': {
                     title: 'Custom Strategy Generator',
@@ -1698,36 +1724,56 @@
 
             // WebSocket Management Functions
             function initializeWebSocket() {
-                const wsStatus = $('wsStatus');
+                const wsStatus = document.getElementById('wsStatus');
+
                 try {
+                    // FastAPI listener's WebSocket endpoint
                     websocket = new WebSocket('wss://n8n-api.data2int.com/ws');
-                    
-                    websocket.onopen = function() {
+
+                    wsStatus.textContent = 'Connecting...';
+                    wsStatus.className = 'ws-status connecting';
+
+                    websocket.onopen = function (event) {
+                        console.log('WebSocket connected successfully');
                         wsStatus.textContent = 'Connected';
                         wsStatus.className = 'ws-status connected';
+                        reconnectAttempts = 0; // Reset reconnect attempts on successful connection
                     };
 
-                    websocket.onmessage = function(event) {
+                    websocket.onmessage = function (event) {
+                        console.log('Received WebSocket message:', event.data);
+
                         try {
                             const data = JSON.parse(event.data);
-                            if (data.messageId && data.result) {
-                                const container = pendingAnalysisRequests.get(parseInt(data.messageId));
-                                if (container) {
-                                    container.innerHTML = `<div class="whitespace-pre-wrap">${data.result}</div>`;
-                                    pendingAnalysisRequests.delete(parseInt(data.messageId));
-                                    setLoading('generate', false);
-                                }
-                            }
+                            handleWebSocketMessage(data);
                         } catch (error) {
                             console.error('Error parsing WebSocket message:', error);
                         }
                     };
 
-                    websocket.onclose = function() {
+                    websocket.onclose = function (event) {
+                        console.log('WebSocket connection closed:', event.code, event.reason);
                         wsStatus.textContent = 'Disconnected';
                         wsStatus.className = 'ws-status disconnected';
+
+                        // Attempt to reconnect unless it was a manual close
+                        if (event.code !== 1000 && reconnectAttempts < maxReconnectAttempts) {
+                            setTimeout(() => {
+                                reconnectAttempts++;
+                                console.log(`WebSocket reconnection attempt ${reconnectAttempts}/${maxReconnectAttempts}`);
+                                initializeWebSocket();
+                            }, reconnectDelay);
+                        }
                     };
+
+                    websocket.onerror = function (error) {
+                        console.error('WebSocket error:', error);
+                        wsStatus.textContent = 'Error';
+                        wsStatus.className = 'ws-status disconnected';
+                    };
+
                 } catch (error) {
+                    console.error('Failed to initialize WebSocket:', error);
                     wsStatus.textContent = 'Failed';
                     wsStatus.className = 'ws-status disconnected';
                 }
@@ -1875,7 +1921,7 @@
                         populateFrameworksPage();
                     }
                     if (pageId === 'knowledgeGraph') {
-                        loadKnowledgeGraph();
+                        initializeKnowledgeGraph();
                     }
                     if (pageId === 'adminDashboard') {
                         // Automatically fetch stats when navigating to dashboard
@@ -2081,18 +2127,20 @@
 
             function showTemplateDetail(templateId) {
                 currentTemplateId = templateId;
-                const template = templates[templateId];
+                let template = templates[templateId];
                 if (!template) {
                      // Fallback for new template IDs from the updated homepage
                     const card = document.querySelector(`.home-template-link[data-template-id="${templateId}"]`);
                     if (card) {
                         const title = card.querySelector('h3').innerText;
-                        templates[templateId] = { title: title, description: `Generate a detailed analysis for ${title}.` };
-                        showTemplateDetail(templateId); // Retry with the new template object
+                        template = { title: title, description: `Generate a detailed analysis for ${title}.` };
+                        templates[templateId] = template; // Cache it
                     } else {
                         console.error("Template not found and could not be created:", templateId);
+                        // Create a generic fallback to prevent crashing
+                        template = { title: templateId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()), description: `Generate a detailed analysis.` };
+                        templates[templateId] = template;
                     }
-                    return;
                 }
 
                 $('templateTitle').textContent = template.title;
@@ -2100,54 +2148,67 @@
                 const templateFormFields = $('templateFormFields');
                 templateFormFields.innerHTML = '';
 
-                if (templateId === 'custom-template') {
-                    templateFormFields.innerHTML += `
-                    <div>
-                        <label for="typeOfStrategy" class="block text-sm font-medium text-gray-200 mb-2">Type of Strategy</label>
-                        <input type="text" id="typeOfStrategy" class="input-field" placeholder="e.g., Market Expansion Strategy" required>
-                    </div>`;
-                }
-
-                templateFormFields.innerHTML += `
-                    <div><label for="companyName" class="block text-sm font-medium text-gray-200 mb-2">Company Name</label><input type="text" id="companyName" class="input-field" placeholder="e.g., Innovate Inc." required></div>
-                    <div>
-                        <label for="companyDocumentsFile" class="block text-sm font-medium text-gray-200 mb-2">Upload Company Documents</label>
-                        <div class="input-file-wrapper">
-                             <label for="companyDocumentsFile" id="companyDocumentsFileLabel" class="input-file-btn">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16">
-                                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
-                                    <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/>
-                                </svg>
-                                <span class="file-name">Click to select a file...</span>
-                             </label>
-                             <input type="file" id="companyDocumentsFile" class="input-file" required>
+                // For Fishbone/Pareto, we only need the problem statement.
+                if (templateId === 'pareto-fishbone') {
+                    templateFormFields.innerHTML = `
+                        <div>
+                            <label for="problemStatement" class="block text-sm font-medium text-gray-200 mb-2">Problem Statement</label>
+                            <input type="text" id="problemStatement" class="input-field" placeholder="e.g., Low Customer Satisfaction" required>
                         </div>
-                    </div>
-                    <div><label for="location" class="block text-sm font-medium text-gray-200 mb-2">Location</label><input type="text" id="location" class="input-field" placeholder="e.g., Global" required></div>
-                `;
+                    `;
+                } else {
+                     if (templateId === 'custom-template') {
+                        templateFormFields.innerHTML += `
+                        <div>
+                            <label for="typeOfStrategy" class="block text-sm font-medium text-gray-200 mb-2">Type of Strategy</label>
+                            <input type="text" id="typeOfStrategy" class="input-field" placeholder="e.g., Market Expansion Strategy" required>
+                        </div>`;
+                    }
 
-                // After adding the fields, pre-fill if data exists
-                if (templateId === 'custom-template') {
-                    const strategyInput = $('typeOfStrategy');
-                    if (strategyInput && preFillData) {
-                        strategyInput.value = `${preFillData} Strategy`;
+                    templateFormFields.innerHTML += `
+                        <div><label for="companyName" class="block text-sm font-medium text-gray-200 mb-2">Company Name</label><input type="text" id="companyName" class="input-field" placeholder="e.g., Innovate Inc." required></div>
+                        <div>
+                            <label for="companyDocumentsFile" class="block text-sm font-medium text-gray-200 mb-2">Upload Company Documents</label>
+                            <div class="input-file-wrapper">
+                                 <label for="companyDocumentsFile" id="companyDocumentsFileLabel" class="input-file-btn">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16">
+                                        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+                                        <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/>
+                                    </svg>
+                                    <span class="file-name">Click to select a file...</span>
+                                 </label>
+                                 <input type="file" id="companyDocumentsFile" class="input-file" required>
+                            </div>
+                        </div>
+                        <div><label for="location" class="block text-sm font-medium text-gray-200 mb-2">Location</label><input type="text" id="location" class="input-field" placeholder="e.g., Global" required></div>
+                    `;
+
+                    // After adding the fields, pre-fill if data exists
+                    if (templateId === 'custom-template') {
+                        const strategyInput = $('typeOfStrategy');
+                        if (strategyInput && preFillData) {
+                            strategyInput.value = `${preFillData} Strategy`;
+                        }
+                    }
+
+                    const fileInput = $('companyDocumentsFile');
+                    if(fileInput) {
+                        fileInput.addEventListener('change', (e) => {
+                            const label = $('companyDocumentsFileLabel');
+                            const fileNameSpan = label.querySelector('.file-name');
+                            if (e.target.files.length > 0) {
+                                fileNameSpan.textContent = e.target.files[0].name;
+                                label.classList.add('has-file');
+                            } else {
+                                fileNameSpan.textContent = 'Click to select a file...';
+                                 label.classList.remove('has-file');
+                            }
+                        });
                     }
                 }
+
                 preFillData = ''; // Clear after use
-
-
-                $('companyDocumentsFile').addEventListener('change', (e) => {
-                    const label = $('companyDocumentsFileLabel');
-                    const fileNameSpan = label.querySelector('.file-name');
-                    if (e.target.files.length > 0) {
-                        fileNameSpan.textContent = e.target.files[0].name;
-                        label.classList.add('has-file');
-                    } else {
-                        fileNameSpan.textContent = 'Click to select a file...';
-                         label.classList.remove('has-file');
-                    }
-                });
-
+                
                 $('analysisResult').innerHTML = '<div class="text-white/60 p-8 text-center">Your generated analysis will appear here.</div>';
                 $('analysisActions').classList.add('hidden');
                 currentProjectId = null;
@@ -2267,129 +2328,233 @@
             }
 
 
-            async function handleGenerate() {
-                if (!currentTemplateId) return;
+           async function handleGenerate() {
+    if (!currentTemplateId) return;
 
-                setLoading('generate', true);
-                $('analysisActions').classList.add('hidden');
+    setLoading('generate', true);
+    $('analysisActions').classList.add('hidden');
+    
+    const analysisResultContainer = $('analysisResult');
+    analysisResultContainer.innerHTML = `
+        <div class="text-center text-white/70 p-8">
+            <div class="typing-indicator mb-6">
+                <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+            </div>
+            <h3 class="text-xl font-semibold text-white mb-4">Generating Your Strategic Analysis</h3>
+            <p class="text-white/80 mb-2">This comprehensive analysis may take 2-5 minutes to complete.</p>
+            <p class="text-white/60 text-sm">Please keep this page open while we process your request.</p>
+        </div>`;
 
-                const companyName = $('companyName').value.trim();
-                const companyDocumentsFile = $('companyDocumentsFile').files[0];
-                const location = $('location').value.trim();
-                const analysisResultContainer = $('analysisResult');
-
-                const framework = getFrameworkForTemplate(currentTemplateId);
-                const sections = getSelectedSections();
-                const checkedFrameworks = Array.from(document.querySelectorAll('#frameworkList .method-checkbox:checked'));
-
-                if (currentTemplateId !== 'pareto-fishbone' && checkedFrameworks.length < 1) {
-                     analysisResultContainer.innerHTML =
-                        `<div class="p-4 text-center text-red-400">Please select at least one framework.</div>`;
-                    setLoading('generate', false);
-                    return;
-                }
-                
-                if (currentTemplateId !== 'pareto-fishbone' && checkedFrameworks.length > currentSelectionLimit) {
-                    analysisResultContainer.innerHTML =
-                        `<div class="p-4 text-center text-red-400">You can select a maximum of ${currentSelectionLimit} frameworks.</div>`;
-                    setLoading('generate', false);
-                    return;
-                }
-
-                let fullPrompt = '';
-                if (currentTemplateId === 'custom-template' || currentTemplateId === 'vision-mission-goals') {
-                    const typeOfStrategy = (currentTemplateId === 'custom-template') 
-                        ? $('typeOfStrategy').value.trim() 
-                        : templates[currentTemplateId].title;
-
-                    if ((currentTemplateId === 'custom-template' && !typeOfStrategy) || !companyName || !companyDocumentsFile || !location) {
-                        analysisResultContainer.innerHTML =
-                            `<div class="p-4 text-center text-red-400">Please fill out all fields and upload a file for your custom strategy.</div>`;
-                        setLoading('generate', false);
-                        return;
-                    }
-                    fullPrompt =
-                        `Generate a detailed ${typeOfStrategy} for ${companyName}. Use Case: See attached document. Location: ${location} Please provide a comprehensive analysis and actionable recommendations for this custom strategic request.`;
-                } else {
-                    if (!companyName || !companyDocumentsFile || !location) {
-                        analysisResultContainer.innerHTML =
-                            `<div class="p-4 text-center text-red-400">Please fill out all fields and upload a file before generating.</div>`;
-                        setLoading('generate', false);
-                        return;
-                    }
-                    fullPrompt =
-                        `User Information: - Company Name: ${companyName} - Location: ${location}`;
-                }
-
-
-                analysisResultContainer.innerHTML = `
-                    <div class="text-center text-white/70 p-8">
-                        <div class="typing-indicator mb-6">
-                            <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
-                        </div>
-                        <h3 class="text-xl font-semibold text-white mb-4">Generating Your Strategic Analysis</h3>
-                        <p class="text-white/80 mb-2">This comprehensive analysis may take 2-5 minutes to complete.</p>
-                        <p class="text-white/60 text-sm">Please keep this page open while we process your request.</p>
-                    </div>`;
-
-                try {
-                    const { data: { session } } = await supabase.auth.getSession();
-                    if (!session) {
-                        analysisResultContainer.innerHTML =
-                            `<div class="p-4 text-center text-red-400">Please log in to generate analysis.</div>`;
-                        setLoading('generate', false);
-                        return;
-                    }
-
-                    const messageId = Date.now();
-                    pendingAnalysisRequests.set(messageId, analysisResultContainer);
-
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-                    
-                    const formData = new FormData();
-                    formData.append('customerName', companyName);
-                    formData.append('location', location);
-                    formData.append('company_documents', companyDocumentsFile.name); 
-                    formData.append('prompt', fullPrompt);
-                    formData.append('framework', framework);
-                    formData.append('sections', sections);
-                    formData.append('templateId', currentTemplateId);
-                    formData.append('messageId', messageId);
-                    formData.append('file', companyDocumentsFile); // Append the actual file data
-
-
-                    const response = await fetch('https://n8n.data2int.com/webhook/analysis-ev2', {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${session.access_token}`
-                        },
-                        body: formData,
-                        signal: controller.signal
-                    });
-
-                    clearTimeout(timeoutId);
-
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                    }
-
-                    console.log('Analysis request submitted successfully.');
-                    // Result will be handled by WebSocket
-
-                } catch (error) {
-                    if (error.name === 'AbortError') {
-                        // This is an expected timeout of the initial request.
-                        // The actual result will come via WebSocket, so we don't show an error.
-                        console.log('Fetch request timed out as expected. Waiting for WebSocket response.');
-                        return; // Keep the "Generating..." message visible.
-                    }
-                    console.error('Error submitting analysis request:', error);
-                    analysisResultContainer.innerHTML =
-                        `<div class="p-4 text-center text-red-400">An error occurred: ${error.message}</div>`;
-                    setLoading('generate', false);
-                }
+    if (currentTemplateId === 'pareto-fishbone') {
+        try {
+            const problem = $('problemStatement').value.trim();
+            if (!problem) {
+                analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">Please enter a problem statement.</div>`;
+                setLoading('generate', false);
+                return;
             }
+
+            const fullPrompt = `Analyze the problem: "${problem}" and create both a fishbone diagram and Pareto analysis.
+
+Generate exactly 6 main categories with sub-causes, then analyze using 80/20 rule.
+Each label must be MAXIMUM 3 words.
+
+Provide response as valid JSON with this exact structure:
+{{
+  "fishbone": {{
+    "Category 1": ["sub-cause 1", "sub-cause 2", "sub-cause 3"],
+    "Category 2": ["sub-cause 1", "sub-cause 2", "sub-cause 3", "sub-cause 4"],
+    "Category 3": ["sub-cause 1", "sub-cause 2", "sub-cause 3"],
+    "Category 4": ["sub-cause 1", "sub-cause 2", "sub-cause 3"],
+    "Category 5": ["sub-cause 1", "sub-cause 2", "sub-cause 3"],
+    "Category 6": ["sub-cause 1", "sub-cause 2", "sub-cause 3"]
+  }},
+  "pareto_analysis": {{
+    "vital_few": [
+      {{"cause": "Root cause 1", "impact_score": 25, "category": "Category 1"}},
+      {{"cause": "Root cause 2", "impact_score": 20, "category": "Category 2"}},
+      {{"cause": "Root cause 3", "impact_score": 15, "category": "Category 3"}},
+      {{"cause": "Root cause 4", "impact_score": 12, "category": "Category 4"}},
+      {{"cause": "Root cause 5", "impact_score": 10, "category": "Category 5"}}
+    ],
+    "useful_many": [
+      {{"cause": "Root cause 6", "impact_score": 8, "category": "Category 6"}},
+      {{"cause": "Root cause 7", "impact_score": 5, "category": "Category 1"}},
+      {{"cause": "Root cause 8", "impact_score": 3, "category": "Category 2"}},
+      {{"cause": "Root cause 9", "impact_score": 2, "category": "Category 3"}}
+    ],
+    "analysis_summary": "Brief explanation of why these causes follow 80/20 rule for {problem}"
+  }}
+}}
+
+Requirements:
+- Impact scores should total 100
+- Vital few (top 20% causes) should account for ~80% of impact
+- All cause names must be 3 words or less
+- Use realistic impact scores based on typical root cause analysis
+- Focus on actionable, specific root causes
+
+Respond ONLY with valid JSON, no additional text.`;
+            
+            const ollamaPayload = {
+                model: "llama3",
+                prompt: fullPrompt,
+                format: "json",
+                stream: false
+            };
+
+            const response = await fetch('https://ollama.data2int.com/api/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(ollamaPayload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
+            }
+
+            const ollamaResult = await response.json();
+            const parsedData = JSON.parse(ollamaResult.response);
+            const container = analysisResultContainer;
+            container.innerHTML = '';
+            const fishboneData = parsedData.fishbone;
+            const paretoData = parsedData.pareto_analysis;
+            
+            const tabNav = document.createElement('div');
+            tabNav.className = 'flex border-b border-white/20 -mx-10 px-6';
+            tabNav.innerHTML = `
+                <button class="analysis-tab-btn active" data-tab="pareto">📊 Pareto Chart</button>
+                <button class="analysis-tab-btn" data-tab="fishbone">🐟 Fishbone Diagram</button>
+                <button class="analysis-tab-btn" data-tab="details">📋 Analysis Details</button>
+                <button class="analysis-tab-btn" data-tab="plan">🎯 Action Plan</button>
+            `;
+            container.appendChild(tabNav);
+            
+            const tabContent = document.createElement('div');
+            container.appendChild(tabContent);
+
+            tabContent.innerHTML = `
+                <div id="paretoPanel" class="analysis-tab-panel active"></div>
+                <div id="fishbonePanel" class="analysis-tab-panel"></div>
+                <div id="detailsPanel" class="analysis-tab-panel"></div>
+                <div id="planPanel" class="analysis-tab-panel"></div>
+            `;
+            
+            // --- FIX IS HERE ---
+            // 1. Create the div for the chart.
+            const paretoChartDiv = document.createElement('div');
+            paretoChartDiv.id = 'paretoChartContainer';
+            
+            // 2. Add the new div to the correct panel *before* trying to use it.
+            $('paretoPanel').appendChild(paretoChartDiv);
+            
+            // 3. Now, call the plotting function. It will find the element successfully.
+            createParetoChartJS(paretoData, 'paretoChartContainer');
+            // --- END FIX ---
+
+            $('fishbonePanel').innerHTML = `<p class="text-white/70 p-4">Fishbone Diagram data is available in the 'Analysis Details' tab.</p>`;
+
+            let detailsHtml = `<h3 class="text-2xl font-bold mb-4">Analysis Summary</h3>`;
+            if (paretoData.analysis_summary) {
+                detailsHtml += `<div class="p-4 rounded-lg bg-white/5 mb-6 text-white/80 italic">${paretoData.analysis_summary}</div>`;
+            }
+            detailsHtml += `<h4 class="text-xl font-semibold mb-3">Category Breakdown</h4>`;
+            for (const [category, sub_causes] of Object.entries(fishboneData)) {
+                detailsHtml += `<details class="bg-white/5 p-3 rounded-lg mb-2"><summary class="cursor-pointer font-semibold">${category} (${sub_causes.length} causes)</summary><ul class="mt-2 pl-4">`;
+                sub_causes.forEach(cause => {
+                    const isVital = (paretoData.vital_few || []).some(item => cause.toLowerCase() === item.cause.toLowerCase());
+                    detailsHtml += `<li class="mb-1">${isVital ? '🔥' : '📝'} ${cause}</li>`;
+                });
+                detailsHtml += `</ul></details>`;
+            }
+            $('detailsPanel').innerHTML = detailsHtml;
+
+            let planHtml = `<h3 class="text-2xl font-bold mb-4">Recommended Action Plan</h3>
+                            <div class="p-4 rounded-lg bg-green-500/10 text-green-300 mb-6">💡 <strong>80/20 Rule:</strong> Focus 80% of your resources on the 'Vital Few' causes for maximum impact!</div>
+                            <h4 class="text-xl font-semibold mb-3 border-b border-red-500/50 pb-2 text-red-300">🔥 IMMEDIATE FOCUS (Vital Few)</h4>`;
+            (paretoData.vital_few || []).forEach(cause => {
+                planHtml += `<div class="mb-4"><p class="font-bold text-lg">${cause.cause} (${cause.impact_score}% impact)</p><p class="text-sm text-white/70"><strong>Category:</strong> ${cause.category} | <strong>Priority:</strong> HIGH ⚡</p></div>`;
+            });
+            planHtml += `<h4 class="text-xl font-semibold mt-8 mb-3 border-b border-white/20 pb-2">📋 SECONDARY ACTIONS (Useful Many)</h4>`;
+            (paretoData.useful_many || []).forEach(cause => {
+                planHtml += `<div class="mb-4"><p class="font-bold text-lg">${cause.cause} (${cause.impact_score}% impact)</p><p class="text-sm text-white/70"><strong>Category:</strong> ${cause.category} | <strong>Priority:</strong> Medium/Low</p></div>`;
+            });
+            $('planPanel').innerHTML = planHtml;
+
+            tabNav.addEventListener('click', e => {
+                if(e.target.tagName === 'BUTTON') {
+                    tabNav.querySelectorAll('.analysis-tab-btn').forEach(btn => btn.classList.remove('active'));
+                    tabContent.querySelectorAll('.analysis-tab-panel').forEach(pnl => pnl.classList.remove('active'));
+                    e.target.classList.add('active');
+                    $(e.target.dataset.tab + 'Panel').classList.add('active');
+                }
+            });
+
+            $('analysisActions').classList.remove('hidden');
+
+        } catch (error) {
+            console.error('Error with Pareto/Fishbone generation:', error);
+            analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">An error occurred during generation: ${error.message}</div>`;
+        } finally {
+            setLoading('generate', false);
+        }
+
+    } else {
+        let fullPrompt = '';
+        const formData = new FormData();
+        const companyName = $('companyName').value.trim();
+        const companyDocumentsFile = $('companyDocumentsFile').files[0];
+        const location = $('location').value.trim();
+        const framework = getFrameworkForTemplate(currentTemplateId);
+        const sections = getSelectedSections();
+
+        if (!companyName || !companyDocumentsFile || !location) {
+            analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">Please fill out all fields and upload a file.</div>`;
+            setLoading('generate', false);
+            return;
+        }
+        fullPrompt = `User Information: - Company Name: ${companyName} - Location: ${location}`;
+        formData.append('customerName', companyName);
+        formData.append('location', location);
+        formData.append('company_documents', companyDocumentsFile.name);
+        formData.append('file', companyDocumentsFile);
+        formData.append('framework', framework);
+        formData.append('sections', sections);
+        formData.append('prompt', fullPrompt);
+        formData.append('templateId', currentTemplateId);
+        
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) throw new Error("Please log in to generate analysis.");
+
+            const messageId = Date.now();
+            pendingAnalysisRequests.set(messageId, analysisResultContainer);
+            formData.append('messageId', messageId);
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+            const response = await fetch('https://n8n.data2int.com/webhook/analysis-ev2', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${session.access_token}` },
+                body: formData,
+                signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
+            if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            console.log('Analysis request submitted successfully.');
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                console.log('Fetch request timed out as expected. Waiting for WebSocket response.');
+                return;
+            }
+            console.error('Error submitting analysis request:', error);
+            analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">An error occurred: ${error.message}</div>`;
+            setLoading('generate', false);
+        }
+    }
+}
             
             function createParetoChartJS(paretoData, containerId) {
                 const allCauses = (paretoData.vital_few || []).concat(paretoData.useful_many || []);
@@ -2401,11 +2566,12 @@
                 const impacts = allCauses.map(item => item.impact_score);
                 const categories = allCauses.map(item => item.category);
 
-                let cumulative = 0;
-                const cumulativePct = impacts.map(impact => {
-                    cumulative += impact;
-                    return (cumulative / impacts.reduce((a, b) => a + b, 0)) * 100;
-                });
+                const cumulative = impacts.reduce((acc, val) => {
+                    acc.push((acc.length > 0 ? acc[acc.length - 1] : 0) + val);
+                    return acc;
+                }, []);
+                const totalImpact = impacts.reduce((a, b) => a + b, 0);
+                const cumulativePct = cumulative.map(val => (val / totalImpact) * 100);
                 
                 const trace1 = {
                     x: causes,
@@ -2414,7 +2580,7 @@
                     type: 'bar',
                     text: impacts.map(imp => `${imp}%`),
                     textposition: 'outside',
-                    marker: { color: 'var(--primary)'},
+                    marker: { color: 'var(--primary)' },
                     hovertemplate: '<b>%{x}</b><br>Impact: %{y}%<br>Category: %{customdata}<extra></extra>',
                     customdata: categories
                 };
@@ -2442,14 +2608,11 @@
                         range: [0, 101]
                     },
                     shapes: [{
-                        type: 'line',
-                        xref: 'paper', x0: 0, x1: 1,
+                        type: 'line', xref: 'paper', x0: 0, x1: 1,
                         yref: 'y2', y0: 80, y1: 80,
                         line: { color: 'orange', width: 2, dash: 'dash' }
                     }],
-                    showlegend: true,
-                    height: 500,
-                    hovermode: 'x unified',
+                    showlegend: true, height: 500, hovermode: 'x unified',
                     paper_bgcolor: 'rgba(0,0,0,0)',
                     plot_bgcolor: 'rgba(0,0,0,0)',
                     font: { color: document.body.classList.contains('light-theme') ? '#1a202c' : 'white' }
@@ -2470,7 +2633,7 @@
                     return;
                 }
 
-                if (data.progress && !data.result) {
+                if (data.progress && !data.result && data.templateId !== 'pareto-fishbone') {
                     container.innerHTML = `
                     <div class="text-center text-white/70 p-4">
                         <div class="typing-indicator mb-4">
@@ -2483,30 +2646,97 @@
                 }
                 
                 // Handle complex data for pareto-fishbone
-                if (data.templateId === 'pareto-fishbone' && (data.result || data.fishbone_image || data.pareto_data)) {
+                if (data.templateId === 'pareto-fishbone' && data.fishbone && data.pareto) {
                     container.innerHTML = ''; // Clear loading
+                    const fishboneData = data.fishbone;
+                    const paretoData = data.pareto;
                     
-                    if (data.result) {
-                        const textEl = document.createElement('div');
-                        textEl.id = "analysisContent"; // For DOCX export
-                        textEl.className = "whitespace-pre-wrap mb-8";
-                        textEl.innerText = data.result;
-                        container.appendChild(textEl);
+                    // Create Tab Interface
+                    const tabNav = document.createElement('div');
+                    tabNav.className = 'flex border-b border-white/20 -mx-10 px-6';
+                    tabNav.innerHTML = `
+                        <button class="analysis-tab-btn active" data-tab="pareto">📊 Pareto Chart</button>
+                        <button class="analysis-tab-btn" data-tab="fishbone">🐟 Fishbone Diagram</button>
+                        <button class="analysis-tab-btn" data-tab="details">📋 Analysis Details</button>
+                        <button class="analysis-tab-btn" data-tab="plan">🎯 Action Plan</button>
+                    `;
+                    container.appendChild(tabNav);
+                    
+                    const tabContent = document.createElement('div');
+                    container.appendChild(tabContent);
+
+                    // Create Tab Panels
+                    tabContent.innerHTML = `
+                        <div id="paretoPanel" class="analysis-tab-panel active"></div>
+                        <div id="fishbonePanel" class="analysis-tab-panel"></div>
+                        <div id="detailsPanel" class="analysis-tab-panel"></div>
+                        <div id="planPanel" class="analysis-tab-panel"></div>
+                    `;
+
+                    // Populate Pareto Tab
+                    const paretoPanel = $('paretoPanel');
+                    const paretoChartDiv = document.createElement('div');
+                    paretoChartDiv.id = 'paretoChartContainer';
+                    paretoPanel.appendChild(paretoChartDiv);
+                    createParetoChartJS(paretoData, 'paretoChartContainer');
+
+                    // Populate Fishbone Tab
+                    const fishbonePanel = $('fishbonePanel');
+                    if(data.fishbone_image) {
+                        fishbonePanel.innerHTML = `<img id="fishbone_img" src="data:image/png;base64,${data.fishbone_image}" class="w-full h-auto rounded-lg" alt="Fishbone Diagram">`;
+                    } else {
+                        fishbonePanel.innerHTML = `<p class="text-white/70">Fishbone image not available.</p>`;
                     }
-                    if (data.fishbone_image) {
-                        const imgEl = document.createElement('img');
-                        imgEl.id = 'fishbone_img';
-                        imgEl.src = `data:image/png;base64,${data.fishbone_image}`;
-                        imgEl.className = "w-full h-auto rounded-lg mt-4";
-                        container.appendChild(imgEl);
+
+                    // Populate Details Tab
+                    const detailsPanel = $('detailsPanel');
+                    let detailsHtml = `<h3 class="text-2xl font-bold mb-4">Analysis Summary</h3>`;
+                    if(paretoData.analysis_summary) {
+                        detailsHtml += `<div class="p-4 rounded-lg bg-white/5 mb-6 text-white/80 italic">${paretoData.analysis_summary}</div>`;
                     }
-                    if (data.pareto_data) {
-                         const chartContainer = document.createElement('div');
-                         chartContainer.id = 'paretoChartContainer';
-                         chartContainer.className = 'mt-8';
-                         container.appendChild(chartContainer);
-                         createParetoChartJS(data.pareto_data, 'paretoChartContainer');
+                     detailsHtml += `<h4 class="text-xl font-semibold mb-3">Category Breakdown</h4>`;
+                    for(const [category, sub_causes] of Object.entries(fishboneData)) {
+                        detailsHtml += `<details class="bg-white/5 p-3 rounded-lg mb-2"><summary class="cursor-pointer font-semibold">${category} (${sub_causes.length} causes)</summary><ul class="mt-2 pl-4">`;
+                        sub_causes.forEach(cause => {
+                            const isVital = (paretoData.vital_few || []).some(item => cause.toLowerCase() === item.cause.toLowerCase());
+                            detailsHtml += `<li class="mb-1">${isVital ? '🔥' : '📝'} ${cause}</li>`;
+                        });
+                        detailsHtml += `</ul></details>`;
                     }
+                    detailsPanel.innerHTML = detailsHtml;
+
+                    // Populate Action Plan Tab
+                    const planPanel = $('planPanel');
+                    let planHtml = `<h3 class="text-2xl font-bold mb-4">Recommended Action Plan</h3>
+                                    <div class="p-4 rounded-lg bg-green-500/10 text-green-300 mb-6">💡 <strong>80/20 Rule:</strong> Focus 80% of your resources on the 'Vital Few' causes for maximum impact!</div>
+                                    <h4 class="text-xl font-semibold mb-3 border-b border-red-500/50 pb-2 text-red-300">🔥 IMMEDIATE FOCUS (Vital Few)</h4>`;
+                    (paretoData.vital_few || []).forEach(cause => {
+                        planHtml += `<div class="mb-4">
+                                        <p class="font-bold text-lg">${cause.cause} (${cause.impact_score}% impact)</p>
+                                        <p class="text-sm text-white/70"><strong>Category:</strong> ${cause.category} | <strong>Priority:</strong> HIGH ⚡</p>
+                                     </div>`;
+                    });
+                    planHtml += `<h4 class="text-xl font-semibold mt-8 mb-3 border-b border-white/20 pb-2">📋 SECONDARY ACTIONS (Useful Many)</h4>`;
+                    (paretoData.useful_many || []).forEach(cause => {
+                         planHtml += `<div class="mb-4">
+                                        <p class="font-bold text-lg">${cause.cause} (${cause.impact_score}% impact)</p>
+                                        <p class="text-sm text-white/70"><strong>Category:</strong> ${cause.category} | <strong>Priority:</strong> Medium/Low</p>
+                                     </div>`;
+                    });
+                    planPanel.innerHTML = planHtml;
+
+                    // Add Tab Switching Logic
+                    tabNav.addEventListener('click', e => {
+                        if(e.target.tagName === 'BUTTON') {
+                            tabNav.querySelectorAll('.analysis-tab-btn').forEach(btn => btn.classList.remove('active'));
+                            tabContent.querySelectorAll('.analysis-tab-panel').forEach(pnl => pnl.classList.remove('active'));
+                            
+                            e.target.classList.add('active');
+                            const targetPanelId = e.target.dataset.tab + 'Panel';
+                            $(targetPanelId).classList.add('active');
+                        }
+                    });
+
 
                 } else if (data.result) { // Handle simple text result for other templates
                     container.innerHTML = `<div id="analysisContent" class="whitespace-pre-wrap">${data.result}</div>`;
@@ -2524,13 +2754,14 @@
                     return;
                 }
 
-                const projectTitle = $('companyName').value.trim() || 'Untitled Project';
+                const projectTitle = $('companyName')?.value.trim() || $('problemStatement')?.value.trim() || 'Untitled Project';
                 const analysisText = $('analysisResult').innerText;
                 const inputs = {
                     templateId: currentTemplateId,
-                    companyName: $('companyName').value,
-                    location: $('location').value,
+                    companyName: $('companyName')?.value,
+                    location: $('location')?.value,
                     typeOfStrategy: $('typeOfStrategy')?.value,
+                    problemStatement: $('problemStatement')?.value,
                 };
 
                 const saveBtn = $('saveProjectBtn');
@@ -2651,13 +2882,14 @@
                 // Use a slight delay to ensure the page navigation has completed
                 setTimeout(() => {
                     $('templateTitle').textContent = project.project_title;
-                    $('companyName').value = project.inputs.companyName || '';
+                    if($('companyName')) $('companyName').value = project.inputs.companyName || '';
                     if ($('companyDocumentsFileLabel')) {
                         const fileNameSpan = $('companyDocumentsFileLabel').querySelector('.file-name');
                         fileNameSpan.textContent = "Previous documents not stored.";
                     }
-                    $('location').value = project.inputs.location || '';
+                    if($('location')) $('location').value = project.inputs.location || '';
                     if ($('typeOfStrategy')) $('typeOfStrategy').value = project.inputs.typeOfStrategy || '';
+                    if ($('problemStatement')) $('problemStatement').value = project.inputs.problemStatement || '';
 
                     $('analysisResult').innerHTML =
                         `<div class="whitespace-pre-wrap">${project.analysis_text}</div>`;
@@ -2736,9 +2968,11 @@
                     navigateTo('emailVerification');
 
                 } catch (err) {
-                    showMessage('resendMessage', 'Error resending verification email.', 'error');
+                    console.error('Register error:', err);
+                    showMessage('registerMessage', 'An error occurred during registration. Please try again.', 'error');
+                } finally {
+                    setLoading('register', false);
                 }
-                setLoading('resend', false);
             }
 
 
@@ -3059,127 +3293,79 @@
                 });
             }
 
-            let graphContainer;
-            // --- Knowledge Graph Visualization Logic ---
-            async function loadKnowledgeGraph() {
-                const graphContainer = document.querySelector('.graph-inner')
-                
-                if (!graphContainer || typeof NVL === 'undefined') {
-                    console.error('NVL not loaded or graph container not found.');
-                    return;
-                }
+             // --- Knowledge Graph Logic ---
+            let cy; // Keep a reference to the Cytoscape instance
+            async function initializeKnowledgeGraph() {
+                const container = $('cy');
+                if (!container || container.dataset.initialized) return;
 
-                // Define color mapping for node labels
-                const labelColorMap = {
-                    'NOUN_CHUNK': '#FF8C42',  // Orange
-                    'ORG': '#FF4757',         // Red
-                    'VERB': '#2ED573',        // Green
-                    'ADJ': '#5F9EA0',         // Teal
-                    'NOUN': '#DDA0DD',        // Plum
-                    'DATE': '#00CED1',        // Dark Turquoise
-                    'PROPN': '#FF69B4',       // Hot Pink
-                    'CARDINAL': '#D2691E',    // Chocolate
-                    'GPE': '#A9A9A9',         // Dark Gray
-                    'ORDINAL': '#C0C0C0',     // Silver
-                    'PERCENT': '#B0B0B0',     // Gray
-                    'MONEY': '#8B8B8B',       // Dark Gray
-                    'PERSON': '#FF1493',      // Deep Pink
-                    'NORP': '#BEBEBE',        // Gray
-                    'LAW': '#708090',         // Slate Gray
-                    'QUANTITY': '#778899',    // Light Slate Gray
-                    'TIME': '#696969',        // Dim Gray
-                    'WORK_OF_ART': '#808080', // Gray
-                    'LOC': '#2F4F4F',         // Dark Slate Gray
-                    'PRODUCT': '#1E90FF',     // Dodger Blue
-                    'NUM': '#FFD700',         // Gold
-                    'FAC': '#A9A9A9',         // Dark Gray
-                    'ADV': '#BC8F8F',         // Rosy Brown
-                    'X': '#D3D3D3'            // Light Gray
-                }
+                container.innerHTML = '<div class="flex items-center justify-center h-full"><span class="loading-spinner"></span><p class="ml-4">Loading Graph...</p></div>';
 
-                // Function to fetch data from your backend
-                async function fetchGraphData() {
-                    try {
-                        const response = await fetch('https://nlp.data2int.com/graph/knowledge-graph'); 
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
+                try {
+                    const response = await fetch('https://matt-nlp.data2int.com/graph/knowledge-graph');
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    
+                    const graphData = await response.json();
+
+                    const elements = [
+                        ...graphData.nodes.map(node => ({
+                            data: { id: String(node.id), label: node.properties.name || node.label, type: node.label }
+                        })),
+                        ...graphData.relationships.map(rel => ({
+                            data: { id: `e${rel.id}`, source: String(rel.source_id), target: String(rel.target_id), label: rel.type }
+                        }))
+                    ];
+                    
+                    container.innerHTML = ''; // Clear loading indicator
+                    
+                    const isLightTheme = document.body.classList.contains('light-theme');
+                    const labelColor = isLightTheme ? '#1a202c' : '#fff';
+                    const textBgColor = isLightTheme ? 'rgba(255,255,255,0.7)' : '#1f2937';
+
+                    cy = cytoscape({
+                        container: container,
+                        elements: elements,
+                        style: [
+                            {
+                                selector: 'node',
+                                style: {
+                                    'background-color': 'var(--node-color)',
+                                    'label': 'data(label)',
+                                    'color': '#fff', // Node labels on colored bg should be white
+                                    'text-outline-color': 'var(--node-color)',
+                                    'text-outline-width': 2,
+                                    'font-size': '12px'
+                                }
+                            },
+                             {
+                                selector: 'edge',
+                                style: {
+                                    'width': 2,
+                                    'line-color': 'var(--edge-color)',
+                                    'target-arrow-color': 'var(--edge-color)',
+                                    'target-arrow-shape': 'triangle',
+                                    'curve-style': 'bezier',
+                                    'label': 'data(label)',
+                                    'color': labelColor,
+                                    'font-size': '10px',
+                                    'text-rotation': 'autorotate',
+                                    'text-background-opacity': 1,
+                                    'text-background-color': textBgColor
+                                }
+                            }
+                        ],
+                        layout: {
+                            name: 'cose',
+                            animate: true,
+                            padding: 10
                         }
-                        const graphData = await response.json();
-                        console.log("Fetched graph data:", graphData);
-
-                        const transformedNodes = graphData.nodes.map(node => {
-                            const nodeColor = labelColorMap[String(node.label)] || '#FFD700'; // ADDED NODE COLOR VARIABLE
-                            return {
-                                id: String(node.id), // Ensure ID is a string
-                                color: String(nodeColor), // ADDED COLOR FIELD
-                                caption: node.properties.name || node.label,
-                                labels: [String(node.label)], // NVL expects an array of labels
-                                properties: node.properties ? { ...node.properties } : {} // Ensure properties is a plain object
-                            };
-                        });
-
-                        const transformedRelationships = graphData.relationships.map(rel => {
-                            const relId = rel.id ? String(rel.id) : `${rel.source_id}-${rel.type}-${rel.target_id}`;
-                            return {
-                                id: relId,
-                                from: String(rel.source_id), // Ensure IDs are strings
-                                to: String(rel.target_id),   // Ensure IDs are strings
-                                caption: String(rel.type),   // Ensure caption is a string
-                                type: String(rel.type),
-                                properties: rel.properties ? { ...rel.properties } : {} // Ensure properties is a plain object
-                            };
-                        });
-
-                        return {
-                            nodes: transformedNodes,
-                            relationships: transformedRelationships
-                        };
-
-                    } catch (error) {
-                        console.error("Error fetching graph data:", error);
-                        graphContainer.innerHTML = `<p style='color: red;'>Error loading graph: ${error.message}</p>`;
-                        return null; // Return null on error
-                    }
-                }
-
-                const initialGraphData = await fetchGraphData();
-                console.log("Graph data", initialGraphData);
-                const { nodes, relationships } = initialGraphData;
-                if (initialGraphData) {
-                    // Pass the data to the NVL constructor
-                    const visualization = new NVL(graphContainer, nodes, relationships, {
-                        // Optionally specify a layout, e.g., 'forcedirected' or 'hierarchical'
-                        layout: 'forcedirected'
                     });
-                    console.log("Visualization:", visualization);
 
-                    // Instantiate and add interaction handlers
-                    const clickInteraction = new ClickInteraction(visualization);
-                    const zoomInteraction = new ZoomInteraction(visualization);
-                    const panInteraction = new PanInteraction(visualization);
-                    const dragNodeInteraction = new DragNodeInteraction(visualization);
-                    //const boxSelectInteraction = new BoxSelectInteraction(visualization);
-                    const hoverInteraction = new HoverInteraction(visualization);
+                    container.dataset.initialized = 'true';
 
-                    // Example: Add callbacks to interaction handlers
-                    clickInteraction.updateCallback('onNodeClick', (node) => {
-                        console.log('Node clicked', node);
-                    });
-                    // boxSelectInteraction.updateCallback('onBoxSelect', ({ nodes, rels }) => {
-                    //     console.log('Selected elements:', nodes, rels);
-                    // });
-                    dragNodeInteraction.updateCallback('onDrag', (nodes) => {
-                        //console.log('Dragged nodes:', nodes);
-                    });
-                    hoverInteraction.updateCallback('onHover', (element, hitElements, event) => {
-                        //console.log('Hovered element:', element);
-                    });
-                    panInteraction.updateCallback('onPan', (panning) => {
-                        //console.log('Panning:', panning);
-                    });
-                    zoomInteraction.updateCallback('onZoom', (zoomLevel) => {
-                        //console.log('Zoom level:', zoomLevel);
-                    });
+                } catch (error) {
+                    console.error("Error fetching or initializing graph:", error);
+                    container.innerHTML = `<p class="text-red-400 text-center">${error.message}</p>`;
                 }
             }
             
@@ -3246,14 +3432,14 @@
                     colorSwatches.forEach(s => s.classList.remove('active'));
                     swatch.classList.add('active');
                     
-                    // Re-load graph if it exists to apply new colors
-                    if (graphContainer) {
-                        const container = $('graphContainer');
+                    // Re-initialize graph if it exists to apply new colors
+                    if (cy) {
+                        const container = $('cy');
                         if(container) {
-                            graphContainer.destroy();
+                            cy.destroy();
                             container.dataset.initialized = '';
                         }
-                        loadKnowledgeGraph();
+                        initializeKnowledgeGraph();
                     }
                 });
             });
