@@ -24,7 +24,8 @@ origins = [
     "https://mohammed.data2int.com",
     "https://matt.data2int.com",
     "https://khaled.data2int.com",
-    "https://elijah.data2int.com"
+    "https://elijah.data2int.com",
+    "https://ollama.data2int.com"
 ]
 
 app.add_middleware(
