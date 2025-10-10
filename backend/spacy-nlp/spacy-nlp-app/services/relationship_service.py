@@ -52,7 +52,7 @@ async def get_or_create_node(
         Helper function to get an existing node from Neo4j or create a new one if it doesn't exist.
         Caches nodes to prevent redundant database calls within a single processing session.
         """
-        node_key = f"{entity_text}-{entity_type}"
+        node_key = f"{entity_text}-{entity_type}-{neo4j_crud._user_id}"
         if node_key in persisted_nodes:
             return persisted_nodes[node_key]
 
@@ -66,12 +66,14 @@ async def get_or_create_node(
         new_node = Node(
             id=entity_text,
             label=entity_type,
+            user_id=neo4j_crud._user_id,
             properties={
                 "name": entity_text,
                 "source_document_id": source_document_id,
                 "source_sentence_id": source_sentence_id,
             },
         )
+
         created_node = neo4j_crud.create_node(new_node)
         persisted_nodes[node_key] = created_node
         return created_node
@@ -80,7 +82,7 @@ async def get_or_create_node(
 async def persist_relationship_to_neo4j(
         neo4j_crud: Neo4jCRUD, 
         relationship: RelationshipTriple, 
-        persisted_nodes: Dict[str, Node], 
+        persisted_nodes: Dict[str, Node],
         source_document_id: Optional[str], 
         source_sentence_id: Optional[str]
 ) -> None:
@@ -111,9 +113,11 @@ async def persist_relationship_to_neo4j(
     neo4j_properties = {
         "relation_type": relationship.relation_type,
         "confidence": relationship.confidence,
+        "user_id": neo4j_crud._user_id,
         "source_document_id": source_document_id,
-        "source_sentence_id": source_sentence_id,
+        "source_sentence_id": source_sentence_id
     }
+    
     if relationship.relation_metadata:
         # Flatten relation_metadata into node properties
         neo4j_properties.update(relationship.relation_metadata) 
@@ -121,6 +125,7 @@ async def persist_relationship_to_neo4j(
     # Create the relationship in Neo4j
     neo4j_crud.create_relationship(
         Relationship(
+            user_id=neo4j_crud._user_id,
             source_id=subject_node.id,
             source_label=subject_node.label,
             target_id=object_node.id,
@@ -798,7 +803,7 @@ def build_knowledge_graph(relationships: List[RelationshipTriple]) -> KnowledgeG
                 type=triple.relation,
                 properties={
                     "confidence": triple.confidence,
-                    "relation_metadata": triple.relation_metadata,
+                    "relation_metadata": triple.relation_metadata
                 }
             )
         )
