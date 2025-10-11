@@ -164,6 +164,33 @@ def is_weak_verb(lemma: str) -> bool:
     """
     return lemma in WEAK_VERBS
 
+def get_verb_phrase_from_verb(verb_token: Token) -> str:
+    """
+    Constructs a more descriptive verb phrase from a verb token, including
+    auxiliary verbs, adverbs, and directly attached prepositions.
+    """
+    phrase_components = []
+
+    # Add preceding auxiliaries and adverbs
+    for child in verb_token.children:
+        if child.pos_ in ["AUX", "ADV"] and child.i < verb_token.i:
+            phrase_components.append(child.lemma_)
+    
+    # Add the main verb's lemma
+    phrase_components.append(verb_token.lemma_)
+
+    # Add following adverbs
+    for child in verb_token.children:
+        if child.pos_ in ["ADV"] and child.i > verb_token.i:
+            phrase_components.append(child.lemma_)
+    
+    # Add directly attached prepositions (e.g., "rely_on", "thrive_over")
+    for child in verb_token.children:
+        if child.dep_ == "prep":
+            phrase_components.append(child.lemma_)
+
+    return "_".join(phrase_components) if phrase_components else verb_token.lemma_
+
 
 def get_entity_from_span(span: Span, meaningful_entities: List[NamedEntity]) -> Optional[tuple[str,str]]:
     """
@@ -211,6 +238,14 @@ def get_entity_from_span(span: Span, meaningful_entities: List[NamedEntity]) -> 
         return (best_match.text, best_match.label)
 
     return "", ""
+
+
+# Helper to find the largest noun chunk containing a token.
+def get_containing_noun_chunk(token: Token, sentence_span: Span) -> Optional[Span]:
+    for chunk in sentence_span.noun_chunks:
+        if token.i >= chunk.start and token.i < chunk.end:
+            return chunk
+    return None
 
 
 def classify_svo_relationship(triple: RelationshipTriple, doc: Doc) -> RelationshipTriple:
@@ -287,26 +322,16 @@ def extract_svo_relationships_from_sentence(
                 for object_token in objects:
                     # Map subject_token and object_token to meaningful entities.
                     # For multi-word entities, try to get the full noun chunk or entity span.
-                    subject_span = None
-                    for chunk in sent.noun_chunks:
-                        if subject_token.i >= chunk.start and subject_token.i < chunk.end:
-                            subject_span = chunk
-                            break
-
+                    subject_span = get_containing_noun_chunk(subject_token, sent)
                     if not subject_span:
-                        # Fallback to single token span
+                        # Fallback to single token span if no noun chunk is found
                         subject_span = doc[subject_token.i : subject_token.i + 1] 
 
-                    object_span = None
-                    for chunk in sent.noun_chunks:
-                        if object_token.i >= chunk.start and object_token.i < chunk.end:
-                            object_span = chunk
-                            break
-
+                    object_span = get_containing_noun_chunk(object_token, sent)
                     if not object_span:
-                        # Fallback to single token span
+                        # Fallback to single token span if no noun chunk is found
                         object_span = doc[object_token.i : object_token.i + 1] 
-
+                    
                     subject_data = get_entity_from_span(subject_span, meaningful_entities)
                     object_data = get_entity_from_span(object_span, meaningful_entities)
 
@@ -318,7 +343,20 @@ def extract_svo_relationships_from_sentence(
                         # If it's a prepositional object, include the preposition.
                         relation_text = verb.lemma_
                         if object_token.dep_ == "pobj" and object_token.head.pos_ == "ADP":
-                            relation_text = f"{verb.lemma_}_{object_token.head.lemma_}" # e.g., "works_at"
+                            # Include the preposition in the relation text for more context.
+                            relation_text = f"{verb.lemma_}_{object_token.head.lemma_}" 
+                        
+                        # Further enhance relation text by including auxiliary verbs or adverbs.
+                        # This helps create more descriptive relations like "will lead to".
+                        verb_phrase_tokens = [verb.lemma_]
+                        for child in verb.children:
+                            if child.pos_ in ["AUX", "ADV"] and child.i < verb.i: # Preceding auxiliaries/adverbs.
+                                verb_phrase_tokens.insert(0, child.lemma_)
+                            elif child.pos_ in ["ADV"] and child.i > verb.i: # Following adverbs.
+                                verb_phrase_tokens.append(child.lemma_)
+                        
+                        # Join the verb phrase tokens to form a more complete relation
+                        relation_text = "_".join(verb_phrase_tokens)
                         
                         new_triple = RelationshipTriple(
                             subject=subject_text,
@@ -370,9 +408,20 @@ def extract_lca_and_head_relationships(
     if lca and lca.pos_ in ["VERB", "AUX", "ADP"]:
         subject_text = ent1.text
         subject_label = ent1.label
-        relation_text = lca.lemma_
         object_text = ent2.text
         object_label = ent2.label
+
+        relation_text = ""
+        if lca.pos_ in ["VERB", "AUX"]:
+            # Use the helper to get a descriptive verb phrase
+            relation_text = get_verb_phrase_from_verb(lca)
+        elif lca.pos_ == "ADP":
+            # If LCA is a preposition, and its head is a verb, combine them
+            if lca.head.pos_ in ["VERB", "AUX"]:
+                relation_text = f"{lca.head.lemma_}_{lca.lemma_}"
+            else:
+                # Fallback to just the preposition if no governing verb is found
+                relation_text = lca.lemma_
 
         lca_and_head_relationships.append(
             RelationshipTriple(
@@ -399,9 +448,21 @@ def extract_lca_and_head_relationships(
         
         subject_text = ent1.text
         subject_label = ent1.label
-        relation_text = ent1_span.root.head.lemma_
         object_text = ent2.text
         object_label = ent2.label
+
+        head_token = ent1_span.root.head
+        relation_text = ""
+        if head_token.pos_ in ["VERB", "AUX"]:
+            # Use the helper to get a descriptive verb phrase
+            relation_text = get_verb_phrase_from_verb(head_token)
+        elif head_token.pos_ == "ADP":
+            # If head is a preposition, and its head is a verb, combine them
+            if head_token.head.pos_ in ["VERB", "AUX"]:
+                relation_text = f"{head_token.head.lemma_}_{head_token.lemma_}"
+            else:
+                # Fallback to just the preposition if no governing verb is found
+                relation_text = head_token.lemma_
 
         lca_and_head_relationships.append(
             RelationshipTriple(
@@ -437,8 +498,9 @@ def extract_causal_verb_relationship(
         object_data = get_entity_from_span(object_span_obj, meaningful_entities)
         subject_text, subject_label = subject_data
         object_text, object_label = object_data
-        # Access the lemma of the first verb token in the list
-        relation_text = verb_span_tokens[0].lemma_ if verb_span_tokens else ""
+        
+        # Use helper function to get a more descriptive verb phrase for the relation
+        relation_text = get_verb_phrase_from_verb(verb_span_tokens[0]) if verb_span_tokens else ""
         return subject_text, subject_label, object_text, object_label, relation_text
     
     return "", "", "", "", ""
@@ -449,12 +511,15 @@ def extract_causal_preposition_relationship(
         meaningful_entities: List[NamedEntity]
 ) -> tuple[str, str, str, str, str]:
     """Helper to extract subject, object, and relation for CAUSAL_PREPOSITION pattern."""
+    # Identify noun phrases within the span
     noun_phrases = [chunk for chunk in span.noun_chunks]
+    
     if len(noun_phrases) >= 2:
-        # Take the first noun phrase as subject
+        # Take the first noun phrase as subject.
         subject_data = get_entity_from_span(noun_phrases[0], meaningful_entities)
-        # Take the last noun phrase as object
+        # Take the last noun phrase as object.
         object_data = get_entity_from_span(noun_phrases[-1], meaningful_entities)
+        
         subject_text, subject_label = subject_data
         object_text, object_label = object_data
         relation_text = "due to"
@@ -477,16 +542,33 @@ def extract_temporal_relationship(
             break
 
     if temporal_connector_token:
-        # The subject is the part of the span before the connector.
-        subject_span_temp = doc[span.start : temporal_connector_token.i]
-        # The object is the part of the span after the connector.
-        object_span_temp = doc[temporal_connector_token.i + 1 : span.end]
+        # Identify the subject as the largest noun chunk before the connector
+        subject_span_candidate = doc[span.start : temporal_connector_token.i]
+        subject_span = None
+        for chunk in subject_span_candidate.noun_chunks:
+            if chunk.start_char >= subject_span_candidate.start_char and \
+               chunk.end_char <= subject_span_candidate.end_char:
+                if not subject_span or len(chunk.text) > len(subject_span.text):
+                    subject_span = chunk
+        if not subject_span:
+            subject_span = subject_span_candidate # Fallback to the entire span before connector
 
-        subject_data = get_entity_from_span(subject_span_temp, meaningful_entities)
-        object_data = get_entity_from_span(object_span_temp, meaningful_entities)
+        # Identify the object as the largest noun chunk after the connector
+        object_span_candidate = doc[temporal_connector_token.i + 1 : span.end]
+        object_span = None
+        for chunk in object_span_candidate.noun_chunks:
+            if chunk.start_char >= object_span_candidate.start_char and \
+               chunk.end_char <= object_span_candidate.end_char:
+                if not object_span or len(chunk.text) > len(object_span.text):
+                    object_span = chunk
+        if not object_span:
+            object_span = object_span_candidate # Fallback to the entire span after connector
+
+        subject_data = get_entity_from_span(subject_span, meaningful_entities)
+        object_data = get_entity_from_span(object_span, meaningful_entities)
         subject_text, subject_label = subject_data
         object_text, object_label = object_data
-        relation_text = temporal_connector_token.text.lower()
+        relation_text = temporal_connector_token.text.lower() # Temporal connectors are often single words
 
         if subject_text and object_text and relation_text:
             return subject_text, subject_label, object_text, object_label, relation_text
@@ -499,6 +581,7 @@ def extract_hierarchical_relationship(
         meaningful_entities: List[NamedEntity]
 ) -> tuple[str, str, str, str, str]:
     """Helper to extract subject, object, and relation for HIERARCHICAL pattern."""
+    # Identify noun phrases within the span
     noun_phrases = [chunk for chunk in span.noun_chunks]
     if len(noun_phrases) >= 2:
         # Take the first noun phrase as the subject.
