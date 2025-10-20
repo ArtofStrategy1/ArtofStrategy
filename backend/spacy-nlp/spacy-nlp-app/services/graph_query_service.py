@@ -34,8 +34,8 @@ async def get_all_nodes_logic(
     """
     logger.info(f"Executing get_all_nodes_logic with filters: {filters}, entities: {entity_texts}")
 
-    # Fetch all nodes first, then apply Python-side filtering for simplicity
-    # For large graphs, this should be optimized with Cypher queries in neo4j_crud
+    # Fetch all nodes first, then apply Python-side filtering for simplicity.
+    # For large graphs, this will be optimized with Cypher queries in neo4j_crud.
     all_neo4j_nodes = neo4j_crud.get_all_nodes(label=filters.node_label)
 
     filtered_nodes = []
@@ -63,7 +63,7 @@ async def get_all_nodes_logic(
 async def get_all_relationships_logic(
     neo4j_crud: Neo4jCRUD,
     filters: GraphFilterRequest,
-    node_ids: Optional[List[str]] = None,
+    node_ids: Optional[List[str]] = None
 ) -> GraphRelationshipsResponse:
     """
     Retrieves all relationships from the Neo4j database, with optional filtering by source_document_id, relation_type, or connected node_ids.
@@ -117,21 +117,22 @@ def query_neighbors_logic(node_id: str, neo4j_crud: Neo4jCRUD) -> NeighborsRespo
     """
     Queries the neighbors of a given node in the Neo4j graph.
     """
-    logger.info(f"Querying neighbors for node_id: {node_id} in query_neighbors_logic")
+    logger.info(f"Querying neighbors for node_id: {node_id}.")
     
     # This needs a specific Cypher query in neo4j_crud to get neighbors
     # For now, we'll implement a basic version here
     query = """
-    MATCH (n {id: $node_id})-[r]-(m)
+    MATCH (n {id: $node_id, user_id: $user_id})-[r]-(m)
+    WHERE r.user_id = $user_id AND b.user_id = $user_id
     RETURN m.id AS neighbor_id
     """
-    parameters = {"node_id": node_id}
+    parameters = {"node_id": node_id, "user_id": neo4j_crud._user_id}
     results = neo4j_crud._execute_query(query, parameters) # Accessing protected method for now, should be public in CRUD
 
     neighbors = [record["neighbor_id"] for record in results]
     if not neighbors and not neo4j_crud.get_node(node_id):
         raise HTTPException(
-            status_code=404, detail=f"Node '{node_id}' not found in graph."
+            status_code=404, detail=f"Node '{node_id}' not found in graph'."
         )
     return NeighborsResponse(neighbors=neighbors)
 
@@ -145,7 +146,8 @@ def query_shortest_path_logic(
     Finds the shortest path between two nodes in the Neo4j graph.
     """
     query = """
-    MATCH (source {id: $source_node_id}), (target {id: $target_node_id})
+    MATCH (source {id: $source_node_id, user_id: $user_id}), 
+    (target {id: $target_node_id, user_id: $user_id})
     CALL gds.shortestPath.dijkstra.stream('knowledge_graph', {
         sourceNode: source,
         targetNode: target
@@ -155,7 +157,8 @@ def query_shortest_path_logic(
         [nodeId IN nodeIds | gds.util.asNode(nodeId).id] AS node_ids_in_path,
         totalCost
     """
-    parameters = {"source_node_id": source_node_id, "target_node_id": target_node_id}
+    parameters = {"source_node_id": source_node_id, "target_node_id": target_node_id, 
+                  "user_id": neo4j_crud._user_id}
     results = neo4j_crud._execute_query(query, parameters)
 
     if results:
@@ -164,9 +167,9 @@ def query_shortest_path_logic(
     
     # Check if nodes exist
     if not neo4j_crud.get_node(source_node_id):
-        raise HTTPException(status_code=404, detail=f"Source node '{source_node_id}' not found.")
+        raise HTTPException(status_code=404, detail=f"Source node '{source_node_id}'.")
     if not neo4j_crud.get_node(target_node_id):
-        raise HTTPException(status_code=404, detail=f"Target node '{target_node_id}' not found.")
+        raise HTTPException(status_code=404, detail=f"Target node '{target_node_id}'.")
 
     return PathResponse(path=[]) # No path found
 
@@ -224,7 +227,7 @@ async def query_centrality_measures_logic(
     return CentralityResponse(
         degree_centrality=degree_centrality, 
         betweenness_centrality=betweenness_centrality,
-        eigenvector_centrality=eigenvector_centrality,
+        eigenvector_centrality=eigenvector_centrality
     )
 
 
@@ -242,7 +245,7 @@ async def query_community_detection_logic_louvain(
         neo4j_crud=neo4j_crud,
         graph_name=graph_name,
         node_labels=node_labels,
-        relationship_types=relationship_types
+        relationship_types=relationship_types,
     )
 
     parameters = {
@@ -268,17 +271,18 @@ async def query_community_detection_logic_girvan_newman(
     neo4j_crud: Neo4jCRUD,
     graph_name: str,
     node_labels: List[str],
-    relationship_types: Dict[str, Dict[str, str]]
+    relationship_types: Dict[str, Dict[str, str]],
 ) -> CommunityDetectionResponse:
     """
-    Performs community detection using the Girvan-Newman algorithm with Neo4j's Graph Data Science (GDS) library.
+    Performs community detection using the Girvan-Newman algorithm with Neo4j's 
+    Graph Data Science (GDS) library.
     """
     # Call the helper function to project the graph
     project_gds_graph(
         neo4j_crud=neo4j_crud,
         graph_name=graph_name,
         node_labels=node_labels,
-        relationship_types=relationship_types
+        relationship_types=relationship_types,
     )
 
     parameters = {
@@ -343,14 +347,14 @@ async def identify_leverage_points_logic(
 async def query_knowledge_graph_for_rag(
     neo4j_crud: Neo4jCRUD,
     nlp: Any,
-    text: str
+    text: str,
 ) -> KnowledgeGraphQueryResponse:
     """
     Allows an external RAG system to query the knowledge graph for relevant context
     based on a given text query using hybrid search (full-text + graph traversal).
     """
     # 1. Use full-text search to get initial seed nodes
-    logger.info(f"Performing full-text search for query: {text}")
+    logger.info(f"Performing full-text search for query: {text}.")
     fulltext_results = neo4j_crud.search_nodes_fulltext(text, limit=5)
 
     seed_node_ids = []
@@ -358,15 +362,15 @@ async def query_knowledge_graph_for_rag(
     all_relevant_relationships: Dict[str, GraphRelationship] = {}
 
     for result in fulltext_results:
-        node_props = result["node_properties"]
-        node_id = node_props.get("id")
+        node_properties = result["node_properties"]
+        node_id = node_properties.get("id")
         if node_id:
             seed_node_ids.append(node_id)
             # Convert Neo4j node properties to GraphNode model
             all_relevant_nodes[node_id] = GraphNode(
                 id=node_id,
-                label=node_props.get("label", "ENTITY"), # Assuming 'label' property exists or default
-                properties=node_props
+                label=node_properties.get("label", "ENTITY"), # Assuming 'label' property exists or default
+                properties=node_properties
             )
 
     # 2. Expand from seed nodes to get their neighbors and relationships
@@ -381,7 +385,7 @@ async def query_knowledge_graph_for_rag(
                     properties=db_node.properties
                 )
 
-        # Get relationships for the current seed node
+        # Get relationships for the current seed node.
         db_relationships = neo4j_crud.get_relationships_for_node(node_id)
         for rel in db_relationships:
             rel_key = f"{rel.source_id}-{rel.type}-{rel.target_id}"
@@ -403,6 +407,7 @@ async def query_knowledge_graph_for_rag(
                         label=source_db_node.label,
                         properties=source_db_node.properties
                     )
+
             # Target node of relationship
             if rel.target_id not in all_relevant_nodes:
                 target_db_node = neo4j_crud.get_node(rel.target_id)
@@ -426,7 +431,8 @@ def project_gds_graph(
 ) -> list[Record]:
     """
     Projects a graph into Neo4j's Graph Data Science (GDS) in-memory graph
-    using a Cypher Projection for relationships with the given relation_type.
+    using a Cypher Projection for relationships with the given relation_type, 
+    filtered by user_id.
     Nodes and relationships are projected with all their labels and properties.
     """
     if not graph_name:
@@ -448,14 +454,18 @@ def project_gds_graph(
         # Parameters for the gds.graph.project call
         parameters = {
             "graphName": graph_name,
-            "relationType": relation_type
+            "relationType": relation_type,
+            "user_id": neo4j_crud._user_id
         }
         
         # Projection query using the proper gds.graph.project syntax.
         # The gds.graph.project function is used as an aggregation function with `WITH`.
         project_cypher_query = """
         MATCH (a)-[r]-(b)
-        WHERE r.relation_type = $relationType
+        WHERE r.relation_type = $relationType 
+        AND a.user_id = $user_id 
+        AND r.user_id = $user_id
+        AND b.user_id = $user_id
         WITH gds.graph.project(
             $graphName,
             a,  // sourceNode as Node object
@@ -466,16 +476,17 @@ def project_gds_graph(
                 relationshipType: type(r)
             }
         ) AS g
-        RETURN g.graphName AS projectedGraphName, g.nodeCount AS nodeCount, g.relationshipCount AS relationshipCount
+        RETURN g.graphName AS projectedGraphName, g.nodeCount AS nodeCount, 
+        g.relationshipCount AS relationshipCount
         """
 
         result = neo4j_crud._execute_query(project_cypher_query, parameters)
         
-        logger.info(f"GDS graph '{graph_name}' projected successfully for CAUSAL relationships \
-                    using gds.graph.project.")
+        logger.info(f"GDS graph '{graph_name}' projected successfully for relation type '{relation_type}'.")
 
         return result
         
     except Exception as e:
-        logger.error(f"Failed to project GDS graph '{graph_name}' for relation type '{relation_type}': {str(e)}")
+        logger.error(f"Failed to project GDS graph '{graph_name}' for relation type '{relation_type}': \
+                     {str(e)}")
         raise

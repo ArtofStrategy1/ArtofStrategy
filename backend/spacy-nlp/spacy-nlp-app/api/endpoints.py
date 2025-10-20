@@ -78,7 +78,11 @@ async def health_check(nlp: Any = Depends(get_nlp_model)):
 
 
 @nlp_router.post("/process_text", response_model=ProcessedText)
-async def process_text(request_data: TextInput, include_full_nlp_details: bool = False, nlp: Any = Depends(get_nlp_model)):
+async def process_text(
+    request_data: TextInput, 
+    include_full_nlp_details: bool = False, 
+    nlp: Any = Depends(get_nlp_model),
+    ):
     """
     Processes input text using the loaded spaCy model to perform fundamental
     Natural Language Processing (NLP) tasks.
@@ -120,11 +124,9 @@ async def identify_leverage_points(
         raise HTTPException(
             status_code=503, detail="SpaCy model not loaded. Service is not ready."
         )
-
+    
     # Extract relationships and persist to Neo4j
-    await extract_relationships_logic(
-        nlp, request_data.text, neo4j_crud
-    )
+    await extract_relationships_logic(nlp, request_data.text, neo4j_crud)
     
     # Calculate centrality measures using Neo4j GDS
     centrality_response = await query_centrality_measures_logic(
@@ -142,7 +144,9 @@ async def identify_leverage_points(
     return LeveragePointsResponse(leverage_points=leverage_points)
 
 @graph_router.get("/knowledge-graph", response_model=KnowledgeGraph)
-async def get_full_knowledge_graph(neo4j_crud: Neo4jCRUD = Depends(get_neo4j_crud)):
+async def get_full_knowledge_graph(
+    neo4j_crud: Neo4jCRUD = Depends(get_neo4j_crud),
+    ):
     # Retrieve nodes and relationships from Neo4j (these are database models)
     db_nodes: List[Node] = neo4j_crud.get_all_nodes()
     db_relationships: List[Relationship] = []
@@ -207,7 +211,7 @@ async def query_graph_neighbors(
     logger.info(f"Querying neighbors for node_id: {request_data.node_id}")
     
     try:
-        return query_neighbors_logic(request_data.node_id, neo4j_crud)
+        return query_neighbors_logic(request_data.node_id)
     except HTTPException as e:
         raise e
     except Exception as e:
@@ -217,7 +221,7 @@ async def query_graph_neighbors(
 @graph_router.post("/query_shortest_path", response_model=PathResponse)
 async def query_shortest_path(
     request_data: PathQueryRequest,
-    neo4j_crud: Neo4jCRUD = Depends(get_neo4j_crud),
+    neo4j_crud: Neo4jCRUD = Depends(get_neo4j_crud)
 ):
     """
     Finds the shortest path between two nodes in the Neo4j graph.
@@ -234,7 +238,8 @@ async def query_shortest_path(
 
 @graph_router.get("/nodes", response_model=GraphNodesResponse)
 async def get_nodes(
-    filters: GraphFilterRequest = Depends(), neo4j_crud: Neo4jCRUD = Depends(get_neo4j_crud)
+    filters: GraphFilterRequest = Depends(), 
+    neo4j_crud: Neo4jCRUD = Depends(get_neo4j_crud)
 ):
     """
     Retrieve all nodes or filter by source_document_id and type from Neo4j.
@@ -245,7 +250,8 @@ async def get_nodes(
 
 @graph_router.get("/relationships", response_model=GraphRelationshipsResponse)
 async def get_relationships(
-    filters: GraphFilterRequest = Depends(), neo4j_crud: Neo4jCRUD = Depends(get_neo4j_crud)
+    filters: GraphFilterRequest = Depends(), 
+    neo4j_crud: Neo4jCRUD = Depends(get_neo4j_crud)
 ):
     """
     Retrieve all relationships or filter by source_document_id and relation_type from Neo4j.
@@ -265,7 +271,7 @@ async def get_centrality(
     return await query_centrality_measures_logic(
         neo4j_crud,
         graph_name=request_data.graph_name,
-        relation_type=request_data.relation_type
+        relation_type=request_data.relation_type,
         # relationship_property_filter=request_data.relationship_property_filter
     )
 

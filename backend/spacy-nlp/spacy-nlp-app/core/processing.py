@@ -67,7 +67,7 @@ def extract_meaningful_entities(doc: Doc) -> List[NamedEntity]:
         # Filter out noun chunks that are primarily stop words or very short
         if (
             not all(token.is_stop for token in chunk)
-            and len(cleaned_chunk_text) > 1  # Filter out single-character chunks after cleaning
+            and len(cleaned_chunk_text) > 6  # Increased minimum length to 6 for individual tokens
             and any(token.is_alpha for token in chunk) # Ensure it contains at least one alphabetic character
         ):
             # Heuristic: if a noun chunk is just a stop word or punctuation, skip it
@@ -103,7 +103,8 @@ def extract_meaningful_entities(doc: Doc) -> List[NamedEntity]:
         if (
             token.is_alpha
             and not token.is_stop
-            and len(cleaned_token_text) > 1 # Filter out single-character tokens
+            and len(cleaned_token_text) > 6 # Increased minimum length to 6 for individual tokens
+            and token.pos_ not in ["NOUN", "VERB"] # to avoid common single-word nouns/verbs
         ):
             key = f"{cleaned_token_text.lower()}-{token.pos_}"
             if key not in meaningful_entities:
