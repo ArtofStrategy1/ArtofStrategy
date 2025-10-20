@@ -3204,7 +3204,7 @@
                     const response = await fetch("https://ollama.data2int.com/api/generate", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: "json" })
+                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: "json", options: {num_ctx: 32768} })
                     });
                     if (!response.ok) throw new Error(`API error: ${response.status}`);
                     const data = await response.json();
@@ -3582,7 +3582,7 @@
                     const response = await fetch("https://ollama.data2int.com/api/generate", {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json' })
+                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json', options: {num_ctx: 32768} })
                     });
                     if (!response.ok) throw new Error(`API error: ${response.status}`);
                     const data = await response.json();
@@ -3770,7 +3770,7 @@
                     const response = await fetch("https://ollama.data2int.com/api/generate", {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json' })
+                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json', options: {num_ctx: 32768} })
                     });
                     if (!response.ok) throw new Error(`API error: ${response.status}`);
                     const data = await response.json();
@@ -4000,7 +4000,7 @@
                     const response = await fetch("https://ollama.data2int.com/api/generate", {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json' })
+                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json', options: {num_ctx: 32768} })
                     });
                     if (!response.ok) throw new Error(`API error: ${response.status}`);
                     const data = await response.json();
@@ -4244,7 +4244,7 @@
                     const response = await fetch("https://ollama.data2int.com/api/generate", {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json' })
+                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json', options: {num_ctx: 32768} })
                     });
                     if (!response.ok) throw new Error(`API error: ${response.status}`);
                     const data = await response.json();
@@ -4477,7 +4477,7 @@
                     const response = await fetch("https://ollama.data2int.com/api/generate", {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json' })
+                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json', options: {num_ctx: 32768} })
                     });
                     if (!response.ok) throw new Error(`API error: ${response.status}`);
                     const data = await response.json();
@@ -4685,7 +4685,7 @@
                     const response = await fetch("https://ollama.data2int.com/api/generate", {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json' })
+                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json', options: {num_ctx: 32768} })
                     });
                     if (!response.ok) throw new Error(`API error: ${response.status}`);
                     const data = await response.json();
@@ -5721,7 +5721,7 @@
                     const response = await fetch("https://ollama.data2int.com/api/generate", {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json' })
+                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json', options: {num_ctx: 32768} })
                     });
                     if (!response.ok) throw new Error(`API error: ${response.status}`);
                     const data = await response.json();
@@ -6062,7 +6062,7 @@
                     const response = await fetch("https://ollama.data2int.com/api/generate", {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json' })
+                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json', options: {num_ctx: 32768} })
                     });
                     if (!response.ok) throw new Error(`API error: ${response.status}`);
                     const data = await response.json();
@@ -6146,7 +6146,7 @@
                     const response = await fetch("https://ollama.data2int.com/api/generate", {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json' })
+                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json', options: {num_ctx: 32768} })
                     });
                     if (!response.ok) throw new Error(`API error: ${response.status}`);
                     const data = await response.json();
@@ -6257,7 +6257,7 @@
                     const response = await fetch("https://ollama.data2int.com/api/generate", {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json' })
+                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json', options: {num_ctx: 32768} })
                     });
                     if (!response.ok) throw new Error(`API error: ${response.status}`);
                     const data = await response.json();
@@ -6373,7 +6373,7 @@
                     const response = await fetch("https://ollama.data2int.com/api/generate", {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json' })
+                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json', options: {num_ctx: 32768} })
                     });
                     if (!response.ok) throw new Error(`API error: ${response.status}`);
                     const data = await response.json();
@@ -6494,7 +6494,7 @@
                     const response = await fetch("https://ollama.data2int.com/api/generate", {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json' })
+                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json', options: {num_ctx: 32768} })
                     });
                     if (!response.ok) throw new Error(`API error: ${response.status}`);
                     const data = await response.json();
@@ -6580,7 +6580,7 @@
                     const response = await fetch("https://ollama.data2int.com/api/generate", {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json' })
+                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json', options: {num_ctx: 32768} })
                     });
                     if (!response.ok) throw new Error(`API error: ${response.status}`);
                     const data = await response.json();
@@ -6640,7 +6640,7 @@
                     const response = await fetch("https://ollama.data2int.com/api/generate", {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json' })
+                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json', options: {num_ctx: 32768} })
                     });
                     if (!response.ok) throw new Error(`API error: ${response.status}`);
                     const data = await response.json();
@@ -6750,7 +6750,7 @@
                     const response = await fetch("https://ollama.data2int.com/api/generate", {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json' })
+                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json', options: {num_ctx: 32768} })
                     });
                     if (!response.ok) throw new Error(`API error: ${response.status}`);
                     const data = await response.json();
@@ -6802,7 +6802,7 @@
                         const response = await fetch(OLLAMA_URL, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ model: MODEL_NAME, prompt: prompt, stream: false })
+                            body: JSON.stringify({ model: MODEL_NAME, prompt: prompt, stream: false, options: {num_ctx: 32768} })
                         });
                         if (!response.ok) throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
                         const data = await response.json();
@@ -6982,7 +6982,7 @@
                     const response = await fetch("https://ollama.data2int.com/api/generate", {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json' })
+                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json', options: {num_ctx: 32768} })
                     });
                     if (!response.ok) throw new Error(`API error: ${response.status}`);
                     const data = await response.json();
@@ -7085,7 +7085,7 @@
                     const response = await fetch("https://ollama.data2int.com/api/generate", {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json' })
+                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json', options: {num_ctx: 32768} })
                     });
                     if (!response.ok) throw new Error(`API error: ${response.status}`);
                     const data = await response.json();
@@ -7137,7 +7137,7 @@
                         const response = await fetch(OLLAMA_URL, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ model: MODEL_NAME, prompt: prompt, stream: false, format: 'json' })
+                            body: JSON.stringify({ model: MODEL_NAME, prompt: prompt, stream: false, format: 'json', options: {num_ctx: 32768} })
                         });
                         if (!response.ok) throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
                         const data = await response.json();
@@ -7342,7 +7342,7 @@
                     const response = await fetch("https://ollama.data2int.com/api/generate", {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json' })
+                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json', options: {num_ctx: 32768} })
                     });
                     if (!response.ok) throw new Error(`API error: ${response.status}`);
                     const data = await response.json();
@@ -7402,7 +7402,7 @@
                      const response = await fetch("https://ollama.data2int.com/api/generate", {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json' })
+                        body: JSON.stringify({ model: "llama3.1:latest", prompt: prompt, stream: false, format: 'json', options: {num_ctx: 32768} })
                     });
                     if (!response.ok) throw new Error(`API error: ${response.status}`);
                     const data = await response.json();
