@@ -15,6 +15,7 @@ searxng-data
 mongodb-data
 neo4j/
 index-new.html
+knowledge-graph-vis.html
 
 utility/
 .roo
