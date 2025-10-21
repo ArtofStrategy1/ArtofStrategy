@@ -1,0 +1,1330 @@
+/* --- THEME COLORS (CSS VARIABLES) --- */
+:root {
+    --grad-1: #C33764;
+    --grad-2: #1D2671;
+    --primary: #8E2DE2;
+    --primary-hover: #4A00E0;
+    --accent: #C33764;
+    --edge-color: #4A00E0;
+    --node-color: #C33764;
+}
+
+/* --- Base & Animated Background --- */
+html, body {
+    min-height: 100%;
+}
+body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(-45deg, var(--grad-1), var(--grad-2));
+    background-size: 400% 400%;
+    animation: gradientBG 18s ease infinite;
+    color: #f9fafb;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.main-content {
+    flex-grow: 1;
+}
+
+@keyframes gradientBG {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.page {
+    display: none;
+}
+
+/* Hide all pages by default */
+.page.active {
+    animation: fadeIn .5s ease-out;
+}
+
+/* Specific display rules for active pages */
+#home.active,
+#templates.active,
+#templateDetail.active,
+#examplesPage.active,
+#adminDashboard.active,
+#about.active {
+    display: block;
+    /* Content pages */
+}
+
+#login.active,
+#signup.active,
+#emailVerification.active {
+    display: flex;
+    /* Centered pages */
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0
+    }
+
+    to {
+        opacity: 1
+    }
+}
+
+/* --- Glass & Card Effects --- */
+.glass-container {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 1rem;
+    padding: 2.5rem;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+}
+
+.feature-card {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 1rem;
+    transition: all .3s ease;
+    text-align: center;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.template-card,
+.project-card {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 1rem;
+    transition: all .3s ease;
+    cursor: pointer;
+}
+
+.template-card:hover,
+.project-card:hover {
+    transform: translateY(-5px);
+    background: rgba(0, 0, 0, 0.3);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.project-card-content {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+/* --- Buttons --- */
+.btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: #fff;
+}
+
+.btn-primary:hover {
+    background: var(--primary-hover);
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.btn-danger {
+    background: rgba(220, 38, 38, 0.5);
+    color: #fca5a5;
+}
+
+.btn-danger:hover {
+    background: rgba(220, 38, 38, 0.7);
+    color: #fff;
+}
+
+.btn-tertiary {
+    background: transparent;
+    color: #c7d2fe;
+    text-decoration: underline;
+}
+
+.btn-tertiary:hover {
+    color: #fff;
+}
+
+/* --- Forms & Inputs --- */
+.input-field {
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: .5rem;
+    font-size: 1rem;
+    transition: all .2s;
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+}
+
+.input-field::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.input-field:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.2);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.error-message {
+    color: #fca5a5;
+    font-size: .875rem;
+    margin-top: .5rem;
+    background: rgba(220, 38, 38, 0.3);
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+}
+
+.success-message {
+    color: #a7f3d0;
+    font-size: .875rem;
+    margin-top: .5rem;
+    background: rgba(5, 150, 105, 0.3);
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+}
+
+/* --- Loading Spinners --- */
+.loading-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.typing-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 2rem;
+}
+
+.typing-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: typing 1.4s infinite ease-in-out
+}
+
+.typing-dot:nth-child(1) {
+    animation-delay: -.32s
+}
+
+.typing-dot:nth-child(2) {
+    animation-delay: -.16s
+}
+
+.typing-dot:nth-child(3) {
+    animation-delay: 0s
+}
+
+@keyframes typing {
+
+    0%,
+    80%,
+    100% {
+        transform: scale(.8);
+        opacity: .5
+    }
+
+    40% {
+        transform: scale(1);
+        opacity: 1
+    }
+}
+
+/* --- Three.js Canvas Styling --- */
+#threeJsCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -2;
+    display: block;
+    transition: opacity 0.5s ease-in-out;
+}
+
+/* Carousel specific styles */
+.carousel-button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.4);
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: 9999px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    z-index: 10;
+    transition: background 0.3s ease;
+    border: none;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.carousel-button:hover {
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.carousel-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.carousel-button.left {
+    left: -6rem;
+}
+
+.carousel-button.right {
+    right: -6rem;
+}
+
+@media (max-width: 768px) {
+    .carousel-button.left {
+        left: 0.5rem;
+    }
+
+    .carousel-button.right {
+        right: 0.5rem;
+    }
+}
+
+.analysis-example-item {
+    padding: 2.5rem;
+    margin-bottom: 0;
+}
+
+.analysis-example-item h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.analysis-example-item ul,
+.analysis-example-item ol {
+    list-style-position: inside;
+    margin-left: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.analysis-example-item li {
+    margin-bottom: 0.5rem;
+}
+
+.feature-card .feature-description ul,
+.feature-card .feature-description ol,
+.feature-card .feature-description p {
+    text-align: center;
+}
+
+/* WebSocket connection status indicator */
+.ws-status {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    z-index: 1000;
+    transition: all 0.3s ease;
+}
+
+.ws-status.connected {
+    background: rgba(5, 150, 105, 0.8);
+    color: #a7f3d0;
+}
+
+.ws-status.disconnected {
+    background: rgba(220, 38, 38, 0.8);
+    color: #fca5a5;
+}
+
+.ws-status.connecting {
+    background: rgba(245, 158, 11, 0.8);
+    color: #fbbf24;
+}
+
+/* Glassy Checkboxes */
+.method-checkbox {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(4px);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.method-checkbox:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: rgba(255, 255, 255, 0.05);
+}
+.method-checkbox:disabled + span {
+    opacity: 0.5;
+}
+
+.method-checkbox:checked {
+    background: color-mix(in srgb, var(--primary) 80%, transparent);
+    border-color: color-mix(in srgb, var(--accent) 90%, transparent);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 70%, transparent);
+    transform: scale(1.15);
+}
+
+.method-checkbox:hover:not(:disabled) {
+    transform: scale(1.1);
+    border-color: rgba(255, 255, 255, 0.7);
+}
+
+/* --- Custom File Input --- */
+.input-file-wrapper {
+    position: relative;
+    overflow: hidden;
+    display: inline-block;
+    width: 100%;
+}
+.input-file {
+    position: absolute;
+    font-size: 50px;
+    opacity: 0;
+    right: 0;
+    top: 0;
+    cursor: pointer;
+}
+.input-file-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: .5rem;
+    font-size: 1rem;
+    transition: all .2s;
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+}
+.input-file-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--accent);
+}
+.input-file-btn.has-file {
+    color: white;
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--primary) 20%, transparent);
+}
+.file-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-left: 0.5rem;
+}
+
+/* --- Interactive Hover for Guide Cards --- */
+#about .glass-container {
+    transition: all 0.3s ease-in-out;
+}
+
+#about .glass-container:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.45);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* Footer Styling */
+footer {
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+/* --- Sticky Footer Override --- */
+html, body {
+    min-height: 100vh !important;
+}
+body {
+    display: flex !important;
+    flex-direction: column !important;
+}
+.main-content {
+    flex: 1 0 auto !important;
+}
+footer {
+    flex-shrink: 0 !important;
+    position: relative !important;
+}
+
+/* --- Analysis Results Tab Styling --- */
+.analysis-tab-btn {
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.6);
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+.analysis-tab-btn:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.05);
+}
+.analysis-tab-btn.active {
+    color: white;
+    font-weight: 600;
+    border-bottom-color: var(--accent);
+}
+.analysis-tab-panel {
+    display: none;
+    padding-top: 1.5rem;
+    animation: fadeIn 0.5s;
+}
+.analysis-tab-panel.active {
+    display: block;
+}
+
+/* --- Home Page Tab Styling --- */
+.home-tab-btn {
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.7);
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
+    margin-bottom: -2px;
+}
+.home-tab-btn:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
+}
+.home-tab-btn.active {
+    color: white;
+    font-weight: 600;
+    border-bottom-color: var(--primary);
+}
+.home-tab-panel {
+    display: none;
+    animation: fadeIn 0.5s;
+}
+.home-tab-panel.active {
+    display: grid;
+}
+
+/* SWOT Tool specific styles */
+.input-radio-group {
+    display: flex;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 0.5rem;
+    padding: 0.25rem;
+}
+.input-radio-label {
+    flex: 1;
+    text-align: center;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.4rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+.input-radio-label:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+.input-radio:checked + .input-radio-label {
+    background: var(--primary);
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+.input-radio {
+    display: none;
+}
+
+/* Archetype & Factor Analysis Tool Specific Styles */
+.metric-card {
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border-left: 4px solid var(--primary);
+    margin-bottom: 1rem;
+}
+.metric-card.critical {
+    border-left-color: #dc143c;
+}
+.metric-card.high {
+    border-left-color: #ff8c00;
+}
+
+/* --- Strategic Map Diagram Styles --- */
+.strategy-map-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem; /* 24px */
+    padding-bottom: 2rem; /* Add some padding to the bottom */
+}
+
+/* Generic vertical line connecting sections */
+.vertical-connector {
+    width: 2px;
+    background-color: rgba(255, 255, 255, 0.4);
+    height: 40px; /* Standard height for connectors */
+    position: relative;
+}
+/* Downward arrow head for generic connectors */
+.vertical-connector::after {
+    content: '';
+    position: absolute;
+    left: -5px;
+    bottom: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 8px solid rgba(255, 255, 255, 0.4);
+}
+
+/* Container for the Feedback Loops, allowing horizontal alignment */
+.feedback-loops-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Two equal columns */
+    gap: 2rem; /* Spacing between loop boxes */
+    width: 100%;
+    max-width: 900px; /* Control max width for better readability */
+}
+@media (max-width: 768px) {
+    .feedback-loops-grid {
+        grid-template-columns: 1fr; /* Stack on smaller screens */
+    }
+}
+
+/* Lines from feedback loops to interventions header */
+.lines-to-interventions {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    height: 40px; /* Space for the lines */
+    position: relative;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+/* Line from Reinforcing Loop */
+.lines-to-interventions::before {
+    content: '';
+    position: absolute;
+    left: 25%; /* Roughly center of the left box */
+    top: 0;
+    width: 2px;
+    height: 100%;
+    background-color: rgba(46, 139, 87, 0.6); /* Greenish for reinforcing */
+}
+
+/* Line from Balancing Loop */
+.lines-to-interventions::after {
+    content: '';
+    position: absolute;
+    right: 25%; /* Roughly center of the right box */
+    top: 0;
+    width: 2px;
+    height: 100%;
+    background-color: rgba(255, 140, 0, 0.6); /* Orangish for balancing */
+}
+
+/* Individual initiative connection indicators */
+.initiative-target-indicator {
+    position: absolute;
+    top: -25px; /* Position above the card */
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.8rem; /* Larger icon */
+    line-height: 1;
+}
+/* Specific colors for indicators */
+.indicator-boost { color: #28a745; /* Bootstrap success green */ }
+.indicator-mitigate { color: #ffc107; /* Bootstrap warning yellow */ }
+
+/* --- Strategic Cascade Styles --- */
+.cascade-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+    padding: 2rem 1rem;
+}
+.cascade-objective {
+    width: 100%;
+    max-width: 700px;
+    text-align: center;
+    padding: 1.5rem;
+    background: rgba(0,0,0,0.3);
+    border-radius: 1rem;
+    border-top: 4px solid var(--primary);
+}
+.cascade-connector {
+    width: 2px;
+    height: 40px;
+    background: rgba(255,255,255,0.3);
+}
+.cascade-goals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    width: 100%;
+    max-width: 1200px;
+}
+.cascade-goal-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-top: 4px solid var(--accent);
+    padding: 1rem;
+    border-radius: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.cascade-strategy {
+    background: rgba(0,0,0,0.2);
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+}
+
+/* --- Action Plan Timeline Styles --- */
+.action-plan-container {
+    position: relative;
+    padding: 2rem 0;
+}
+.action-plan-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    transform: translateX(-50%);
+}
+.timeline-item {
+    position: relative;
+    margin-bottom: 2.5rem;
+    width: 50%;
+}
+.timeline-item:nth-child(odd) {
+    padding-right: 2.5rem;
+    align-self: flex-start;
+}
+.timeline-item:nth-child(even) {
+    padding-left: 2.5rem;
+    align-self: flex-end;
+}
+.timeline-dot {
+    content: '';
+    position: absolute;
+    top: 1rem;
+    width: 20px;
+    height: 20px;
+    background: var(--background-dark);
+    border-radius: 50%;
+    border: 4px solid var(--primary);
+}
+.timeline-item:nth-child(odd) .timeline-dot {
+    right: -10px;
+    transform: translateX(50%);
+}
+.timeline-item:nth-child(even) .timeline-dot {
+    left: -10px;
+    transform: translateX(-50%);
+}
+.timeline-content {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 1rem;
+    border-radius: 0.75rem;
+}
+.priority-high { border-left: 4px solid #dc2626; }
+.priority-medium { border-left: 4px solid #f59e0b; }
+.priority-low { border-left: 4px solid #2563eb; }
+
+/* --- KPI Dashboard Styles --- */
+.kpi-card {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+.kpi-card .kpi-name {
+    font-size: 1.125rem;
+    font-weight: bold;
+    color: white;
+}
+.kpi-card .kpi-target {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--primary);
+    margin: 0.5rem 0;
+    line-height: 1.2;
+}
+.kpi-card .kpi-type {
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.1);
+    align-self: center;
+}
+
+/* --- Misc Tool: Risk Table Styles --- */
+.risk-pill {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    min-width: 80px;
+}
+.risk-level-high {
+    background-color: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+}
+.risk-level-medium {
+    background-color: rgba(249, 115, 22, 0.2);
+    color: #fdba74;
+}
+.risk-level-low {
+    background-color: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+}
+
+/* --- Strategic Horizons Visual Styles --- */
+.horizons-container {
+    position: relative;
+    width: 100%;
+    max-width: 800px;
+    aspect-ratio: 1 / 1;
+    margin: 2rem auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.horizon-circle {
+    position: absolute;
+    border-style: dashed;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+#h3-circle { width: 100%; height: 100%; border: 2px dashed rgba(255, 255, 255, 0.2); }
+#h2-circle { width: 70%; height: 70%; border: 2px dashed rgba(255, 255, 255, 0.3); }
+#h1-circle { width: 40%; height: 40%; border: 2px dashed rgba(255, 255, 255, 0.4); }
+.horizon-label {
+    position: absolute;
+    top: 10px;
+    font-weight: bold;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+}
+.main-goal-center {
+    width: 33%; /* Increased size */
+    height: 33%; /* Increased size */
+    background: rgba(var(--primary-rgb), 0.3);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 1rem;
+    font-weight: bold;
+    font-size: 0.9rem; /* Adjusted font size */
+    z-index: 10;
+}
+.initiative-point {
+    position: absolute;
+    background: rgba(0,0,0,0.5);
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(255,255,255,0.2);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    max-width: 130px; /* Added max-width for wrapping */
+    text-align: center;
+}
+.initiative-point:hover {
+    transform: scale(1.1) translate(-50%, -50%); /* Adjusted for proper scaling */
+    background: var(--primary);
+    z-index: 20;
+}
+
+/* --- Regression Analysis Table Styles --- */
+.coeff-table {
+    width: 100%;
+    text-align: left;
+    border-collapse: collapse;
+}
+.coeff-table th, .coeff-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.coeff-table th {
+    font-weight: 600;
+    background-color: rgba(0,0,0,0.2);
+}
+.coeff-table .significant {
+    color: #6ee7b7; /* A light green for significant p-values */
+    font-weight: bold;
+}
+
+/* --- PLS-SEM Path Diagram Styles (New Flow Method) --- */
+.path-flow-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 2rem;
+    padding: 2rem;
+}
+.path-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+}
+.path-column-title {
+    font-size: 1rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 1rem;
+}
+.path-node-card {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    width: 100%;
+    text-align: center;
+}
+.path-node-card h4 {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: var(--primary);
+}
+.path-influence-list {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    text-align: left;
+}
+.path-influence-list strong {
+    color: white;
+}
+.path-influence {
+    color: rgba(255,255,255,0.7);
+}
+.path-influence.significant {
+    color: var(--accent);
+    font-weight: bold;
+}
+
+/* --- Descriptive Analysis Styles --- */
+.summary-stat-card {
+    background: rgba(0,0,0,0.25);
+    padding: 1.5rem;
+    border-radius: 1rem;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.summary-stat-card .stat-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--primary);
+    line-height: 1;
+}
+.summary-stat-card .stat-label {
+    font-size: 1rem;
+    color: rgba(255,255,255,0.8);
+    margin-top: 0.5rem;
+}
+
+/* --- Styling for SEM Learn Tab --- */
+.styled-table {
+    border-collapse: collapse;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+.styled-table th,
+.styled-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.styled-table thead th {
+    background: rgba(255, 255, 255, 0.1);
+    font-weight: 600;
+    color: white;
+}
+.styled-table tbody tr:last-child td {
+    border-bottom: none;
+}
+.styled-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+.styled-details {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.5rem;
+}
+.styled-details summary {
+    padding: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    border-radius: 0.5rem;
+}
+.styled-details[open] summary {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+.styled-details summary:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+.styled-details pre {
+    white-space: pre-wrap; /* Allow syntax to wrap */
+}
+/* --- Styling for SEM Analysis Model Tab --- */
+.model-section-container {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    height: 100%;
+}
+
+/* --- Prescriptive Analysis Styles --- */
+.prescription-card {
+    background: rgba(0,0,0,0.3);
+    border-radius: 1rem;
+    border-left: 5px solid var(--primary);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+.prescription-card h4 {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--primary);
+}
+.prescription-card .rationale {
+    font-style: italic;
+    color: rgba(255,255,255,0.8);
+    margin: 0.75rem 0;
+    padding: 0.75rem;
+    background: rgba(0,0,0,0.2);
+    border-radius: 0.5rem;
+}
+
+/* --- Prescriptive Analysis - Enhanced Styles --- */
+.dashboard-prescription-card {
+    background: rgba(0,0,0,0.3);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    border-left: 4px solid var(--accent);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+.insight-card {
+    background: rgba(0,0,0,0.2);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* --- Regression Analysis - Enhanced Styles --- */
+.diagnostic-card {
+    background: rgba(0,0,0,0.2);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    text-align: center;
+}
+.diagnostic-card .stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--accent);
+}
+.diagnostic-card .stat-label {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.7);
+    margin-top: 0.25rem;
+}
+/* --- Visualization Tool Styles --- */
+.viz-interpretation-box {
+    background: rgba(0,0,0,0.2);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    margin-top: 2rem;
+    border-top: 2px solid var(--primary);
+}
+/* --- System Thinking Objectives Styles --- */
+.st-dashboard-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    padding: 2rem;
+}
+.st-objective-card {
+    background: rgba(var(--primary-rgb), 0.2);
+    border: 1px solid var(--primary);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    text-align: center;
+}
+.st-goals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    position: relative;
+}
+.st-goal-card {
+    background: rgba(0,0,0,0.3);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.st-loops-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+/* --- System Thinking Actions Styles --- */
+.action-card {
+    background: rgba(0,0,0,0.3);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.action-card.short-term { border-left: 5px solid #f59e0b; }
+.action-card.long-term { border-left: 5px solid #2563eb; }
+
+.action-card h4 {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+.archetype-card {
+    background: rgba(var(--primary-rgb), 0.2);
+    border: 1px solid var(--primary);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    text-align: center;
+}
+/* --- Creative Dissonance Styles --- */
+.dissonance-map-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2rem;
+    gap: 2rem;
+}
+.dissonance-pole {
+    flex: 1;
+    background: rgba(0,0,0,0.3);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    text-align: center;
+    height: 400px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.dissonance-gap {
+    flex: 1.5;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+}
+.dissonance-point {
+    background: rgba(var(--primary-rgb), 0.2);
+    border: 1px solid var(--primary);
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    text-align: center;
+    font-weight: 600;
+}
+/* --- Living System Analysis Styles --- */
+.ls-dashboard-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    min-height: 500px;
+    padding: 2rem;
+}
+.ls-core {
+    width: 200px;
+    height: 200px;
+    background: rgba(var(--primary-rgb), 0.3);
+    border: 2px solid var(--primary);
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    z-index: 10;
+}
+.ls-system-node {
+    position: absolute;
+    width: 150px;
+    height: 150px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 1rem;
+}
+.ls-health-robust { border-top: 4px solid #22c55e; } /* green */
+.ls-health-strained { border-top: 4px solid #f97316; } /* orange */
+.ls-health-fragile { border-top: 4px solid #ef4444; } /* red */
+/* --- Thinking System (Ladder of Inference) Styles --- */
+.ladder-container {
+    display: flex;
+    flex-direction: column-reverse; /* Build the ladder from the bottom up */
+    align-items: center;
+    gap: 0.5rem;
+    padding: 2rem;
+}
+.ladder-rung {
+    width: 100%;
+    max-width: 600px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    text-align: center;
+}
+.ladder-rung h4 {
+    font-size: 1rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: var(--primary);
+    margin-bottom: 0.5rem;
+}
+.ladder-rung p {
+    font-size: 1.125rem;
+    font-style: italic;
+    color: rgba(255,255,255,0.9);
+}
+.ladder-arrow {
+    font-size: 2rem;
+    color: rgba(255,255,255,0.4);
+    transform: rotate(90deg);
+}
+
+/* --- Predictive Styling --- */
+
+/* --- Custom Select Dropdown Styling --- */
+.select-wrapper {
+    position: relative;
+}
+
+select.input-field {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    padding-right: 2.5rem; /* Make space for the arrow */
+}
+
+/* Custom Arrow using SVG */
+.select-wrapper::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 1rem;
+    width: 1rem;
+    height: 1rem;
+    transform: translateY(-50%);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='rgba(255,255,255,0.7)' class='bi bi-chevron-down' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    pointer-events: none; /* Allows clicks to go through to the select element */
+}
+
+/* Style the dropdown options list */
+select.input-field option {
+    background: #1d2671; /* A dark color from your gradient */
+    color: #f9fafb;
+}
+
+/* --- Predictive Forecast Table Styling --- */
+.forecast-table thead th {
+    background-color: #3b429f; /* Blue from your image */
+    color: white;
+}
+
+.forecast-table tbody td {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+}
+
+.forecast-table tbody td strong {
+    color: #f0f0f0; /* Slightly brighter for emphasis */
+    font-weight: 600;
+}
