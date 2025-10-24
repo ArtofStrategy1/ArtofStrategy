@@ -23,6 +23,7 @@ diagrams-new.css
 strategy-diagrams.js
 process-mapping-cyto.html
 process-mapping-cyto.js
+knowledge-graph-vis.html
 ts/
 tsconfig.json
 
