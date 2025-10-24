@@ -1328,3 +1328,15 @@ select.input-field option {
     color: #f0f0f0; /* Slightly brighter for emphasis */
     font-weight: 600;
 }
+
+#mermaidPanel {
+    width: 100%;
+    height: 500px; /* Adjust height as needed */
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 1.5rem;	/* The amount of rounding you want to apply */
+    overflow: hidden; /* So content inside is also rounded */
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    background-color: rgba(30, 30, 30, 0.8); 	/* Slightly transparent background */
+    padding: 1.5rem;
+}
+

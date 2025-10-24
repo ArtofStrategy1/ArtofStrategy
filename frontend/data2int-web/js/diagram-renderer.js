@@ -1,5 +1,5 @@
 // Initialize Mermaid.js.
-mermaid.initialize({ startOnLoad: true });
+mermaid.initialize({ startOnLoad: true, theme: 'dark', darkMode: true });
 // Variable for panzoomObject instance.
 let panzoomInstance = null;
 /**
@@ -7,7 +7,7 @@ let panzoomInstance = null;
  * @param {HTMLElement} diagramContainerElement - The DOM element where the Mermaid diagram should be rendered.
  * @param {string} mermaidCode - The Mermaid.js code used to render the Mermaid.js diagram.
  */
-async function renderMermaidDiagram(diagramContainerElement, mermaidCode) {
+export async function renderMermaidDiagram(diagramContainerElement, mermaidCode) {
     try {
         if (panzoomInstance) {
             panzoomInstance.destroy();
@@ -24,8 +24,8 @@ async function renderMermaidDiagram(diagramContainerElement, mermaidCode) {
         diagramContainerElement.innerHTML = svg; // Insert the generated SVG into the container.
         // Initialize Panzoom on the container.
         panzoomInstance = Panzoom(diagramContainerElement, {
-            maxScale: 5, // Zoom in up to 5x.
-            minScale: 0.5, // Zoom out to 0.5x.
+            maxScale: 10, // Zoom in up to 10x.
+            minScale: 0.1, // Zoom out to 0.1x.
             canvas: true, // Use 'canvas' style for SVGs.
             step: 0.2 // Zoom step for mouse .
         });
@@ -41,7 +41,3 @@ async function renderMermaidDiagram(diagramContainerElement, mermaidCode) {
         ${error.message || error.str || 'Unknown error'}</div>`;
     }
 }
-export {};
-// // Optional: Render an initial diagram on page load
-// const initialCode = 'graph TD; A[Start] --> B[Analyze]; B --> C[Generate]; C --> D[Render];';
-// renderMermaidDiagram(initialCode);
