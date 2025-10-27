@@ -8,6 +8,7 @@
 *.pass.txt
 *-matt*
 *-khaled*
+*-latest*
 open-webui-data
 ollama-data
 n8n-data
