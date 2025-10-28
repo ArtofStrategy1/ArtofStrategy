@@ -137,3 +137,6 @@ yarn-error.log*
 # Docker
 # ===================================================================
 docker-compose.override.yml
+
+sem_plot
+sem_plot.png
