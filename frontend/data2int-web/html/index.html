@@ -6742,13 +6742,8 @@ function renderSystemActionsPage_ST(container, data) {
                     </div>`;
         setupInputToggle("systemFile", "systemFileLabel", "textInputArea", "docUploadArea");
     }
-    
-    /**
- * Creates the HTML structure and attaches listeners for the SEM Analysis tool.
- * Includes data preview, model template selection, and split syntax inputs.
- * @param {object} template - Object containing template title and description.
- */
-function createSemAnalysisLayout(template) {
+   
+    function createSemAnalysisLayout(template) {
     const contentContainer = $("templateDetailContent");
     contentContainer.className = "grid lg:grid-cols-1 gap-12"; // Single column layout
 
@@ -6760,7 +6755,16 @@ function createSemAnalysisLayout(template) {
 
             <div class="max-w-2xl mx-auto w-full">
                 <div class="glass-container p-6 space-y-6">
-                    <h3 class="text-xl font-bold mb-2 text-white">Analysis Configuration</h3>
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-xl font-bold text-white">Analysis Configuration</h3>
+                        <button type="button" id="configExamplesBtn" class="text-xs px-2 py-1 border border-white/30 rounded text-white/80 hover:bg-white/10 hover:text-white transition-all">View Examples</button>
+                    </div>
+                    <div id="configExamples" class="hidden mb-4 p-3 bg-black/20 border border-white/15 rounded-lg">
+                        <div class="text-xs font-medium text-white/90 mb-2">📋 Configuration Examples</div>
+                        <div class="space-y-2 text-xs">
+                            <div id="exampleContent" class="text-white/80">Loading example...</div>
+                        </div>
+                    </div>
 
                     <div class="input-radio-group">
                         <input type="radio" name="semInputType" id="semInputFileToggle" class="input-radio" checked>
@@ -6803,12 +6807,56 @@ function createSemAnalysisLayout(template) {
                     </div>
 
                     <div>
-                        <label for="semMeasurementSyntax" class="block text-sm font-medium text-gray-200 mb-2">Measurement Model Syntax</label>
+                        <div class="flex items-center justify-between mb-2">
+                            <label for="semMeasurementSyntax" class="block text-sm font-medium text-gray-200">Measurement Model Syntax</label>
+                            <button type="button" id="measurementExamplesBtn" class="text-xs px-2 py-1 border border-white/30 rounded text-white/80 hover:bg-white/10 hover:text-white transition-all">View Examples</button>
+                        </div>
+                        <div id="measurementExamples" class="hidden mb-2 p-3 bg-black/20 border border-white/15 rounded-lg">
+                            <div class="text-xs font-medium text-white/90 mb-2">📊 Measurement Model Examples</div>
+                            <div class="space-y-2 text-xs">
+                                <div>
+                                    <div class="text-white/80 mb-1">Basic Factor Structure:</div>
+                                    <div class="bg-black/30 p-2 rounded font-mono text-white/90 relative">
+                                        <button class="absolute top-1 right-1 text-xs px-1 py-0.5 bg-white/10 rounded hover:bg-white/20" onclick="copyToClipboard(this, 'Anxiety =~ anx1 + anx2 + anx3 + anx4\\nDepression =~ dep1 + dep2 + dep3 + dep4')">Copy</button>
+                                        Anxiety =~ anx1 + anx2 + anx3 + anx4<br>Depression =~ dep1 + dep2 + dep3 + dep4
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="text-white/80 mb-1">With Fixed Loadings:</div>
+                                    <div class="bg-black/30 p-2 rounded font-mono text-white/90 relative">
+                                        <button class="absolute top-1 right-1 text-xs px-1 py-0.5 bg-white/10 rounded hover:bg-white/20" onclick="copyToClipboard(this, 'Performance =~ 1*perf1 + perf2 + perf3\\nSatisfaction =~ 1*sat1 + sat2 + sat3')">Copy</button>
+                                        Performance =~ 1*perf1 + perf2 + perf3<br>Satisfaction =~ 1*sat1 + sat2 + sat3
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <textarea id="semMeasurementSyntax" class="input-field h-32" placeholder="e.g., Factor1 =~ varA + varB\nFactor2 =~ varC + varD..."></textarea>
                     </div>
 
                     <div>
-                        <label for="semStructuralSyntax" class="block text-sm font-medium text-gray-200 mb-2">Structural Model Syntax</label>
+                        <div class="flex items-center justify-between mb-2">
+                            <label for="semStructuralSyntax" class="block text-sm font-medium text-gray-200">Structural Model Syntax</label>
+                            <button type="button" id="structuralExamplesBtn" class="text-xs px-2 py-1 border border-white/30 rounded text-white/80 hover:bg-white/10 hover:text-white transition-all">View Examples</button>
+                        </div>
+                        <div id="structuralExamples" class="hidden mb-2 p-3 bg-black/20 border border-white/15 rounded-lg">
+                            <div class="text-xs font-medium text-white/90 mb-2">🔗 Structural Model Examples</div>
+                            <div class="space-y-2 text-xs">
+                                <div>
+                                    <div class="text-white/80 mb-1">Simple Regression:</div>
+                                    <div class="bg-black/30 p-2 rounded font-mono text-white/90 relative">
+                                        <button class="absolute top-1 right-1 text-xs px-1 py-0.5 bg-white/10 rounded hover:bg-white/20" onclick="copyToClipboard(this, 'Performance ~ Motivation + Ability\\nSatisfaction ~ Performance')">Copy</button>
+                                        Performance ~ Motivation + Ability<br>Satisfaction ~ Performance
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="text-white/80 mb-1">Mediation Model:</div>
+                                    <div class="bg-black/30 p-2 rounded font-mono text-white/90 relative">
+                                        <button class="absolute top-1 right-1 text-xs px-1 py-0.5 bg-white/10 rounded hover:bg-white/20" onclick="copyToClipboard(this, 'Outcome ~ c*Predictor + b*Mediator\\nMediator ~ a*Predictor\\n\\nindirect := a*b\\ntotal := c + (a*b)')">Copy</button>
+                                        Outcome ~ c*Predictor + b*Mediator<br>Mediator ~ a*Predictor<br><br>indirect := a*b<br>total := c + (a*b)
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <textarea id="semStructuralSyntax" class="input-field h-32" placeholder="e.g., Factor1 ~ Factor2\nObservedVar ~ Factor1..."></textarea>
                     </div>
 
@@ -6829,9 +6877,68 @@ function createSemAnalysisLayout(template) {
             </div>
         </div>`;
 
+    // --- Helper function for copying to clipboard ---
+    window.copyToClipboard = function(button, text) {
+        navigator.clipboard.writeText(text.replace(/\\n/g, '\n')).then(() => {
+            const originalText = button.textContent;
+            button.textContent = 'Copied!';
+            setTimeout(() => {
+                button.textContent = originalText;
+            }, 2000);
+        });
+    };
+
     // --- Attach Core Event Listeners ---
     $("generateBtn").addEventListener("click", handleGenerate); // Assumes handleGenerate exists and calls handleSemAnalysis
     reattachActionListeners(); // Assumes this function attaches save button listeners
+
+    // --- Add Example Toggle Event Listeners ---
+    $("configExamplesBtn").addEventListener("click", function() {
+        const exampleDiv = $("configExamples");
+        const isHidden = exampleDiv.classList.contains("hidden");
+        
+        if (isHidden) {
+            // Display hardcoded example content immediately
+            const exampleContent = $("exampleContent");
+            const exampleText = `Date,Performance_Score,Satisfaction_Rating,Quality_Index,Revenue_USD
+2023-01-01,85,4.2,8.5,15000
+2023-02-01,87,4.4,8.7,16200
+2023-03-01,89,4.6,8.9,17500
+2023-04-01,82,4.1,8.2,14800
+2023-05-01,91,4.8,9.1,18900
+2023-06-01,88,4.5,8.8,17200`;
+
+            exampleContent.innerHTML = `
+                <div class="bg-black/30 p-2 rounded font-mono text-white/90 text-xs whitespace-pre-wrap">${exampleText}</div>
+                <div class="text-white/60 text-xs mt-2 space-y-1">
+                    <div class="font-medium text-white/80">SEM Data Requirements:</div>
+                    <div>• <strong>Clean column names:</strong> No spaces, symbols, or special characters (use underscores instead)</div>
+                    <div>• <strong>Numeric data only:</strong> All measurement variables must be numbers</div>
+                    <div>• <strong>Sample size:</strong> Minimum 200 rows recommended for reliable results</div>
+                    <div>• <strong>No missing values:</strong> Complete data for all variables (or <10% missing)</div>
+                    <div>• <strong>Variable types:</strong> Use meaningful names like Performance_Score, Customer_Satisfaction</div>
+                    <div>• <strong>Scale consistency:</strong> Use same scale for related measures (e.g., all 1-10 ratings)</div>
+                </div>
+            `;
+        }
+        
+        exampleDiv.classList.toggle("hidden");
+        this.textContent = isHidden ? "Hide Examples" : "View Examples";
+    });
+
+    $("measurementExamplesBtn").addEventListener("click", function() {
+        const exampleDiv = $("measurementExamples");
+        const isHidden = exampleDiv.classList.contains("hidden");
+        exampleDiv.classList.toggle("hidden");
+        this.textContent = isHidden ? "Hide Examples" : "View Examples";
+    });
+
+    $("structuralExamplesBtn").addEventListener("click", function() {
+        const exampleDiv = $("structuralExamples");
+        const isHidden = exampleDiv.classList.contains("hidden");
+        exampleDiv.classList.toggle("hidden");
+        this.textContent = isHidden ? "Hide Examples" : "View Examples";
+    });
 
     // --- Restore Cached Results (if any) ---
     if (analysisCache[currentTemplateId]) {
@@ -6924,13 +7031,6 @@ function createSemAnalysisLayout(template) {
         modelTemplateSelect.add(new Option("Select a model template...", ""));
         modelTemplateSelect.add(new Option("Custom Syntax (Type below)", "custom"));
         modelTemplateSelect.add(new Option("Auto-Suggest (Generic Model)", "autosuggest"));
-
-        const hasMarketing = headers.includes('Ad_Spend_USD') && headers.includes('Brand_Awareness_Pct');
-        const hasSales = headers.includes('Online_Sales_USD') && headers.includes('Retail_Sales_USD');
-        const hasProfit = headers.includes('Profit_USD');
-        if (hasMarketing && hasSales && hasProfit) {
-            modelTemplateSelect.add(new Option("Marketing Path Analysis", "recommended"));
-        }
         modelTemplateSelect.disabled = false;
     };
 
@@ -6965,38 +7065,39 @@ Profit_USD ~ Marketing + Online_Sales_USD + Retail_Sales_USD`;
         populateSyntaxBoxes(fullSyntax);
     };
 
-    /** Generates a generic SEM syntax based on columns (comment-free). */
+    /** Generates a super simple SEM syntax based on columns (quick fix version). */
     const generateSyntax = () => {
-        if (fullHeaders.length === 0) { alert("Data headers not found for auto-suggestion."); return; }
-        const headersForModel = fullHeaders.filter(h => h.toLowerCase() !== 'date');
-        const marketing = [], customer = [], sales = [], financial = [];
-        // Categorization logic (same as before)
-        const totalRev = headersForModel.find(h => h.toLowerCase().includes('total') && h.toLowerCase().includes('revenue'));
-        const onlineSales = headersForModel.find(h => h.toLowerCase().includes('online') && h.toLowerCase().includes('sales'));
-        const retailSales = headersForModel.find(h => h.toLowerCase().includes('retail') && h.toLowerCase().includes('sales'));
-        const hasPerfectDependency = totalRev && onlineSales && retailSales;
-        const varsToSkip = hasPerfectDependency ? [totalRev] : [];
-        headersForModel.forEach(col => {
-            const lower = col.toLowerCase();
-            if (varsToSkip.includes(col)) return;
-            if (lower.includes('ad') || lower.includes('marketing') || lower.includes('spend') || lower.includes('awareness') || lower.includes('brand')) { marketing.push(col); }
-            else if (lower.includes('customer') || lower.includes('acquisition') || lower.includes('new_customer')) { customer.push(col); }
-            else if ((lower.includes('sales') || lower.includes('orders')) && !lower.includes('total') && !lower.includes('revenue')) { sales.push(col); }
-            else if (lower.includes('revenue') || lower.includes('profit') || lower.includes('income') || lower.includes('earnings')) { financial.push(col); }
-        });
+        if (fullHeaders.length === 0) { 
+            alert("Data headers not found for auto-suggestion."); 
+            return; 
+        }
 
-        let measurementPart = '', structuralPart = '';
-        if (marketing.length > 0) measurementPart += `Marketing =~ ${marketing.slice(0, 3).join(' + ')}\n`;
-        const customerSales = [...customer, ...sales];
-        if (customerSales.length > 0) measurementPart += `CustomerSales =~ ${customerSales.slice(0, 3).join(' + ')}\n`;
-        if (financial.length > 0) measurementPart += `Financial =~ ${financial.slice(0, 2).join(' + ')}\n`;
-        if (marketing.length > 0 && customerSales.length > 0) structuralPart += 'CustomerSales ~ Marketing\n';
-        if (customerSales.length > 0 && financial.length > 0) structuralPart += 'Financial ~ CustomerSales\n';
+        // Filter out common non-analytical columns
+        const excludePatterns = ['id', 'date', 'time', 'timestamp', 'index', 'row'];
+        const analyticalHeaders = fullHeaders.filter(h => 
+            !excludePatterns.some(pattern => h.toLowerCase().includes(pattern))
+        );
 
-        let fullSyntax = measurementPart.trim();
-        if (structuralPart.trim()) fullSyntax += (fullSyntax ? "\n\n" : "") + structuralPart.trim();
+        // QUICK FIX: Check if we have enough columns
+        if (analyticalHeaders.length < 4) {
+            populateSyntaxBoxes(`# Need at least 4 numeric columns for SEM\n# Available: ${analyticalHeaders.join(', ')}\n# Please add more numeric variables to your data`);
+            return;
+        }
 
-        populateSyntaxBoxes(fullSyntax || " "); // Pass space if empty to clear boxes
+        // QUICK FIX: Generate the simplest possible model
+        let measurementPart = '';
+        let structuralPart = '';
+        
+        // Just create 2 factors with 2 indicators each
+        measurementPart += `Factor1 =~ ${analyticalHeaders[0]} + ${analyticalHeaders[1]}\n`;
+        measurementPart += `Factor2 =~ ${analyticalHeaders[2]} + ${analyticalHeaders[3]}\n`;
+        
+        // Simple structural relationship
+        structuralPart = 'Factor2 ~ Factor1\n';
+
+        // Combine parts
+        let fullSyntax = measurementPart.trim() + '\n\n' + structuralPart.trim();
+        populateSyntaxBoxes(fullSyntax);
     };
 
     /** Processes data input (file or text) to update UI state. */
@@ -7035,17 +7136,38 @@ Profit_USD ~ Marketing + Online_Sales_USD + Retail_Sales_USD`;
 
             originalHeaders = getHeadersFromText(textContent);
 
+            // QUICK FIX: Basic data validation
+            const lines = textContent.split(/[\r\n]+/).filter(Boolean);
+            const dataRows = lines.slice(1); // Skip header
+            
+            if (dataRows.length < 10) {
+                if (errorEl) errorEl.textContent = "Warning: Very small dataset. Need at least 10 rows for reliable SEM analysis.";
+            }
+            
+            // Check for numeric data in first few rows
+            let numericColumnsCount = 0;
+            if (dataRows.length > 0) {
+                const firstRow = dataRows[0].split(/[,;\t]/);
+                firstRow.forEach((cell, index) => {
+                    if (index > 0 && !isNaN(parseFloat(cell)) && isFinite(cell)) { // Skip first column (might be date/id)
+                        numericColumnsCount++;
+                    }
+                });
+            }
+            
+            if (numericColumnsCount < 3) {
+                if (errorEl) errorEl.textContent = "Warning: Most columns appear non-numeric. SEM requires numeric data.";
+            }
+
             // If headers parsed successfully:
             showDataPreview(textContent);
             updateModelTemplates(originalHeaders); // This enables the dropdown
 
-            // *** NEW: Automatically trigger AI syntax generation IF data is present ***
-            // Set dropdown to AI generated to trigger the change event
-            modelTemplateSelect.value = "ai-generated";
-            // Manually dispatch the change event to ensure the listener runs
-            modelTemplateSelect.dispatchEvent(new Event('change'));
-
-            // The placeholders will be updated *during* the AI generation via the change listener
+            // AUTO-TRIGGER: Only if we have sufficient data
+            if (dataRows.length >= 10 && numericColumnsCount >= 3) {
+                modelTemplateSelect.value = "autosuggest";
+                modelTemplateSelect.dispatchEvent(new Event('change'));
+            }
 
         } catch (err) {
             console.error("Input processing failed:", err);
@@ -7140,7 +7262,7 @@ Profit_USD ~ Marketing + Online_Sales_USD + Retail_Sales_USD`;
 
 }
 
-    function createPredictiveAnalysisLayout(template) {
+function createPredictiveAnalysisLayout(template) {
         const contentContainer = $("templateDetailContent");
         contentContainer.className = "grid lg:grid-cols-1 gap-12";
         contentContainer.innerHTML = `
