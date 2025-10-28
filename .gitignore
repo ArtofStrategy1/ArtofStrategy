@@ -8,6 +8,7 @@
 *.pass.txt
 *-matt*
 *-khaled*
+*-latest*
 open-webui-data
 ollama-data
 n8n-data
@@ -16,11 +17,17 @@ mongodb-data
 neo4j/
 index-new.html
 script-new.js
+script-new-n.js
 style-new.css
 diagrams.html
-diagrams-new.js
 diagrams-new.css
+strategy-diagrams.js
+strategy-diagrams.html
+process-mapping-cyto.html
+process-mapping-cyto.js
 knowledge-graph-vis.html
+ts/
+tsconfig.json
 
 utility/
 .roo
@@ -98,9 +105,14 @@ node_modules/
 
 # Build artifacts
 build/
-dist/
+# dist/
 .next/
 out/
+*.js.map
+*.d.ts
+*.d.ts.map
+package.json
+package-lock.json
 
 # Logs
 npm-debug.log*
