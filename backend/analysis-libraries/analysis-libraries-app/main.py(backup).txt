@@ -1,0 +1,122 @@
+# main.py
+import io
+import pandas as pd
+import traceback
+import re
+import json
+from typing import Optional, Tuple, List, Dict, Any, Union # Add Union
+
+from fastapi import FastAPI, Form, File, UploadFile, HTTPException
+from starlette.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+
+# --- Import your analysis functions ---
+from analysis_modules import sem_analysis
+# ... other imports ...
+
+app = FastAPI(docs_url="/")
+
+# --- CORS ---
+# ... (CORS middleware setup remains the same) ...
+origins = [
+    "https://elijah.data2int.com",  # Your website
+    "http://localhost:8080",       # For local testing
+    "http://127.0.0.1:8080",       # For local testing
+    "http://localhost:8000",       # For python -m http.server
+    "http://127.0.0.1:8000",       # For python -m http.server
+    "http://10.0.0.243:8000"        # From your server log
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.post("/api/analysis")
+async def run_analysis_router(
+    analysis_type: str = Form(...),
+    data_file: Optional[UploadFile] = File(None),
+    data_text: Optional[str] = Form(None),
+    measurement_syntax: Optional[str] = Form(None),
+    structural_syntax: Optional[str] = Form(None)
+    # Add other parameters specific to different analyses if needed
+):
+    """
+    Routes analysis requests. Accepts data via file upload OR text paste.
+    Accepts separate measurement and structural syntax for SEM.
+    """
+    # *** CHANGE: Define data_payload and filename earlier ***
+    data_payload: Union[UploadFile, str, None] = None
+    input_filename: str = "unknown"
+    is_file_upload: bool = False
+
+    try:
+        # --- Determine data source ---
+        if data_file:
+            filename_lower = data_file.filename.lower()
+            if not filename_lower.endswith(('.csv', '.xlsx', '.xls')):
+                 raise HTTPException(status_code=400, detail="Invalid file type. Please upload a CSV or Excel file.")
+            data_payload = data_file # Pass the UploadFile object
+            input_filename = data_file.filename
+            is_file_upload = True
+            print(f"Processing uploaded file: {input_filename}")
+        elif data_text:
+            data_payload = data_text # Pass the raw string
+            input_filename = "pasted_data.csv" # Assume CSV for text
+            is_file_upload = False
+            print(f"Processing pasted text data.")
+        else:
+            raise HTTPException(status_code=400, detail="No data provided. Please either upload a file or paste text data.")
+
+        # --- Route based on analysis_type ---
+        if analysis_type == "sem":
+            if not measurement_syntax and not structural_syntax:
+                raise HTTPException(status_code=400, detail="SEM requires at least Measurement Syntax or Structural Syntax.")
+
+            measurement_part = measurement_syntax if measurement_syntax else ""
+            structural_part = structural_syntax if structural_syntax else ""
+
+            print(f"Routing to SEM Analysis...")
+
+            # *** CHANGE: Pass data_payload (File or str) directly ***
+            results = await sem_analysis.perform_sem(
+                data_payload=data_payload, # Pass UploadFile or str
+                is_file_upload=is_file_upload, # Flag to indicate type
+                input_filename=input_filename,
+                measurement_syntax=measurement_part,
+                structural_syntax=structural_part
+            )
+            return JSONResponse(content=results)
+
+        # === Add elif blocks for other analysis types ===
+        # elif analysis_type == "predictive":
+        #     results = await predictive_analysis.perform_prediction(
+        #         data_payload=data_payload,
+        #         is_file_upload=is_file_upload,
+        #         input_filename=input_filename,
+        #         # ... other predictive params ...
+        #     )
+        #     return JSONResponse(content=results)
+
+        else:
+            raise HTTPException(status_code=400, detail=f"Unsupported analysis_type: {analysis_type}")
+
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        print(f"Error during {analysis_type} analysis: {e}\n{traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"An internal server error occurred: {str(e)}")
+    finally:
+        # Ensure uploaded file is closed if it exists and is UploadFile
+        if is_file_upload and isinstance(data_payload, UploadFile):
+            await data_payload.close()
+
+# --- Status Endpoint ---
+@app.get("/status")
+def read_root():
+    """Returns the API status."""
+    return {"status": "Analysis API is running"}
