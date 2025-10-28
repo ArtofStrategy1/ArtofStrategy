@@ -8,6 +8,7 @@ services:
       - "11434:11434"
     networks:
       - data2int-net
+      - npm_default
     environment:
       - OLLAMA_AUTH=false  # Disable authentication
       - OLLAMA_MAX_LOADED_MODELS=3
