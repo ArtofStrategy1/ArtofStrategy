@@ -140,6 +140,8 @@ async def run_analysis_router(
         if is_file_upload and isinstance(data_payload, UploadFile):
             await data_payload.close()
 
+# Currently being worked on.
+# --- Save Document Endpoint ---
 @app.post("/api/export")
 async def export_analysis_report(
     format: str = Form(...),
@@ -189,3 +191,7 @@ async def export_analysis_report(
 def read_root():
     """Returns the API status."""
     return {"status": "Analysis API is running"}
+
+if __name__ == '__main__':
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

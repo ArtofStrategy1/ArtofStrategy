@@ -194,32 +194,51 @@ async def perform_sem(
 
         df_model_data = df[list(obs_vars)].copy()
 
-        print("   Converting data to numeric...")
-        for col in df_model_data.columns:
-             df_model_data[col] = pd.to_numeric(df_model_data[col], errors='coerce')
-
-        n_coerced_total = 0
-        coerced_details = []
-        for col in df_model_data.columns:
-             n_coerced = df_model_data[col].isnull().sum() - (df[col].isnull().sum() if col in df else 0)
-             if n_coerced > 0:
-                 n_coerced_total += n_coerced
-                 coerced_details.append(f"'{col}': {n_coerced}")
-        if n_coerced_total > 0: print(f"   Warning: {n_coerced_total} non-numeric values coerced to NaN in columns: {', '.join(coerced_details)}")
-
+        # --- QUICK FIX: Improved data cleaning ---
+        print("   Converting data to numeric and handling missing data...")
         initial_rows = len(df_model_data)
-        rows_with_na = df_model_data.isnull().any(axis=1).sum()
+        
+        # Check data quality BEFORE cleaning
+        for col in df_model_data.columns:
+            df_model_data[col] = pd.to_numeric(df_model_data[col], errors='coerce')
+        
+        # Count missing values per column
+        missing_counts = df_model_data.isnull().sum()
+        total_missing = missing_counts.sum()
+        print(f"   Missing values per column: {dict(missing_counts)}")
+        
+        # QUICK FIX: If too much missing data, filter columns first
+        if total_missing > (initial_rows * len(df_model_data.columns) * 0.3):  # >30% missing overall
+            print("   High missing data detected. Filtering columns...")
+            
+            # Keep only columns with <50% missing data
+            good_columns = missing_counts[missing_counts < (initial_rows * 0.5)].index.tolist()
+            
+            if len(good_columns) < 4:
+                raise HTTPException(status_code=400, detail=f"Too many columns have missing data. Only {len(good_columns)} usable columns found. Please clean your data or provide more complete data.")
+            
+            print(f"   Keeping {len(good_columns)} columns with good data: {good_columns}")
+            df_model_data = df_model_data[good_columns]
+            
+            # Update observed variables to match filtered columns
+            obs_vars = set(good_columns)
+        
+        # Now drop rows with any missing values
+        rows_before = len(df_model_data)
         df_model_data.dropna(inplace=True)
-        rows_after_dropna = len(df_model_data)
-        rows_dropped = initial_rows - rows_after_dropna
-        print(f"   Rows before NA drop: {initial_rows}. Rows containing NA: {rows_with_na}.")
-        print(f"   Rows after NA drop: {rows_after_dropna}. Rows dropped: {rows_dropped}")
-
-        min_required_rows = len(obs_vars) + 1
-        if rows_after_dropna < min_required_rows:
-             raise HTTPException(status_code=400, detail=f"Insufficient valid data ({rows_after_dropna} rows) after cleaning for {len(obs_vars)} variables. Min required: {min_required_rows}.")
-        elif rows_after_dropna < 50:
-             print(f"   Warning: Sample size ({rows_after_dropna}) is small, results might be unstable.")
+        rows_after = len(df_model_data)
+        rows_dropped = rows_before - rows_after
+        
+        print(f"   Rows before NA drop: {rows_before}")
+        print(f"   Rows after NA drop: {rows_after} (dropped {rows_dropped})")
+        
+        # Check if we have enough data
+        min_required_rows = max(len(obs_vars) * 2, 20)  # At least 2x variables or 20 rows minimum
+        if rows_after < min_required_rows:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Insufficient data: {rows_after} rows remaining after cleaning, need at least {min_required_rows}. Your data has too many missing values. Please provide cleaner data with fewer missing values."
+            )
 
 
         # --- 5. Standardize Data ---
@@ -259,8 +278,8 @@ async def perform_sem(
             if hasattr(model_obj, 'param_vals') and model_obj.param_vals is not None:
                 num_params = len(model_obj.param_vals)
                 rec_min = max(num_params * 5, 100)
-                if rows_after_dropna < rec_min:
-                    size_warning = f"Sample size ({rows_after_dropna}) may be small for {num_params} params. Rec min: {rec_min}."
+                if rows_after < rec_min:
+                    size_warning = f"Sample size ({rows_after}) may be small for {num_params} params. Rec min: {rec_min}."
                     sample_size_ok = False
                 else: sample_size_ok = True
                 print(f"   Parameters: {num_params}. Sample size adequate: {sample_size_ok}.")
@@ -440,7 +459,7 @@ async def perform_sem(
             },
             "data_summary": {
                  "rows_input": initial_rows + rows_dropped,
-                 "rows_used": rows_after_dropna,
+                 "rows_used": rows_after,
                  "rows_dropped_na": rows_dropped,
                  "columns_used": df_standardized.columns.tolist()
             }
