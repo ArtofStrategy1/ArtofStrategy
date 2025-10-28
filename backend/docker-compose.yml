@@ -157,6 +157,21 @@ services:
       - ./.env
     restart: always
 
+  analysis-libraries:
+    build:
+      context: ./analysis-libraries
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    container_name: analysis-libraries
+    ports:
+      - "8020:8000" # Map host port 8010 to container port 8000
+    networks:
+      - data2int-net
+      - npm_default   # Connect to Nginx Proxy Manager network
+    environment:
+      - PYTHONUNBUFFERED=1   # Ensures Python output is unbuffered
+    volumes:
+      - ./analysis-libraries/analysis-libraries-app:/app
 networks:
   default:
   data2int-net:
