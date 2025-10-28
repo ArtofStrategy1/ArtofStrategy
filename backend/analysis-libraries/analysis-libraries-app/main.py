@@ -39,7 +39,7 @@ app.add_middleware(
 )
 
 
-@app.post("/api/analysis")
+@app.post("/api/data-analysis")
 async def run_analysis_router(
     analysis_type: str = Form(...),
     data_file: Optional[UploadFile] = File(None),
