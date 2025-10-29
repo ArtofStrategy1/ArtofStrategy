@@ -17,7 +17,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/viz.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/lite.render.js"></script> 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/lite.render.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4/dist/panzoom.min.js"></script>
     <style>
         /* --- THEME COLORS (CSS VARIABLES) --- */
         :root {
@@ -1884,11 +1886,13 @@ select.input-field option {
         </div>
     </footer>
 
-    <script>
+    <script type="module">
         // js2.js
 // =========================================================
 // SCRIPT
 // =========================================================
+import { renderMermaidDiagram } from '../js/diagram-renderer.js'
+
 document.addEventListener("DOMContentLoaded", () => {
     // --- Supabase Configuration ---
     const SUPABASE_URL = "https://supabase.data2int.com";
@@ -6744,401 +6748,401 @@ function renderSystemActionsPage_ST(container, data) {
     }
     
     /**
- * Creates the HTML structure and attaches listeners for the SEM Analysis tool.
- * Includes data preview, model template selection, and split syntax inputs.
- * @param {object} template - Object containing template title and description.
- */
-function createSemAnalysisLayout(template) {
-    const contentContainer = $("templateDetailContent");
-    contentContainer.className = "grid lg:grid-cols-1 gap-12"; // Single column layout
-
-    // --- HTML Structure ---
-    contentContainer.innerHTML = `
-        <div class="lg:col-span-1">
-            <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
-            <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">${template.description}</p>
-
-            <div class="max-w-2xl mx-auto w-full">
-                <div class="glass-container p-6 space-y-6">
-                    <h3 class="text-xl font-bold mb-2 text-white">Analysis Configuration</h3>
-
-                    <div class="input-radio-group">
-                        <input type="radio" name="semInputType" id="semInputFileToggle" class="input-radio" checked>
-                        <label for="semInputFileToggle" class="input-radio-label">File Upload</label>
-                        <input type="radio" name="semInputType" id="semInputTextToggle" class="input-radio">
-                        <label for="semInputTextToggle" class="input-radio-label">Paste Text</label>
-                    </div>
-
-                    <div id="semFileUploadArea">
-                        <label for="semFile" class="block text-sm font-medium text-gray-200 mb-2">Data File (.csv, .xlsx)</label>
-                        <div class="input-file-wrapper">
-                            <label for="semFile" id="semFileLabel" class="input-file-btn">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
-                                <span class="file-name">Select data file...</span>
-                            </label>
-                            <input type="file" id="semFile" class="input-file" accept=".csv,.xlsx">
-                        </div>
-                        <div id="semFileError" class="text-red-400 text-sm mt-2"></div>
-                    </div>
-
-                    <div id="semTextInputArea" class="hidden">
-                        <label for="semDataText" class="block text-sm font-medium text-gray-200 mb-2">Paste CSV Data</label>
-                        <textarea id="semDataText" class="input-field h-48" placeholder="Date,Var1,Var2...\n2023-01-01,10,20..."></textarea>
-                        <div id="semTextError" class="text-red-400 text-sm mt-2"></div>
-                    </div>
-
-                    <div id="semDataPreview" class="hidden space-y-2">
-                        <label class="block text-sm font-medium text-gray-200">Data Preview (First 5 Rows)</label>
-                        <div class="overflow-x-auto rounded-lg border border-white/20">
-                            <table class="min-w-full text-left text-sm text-white/90" id="semPreviewTable">
-                            </table>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label for="semModelTemplate" class="block text-sm font-medium text-gray-200 mb-2">Model Template</label>
-                        <select id="semModelTemplate" class="input-field" disabled>
-                            <option value="">-- Upload or paste data first --</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label for="semMeasurementSyntax" class="block text-sm font-medium text-gray-200 mb-2">Measurement Model Syntax</label>
-                        <textarea id="semMeasurementSyntax" class="input-field h-32" placeholder="e.g., Factor1 =~ varA + varB\nFactor2 =~ varC + varD..."></textarea>
-                    </div>
-
-                    <div>
-                        <label for="semStructuralSyntax" class="block text-sm font-medium text-gray-200 mb-2">Structural Model Syntax</label>
-                        <textarea id="semStructuralSyntax" class="input-field h-32" placeholder="e.g., Factor1 ~ Factor2\nObservedVar ~ Factor1..."></textarea>
-                    </div>
-
-                    <button id="generateBtn" class="btn btn-primary w-full text-lg py-3">
-                        <span id="generateBtnText">📊 Run SEM Analysis</span>
-                        <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
-                    </button>
-                </div>
-            </div>
-
-            <div class="mt-12">
-                <h2 class="text-3xl font-bold mb-4 text-center">Analysis Results</h2>
-                <div id="analysisResult" class="glass-container min-h-[300px] overflow-x-auto"> {/* Results will be injected here */} </div>
-                <div id="analysisActions" class="text-center mt-4 space-x-2 hidden">
-                    <button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>
-                    <button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
-                </div>
-            </div>
-        </div>`;
-
-    // --- Attach Core Event Listeners ---
-    $("generateBtn").addEventListener("click", handleGenerate); // Assumes handleGenerate exists and calls handleSemAnalysis
-    reattachActionListeners(); // Assumes this function attaches save button listeners
-
-    // --- Restore Cached Results (if any) ---
-    if (analysisCache[currentTemplateId]) {
-        $("analysisResult").innerHTML = analysisCache[currentTemplateId];
-        $("analysisActions").classList.remove("hidden");
-        // Re-attach listeners specific to the results content (e.g., tabs)
-        reattachTabListeners($("analysisResult")); // Assumes this function exists
-    } else {
-        // Default placeholder if no cached results
-        $("analysisResult").innerHTML = '<div class="text-white/60 p-8 text-center">Your generated analysis will appear here.</div>';
-        $("analysisActions").classList.add("hidden");
-    }
-
-    // --- Get References to SEM-Specific DOM Elements ---
-    const fileInput = $("semFile");
-    const textInput = $("semDataText");
-    const measurementSyntaxBox = $("semMeasurementSyntax");
-    const structuralSyntaxBox = $("semStructuralSyntax");
-    const fileError = $("semFileError");
-    const textError = $("semTextError");
-    const fileToggle = $("semInputFileToggle");
-    const textToggle = $("semInputTextToggle");
-    const fileArea = $("semFileUploadArea");
-    const textArea = $("semTextInputArea");
-    const dataPreviewContainer = $("semDataPreview");
-    const previewTable = $("semPreviewTable");
-    const modelTemplateSelect = $("semModelTemplate");
-    let fullHeaders = []; // Holds the headers extracted from data
-
-    // --- SEM Helper Functions --- (Keep all helper functions as they were)
-
-    /**
-     * Extracts headers from CSV text, trying common delimiters.
-     * @param {string} text - CSV content.
-     * @returns {string[]} Array of headers.
+     * Creates the HTML structure and attaches listeners for the SEM Analysis tool.
+     * Includes data preview, model template selection, and split syntax inputs.
+     * @param {object} template - Object containing template title and description.
      */
-    const getHeadersFromText = (text) => {
-        if (!text || typeof text !== 'string' || !text.trim()) throw new Error("Input text is empty.");
-        const firstLine = text.split(/[\r\n]+/)[0];
-        if (!firstLine || !firstLine.trim()) throw new Error("First line (header) is empty.");
+    function createSemAnalysisLayout(template) {
+        const contentContainer = $("templateDetailContent");
+        contentContainer.className = "grid lg:grid-cols-1 gap-12"; // Single column layout
 
-        let headers = firstLine.split(',').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
-        if (headers.length <= 1) {
-            headers = firstLine.split(';').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+        // --- HTML Structure ---
+        contentContainer.innerHTML = `
+            <div class="lg:col-span-1">
+                <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
+                <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">${template.description}</p>
+
+                <div class="max-w-2xl mx-auto w-full">
+                    <div class="glass-container p-6 space-y-6">
+                        <h3 class="text-xl font-bold mb-2 text-white">Analysis Configuration</h3>
+
+                        <div class="input-radio-group">
+                            <input type="radio" name="semInputType" id="semInputFileToggle" class="input-radio" checked>
+                            <label for="semInputFileToggle" class="input-radio-label">File Upload</label>
+                            <input type="radio" name="semInputType" id="semInputTextToggle" class="input-radio">
+                            <label for="semInputTextToggle" class="input-radio-label">Paste Text</label>
+                        </div>
+
+                        <div id="semFileUploadArea">
+                            <label for="semFile" class="block text-sm font-medium text-gray-200 mb-2">Data File (.csv, .xlsx)</label>
+                            <div class="input-file-wrapper">
+                                <label for="semFile" id="semFileLabel" class="input-file-btn">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                                    <span class="file-name">Select data file...</span>
+                                </label>
+                                <input type="file" id="semFile" class="input-file" accept=".csv,.xlsx">
+                            </div>
+                            <div id="semFileError" class="text-red-400 text-sm mt-2"></div>
+                        </div>
+
+                        <div id="semTextInputArea" class="hidden">
+                            <label for="semDataText" class="block text-sm font-medium text-gray-200 mb-2">Paste CSV Data</label>
+                            <textarea id="semDataText" class="input-field h-48" placeholder="Date,Var1,Var2...\n2023-01-01,10,20..."></textarea>
+                            <div id="semTextError" class="text-red-400 text-sm mt-2"></div>
+                        </div>
+
+                        <div id="semDataPreview" class="hidden space-y-2">
+                            <label class="block text-sm font-medium text-gray-200">Data Preview (First 5 Rows)</label>
+                            <div class="overflow-x-auto rounded-lg border border-white/20">
+                                <table class="min-w-full text-left text-sm text-white/90" id="semPreviewTable">
+                                </table>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="semModelTemplate" class="block text-sm font-medium text-gray-200 mb-2">Model Template</label>
+                            <select id="semModelTemplate" class="input-field" disabled>
+                                <option value="">-- Upload or paste data first --</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="semMeasurementSyntax" class="block text-sm font-medium text-gray-200 mb-2">Measurement Model Syntax</label>
+                            <textarea id="semMeasurementSyntax" class="input-field h-32" placeholder="e.g., Factor1 =~ varA + varB\nFactor2 =~ varC + varD..."></textarea>
+                        </div>
+
+                        <div>
+                            <label for="semStructuralSyntax" class="block text-sm font-medium text-gray-200 mb-2">Structural Model Syntax</label>
+                            <textarea id="semStructuralSyntax" class="input-field h-32" placeholder="e.g., Factor1 ~ Factor2\nObservedVar ~ Factor1..."></textarea>
+                        </div>
+
+                        <button id="generateBtn" class="btn btn-primary w-full text-lg py-3">
+                            <span id="generateBtnText">📊 Run SEM Analysis</span>
+                            <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mt-12">
+                    <h2 class="text-3xl font-bold mb-4 text-center">Analysis Results</h2>
+                    <div id="analysisResult" class="glass-container min-h-[300px] overflow-x-auto"> {/* Results will be injected here */} </div>
+                    <div id="analysisActions" class="text-center mt-4 space-x-2 hidden">
+                        <button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>
+                        <button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
+                    </div>
+                </div>
+            </div>`;
+
+        // --- Attach Core Event Listeners ---
+        $("generateBtn").addEventListener("click", handleGenerate); // Assumes handleGenerate exists and calls handleSemAnalysis
+        reattachActionListeners(); // Assumes this function attaches save button listeners
+
+        // --- Restore Cached Results (if any) ---
+        if (analysisCache[currentTemplateId]) {
+            $("analysisResult").innerHTML = analysisCache[currentTemplateId];
+            $("analysisActions").classList.remove("hidden");
+            // Re-attach listeners specific to the results content (e.g., tabs)
+            reattachTabListeners($("analysisResult")); // Assumes this function exists
+        } else {
+            // Default placeholder if no cached results
+            $("analysisResult").innerHTML = '<div class="text-white/60 p-8 text-center">Your generated analysis will appear here.</div>';
+            $("analysisActions").classList.add("hidden");
         }
-        if (headers.length <= 1) {
-            headers = firstLine.split('\t').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
-        }
-        if (headers.length === 0) throw new Error("Could not parse headers (tried comma, semicolon, tab).");
-        return headers;
-    };
 
-    /** Shows the first 5 data rows in the preview table. */
-    const showDataPreview = (csvText) => {
-        try {
-            const lines = csvText.split(/[\r\n]+/).filter(Boolean); // Filter empty lines
-            const rows = lines.slice(0, 6); // Header + 5 data rows
-            if (rows.length < 2) { dataPreviewContainer.classList.add("hidden"); return; }
+        // --- Get References to SEM-Specific DOM Elements ---
+        const fileInput = $("semFile");
+        const textInput = $("semDataText");
+        const measurementSyntaxBox = $("semMeasurementSyntax");
+        const structuralSyntaxBox = $("semStructuralSyntax");
+        const fileError = $("semFileError");
+        const textError = $("semTextError");
+        const fileToggle = $("semInputFileToggle");
+        const textToggle = $("semInputTextToggle");
+        const fileArea = $("semFileUploadArea");
+        const textArea = $("semTextInputArea");
+        const dataPreviewContainer = $("semDataPreview");
+        const previewTable = $("semPreviewTable");
+        const modelTemplateSelect = $("semModelTemplate");
+        let fullHeaders = []; // Holds the headers extracted from data
 
-            const headers = getHeadersFromText(rows[0]);
-            let tableHTML = '<thead class="bg-white/10 text-xs uppercase"><tr>';
-            headers.forEach(h => { tableHTML += `<th scope="col" class="px-4 py-2">${h}</th>`; });
-            tableHTML += '</tr></thead><tbody>';
+        // --- SEM Helper Functions --- (Keep all helper functions as they were)
 
-            rows.slice(1).forEach((line, rowIndex) => {
-                // Simple split for preview - assumes consistent delimiter detected by getHeadersFromText
-                let cells = line.split(',');
-                if (cells.length <= 1) cells = line.split(';');
-                if (cells.length <= 1) cells = line.split('\t');
+        /**
+         * Extracts headers from CSV text, trying common delimiters.
+         * @param {string} text - CSV content.
+         * @returns {string[]} Array of headers.
+         */
+        const getHeadersFromText = (text) => {
+            if (!text || typeof text !== 'string' || !text.trim()) throw new Error("Input text is empty.");
+            const firstLine = text.split(/[\r\n]+/)[0];
+            if (!firstLine || !firstLine.trim()) throw new Error("First line (header) is empty.");
 
-                tableHTML += `<tr class="border-t border-white/10 ${rowIndex % 2 === 0 ? 'bg-white/5' : ''}">`;
-                headers.forEach((_, cellIndex) => {
-                    tableHTML += `<td class="px-4 py-2">${cells[cellIndex] === undefined ? '' : cells[cellIndex]}</td>`;
+            let headers = firstLine.split(',').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+            if (headers.length <= 1) {
+                headers = firstLine.split(';').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+            }
+            if (headers.length <= 1) {
+                headers = firstLine.split('\t').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+            }
+            if (headers.length === 0) throw new Error("Could not parse headers (tried comma, semicolon, tab).");
+            return headers;
+        };
+
+        /** Shows the first 5 data rows in the preview table. */
+        const showDataPreview = (csvText) => {
+            try {
+                const lines = csvText.split(/[\r\n]+/).filter(Boolean); // Filter empty lines
+                const rows = lines.slice(0, 6); // Header + 5 data rows
+                if (rows.length < 2) { dataPreviewContainer.classList.add("hidden"); return; }
+
+                const headers = getHeadersFromText(rows[0]);
+                let tableHTML = '<thead class="bg-white/10 text-xs uppercase"><tr>';
+                headers.forEach(h => { tableHTML += `<th scope="col" class="px-4 py-2">${h}</th>`; });
+                tableHTML += '</tr></thead><tbody>';
+
+                rows.slice(1).forEach((line, rowIndex) => {
+                    // Simple split for preview - assumes consistent delimiter detected by getHeadersFromText
+                    let cells = line.split(',');
+                    if (cells.length <= 1) cells = line.split(';');
+                    if (cells.length <= 1) cells = line.split('\t');
+
+                    tableHTML += `<tr class="border-t border-white/10 ${rowIndex % 2 === 0 ? 'bg-white/5' : ''}">`;
+                    headers.forEach((_, cellIndex) => {
+                        tableHTML += `<td class="px-4 py-2">${cells[cellIndex] === undefined ? '' : cells[cellIndex]}</td>`;
+                    });
+                    tableHTML += '</tr>';
                 });
-                tableHTML += '</tr>';
+                tableHTML += '</tbody>';
+                previewTable.innerHTML = tableHTML;
+                dataPreviewContainer.classList.remove("hidden");
+            } catch (e) {
+                console.error("Error showing data preview:", e);
+                dataPreviewContainer.classList.add("hidden");
+            }
+        };
+
+        /** Populates the model template dropdown based on detected headers. */
+        const updateModelTemplates = (headers) => {
+            fullHeaders = headers;
+            modelTemplateSelect.innerHTML = '';
+            modelTemplateSelect.add(new Option("Select a model template...", ""));
+            modelTemplateSelect.add(new Option("Custom Syntax (Type below)", "custom"));
+            modelTemplateSelect.add(new Option("Auto-Suggest (Generic Model)", "autosuggest"));
+
+            const hasMarketing = headers.includes('Ad_Spend_USD') && headers.includes('Brand_Awareness_Pct');
+            const hasSales = headers.includes('Online_Sales_USD') && headers.includes('Retail_Sales_USD');
+            const hasProfit = headers.includes('Profit_USD');
+            if (hasMarketing && hasSales && hasProfit) {
+                modelTemplateSelect.add(new Option("Marketing Path Analysis", "recommended"));
+            }
+            modelTemplateSelect.disabled = false;
+        };
+
+        /** Splits syntax into measurement/structural parts and populates text boxes, removing comments first. */
+        const populateSyntaxBoxes = (fullSyntax) => {
+            const uncommentedSyntax = fullSyntax.split('\n')
+                .filter(line => !line.trim().startsWith('#')) // Remove comments
+                .join('\n');
+            const lines = uncommentedSyntax.split('\n');
+            let measurement = [], structural = [], foundStructural = false;
+
+            lines.forEach(line => {
+                const trimmedLine = line.trim();
+                if (!trimmedLine) return; // Skip blank lines after comment removal
+                if (trimmedLine.includes('~') && !trimmedLine.includes('=~')) foundStructural = true;
+                if (foundStructural) structural.push(line);
+                else measurement.push(line);
             });
-            tableHTML += '</tbody>';
-            previewTable.innerHTML = tableHTML;
-            dataPreviewContainer.classList.remove("hidden");
-        } catch (e) {
-            console.error("Error showing data preview:", e);
-            dataPreviewContainer.classList.add("hidden");
-        }
-    };
 
-    /** Populates the model template dropdown based on detected headers. */
-    const updateModelTemplates = (headers) => {
-        fullHeaders = headers;
-        modelTemplateSelect.innerHTML = '';
-        modelTemplateSelect.add(new Option("Select a model template...", ""));
-        modelTemplateSelect.add(new Option("Custom Syntax (Type below)", "custom"));
-        modelTemplateSelect.add(new Option("Auto-Suggest (Generic Model)", "autosuggest"));
+            measurementSyntaxBox.value = measurement.join('\n').trim();
+            structuralSyntaxBox.value = structural.join('\n').trim();
+            measurementSyntaxBox.placeholder = measurementSyntaxBox.value ? measurementSyntaxBox.placeholder : "e.g., F1 =~ x1+x2";
+            structuralSyntaxBox.placeholder = structuralSyntaxBox.value ? structuralSyntaxBox.placeholder : "e.g., F1 ~ F2";
+        };
 
-        const hasMarketing = headers.includes('Ad_Spend_USD') && headers.includes('Brand_Awareness_Pct');
-        const hasSales = headers.includes('Online_Sales_USD') && headers.includes('Retail_Sales_USD');
-        const hasProfit = headers.includes('Profit_USD');
-        if (hasMarketing && hasSales && hasProfit) {
-            modelTemplateSelect.add(new Option("Marketing Path Analysis", "recommended"));
-        }
-        modelTemplateSelect.disabled = false;
-    };
+        /** Generates the recommended path analysis syntax (comment-free). */
+        const generateRecommendedSyntax = () => {
+            const fullSyntax = `
+    Marketing =~ Ad_Spend_USD + Brand_Awareness_Pct
 
-    /** Splits syntax into measurement/structural parts and populates text boxes, removing comments first. */
-    const populateSyntaxBoxes = (fullSyntax) => {
-        const uncommentedSyntax = fullSyntax.split('\n')
-            .filter(line => !line.trim().startsWith('#')) // Remove comments
-            .join('\n');
-        const lines = uncommentedSyntax.split('\n');
-        let measurement = [], structural = [], foundStructural = false;
+    Profit_USD ~ Marketing + Online_Sales_USD + Retail_Sales_USD`;
+            populateSyntaxBoxes(fullSyntax);
+        };
 
-        lines.forEach(line => {
-            const trimmedLine = line.trim();
-            if (!trimmedLine) return; // Skip blank lines after comment removal
-            if (trimmedLine.includes('~') && !trimmedLine.includes('=~')) foundStructural = true;
-            if (foundStructural) structural.push(line);
-            else measurement.push(line);
-        });
+        /** Generates a generic SEM syntax based on columns (comment-free). */
+        const generateSyntax = () => {
+            if (fullHeaders.length === 0) { alert("Data headers not found for auto-suggestion."); return; }
+            const headersForModel = fullHeaders.filter(h => h.toLowerCase() !== 'date');
+            const marketing = [], customer = [], sales = [], financial = [];
+            // Categorization logic (same as before)
+            const totalRev = headersForModel.find(h => h.toLowerCase().includes('total') && h.toLowerCase().includes('revenue'));
+            const onlineSales = headersForModel.find(h => h.toLowerCase().includes('online') && h.toLowerCase().includes('sales'));
+            const retailSales = headersForModel.find(h => h.toLowerCase().includes('retail') && h.toLowerCase().includes('sales'));
+            const hasPerfectDependency = totalRev && onlineSales && retailSales;
+            const varsToSkip = hasPerfectDependency ? [totalRev] : [];
+            headersForModel.forEach(col => {
+                const lower = col.toLowerCase();
+                if (varsToSkip.includes(col)) return;
+                if (lower.includes('ad') || lower.includes('marketing') || lower.includes('spend') || lower.includes('awareness') || lower.includes('brand')) { marketing.push(col); }
+                else if (lower.includes('customer') || lower.includes('acquisition') || lower.includes('new_customer')) { customer.push(col); }
+                else if ((lower.includes('sales') || lower.includes('orders')) && !lower.includes('total') && !lower.includes('revenue')) { sales.push(col); }
+                else if (lower.includes('revenue') || lower.includes('profit') || lower.includes('income') || lower.includes('earnings')) { financial.push(col); }
+            });
 
-        measurementSyntaxBox.value = measurement.join('\n').trim();
-        structuralSyntaxBox.value = structural.join('\n').trim();
-        measurementSyntaxBox.placeholder = measurementSyntaxBox.value ? measurementSyntaxBox.placeholder : "e.g., F1 =~ x1+x2";
-        structuralSyntaxBox.placeholder = structuralSyntaxBox.value ? structuralSyntaxBox.placeholder : "e.g., F1 ~ F2";
-    };
+            let measurementPart = '', structuralPart = '';
+            if (marketing.length > 0) measurementPart += `Marketing =~ ${marketing.slice(0, 3).join(' + ')}\n`;
+            const customerSales = [...customer, ...sales];
+            if (customerSales.length > 0) measurementPart += `CustomerSales =~ ${customerSales.slice(0, 3).join(' + ')}\n`;
+            if (financial.length > 0) measurementPart += `Financial =~ ${financial.slice(0, 2).join(' + ')}\n`;
+            if (marketing.length > 0 && customerSales.length > 0) structuralPart += 'CustomerSales ~ Marketing\n';
+            if (customerSales.length > 0 && financial.length > 0) structuralPart += 'Financial ~ CustomerSales\n';
 
-    /** Generates the recommended path analysis syntax (comment-free). */
-    const generateRecommendedSyntax = () => {
-        const fullSyntax = `
-Marketing =~ Ad_Spend_USD + Brand_Awareness_Pct
+            let fullSyntax = measurementPart.trim();
+            if (structuralPart.trim()) fullSyntax += (fullSyntax ? "\n\n" : "") + structuralPart.trim();
 
-Profit_USD ~ Marketing + Online_Sales_USD + Retail_Sales_USD`;
-        populateSyntaxBoxes(fullSyntax);
-    };
+            populateSyntaxBoxes(fullSyntax || " "); // Pass space if empty to clear boxes
+        };
 
-    /** Generates a generic SEM syntax based on columns (comment-free). */
-    const generateSyntax = () => {
-        if (fullHeaders.length === 0) { alert("Data headers not found for auto-suggestion."); return; }
-        const headersForModel = fullHeaders.filter(h => h.toLowerCase() !== 'date');
-        const marketing = [], customer = [], sales = [], financial = [];
-        // Categorization logic (same as before)
-        const totalRev = headersForModel.find(h => h.toLowerCase().includes('total') && h.toLowerCase().includes('revenue'));
-        const onlineSales = headersForModel.find(h => h.toLowerCase().includes('online') && h.toLowerCase().includes('sales'));
-        const retailSales = headersForModel.find(h => h.toLowerCase().includes('retail') && h.toLowerCase().includes('sales'));
-        const hasPerfectDependency = totalRev && onlineSales && retailSales;
-        const varsToSkip = hasPerfectDependency ? [totalRev] : [];
-        headersForModel.forEach(col => {
-            const lower = col.toLowerCase();
-            if (varsToSkip.includes(col)) return;
-            if (lower.includes('ad') || lower.includes('marketing') || lower.includes('spend') || lower.includes('awareness') || lower.includes('brand')) { marketing.push(col); }
-            else if (lower.includes('customer') || lower.includes('acquisition') || lower.includes('new_customer')) { customer.push(col); }
-            else if ((lower.includes('sales') || lower.includes('orders')) && !lower.includes('total') && !lower.includes('revenue')) { sales.push(col); }
-            else if (lower.includes('revenue') || lower.includes('profit') || lower.includes('income') || lower.includes('earnings')) { financial.push(col); }
-        });
+        /** Processes data input (file or text) to update UI state. */
+        const processDataInput = async (isFileInput) => {
+            let textContent = null;
+            let originalHeaders = [];
+            const errorEl = isFileInput === null ? null : (isFileInput ? fileError : textError);
+            const inputEl = isFileInput === null ? null : (isFileInput ? fileInput : textInput);
 
-        let measurementPart = '', structuralPart = '';
-        if (marketing.length > 0) measurementPart += `Marketing =~ ${marketing.slice(0, 3).join(' + ')}\n`;
-        const customerSales = [...customer, ...sales];
-        if (customerSales.length > 0) measurementPart += `CustomerSales =~ ${customerSales.slice(0, 3).join(' + ')}\n`;
-        if (financial.length > 0) measurementPart += `Financial =~ ${financial.slice(0, 2).join(' + ')}\n`;
-        if (marketing.length > 0 && customerSales.length > 0) structuralPart += 'CustomerSales ~ Marketing\n';
-        if (customerSales.length > 0 && financial.length > 0) structuralPart += 'Financial ~ CustomerSales\n';
+            // Clear errors
+            if (fileError) fileError.textContent = "";
+            if (textError) textError.textContent = "";
 
-        let fullSyntax = measurementPart.trim();
-        if (structuralPart.trim()) fullSyntax += (fullSyntax ? "\n\n" : "") + structuralPart.trim();
-
-        populateSyntaxBoxes(fullSyntax || " "); // Pass space if empty to clear boxes
-    };
-
-    /** Processes data input (file or text) to update UI state. */
-    const processDataInput = async (isFileInput) => {
-        let textContent = null;
-        let originalHeaders = [];
-        const errorEl = isFileInput === null ? null : (isFileInput ? fileError : textError);
-        const inputEl = isFileInput === null ? null : (isFileInput ? fileInput : textInput);
-
-        // Clear errors
-        if (fileError) fileError.textContent = "";
-        if (textError) textError.textContent = "";
-
-        // Reset UI before processing
-        modelTemplateSelect.disabled = true;
-        modelTemplateSelect.innerHTML = '<option value="">-- Upload or paste data first --</option>';
-        dataPreviewContainer.classList.add("hidden");
-        previewTable.innerHTML = "";
-        measurementSyntaxBox.value = ""; // Clear syntax boxes too
-        structuralSyntaxBox.value = "";
-        measurementSyntaxBox.placeholder = "Upload or paste data to see model templates...";
-        structuralSyntaxBox.placeholder = "";
-
-        // If isFileInput is null, it means we just need to reset the UI (e.g., file deselected)
-        if (isFileInput === null) return;
-
-        try {
-            if (isFileInput) {
-                const file = inputEl.files[0];
-                if (!file) return;
-                textContent = await extractTextFromFile(file);
-            } else {
-                textContent = inputEl.value;
-                if (!textContent.trim()) return;
-            }
-
-            originalHeaders = getHeadersFromText(textContent);
-
-            // If headers parsed successfully:
-            showDataPreview(textContent);
-            updateModelTemplates(originalHeaders); // This enables the dropdown
-
-            // *** NEW: Automatically trigger AI syntax generation IF data is present ***
-            // Set dropdown to AI generated to trigger the change event
-            modelTemplateSelect.value = "ai-generated";
-            // Manually dispatch the change event to ensure the listener runs
-            modelTemplateSelect.dispatchEvent(new Event('change'));
-
-            // The placeholders will be updated *during* the AI generation via the change listener
-
-        } catch (err) {
-            console.error("Input processing failed:", err);
-            if (errorEl) errorEl.textContent = `Error: ${err.message}.`;
-            // Reset UI to error state
+            // Reset UI before processing
             modelTemplateSelect.disabled = true;
-            modelTemplateSelect.innerHTML = '<option value="">-- Error reading data --</option>';
+            modelTemplateSelect.innerHTML = '<option value="">-- Upload or paste data first --</option>';
             dataPreviewContainer.classList.add("hidden");
-            measurementSyntaxBox.placeholder = "Error reading input data.";
-            structuralSyntaxBox.placeholder = "";
-        }
-    };
-
-    // --- Attach Input Event Listeners ---
-
-    // Radio toggles
-    fileToggle.addEventListener("change", () => {
-        fileArea.classList.remove("hidden");
-        textArea.classList.add("hidden");
-        processDataInput(fileInput.files.length > 0 ? true : null); // Re-process if file exists, else reset
-    });
-    textToggle.addEventListener("change", () => {
-        fileArea.classList.add("hidden");
-        textArea.classList.remove("hidden");
-        processDataInput(textInput.value.trim() ? false : null); // Re-process if text exists, else reset
-    });
-
-    // File input selection
-    if (fileInput) {
-        fileInput.addEventListener("change", () => {
-            const label = $("semFileLabel");
-            const fileNameSpan = label.querySelector(".file-name");
-            if (fileInput.files.length > 0) {
-                fileNameSpan.textContent = fileInput.files[0].name;
-                label.classList.add("has-file");
-                processDataInput(true); // Process the new file
-            } else { // File deselected
-                fileNameSpan.textContent = "Select data file...";
-                label.classList.remove("has-file");
-                processDataInput(null); // Reset the UI
-            }
-        });
-    }
-
-    // Text input typing (only process if text area is visible)
-    // Use 'blur' or a debounce mechanism if 'input' triggers too often
-    if (textInput) {
-        textInput.addEventListener("blur", () => { // Changed from 'input' to 'blur'
-            if (!textArea.classList.contains("hidden")) {
-                processDataInput(textInput.value.trim() ? false : null);
-            }
-        });
-    }
-
-    // Model template selection change
-    if (modelTemplateSelect) {
-        // --- MODIFIED LISTENER ---
-        modelTemplateSelect.addEventListener("change", async () => { // Make the handler async
-            const selected = modelTemplateSelect.value;
-            measurementSyntaxBox.value = ""; // Clear boxes when selection changes
+            previewTable.innerHTML = "";
+            measurementSyntaxBox.value = ""; // Clear syntax boxes too
             structuralSyntaxBox.value = "";
+            measurementSyntaxBox.placeholder = "Upload or paste data to see model templates...";
+            structuralSyntaxBox.placeholder = "";
 
-            switch (selected) {
-                case "custom":
-                    measurementSyntaxBox.placeholder = "Type measurement model syntax here...";
-                    structuralSyntaxBox.placeholder = "Type structural model syntax here...";
-                    measurementSyntaxBox.focus(); // Focus the first box for custom entry
-                    break;
-                case "autosuggest":
-                     measurementSyntaxBox.placeholder = "Auto-suggesting generic model...";
-                     structuralSyntaxBox.placeholder = "Auto-suggesting generic model...";
-                    generateSyntax(); // Call the simple auto-suggest function
-                     measurementSyntaxBox.placeholder = measurementSyntaxBox.value ? "Review auto-suggested syntax." : "Could not auto-suggest.";
-                     structuralSyntaxBox.placeholder = structuralSyntaxBox.value ? "Review auto-suggested syntax." : "";
+            // If isFileInput is null, it means we just need to reset the UI (e.g., file deselected)
+            if (isFileInput === null) return;
 
-                    break;
-                case "recommended":
-                     measurementSyntaxBox.placeholder = "Loading recommended model...";
-                     structuralSyntaxBox.placeholder = "Loading recommended model...";
-                    generateRecommendedSyntax(); // Call the specific recommended syntax function
-                     measurementSyntaxBox.placeholder = "Review recommended syntax.";
-                     structuralSyntaxBox.placeholder = "Review recommended syntax.";
-                    break;
-                default:
-                    // Option "" selected (Select a model template...)
-                    measurementSyntaxBox.placeholder = "Select a model template or type syntax...";
-                    structuralSyntaxBox.placeholder = "";
+            try {
+                if (isFileInput) {
+                    const file = inputEl.files[0];
+                    if (!file) return;
+                    textContent = await extractTextFromFile(file);
+                } else {
+                    textContent = inputEl.value;
+                    if (!textContent.trim()) return;
+                }
+
+                originalHeaders = getHeadersFromText(textContent);
+
+                // If headers parsed successfully:
+                showDataPreview(textContent);
+                updateModelTemplates(originalHeaders); // This enables the dropdown
+
+                // *** NEW: Automatically trigger AI syntax generation IF data is present ***
+                // Set dropdown to AI generated to trigger the change event
+                modelTemplateSelect.value = "ai-generated";
+                // Manually dispatch the change event to ensure the listener runs
+                modelTemplateSelect.dispatchEvent(new Event('change'));
+
+                // The placeholders will be updated *during* the AI generation via the change listener
+
+            } catch (err) {
+                console.error("Input processing failed:", err);
+                if (errorEl) errorEl.textContent = `Error: ${err.message}.`;
+                // Reset UI to error state
+                modelTemplateSelect.disabled = true;
+                modelTemplateSelect.innerHTML = '<option value="">-- Error reading data --</option>';
+                dataPreviewContainer.classList.add("hidden");
+                measurementSyntaxBox.placeholder = "Error reading input data.";
+                structuralSyntaxBox.placeholder = "";
             }
-        });
-        // --- END OF MODIFIED LISTENER ---
-    }
+        };
 
-}
+        // --- Attach Input Event Listeners ---
+
+        // Radio toggles
+        fileToggle.addEventListener("change", () => {
+            fileArea.classList.remove("hidden");
+            textArea.classList.add("hidden");
+            processDataInput(fileInput.files.length > 0 ? true : null); // Re-process if file exists, else reset
+        });
+        textToggle.addEventListener("change", () => {
+            fileArea.classList.add("hidden");
+            textArea.classList.remove("hidden");
+            processDataInput(textInput.value.trim() ? false : null); // Re-process if text exists, else reset
+        });
+
+        // File input selection
+        if (fileInput) {
+            fileInput.addEventListener("change", () => {
+                const label = $("semFileLabel");
+                const fileNameSpan = label.querySelector(".file-name");
+                if (fileInput.files.length > 0) {
+                    fileNameSpan.textContent = fileInput.files[0].name;
+                    label.classList.add("has-file");
+                    processDataInput(true); // Process the new file
+                } else { // File deselected
+                    fileNameSpan.textContent = "Select data file...";
+                    label.classList.remove("has-file");
+                    processDataInput(null); // Reset the UI
+                }
+            });
+        }
+
+        // Text input typing (only process if text area is visible)
+        // Use 'blur' or a debounce mechanism if 'input' triggers too often
+        if (textInput) {
+            textInput.addEventListener("blur", () => { // Changed from 'input' to 'blur'
+                if (!textArea.classList.contains("hidden")) {
+                    processDataInput(textInput.value.trim() ? false : null);
+                }
+            });
+        }
+
+        // Model template selection change
+        if (modelTemplateSelect) {
+            // --- MODIFIED LISTENER ---
+            modelTemplateSelect.addEventListener("change", async () => { // Make the handler async
+                const selected = modelTemplateSelect.value;
+                measurementSyntaxBox.value = ""; // Clear boxes when selection changes
+                structuralSyntaxBox.value = "";
+
+                switch (selected) {
+                    case "custom":
+                        measurementSyntaxBox.placeholder = "Type measurement model syntax here...";
+                        structuralSyntaxBox.placeholder = "Type structural model syntax here...";
+                        measurementSyntaxBox.focus(); // Focus the first box for custom entry
+                        break;
+                    case "autosuggest":
+                        measurementSyntaxBox.placeholder = "Auto-suggesting generic model...";
+                        structuralSyntaxBox.placeholder = "Auto-suggesting generic model...";
+                        generateSyntax(); // Call the simple auto-suggest function
+                        measurementSyntaxBox.placeholder = measurementSyntaxBox.value ? "Review auto-suggested syntax." : "Could not auto-suggest.";
+                        structuralSyntaxBox.placeholder = structuralSyntaxBox.value ? "Review auto-suggested syntax." : "";
+
+                        break;
+                    case "recommended":
+                        measurementSyntaxBox.placeholder = "Loading recommended model...";
+                        structuralSyntaxBox.placeholder = "Loading recommended model...";
+                        generateRecommendedSyntax(); // Call the specific recommended syntax function
+                        measurementSyntaxBox.placeholder = "Review recommended syntax.";
+                        structuralSyntaxBox.placeholder = "Review recommended syntax.";
+                        break;
+                    default:
+                        // Option "" selected (Select a model template...)
+                        measurementSyntaxBox.placeholder = "Select a model template or type syntax...";
+                        structuralSyntaxBox.placeholder = "";
+                }
+            });
+            // --- END OF MODIFIED LISTENER ---
+        }
+
+    }
 
     function createPredictiveAnalysisLayout(template) {
         const contentContainer = $("templateDetailContent");
@@ -7864,497 +7868,497 @@ Profit_USD ~ Marketing + Online_Sales_USD + Retail_Sales_USD`;
     }
 
     async function handleParetoFishboneAnalysis() {
-    const analysisResultContainer = $("analysisResult");
-    analysisResultContainer.innerHTML = `
-        <div class="text-center text-white/70 p-8">
-            <div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div>
-            <h3 class="text-xl font-semibold text-white mb-4">Generating Detailed Pareto & Fishbone Analysis...</h3>
-            <p class="text-white/80 mb-2">Identifying root causes, prioritizing impact, and suggesting actions...</p>
-        </div>`; // Updated text
-    setLoading("generate", true);
+        const analysisResultContainer = $("analysisResult");
+        analysisResultContainer.innerHTML = `
+            <div class="text-center text-white/70 p-8">
+                <div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div>
+                <h3 class="text-xl font-semibold text-white mb-4">Generating Detailed Pareto & Fishbone Analysis...</h3>
+                <p class="text-white/80 mb-2">Identifying root causes, prioritizing impact, and suggesting actions...</p>
+            </div>`; // Updated text
+        setLoading("generate", true);
 
-    // Define URL and Model
-    const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
-    const MODEL_NAME = "llama3.1:latest"; // Consistent model
+        // Define URL and Model
+        const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
+        const MODEL_NAME = "llama3.1:latest"; // Consistent model
 
-    try {
-        // 1. Gather Inputs
-        const useDoc = $("docUpload").checked;
-        let problemContext = "";
+        try {
+            // 1. Gather Inputs
+            const useDoc = $("docUpload").checked;
+            let problemContext = "";
 
-        if (useDoc) {
-            const file = $("paretoFile").files[0];
-            if (!file) throw new Error("Please select a document (.txt, .docx) to upload.");
-            problemContext = await extractTextFromFile(file);
-        } else {
-            problemContext = $("problemStatement").value.trim(); // Use ID from createParetoLayout
-            if (!problemContext) throw new Error("Please enter a problem statement or description in the text area.");
-        }
-
-        // Truncate if necessary
-        const MAX_CONTEXT_LENGTH = 15000;
-        let truncatedNote = "";
-        if (problemContext.length > MAX_CONTEXT_LENGTH) {
-            problemContext = problemContext.substring(0, MAX_CONTEXT_LENGTH);
-            truncatedNote = `(Note: Analysis based on the first ${MAX_CONTEXT_LENGTH} characters.)`;
-            console.warn(`Pareto/Fishbone context truncated.`);
-        }
-
-        // 2. Construct ENHANCED Prompt
-        const prompt = `
-            You are an expert quality management and process improvement consultant. Analyze the user's provided problem description using the Fishbone (Ishikawa) diagram and Pareto Principle (80/20 rule). Infer plausible causes and impacts based *only* on the context provided. ${truncatedNote}
-
-            **USER'S PROBLEM DESCRIPTION:**
-            \`\`\`
-            ${problemContext}
-            \`\`\`
-
-            **DETAILED TASKS:**
-            1.  **Problem Statement:** Clearly define the central \`problem_statement\` being analyzed, derived from the context.
-            2.  **Fishbone Analysis:** Identify potential root causes categorized under the 6 standard Ms. For each category (Methods, Machines, Materials, Manpower, Measurement, Environment), list 2-4 specific sub-causes (2-5 words each) *inferred solely from the problem description*. If context doesn't suggest causes for a category, return an empty array for it.
-            3.  **Pareto Analysis:** Based *only* on the inferred sub-causes and the problem context:
-                * Estimate a plausible relative \`impact_score\` (percentage, summing to 100) for each identified sub-cause, reflecting its likely contribution to the main problem statement based on the context.
-                * Categorize these causes into:
-                    * \`vital_few\`: The top ~20% of causes contributing to ~80% of the impact. Include cause name, estimated impact_score, and fishbone category.
-                    * \`useful_many\`: The remaining causes. Include cause name, estimated impact_score, and fishbone category.
-                * Provide an \`analysis_summary\` explaining how the vital few dominate the impact, according to the 80/20 principle, based on your estimations.
-            4.  **Action Plan (Focus on Vital Few):** Generate an array of 2-3 structured actions targeting the identified \`vital_few\` causes. For each action:
-                * \`target_cause\`: The specific vital few cause being addressed.
-                * \`action_suggestion\`: A concrete, actionable step to mitigate this cause (e.g., "Implement standardized training", "Upgrade specific software module").
-                * \`rationale\`: Explain *how* this action addresses the target cause, referencing the problem context if possible.
-                * \`potential_impact\`: Estimate the potential impact on the main problem (High, Medium, Low).
-            5.  **Self-Correction:** Before outputting JSON, rigorously check: Is the problem statement accurate? Are all fishbone sub-causes derived *only* from the text? Are impact scores plausible estimations based on context? Does the Pareto categorization correctly reflect the 80/20 split based on *your estimated scores*? Does the action plan focus *only* on the vital few? Is the JSON structure perfect? Fix all errors.
-
-            **ABSOLUTE CONSTRAINTS:**
-            - **CONTEXT GROUNDING:** All analysis (problem, causes, impacts, actions) MUST be based *exclusively* on the USER'S PROBLEM DESCRIPTION. Do NOT invent information.
-            - **PLAUSIBLE ESTIMATION:** Impact scores are estimations based on context, not precise calculations, but should be logical and sum to 100.
-            - **JSON FORMAT:** Adhere EXACTLY. Include ALL specified keys and sub-keys. Use standard 6M fishbone categories.
-
-            **RETURN FORMAT:**
-            Provide ONLY a valid JSON object. **CRITICAL: Include ALL keys specified below.**
-            {
-              "problem_statement": "e.g., Low Customer Satisfaction Scores",
-              "fishbone": {
-                "Methods": ["Sub-cause inferred from text 1", "Sub-cause inferred from text 2"],
-                "Machines": ["Sub-cause inferred from text 3"],
-                "Materials": [], // Example if no context
-                "Manpower": ["Sub-cause inferred from text 4", "Sub-cause inferred from text 5"],
-                "Measurement": ["Sub-cause inferred from text 6"],
-                "Environment": ["Sub-cause inferred from text 7"]
-              },
-              "pareto_analysis": {
-                "vital_few": [ // Top ~20% causes, ~80% impact based on estimations
-                  {"cause": "Sub-cause inferred from text 4", "impact_score": 45, "category": "Manpower"},
-                  {"cause": "Sub-cause inferred from text 1", "impact_score": 30, "category": "Methods"}
-                ],
-                "useful_many": [ // Remaining causes
-                  {"cause": "Sub-cause inferred from text 6", "impact_score": 10, "category": "Measurement"},
-                  {"cause": "Sub-cause inferred from text 3", "impact_score": 8, "category": "Machines"},
-                  {"cause": "Sub-cause inferred from text 2", "impact_score": 5, "category": "Methods"},
-                  {"cause": "Sub-cause inferred from text 5", "impact_score": 1, "category": "Manpower"},
-                  {"cause": "Sub-cause inferred from text 7", "impact_score": 1, "category": "Environment"}
-                ],
-                "analysis_summary": "Explanation of 80/20 finding based on estimations (e.g., 'The analysis suggests that 'Sub-cause 4' and 'Sub-cause 1' collectively account for an estimated 75% of the impact...')"
-              },
-              "action_plan": [ // Actions targeting ONLY vital_few
-                {
-                  "target_cause": "Sub-cause inferred from text 4",
-                  "action_suggestion": "e.g., Develop targeted training program",
-                  "rationale": "Addresses the primary driver identified (Manpower issue mentioned in context) by...",
-                  "potential_impact": "High"
-                },
-                {
-                  "target_cause": "Sub-cause inferred from text 1",
-                  "action_suggestion": "e.g., Standardize process documentation",
-                  "rationale": "Tackles the second major contributor (Methods issue described as...) by...",
-                  "potential_impact": "High"
-                }
-              ]
+            if (useDoc) {
+                const file = $("paretoFile").files[0];
+                if (!file) throw new Error("Please select a document (.txt, .docx) to upload.");
+                problemContext = await extractTextFromFile(file);
+            } else {
+                problemContext = $("problemStatement").value.trim(); // Use ID from createParetoLayout
+                if (!problemContext) throw new Error("Please enter a problem statement or description in the text area.");
             }
+
+            // Truncate if necessary
+            const MAX_CONTEXT_LENGTH = 15000;
+            let truncatedNote = "";
+            if (problemContext.length > MAX_CONTEXT_LENGTH) {
+                problemContext = problemContext.substring(0, MAX_CONTEXT_LENGTH);
+                truncatedNote = `(Note: Analysis based on the first ${MAX_CONTEXT_LENGTH} characters.)`;
+                console.warn(`Pareto/Fishbone context truncated.`);
+            }
+
+            // 2. Construct ENHANCED Prompt
+            const prompt = `
+                You are an expert quality management and process improvement consultant. Analyze the user's provided problem description using the Fishbone (Ishikawa) diagram and Pareto Principle (80/20 rule). Infer plausible causes and impacts based *only* on the context provided. ${truncatedNote}
+
+                **USER'S PROBLEM DESCRIPTION:**
+                \`\`\`
+                ${problemContext}
+                \`\`\`
+
+                **DETAILED TASKS:**
+                1.  **Problem Statement:** Clearly define the central \`problem_statement\` being analyzed, derived from the context.
+                2.  **Fishbone Analysis:** Identify potential root causes categorized under the 6 standard Ms. For each category (Methods, Machines, Materials, Manpower, Measurement, Environment), list 2-4 specific sub-causes (2-5 words each) *inferred solely from the problem description*. If context doesn't suggest causes for a category, return an empty array for it.
+                3.  **Pareto Analysis:** Based *only* on the inferred sub-causes and the problem context:
+                    * Estimate a plausible relative \`impact_score\` (percentage, summing to 100) for each identified sub-cause, reflecting its likely contribution to the main problem statement based on the context.
+                    * Categorize these causes into:
+                        * \`vital_few\`: The top ~20% of causes contributing to ~80% of the impact. Include cause name, estimated impact_score, and fishbone category.
+                        * \`useful_many\`: The remaining causes. Include cause name, estimated impact_score, and fishbone category.
+                    * Provide an \`analysis_summary\` explaining how the vital few dominate the impact, according to the 80/20 principle, based on your estimations.
+                4.  **Action Plan (Focus on Vital Few):** Generate an array of 2-3 structured actions targeting the identified \`vital_few\` causes. For each action:
+                    * \`target_cause\`: The specific vital few cause being addressed.
+                    * \`action_suggestion\`: A concrete, actionable step to mitigate this cause (e.g., "Implement standardized training", "Upgrade specific software module").
+                    * \`rationale\`: Explain *how* this action addresses the target cause, referencing the problem context if possible.
+                    * \`potential_impact\`: Estimate the potential impact on the main problem (High, Medium, Low).
+                5.  **Self-Correction:** Before outputting JSON, rigorously check: Is the problem statement accurate? Are all fishbone sub-causes derived *only* from the text? Are impact scores plausible estimations based on context? Does the Pareto categorization correctly reflect the 80/20 split based on *your estimated scores*? Does the action plan focus *only* on the vital few? Is the JSON structure perfect? Fix all errors.
+
+                **ABSOLUTE CONSTRAINTS:**
+                - **CONTEXT GROUNDING:** All analysis (problem, causes, impacts, actions) MUST be based *exclusively* on the USER'S PROBLEM DESCRIPTION. Do NOT invent information.
+                - **PLAUSIBLE ESTIMATION:** Impact scores are estimations based on context, not precise calculations, but should be logical and sum to 100.
+                - **JSON FORMAT:** Adhere EXACTLY. Include ALL specified keys and sub-keys. Use standard 6M fishbone categories.
+
+                **RETURN FORMAT:**
+                Provide ONLY a valid JSON object. **CRITICAL: Include ALL keys specified below.**
+                {
+                "problem_statement": "e.g., Low Customer Satisfaction Scores",
+                "fishbone": {
+                    "Methods": ["Sub-cause inferred from text 1", "Sub-cause inferred from text 2"],
+                    "Machines": ["Sub-cause inferred from text 3"],
+                    "Materials": [], // Example if no context
+                    "Manpower": ["Sub-cause inferred from text 4", "Sub-cause inferred from text 5"],
+                    "Measurement": ["Sub-cause inferred from text 6"],
+                    "Environment": ["Sub-cause inferred from text 7"]
+                },
+                "pareto_analysis": {
+                    "vital_few": [ // Top ~20% causes, ~80% impact based on estimations
+                    {"cause": "Sub-cause inferred from text 4", "impact_score": 45, "category": "Manpower"},
+                    {"cause": "Sub-cause inferred from text 1", "impact_score": 30, "category": "Methods"}
+                    ],
+                    "useful_many": [ // Remaining causes
+                    {"cause": "Sub-cause inferred from text 6", "impact_score": 10, "category": "Measurement"},
+                    {"cause": "Sub-cause inferred from text 3", "impact_score": 8, "category": "Machines"},
+                    {"cause": "Sub-cause inferred from text 2", "impact_score": 5, "category": "Methods"},
+                    {"cause": "Sub-cause inferred from text 5", "impact_score": 1, "category": "Manpower"},
+                    {"cause": "Sub-cause inferred from text 7", "impact_score": 1, "category": "Environment"}
+                    ],
+                    "analysis_summary": "Explanation of 80/20 finding based on estimations (e.g., 'The analysis suggests that 'Sub-cause 4' and 'Sub-cause 1' collectively account for an estimated 75% of the impact...')"
+                },
+                "action_plan": [ // Actions targeting ONLY vital_few
+                    {
+                    "target_cause": "Sub-cause inferred from text 4",
+                    "action_suggestion": "e.g., Develop targeted training program",
+                    "rationale": "Addresses the primary driver identified (Manpower issue mentioned in context) by...",
+                    "potential_impact": "High"
+                    },
+                    {
+                    "target_cause": "Sub-cause inferred from text 1",
+                    "action_suggestion": "e.g., Standardize process documentation",
+                    "rationale": "Tackles the second major contributor (Methods issue described as...) by...",
+                    "potential_impact": "High"
+                    }
+                ]
+                }
+            `;
+
+            // 3. Send Request to Ollama
+            console.log(`Sending ENHANCED Pareto/Fishbone prompt to ${MODEL_NAME}...`);
+            const response = await fetch(OLLAMA_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ model: MODEL_NAME, prompt: prompt, stream: false, format: "json", options: { num_ctx: 32768 } })
+            });
+
+            if (!response.ok) {
+                let errorBody = `API error ${response.status}`;
+                try { errorBody += `: ${await response.text()}`; } catch (e) {}
+                throw new Error(errorBody);
+            }
+
+            const data = await response.json();
+            let parsedData;
+            console.log('Raw AI Response (Pareto/Fishbone):', data.response); // Log raw response
+            try {
+                parsedData = JSON.parse(data.response);
+                // *** Refined Robust Validation ***
+                console.log('--- RAW AI JSON RESPONSE (Parsed - Enhanced Pareto/Fishbone) ---');
+                console.log(JSON.stringify(parsedData, null, 2));
+                console.log('------------------------------------');
+
+                if (!parsedData || typeof parsedData !== 'object' ||
+                    !parsedData.problem_statement || typeof parsedData.problem_statement !== 'string' ||
+                    !parsedData.fishbone || typeof parsedData.fishbone !== 'object' || !parsedData.fishbone.Methods || // Check one standard category
+                    !parsedData.pareto_analysis || typeof parsedData.pareto_analysis !== 'object' ||
+                    !Array.isArray(parsedData.pareto_analysis.vital_few) || !Array.isArray(parsedData.pareto_analysis.useful_many) || !parsedData.pareto_analysis.analysis_summary ||
+                    !Array.isArray(parsedData.action_plan) || // Action plan is required, even if empty based on vital_few
+                    // Check structure of first elements if they exist
+                    (parsedData.pareto_analysis.vital_few.length > 0 && (typeof parsedData.pareto_analysis.vital_few[0] !== 'object' || !parsedData.pareto_analysis.vital_few[0].hasOwnProperty('cause') || !parsedData.pareto_analysis.vital_few[0].hasOwnProperty('impact_score'))) ||
+                    (parsedData.action_plan.length > 0 && (typeof parsedData.action_plan[0] !== 'object' || !parsedData.action_plan[0].hasOwnProperty('target_cause') || !parsedData.action_plan[0].hasOwnProperty('rationale')))
+                    )
+                {
+                    console.error("Validation Failed (Enhanced Pareto/Fishbone): Required fields missing or invalid structure.", parsedData);
+                    throw new Error(`AI response structure is incorrect or inconsistent (Enhanced Pareto/Fishbone). Check problem, fishbone, pareto (vital/useful/summary), and action_plan. See console logs.`);
+                }
+                // Simple check on impact scores summing roughly to 100
+                const totalScore = [...parsedData.pareto_analysis.vital_few, ...parsedData.pareto_analysis.useful_many].reduce((sum, item) => sum + (item.impact_score || 0), 0);
+                if (Math.abs(totalScore - 100) > 5) { // Allow some tolerance
+                    console.warn(`Pareto impact scores sum to ${totalScore}, not 100.`);
+                    // Don't throw error, but log it. AI might struggle with perfect sums.
+                }
+
+                console.log(`Successfully parsed ENHANCED Pareto/Fishbone JSON using ${MODEL_NAME}. Problem: ${parsedData.problem_statement}.`);
+
+            } catch (e) {
+                console.error(`Failed to parse/validate ENHANCED Pareto/Fishbone JSON using ${MODEL_NAME}:`, data?.response, e);
+                throw new Error(`Invalid JSON received or validation failed (Enhanced Pareto/Fishbone): ${e.message}. See raw response in console.`);
+            }
+
+            // 4. Render Results using a new dedicated function
+            renderParetoFishbonePage(analysisResultContainer, parsedData);
+
+        } catch (error) {
+            console.error(`Error in handleParetoFishboneAnalysis (Enhanced) using ${MODEL_NAME}:`, error);
+            analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
+            setLoading("generate", false);
+        } finally {
+            // Ensure loading stops reliably
+            if ($("generateSpinner") && !$("generateSpinner").classList.contains("hidden")) {
+                setLoading("generate", false);
+            }
+        }
+    }
+
+
+    function renderParetoFishbonePage(container, data) {
+        container.innerHTML = ""; // Clear loading
+        // Basic validation
+        if (!data || !data.problem_statement || !data.fishbone || !data.pareto_analysis || !data.action_plan) {
+            console.error("Incomplete data passed to renderParetoFishbonePage:", data);
+            container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render Pareto/Fishbone results.</div>`;
+            $("analysisActions").classList.add("hidden");
+            return;
+        }
+
+        const { problem_statement, fishbone, pareto_analysis, action_plan } = data;
+
+        // --- Create Tab Navigation ---
+        const tabNav = document.createElement("div");
+        tabNav.className = "flex flex-wrap border-b border-white/20 -mx-6 px-6";
+        tabNav.innerHTML = `
+            <button class="analysis-tab-btn active" data-tab="pareto">📊 Pareto Chart & Summary</button>
+            <button class="analysis-tab-btn" data-tab="fishbone">🐟 Fishbone Diagram</button>
+            <button class="analysis-tab-btn" data-tab="action">🎯 Action Plan (Vital Few)</button>
+            <button class="analysis-tab-btn" data-tab="learn">🎓 Learn Techniques</button>
+        `;
+        container.appendChild(tabNav);
+
+        // --- Create Tab Panels ---
+        const tabContent = document.createElement("div");
+        container.appendChild(tabContent);
+        tabContent.innerHTML = `
+            <div id="paretoPanel" class="analysis-tab-panel active"></div>
+            <div id="fishbonePanel" class="analysis-tab-panel"></div>
+            <div id="actionPanel" class="analysis-tab-panel"></div>
+            <div id="learnPanel" class="analysis-tab-panel"></div>
         `;
 
-        // 3. Send Request to Ollama
-        console.log(`Sending ENHANCED Pareto/Fishbone prompt to ${MODEL_NAME}...`);
-        const response = await fetch(OLLAMA_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ model: MODEL_NAME, prompt: prompt, stream: false, format: "json", options: { num_ctx: 32768 } })
-        });
-
-        if (!response.ok) {
-            let errorBody = `API error ${response.status}`;
-            try { errorBody += `: ${await response.text()}`; } catch (e) {}
-            throw new Error(errorBody);
-        }
-
-        const data = await response.json();
-        let parsedData;
-        console.log('Raw AI Response (Pareto/Fishbone):', data.response); // Log raw response
+        // --- 1. Populate Pareto Chart & Summary Tab ---
+        const paretoPanel = $("paretoPanel");
+        paretoPanel.innerHTML = `<div class="p-4">
+            <h3 class="text-2xl font-bold mb-4 text-center">Pareto Analysis (80/20 Rule)</h3>
+            <p class="text-center text-lg italic text-white/80 mb-6">Problem: ${problem_statement}</p>
+            <div id="paretoChartContainer" class="w-full h-[550px] plotly-chart bg-black/10 rounded-lg mb-8"></div>
+            <h4 class="text-xl font-semibold mb-3">Analysis Summary:</h4>
+            <blockquote class="p-3 italic border-l-4 border-gray-500 bg-black/20 text-white/90 text-sm">
+                ${pareto_analysis.analysis_summary || "Summary unavailable."}
+            </blockquote>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 text-sm">
+                <div class="bg-red-900/20 p-3 rounded border border-red-500/50">
+                    <h5 class="font-bold text-red-300 mb-1">🔥 Vital Few (${pareto_analysis.vital_few.length} causes)</h5>
+                    <p class="text-xs text-white/70 mb-2">Focus improvement efforts here (~80% of impact).</p>
+                    <ul class="list-disc list-inside space-y-1">
+                        ${pareto_analysis.vital_few.map(item => `<li>${item.cause} (${item.impact_score}%)</li>`).join("")}
+                    </ul>
+                </div>
+                <div class="bg-gray-700/20 p-3 rounded border border-gray-500/50">
+                    <h5 class="font-bold text-gray-300 mb-1">📋 Useful Many (${pareto_analysis.useful_many.length} causes)</h5>
+                    <p class="text-xs text-white/70 mb-2">Address later or if resources allow (~20% of impact).</p>
+                    <ul class="list-disc list-inside space-y-1">
+                        ${pareto_analysis.useful_many.map(item => `<li>${item.cause} (${item.impact_score}%)</li>`).join("")}
+                    </ul>
+                </div>
+            </div>
+        </div>`;
+        // Render the Pareto chart
         try {
-            parsedData = JSON.parse(data.response);
-             // *** Refined Robust Validation ***
-             console.log('--- RAW AI JSON RESPONSE (Parsed - Enhanced Pareto/Fishbone) ---');
-             console.log(JSON.stringify(parsedData, null, 2));
-             console.log('------------------------------------');
-
-             if (!parsedData || typeof parsedData !== 'object' ||
-                 !parsedData.problem_statement || typeof parsedData.problem_statement !== 'string' ||
-                 !parsedData.fishbone || typeof parsedData.fishbone !== 'object' || !parsedData.fishbone.Methods || // Check one standard category
-                 !parsedData.pareto_analysis || typeof parsedData.pareto_analysis !== 'object' ||
-                 !Array.isArray(parsedData.pareto_analysis.vital_few) || !Array.isArray(parsedData.pareto_analysis.useful_many) || !parsedData.pareto_analysis.analysis_summary ||
-                 !Array.isArray(parsedData.action_plan) || // Action plan is required, even if empty based on vital_few
-                 // Check structure of first elements if they exist
-                 (parsedData.pareto_analysis.vital_few.length > 0 && (typeof parsedData.pareto_analysis.vital_few[0] !== 'object' || !parsedData.pareto_analysis.vital_few[0].hasOwnProperty('cause') || !parsedData.pareto_analysis.vital_few[0].hasOwnProperty('impact_score'))) ||
-                 (parsedData.action_plan.length > 0 && (typeof parsedData.action_plan[0] !== 'object' || !parsedData.action_plan[0].hasOwnProperty('target_cause') || !parsedData.action_plan[0].hasOwnProperty('rationale')))
-                )
-             {
-                  console.error("Validation Failed (Enhanced Pareto/Fishbone): Required fields missing or invalid structure.", parsedData);
-                  throw new Error(`AI response structure is incorrect or inconsistent (Enhanced Pareto/Fishbone). Check problem, fishbone, pareto (vital/useful/summary), and action_plan. See console logs.`);
-             }
-             // Simple check on impact scores summing roughly to 100
-             const totalScore = [...parsedData.pareto_analysis.vital_few, ...parsedData.pareto_analysis.useful_many].reduce((sum, item) => sum + (item.impact_score || 0), 0);
-             if (Math.abs(totalScore - 100) > 5) { // Allow some tolerance
-                 console.warn(`Pareto impact scores sum to ${totalScore}, not 100.`);
-                 // Don't throw error, but log it. AI might struggle with perfect sums.
-             }
-
-             console.log(`Successfully parsed ENHANCED Pareto/Fishbone JSON using ${MODEL_NAME}. Problem: ${parsedData.problem_statement}.`);
-
-        } catch (e) {
-            console.error(`Failed to parse/validate ENHANCED Pareto/Fishbone JSON using ${MODEL_NAME}:`, data?.response, e);
-            throw new Error(`Invalid JSON received or validation failed (Enhanced Pareto/Fishbone): ${e.message}. See raw response in console.`);
+            createParetoChartJS(pareto_analysis, "paretoChartContainer"); // Use the existing chart function
+        } catch(e) {
+            console.error("Error rendering Pareto chart:", e);
+            $("paretoChartContainer").innerHTML = "<p class='p-4 text-center text-red-400'>Could not render Pareto chart.</p>";
         }
 
-        // 4. Render Results using a new dedicated function
-        renderParetoFishbonePage(analysisResultContainer, parsedData);
+        // --- 2. Populate Fishbone Diagram Tab (Textual) ---
+        const fishbonePanel = $("fishbonePanel");
+        let fishboneHtml = `<div class="p-4">
+            <h3 class="text-2xl font-bold mb-4 text-center">Fishbone Diagram (Ishikawa) - Potential Causes</h3>
+            <p class="text-center text-lg italic text-white/80 mb-6">Problem: ${problem_statement}</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">`;
 
-    } catch (error) {
-        console.error(`Error in handleParetoFishboneAnalysis (Enhanced) using ${MODEL_NAME}:`, error);
-        analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
-        setLoading("generate", false);
-    } finally {
-        // Ensure loading stops reliably
-         if ($("generateSpinner") && !$("generateSpinner").classList.contains("hidden")) {
-            setLoading("generate", false);
-         }
-    }
-}
+        const standardCategories = ["Methods", "Machines", "Materials", "Manpower", "Measurement", "Environment"];
+        standardCategories.forEach(category => {
+            const subCauses = fishbone[category] || [];
+            // Highlight vital few causes within the fishbone list
+            const causesHtml = subCauses.map(cause => {
+                const isVital = pareto_analysis.vital_few.some(item => item.cause.toLowerCase() === cause.toLowerCase());
+                return `<li class="${isVital ? 'font-semibold text-red-300' : 'text-white/80'}">${isVital ? '🔥 ' : ''}${cause}</li>`;
+            }).join("");
 
-
-function renderParetoFishbonePage(container, data) {
-    container.innerHTML = ""; // Clear loading
-    // Basic validation
-    if (!data || !data.problem_statement || !data.fishbone || !data.pareto_analysis || !data.action_plan) {
-        console.error("Incomplete data passed to renderParetoFishbonePage:", data);
-        container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render Pareto/Fishbone results.</div>`;
-        $("analysisActions").classList.add("hidden");
-        return;
-    }
-
-    const { problem_statement, fishbone, pareto_analysis, action_plan } = data;
-
-    // --- Create Tab Navigation ---
-    const tabNav = document.createElement("div");
-    tabNav.className = "flex flex-wrap border-b border-white/20 -mx-6 px-6";
-    tabNav.innerHTML = `
-        <button class="analysis-tab-btn active" data-tab="pareto">📊 Pareto Chart & Summary</button>
-        <button class="analysis-tab-btn" data-tab="fishbone">🐟 Fishbone Diagram</button>
-        <button class="analysis-tab-btn" data-tab="action">🎯 Action Plan (Vital Few)</button>
-        <button class="analysis-tab-btn" data-tab="learn">🎓 Learn Techniques</button>
-    `;
-    container.appendChild(tabNav);
-
-    // --- Create Tab Panels ---
-    const tabContent = document.createElement("div");
-    container.appendChild(tabContent);
-    tabContent.innerHTML = `
-        <div id="paretoPanel" class="analysis-tab-panel active"></div>
-        <div id="fishbonePanel" class="analysis-tab-panel"></div>
-        <div id="actionPanel" class="analysis-tab-panel"></div>
-        <div id="learnPanel" class="analysis-tab-panel"></div>
-    `;
-
-    // --- 1. Populate Pareto Chart & Summary Tab ---
-    const paretoPanel = $("paretoPanel");
-    paretoPanel.innerHTML = `<div class="p-4">
-        <h3 class="text-2xl font-bold mb-4 text-center">Pareto Analysis (80/20 Rule)</h3>
-         <p class="text-center text-lg italic text-white/80 mb-6">Problem: ${problem_statement}</p>
-        <div id="paretoChartContainer" class="w-full h-[550px] plotly-chart bg-black/10 rounded-lg mb-8"></div>
-        <h4 class="text-xl font-semibold mb-3">Analysis Summary:</h4>
-        <blockquote class="p-3 italic border-l-4 border-gray-500 bg-black/20 text-white/90 text-sm">
-            ${pareto_analysis.analysis_summary || "Summary unavailable."}
-        </blockquote>
-         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 text-sm">
-             <div class="bg-red-900/20 p-3 rounded border border-red-500/50">
-                <h5 class="font-bold text-red-300 mb-1">🔥 Vital Few (${pareto_analysis.vital_few.length} causes)</h5>
-                <p class="text-xs text-white/70 mb-2">Focus improvement efforts here (~80% of impact).</p>
-                <ul class="list-disc list-inside space-y-1">
-                    ${pareto_analysis.vital_few.map(item => `<li>${item.cause} (${item.impact_score}%)</li>`).join("")}
-                </ul>
-             </div>
-             <div class="bg-gray-700/20 p-3 rounded border border-gray-500/50">
-                 <h5 class="font-bold text-gray-300 mb-1">📋 Useful Many (${pareto_analysis.useful_many.length} causes)</h5>
-                 <p class="text-xs text-white/70 mb-2">Address later or if resources allow (~20% of impact).</p>
-                 <ul class="list-disc list-inside space-y-1">
-                     ${pareto_analysis.useful_many.map(item => `<li>${item.cause} (${item.impact_score}%)</li>`).join("")}
-                 </ul>
-             </div>
-         </div>
-    </div>`;
-    // Render the Pareto chart
-    try {
-        createParetoChartJS(pareto_analysis, "paretoChartContainer"); // Use the existing chart function
-    } catch(e) {
-        console.error("Error rendering Pareto chart:", e);
-        $("paretoChartContainer").innerHTML = "<p class='p-4 text-center text-red-400'>Could not render Pareto chart.</p>";
-    }
-
-    // --- 2. Populate Fishbone Diagram Tab (Textual) ---
-    const fishbonePanel = $("fishbonePanel");
-    let fishboneHtml = `<div class="p-4">
-        <h3 class="text-2xl font-bold mb-4 text-center">Fishbone Diagram (Ishikawa) - Potential Causes</h3>
-        <p class="text-center text-lg italic text-white/80 mb-6">Problem: ${problem_statement}</p>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">`;
-
-    const standardCategories = ["Methods", "Machines", "Materials", "Manpower", "Measurement", "Environment"];
-    standardCategories.forEach(category => {
-        const subCauses = fishbone[category] || [];
-        // Highlight vital few causes within the fishbone list
-        const causesHtml = subCauses.map(cause => {
-            const isVital = pareto_analysis.vital_few.some(item => item.cause.toLowerCase() === cause.toLowerCase());
-            return `<li class="${isVital ? 'font-semibold text-red-300' : 'text-white/80'}">${isVital ? '🔥 ' : ''}${cause}</li>`;
-        }).join("");
-
-        fishboneHtml += `
-            <div class="bg-white/5 p-3 rounded-lg border-t-4 border-indigo-400">
-                <h4 class="font-semibold text-lg mb-2 text-indigo-300">${category}</h4>
-                ${subCauses.length > 0
-                    ? `<ul class="list-disc list-inside space-y-1 text-sm">${causesHtml}</ul>`
-                    : `<p class="text-sm italic text-white/60">(No specific causes identified from context)</p>`
-                }
-            </div>`;
-    });
-
-    fishboneHtml += `</div></div>`; // Close grid and p-4
-    fishbonePanel.innerHTML = fishboneHtml;
-
-
-    // --- 3. Populate Action Plan Tab ---
-    const actionPanel = $("actionPanel");
-    let actionHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">🎯 Action Plan (Focus on Vital Few)</h3>`;
-    if (action_plan && action_plan.length > 0) {
-        actionHtml += `<p class="text-sm text-white/70 mb-6 italic">Concentrate resources on addressing these high-impact causes identified in the Pareto analysis.</p>`;
-        actionHtml += `<div class="space-y-6">`;
-        action_plan.forEach((action, index) => {
-             let impactClass = "text-yellow-400"; // Medium default
-             if (action.potential_impact?.toLowerCase() === 'high') impactClass = "text-green-400";
-             else if (action.potential_impact?.toLowerCase() === 'low') impactClass = "text-red-400";
-
-            actionHtml += `
-                <div class="prescription-card border-l-4 border-yellow-500">
-                    <h4 class="text-xl font-bold">${index + 1}. ${action.action_suggestion}</h4>
-                     <p class="text-xs font-semibold my-1 text-indigo-300">TARGET CAUSE: ${action.target_cause || 'N/A'}</p>
-                     <p class="text-xs font-semibold my-1 ${impactClass}">POTENTIAL IMPACT: ${action.potential_impact || 'N/A'}</p>
-                    <p class="rationale"><strong>Rationale:</strong> ${action.rationale || 'N/A'}</p>
+            fishboneHtml += `
+                <div class="bg-white/5 p-3 rounded-lg border-t-4 border-indigo-400">
+                    <h4 class="font-semibold text-lg mb-2 text-indigo-300">${category}</h4>
+                    ${subCauses.length > 0
+                        ? `<ul class="list-disc list-inside space-y-1 text-sm">${causesHtml}</ul>`
+                        : `<p class="text-sm italic text-white/60">(No specific causes identified from context)</p>`
+                    }
                 </div>`;
         });
-        actionHtml += `</div>`;
-    } else {
-        actionHtml += `<p class="text-center text-white/70 italic">No specific actions were generated for the 'vital few' causes, possibly because none were identified or derivable from the context.</p>`;
-    }
-    actionHtml += `</div>`;
-    actionPanel.innerHTML = actionHtml;
 
-    // --- 4. Populate Learn Techniques Tab ---
-    const learnPanel = $("learnPanel");
-    learnPanel.innerHTML = `
-    <div class="p-6 space-y-6 text-white/90">
-        <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding Pareto & Fishbone Analysis</h3>
+        fishboneHtml += `</div></div>`; // Close grid and p-4
+        fishbonePanel.innerHTML = fishboneHtml;
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div class="bg-black/20 p-4 rounded-lg">
-                <h4 class="text-lg font-bold mb-2 text-indigo-300">📊 Pareto Principle (80/20 Rule)</h4>
-                 [Image of Pareto chart example]
-                <p class="text-sm text-white/80 mb-3">States that for many outcomes, roughly 80% of consequences come from 20% of causes. In quality improvement, it helps identify the "vital few" causes that have the most significant impact on a problem, distinguishing them from the "useful many."</p>
-                <h5 class="text-md font-semibold mb-1">How it's Used Here:</h5>
-                <ul class="list-disc list-inside space-y-1 text-sm">
-                    <li>Identifies potential causes from the Fishbone analysis.</li>
-                    <li>Estimates the relative impact of each cause on the main problem.</li>
-                    <li>Sorts causes by impact score.</li>
-                    <li>Calculates cumulative impact percentage.</li>
-                    <li>Visually separates the "vital few" (first ~80% cumulative impact) from the "useful many".</li>
-                    <li>Directs action planning towards the vital few for maximum efficiency.</li>
-                </ul>
-            </div>
 
-            <div class="bg-black/20 p-4 rounded-lg">
-                <h4 class="text-lg font-bold mb-2 text-indigo-300">🐟 Fishbone Diagram (Ishikawa / Cause-and-Effect)</h4>
-                [Image of Fishbone diagram example]
-                <p class="text-sm text-white/80 mb-3">A visualization tool used to brainstorm and categorize potential causes of a specific problem (the "effect"). Causes are grouped into major categories to ensure a structured and comprehensive analysis.</p>
-                <h5 class="text-md font-semibold mb-1">Standard Categories (6Ms):</h5>
-                <ul class="list-disc list-inside space-y-1 text-sm">
-                    <li><strong>Methods:</strong> Policies, procedures, rules, regulations, laws.</li>
-                    <li><strong>Machines:</strong> Equipment, tools, technology used.</li>
-                    <li><strong>Materials:</strong> Raw materials, consumables, information.</li>
-                    <li><strong>Manpower (People):</strong> Anyone involved in the process; skills, training, motivation.</li>
-                    <li><strong>Measurement:</strong> Data generated from the process used for evaluation.</li>
-                    <li><strong>Environment (Mother Nature):</strong> Location, time, temperature, workplace culture.</li>
-                </ul>
-                <p class="text-xs italic mt-2">Note: Categories can sometimes be adapted based on the industry (e.g., 4S for Service).</p>
-            </div>
-        </div>
+        // --- 3. Populate Action Plan Tab ---
+        const actionPanel = $("actionPanel");
+        let actionHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">🎯 Action Plan (Focus on Vital Few)</h3>`;
+        if (action_plan && action_plan.length > 0) {
+            actionHtml += `<p class="text-sm text-white/70 mb-6 italic">Concentrate resources on addressing these high-impact causes identified in the Pareto analysis.</p>`;
+            actionHtml += `<div class="space-y-6">`;
+            action_plan.forEach((action, index) => {
+                let impactClass = "text-yellow-400"; // Medium default
+                if (action.potential_impact?.toLowerCase() === 'high') impactClass = "text-green-400";
+                else if (action.potential_impact?.toLowerCase() === 'low') impactClass = "text-red-400";
 
-         <div class="bg-white/5 p-4 rounded-lg mt-6 border border-white/10">
-            <h4 class="text-lg font-bold mb-2">🤝 How They Work Together:</h4>
-            <p class="text-sm text-white/80">The Fishbone diagram helps brainstorm a wide range of potential causes. The Pareto analysis then helps prioritize which of those causes are likely contributing the most to the problem, allowing teams to focus their improvement efforts effectively.</p>
-        </div>
-    </div>
-    `;
-
-    // --- Final Touches ---
-    analysisCache[currentTemplateId] = container.innerHTML; // Cache result
-
-    // Tab switching logic
-    tabNav.addEventListener("click", (e) => {
-        if (e.target.tagName === "BUTTON") {
-            // Deactivate all
-            tabNav.querySelectorAll(".analysis-tab-btn").forEach(btn => btn.classList.remove("active"));
-            tabContent.querySelectorAll(".analysis-tab-panel").forEach(pnl => pnl.classList.remove("active"));
-
-            // Activate clicked
-            e.target.classList.add("active");
-            const targetPanelId = e.target.dataset.tab + "Panel";
-            const targetPanel = $(targetPanelId);
-            if (targetPanel) {
-                targetPanel.classList.add("active");
-                // Resize chart if the Pareto tab is activated
-                const chart = targetPanel.querySelector('.plotly-chart');
-                if (chart && chart.layout && typeof Plotly !== 'undefined') {
-                    try { Plotly.Plots.resize(chart); } catch (err) { console.error("Resize err:", err); }
-                }
-            } else {
-                 console.warn("Target panel not found:", targetPanelId);
-            }
+                actionHtml += `
+                    <div class="prescription-card border-l-4 border-yellow-500">
+                        <h4 class="text-xl font-bold">${index + 1}. ${action.action_suggestion}</h4>
+                        <p class="text-xs font-semibold my-1 text-indigo-300">TARGET CAUSE: ${action.target_cause || 'N/A'}</p>
+                        <p class="text-xs font-semibold my-1 ${impactClass}">POTENTIAL IMPACT: ${action.potential_impact || 'N/A'}</p>
+                        <p class="rationale"><strong>Rationale:</strong> ${action.rationale || 'N/A'}</p>
+                    </div>`;
+            });
+            actionHtml += `</div>`;
+        } else {
+            actionHtml += `<p class="text-center text-white/70 italic">No specific actions were generated for the 'vital few' causes, possibly because none were identified or derivable from the context.</p>`;
         }
-    });
+        actionHtml += `</div>`;
+        actionPanel.innerHTML = actionHtml;
 
-     // Attempt initial resize for chart in the default active tab (Pareto)
-     setTimeout(() => {
-         const initialChart = $('paretoChartContainer');
-         if (initialChart && initialChart.layout && typeof Plotly !== 'undefined') {
-             try { Plotly.Plots.resize(initialChart); } catch (err) { console.error("Initial Resize err:", err); }
-         }
-     }, 150);
+        // --- 4. Populate Learn Techniques Tab ---
+        const learnPanel = $("learnPanel");
+        learnPanel.innerHTML = `
+        <div class="p-6 space-y-6 text-white/90">
+            <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding Pareto & Fishbone Analysis</h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-black/20 p-4 rounded-lg">
+                    <h4 class="text-lg font-bold mb-2 text-indigo-300">📊 Pareto Principle (80/20 Rule)</h4>
+                    [Image of Pareto chart example]
+                    <p class="text-sm text-white/80 mb-3">States that for many outcomes, roughly 80% of consequences come from 20% of causes. In quality improvement, it helps identify the "vital few" causes that have the most significant impact on a problem, distinguishing them from the "useful many."</p>
+                    <h5 class="text-md font-semibold mb-1">How it's Used Here:</h5>
+                    <ul class="list-disc list-inside space-y-1 text-sm">
+                        <li>Identifies potential causes from the Fishbone analysis.</li>
+                        <li>Estimates the relative impact of each cause on the main problem.</li>
+                        <li>Sorts causes by impact score.</li>
+                        <li>Calculates cumulative impact percentage.</li>
+                        <li>Visually separates the "vital few" (first ~80% cumulative impact) from the "useful many".</li>
+                        <li>Directs action planning towards the vital few for maximum efficiency.</li>
+                    </ul>
+                </div>
+
+                <div class="bg-black/20 p-4 rounded-lg">
+                    <h4 class="text-lg font-bold mb-2 text-indigo-300">🐟 Fishbone Diagram (Ishikawa / Cause-and-Effect)</h4>
+                    [Image of Fishbone diagram example]
+                    <p class="text-sm text-white/80 mb-3">A visualization tool used to brainstorm and categorize potential causes of a specific problem (the "effect"). Causes are grouped into major categories to ensure a structured and comprehensive analysis.</p>
+                    <h5 class="text-md font-semibold mb-1">Standard Categories (6Ms):</h5>
+                    <ul class="list-disc list-inside space-y-1 text-sm">
+                        <li><strong>Methods:</strong> Policies, procedures, rules, regulations, laws.</li>
+                        <li><strong>Machines:</strong> Equipment, tools, technology used.</li>
+                        <li><strong>Materials:</strong> Raw materials, consumables, information.</li>
+                        <li><strong>Manpower (People):</strong> Anyone involved in the process; skills, training, motivation.</li>
+                        <li><strong>Measurement:</strong> Data generated from the process used for evaluation.</li>
+                        <li><strong>Environment (Mother Nature):</strong> Location, time, temperature, workplace culture.</li>
+                    </ul>
+                    <p class="text-xs italic mt-2">Note: Categories can sometimes be adapted based on the industry (e.g., 4S for Service).</p>
+                </div>
+            </div>
+
+            <div class="bg-white/5 p-4 rounded-lg mt-6 border border-white/10">
+                <h4 class="text-lg font-bold mb-2">🤝 How They Work Together:</h4>
+                <p class="text-sm text-white/80">The Fishbone diagram helps brainstorm a wide range of potential causes. The Pareto analysis then helps prioritize which of those causes are likely contributing the most to the problem, allowing teams to focus their improvement efforts effectively.</p>
+            </div>
+        </div>
+        `;
+
+        // --- Final Touches ---
+        analysisCache[currentTemplateId] = container.innerHTML; // Cache result
+
+        // Tab switching logic
+        tabNav.addEventListener("click", (e) => {
+            if (e.target.tagName === "BUTTON") {
+                // Deactivate all
+                tabNav.querySelectorAll(".analysis-tab-btn").forEach(btn => btn.classList.remove("active"));
+                tabContent.querySelectorAll(".analysis-tab-panel").forEach(pnl => pnl.classList.remove("active"));
+
+                // Activate clicked
+                e.target.classList.add("active");
+                const targetPanelId = e.target.dataset.tab + "Panel";
+                const targetPanel = $(targetPanelId);
+                if (targetPanel) {
+                    targetPanel.classList.add("active");
+                    // Resize chart if the Pareto tab is activated
+                    const chart = targetPanel.querySelector('.plotly-chart');
+                    if (chart && chart.layout && typeof Plotly !== 'undefined') {
+                        try { Plotly.Plots.resize(chart); } catch (err) { console.error("Resize err:", err); }
+                    }
+                } else {
+                    console.warn("Target panel not found:", targetPanelId);
+                }
+            }
+        });
+
+        // Attempt initial resize for chart in the default active tab (Pareto)
+        setTimeout(() => {
+            const initialChart = $('paretoChartContainer');
+            if (initialChart && initialChart.layout && typeof Plotly !== 'undefined') {
+                try { Plotly.Plots.resize(initialChart); } catch (err) { console.error("Initial Resize err:", err); }
+            }
+        }, 150);
 
 
-    $("analysisActions").classList.remove("hidden"); // Show save buttons
-    // setLoading('generate', false); // Handled in the calling function
-}
-
-
-// Ensure createParetoChartJS is available (it was defined in a previous step, but include it here for completeness if needed)
-function createParetoChartJS(paretoData, containerId) {
-    const container = $(containerId);
-    if (!container) {
-        console.error(`Container with ID ${containerId} not found for Pareto chart.`);
-        return;
+        $("analysisActions").classList.remove("hidden"); // Show save buttons
+        // setLoading('generate', false); // Handled in the calling function
     }
-    container.innerHTML = ""; // Clear previous chart
 
-    // Ensure paretoData exists and has the expected structure
-    if (!paretoData || (!paretoData.vital_few && !paretoData.useful_many)) {
-         container.innerHTML = "<p class='p-4 text-center text-red-400'>Pareto data is missing or incomplete.</p>";
-         return;
+
+    // Ensure createParetoChartJS is available (it was defined in a previous step, but include it here for completeness if needed)
+    function createParetoChartJS(paretoData, containerId) {
+        const container = $(containerId);
+        if (!container) {
+            console.error(`Container with ID ${containerId} not found for Pareto chart.`);
+            return;
+        }
+        container.innerHTML = ""; // Clear previous chart
+
+        // Ensure paretoData exists and has the expected structure
+        if (!paretoData || (!paretoData.vital_few && !paretoData.useful_many)) {
+            container.innerHTML = "<p class='p-4 text-center text-red-400'>Pareto data is missing or incomplete.</p>";
+            return;
+        }
+
+        const allCauses = (paretoData.vital_few || []).concat(paretoData.useful_many || []);
+        if (allCauses.length === 0) {
+            container.innerHTML = "<p class='p-4 text-center text-white/70'>No causes identified for Pareto analysis.</p>";
+            return;
+        }
+
+
+        allCauses.sort((a, b) => (b.impact_score || 0) - (a.impact_score || 0));
+
+        const causes = allCauses.map((item) => item.cause || "Unknown Cause");
+        const impacts = allCauses.map((item) => item.impact_score || 0);
+        const categories = allCauses.map((item) => item.category || "Uncategorized");
+
+        const cumulative = impacts.reduce((acc, val) => {
+            acc.push((acc.length > 0 ? acc[acc.length - 1] : 0) + val);
+            return acc;
+        }, []);
+        // Ensure totalImpact is not zero before dividing
+        const totalImpact = impacts.reduce((a, b) => a + b, 0);
+        const cumulativePct = totalImpact > 0 ? cumulative.map((val) => (val / totalImpact) * 100) : cumulative.map(() => 0);
+
+
+        const trace1 = {
+            x: causes,
+            y: impacts,
+            name: "Impact Score",
+            type: "bar",
+            text: impacts.map((imp) => `${imp}%`),
+            textposition: "outside",
+            marker: { color: "var(--primary)" }, // Consistent color
+            hovertemplate: "<b>%{x}</b><br>Impact: %{y}%<br>Category: %{customdata}<extra></extra>",
+            customdata: categories
+        };
+
+        const trace2 = {
+            x: causes,
+            y: cumulativePct,
+            name: "Cumulative %",
+            type: "scatter",
+            mode: "lines+markers",
+            line: { color: "var(--accent)", width: 3 }, // Accent color for line
+            marker: { size: 8 },
+            yaxis: "y2",
+            hovertemplate: "<b>%{x}</b><br>Cumulative: %{y:.1f}%<extra></extra>"
+        };
+
+        // Find the index where cumulative percentage crosses 80%
+        const eightyPercentIndex = cumulativePct.findIndex(p => p >= 80);
+        let vitalFewCount = eightyPercentIndex !== -1 ? eightyPercentIndex + 1 : allCauses.length;
+        // Ensure vitalFewCount matches the actual vital_few array length if provided, otherwise use calculated
+        vitalFewCount = paretoData.vital_few ? paretoData.vital_few.length : vitalFewCount;
+
+
+        const layout = {
+            title: "Pareto Analysis - Vital Few vs. Useful Many Causes",
+            xaxis: { title: "Potential Root Causes", tickangle: -45, automargin: true },
+            yaxis: { title: "Estimated Impact Score (%)", gridcolor: "rgba(255,255,255,0.1)" },
+            yaxis2: {
+                title: "Cumulative Impact (%)",
+                overlaying: "y",
+                side: "right",
+                range: [0, 101],
+                gridcolor: "rgba(255,255,255,0.05)",
+                zeroline: false
+            },
+            shapes: [
+                // 80% cumulative line
+                { type: "line", xref: "paper", x0: 0, x1: 1, yref: "y2", y0: 80, y1: 80, line: { color: "orange", width: 2, dash: "dot" } },
+                // Vertical line separating vital few
+                vitalFewCount > 0 && vitalFewCount < allCauses.length ? { type: "line", xref: "x", x0: vitalFewCount - 0.5, x1: vitalFewCount - 0.5, yref: "paper", y0: 0, y1: 1, line: { color: "rgba(255, 0, 0, 0.5)", width: 2, dash: "dash" } } : {}
+            ],
+            annotations: [
+                vitalFewCount > 0 ? { xref: 'x', yref: 'paper', x: (vitalFewCount - 1) / 2, y: 1.05, text: '🔥 Vital Few', showarrow: false, font: {color: 'red'} } : {},
+                vitalFewCount < allCauses.length ? { xref: 'x', yref: 'paper', x: vitalFewCount + (allCauses.length - vitalFewCount -1) / 2, y: 1.05, text: '📋 Useful Many', showarrow: false, font: {color: 'grey'} } : {},
+                { xref: 'paper', yref: 'y2', x: 0.95, y: 80, text: '80% Impact', showarrow: false, font: {color: 'orange'}, xanchor: 'right', yanchor: 'bottom' }
+            ],
+            showlegend: true,
+            height: 550, // Increased height slightly
+            hovermode: "x unified",
+            paper_bgcolor: "rgba(0,0,0,0)",
+            plot_bgcolor: "rgba(0,0,0,0)",
+            font: { color: "white" },
+            legend: { orientation: "h", y: -0.3 }, // Adjusted legend position
+            margin: { t: 60, b: 150, l: 60, r: 60 } // Adjusted margins
+        };
+
+        Plotly.newPlot(containerId, [trace1, trace2], layout, { responsive: true });
     }
-
-    const allCauses = (paretoData.vital_few || []).concat(paretoData.useful_many || []);
-    if (allCauses.length === 0) {
-         container.innerHTML = "<p class='p-4 text-center text-white/70'>No causes identified for Pareto analysis.</p>";
-        return;
-    }
-
-
-    allCauses.sort((a, b) => (b.impact_score || 0) - (a.impact_score || 0));
-
-    const causes = allCauses.map((item) => item.cause || "Unknown Cause");
-    const impacts = allCauses.map((item) => item.impact_score || 0);
-    const categories = allCauses.map((item) => item.category || "Uncategorized");
-
-    const cumulative = impacts.reduce((acc, val) => {
-        acc.push((acc.length > 0 ? acc[acc.length - 1] : 0) + val);
-        return acc;
-    }, []);
-    // Ensure totalImpact is not zero before dividing
-    const totalImpact = impacts.reduce((a, b) => a + b, 0);
-    const cumulativePct = totalImpact > 0 ? cumulative.map((val) => (val / totalImpact) * 100) : cumulative.map(() => 0);
-
-
-    const trace1 = {
-        x: causes,
-        y: impacts,
-        name: "Impact Score",
-        type: "bar",
-        text: impacts.map((imp) => `${imp}%`),
-        textposition: "outside",
-        marker: { color: "var(--primary)" }, // Consistent color
-        hovertemplate: "<b>%{x}</b><br>Impact: %{y}%<br>Category: %{customdata}<extra></extra>",
-        customdata: categories
-    };
-
-    const trace2 = {
-        x: causes,
-        y: cumulativePct,
-        name: "Cumulative %",
-        type: "scatter",
-        mode: "lines+markers",
-        line: { color: "var(--accent)", width: 3 }, // Accent color for line
-        marker: { size: 8 },
-        yaxis: "y2",
-        hovertemplate: "<b>%{x}</b><br>Cumulative: %{y:.1f}%<extra></extra>"
-    };
-
-    // Find the index where cumulative percentage crosses 80%
-     const eightyPercentIndex = cumulativePct.findIndex(p => p >= 80);
-     let vitalFewCount = eightyPercentIndex !== -1 ? eightyPercentIndex + 1 : allCauses.length;
-     // Ensure vitalFewCount matches the actual vital_few array length if provided, otherwise use calculated
-     vitalFewCount = paretoData.vital_few ? paretoData.vital_few.length : vitalFewCount;
-
-
-    const layout = {
-        title: "Pareto Analysis - Vital Few vs. Useful Many Causes",
-        xaxis: { title: "Potential Root Causes", tickangle: -45, automargin: true },
-        yaxis: { title: "Estimated Impact Score (%)", gridcolor: "rgba(255,255,255,0.1)" },
-        yaxis2: {
-            title: "Cumulative Impact (%)",
-            overlaying: "y",
-            side: "right",
-            range: [0, 101],
-            gridcolor: "rgba(255,255,255,0.05)",
-            zeroline: false
-        },
-        shapes: [
-            // 80% cumulative line
-            { type: "line", xref: "paper", x0: 0, x1: 1, yref: "y2", y0: 80, y1: 80, line: { color: "orange", width: 2, dash: "dot" } },
-            // Vertical line separating vital few
-             vitalFewCount > 0 && vitalFewCount < allCauses.length ? { type: "line", xref: "x", x0: vitalFewCount - 0.5, x1: vitalFewCount - 0.5, yref: "paper", y0: 0, y1: 1, line: { color: "rgba(255, 0, 0, 0.5)", width: 2, dash: "dash" } } : {}
-        ],
-         annotations: [
-             vitalFewCount > 0 ? { xref: 'x', yref: 'paper', x: (vitalFewCount - 1) / 2, y: 1.05, text: '🔥 Vital Few', showarrow: false, font: {color: 'red'} } : {},
-             vitalFewCount < allCauses.length ? { xref: 'x', yref: 'paper', x: vitalFewCount + (allCauses.length - vitalFewCount -1) / 2, y: 1.05, text: '📋 Useful Many', showarrow: false, font: {color: 'grey'} } : {},
-              { xref: 'paper', yref: 'y2', x: 0.95, y: 80, text: '80% Impact', showarrow: false, font: {color: 'orange'}, xanchor: 'right', yanchor: 'bottom' }
-         ],
-        showlegend: true,
-        height: 550, // Increased height slightly
-        hovermode: "x unified",
-        paper_bgcolor: "rgba(0,0,0,0)",
-        plot_bgcolor: "rgba(0,0,0,0)",
-        font: { color: "white" },
-        legend: { orientation: "h", y: -0.3 }, // Adjusted legend position
-        margin: { t: 60, b: 150, l: 60, r: 60 } // Adjusted margins
-    };
-
-    Plotly.newPlot(containerId, [trace1, trace2], layout, { responsive: true });
-}
 
 
     function createParetoChartJS(paretoData, containerId) {
@@ -8931,241 +8935,399 @@ function createParetoChartJS(paretoData, containerId) {
 }
 
 
-function renderProcessMappingPage(container, data) {
-    container.innerHTML = ""; // Clear the loading indicator
-    // Add validation for new fields
-    if (!data || !data.process_name || !data.steps || !data.connections || !data.bottlenecks || !data.optimizations || !data.kpis) {
-        console.error("Incomplete data passed to renderProcessMappingPage:", data);
-        container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render Process Map results.</div>`;
-        $("analysisActions").classList.add("hidden");
-        return;
-    }
-
-    const { process_name, steps, connections, bottlenecks, optimizations, kpis } = data;
-
-
-    // --- Create Tab Navigation (Updated) ---
-    const tabNav = document.createElement("div");
-    tabNav.className = "flex flex-wrap border-b border-white/20 -mx-6 px-6";
-    tabNav.innerHTML = `
-        <button class="analysis-tab-btn active" data-tab="flowchart">🗺️ Process Flowchart</button>
-        <button class="analysis-tab-btn" data-tab="details">📋 Step Details</button>
-        <button class="analysis-tab-btn" data-tab="optimizations">✨ Optimizations</button> <!-- New Tab -->
-        <button class="analysis-tab-btn" data-tab="kpis">📊 KPIs & Bottlenecks</button> <!-- Renamed & Combined -->
-        <button class="analysis-tab-btn" data-tab="learn">🎓 Learn Mapping</button> <!-- New Tab -->
-    `;
-    container.appendChild(tabNav);
-
-    // --- Create Tab Panels (Updated) ---
-    const tabContent = document.createElement("div");
-    container.appendChild(tabContent);
-    tabContent.innerHTML = `
-        <div id="flowchartPanel" class="analysis-tab-panel active"></div>
-        <div id="detailsPanel" class="analysis-tab-panel"></div>
-        <div id="optimizationsPanel" class="analysis-tab-panel"></div> <!-- New Panel -->
-        <div id="kpisPanel" class="analysis-tab-panel"></div> <!-- Renamed Panel -->
-        <div id="learnPanel" class="analysis-tab-panel"></div> <!-- New Panel -->
-    `;
-
-    // --- 1. Populate Flowchart Panel (Keep as is, but add better icons) ---
-    const flowchartPanel = $("flowchartPanel");
-    let flowchartHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-6 text-center">${process_name}</h3><div class="space-y-2 max-w-lg mx-auto">`; // Centered flowchart
-
-    const stepMap = new Map(steps.map((step) => [step.id, step]));
-
-    steps.forEach((step, index) => {
-        let stepClass = "bg-black/20 p-3 rounded-lg border-l-4 flex items-center gap-3 ";
-        let icon = "▶️"; // Default
-        switch (step.type.toLowerCase()) {
-            case "start": stepClass += "border-green-400"; icon = "🏁"; break;
-            case "end": stepClass += "border-red-400"; icon = "🛑"; break;
-            case "decision": stepClass += "border-yellow-400"; icon = "🤔"; break;
-            case "sub-process": stepClass += "border-purple-400"; icon = "🧩"; break; // Added sub-process
-            default: stepClass += "border-blue-400"; icon = "⚙️"; // Task
+    function renderProcessMappingPage(container, data) {
+        container.innerHTML = ""; // Clear the loading indicator
+        // Add validation for new fields
+        if (!data || !data.process_name || !data.steps || !data.connections || !data.bottlenecks || !data.optimizations || !data.kpis) {
+            console.error("Incomplete data passed to renderProcessMappingPage:", data);
+            container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render Process Map results.</div>`;
+            $("analysisActions").classList.add("hidden");
+            return;
         }
-        flowchartHtml += `<div class="${stepClass}">
-                            <span class="text-xl">${icon}</span>
-                            <div>
-                                <p class="font-bold text-md">${step.name}</p>
-                                <p class="text-xs text-white/70">Owner: ${step.owner || 'N/A'}</p>
-                            </div>
-                         </div>`;
 
-        // Add connection arrow and label if not the last step
-         // Find connections originating FROM this step
-         const outgoingConnections = connections.filter(c => c.from === step.id);
-         if (outgoingConnections.length > 0) {
-              if (outgoingConnections.length === 1) {
-                  // Single outgoing path
-                  const connection = outgoingConnections[0];
-                  const label = connection.label || "Next";
-                  flowchartHtml += `<div class="text-center text-white/50 text-2xl font-light leading-none my-1" aria-hidden="true">↓ <span class="text-xs font-sans align-middle">${label}</span></div>`;
-              } else {
-                  // Multiple outgoing paths (likely from a decision)
-                  flowchartHtml += `<div class="text-center text-white/50 text-lg font-light leading-none my-1 flex justify-around items-center" aria-hidden="true">`;
-                  outgoingConnections.forEach(conn => {
-                      const targetStepName = stepMap.get(conn.to)?.name || `Step ${conn.to}`;
-                      flowchartHtml += `<span class="text-xs font-sans">↘️ ${conn.label || ''} (to ${targetStepName})</span>`;
-                  });
-                  flowchartHtml += `</div>`;
-              }
-         } else if (step.type.toLowerCase() !== 'end' && index < steps.length - 1) {
-             // If no connection defined but not the end, assume 'Next'
-             flowchartHtml += `<div class="text-center text-white/50 text-2xl font-light leading-none my-1" aria-hidden="true">↓ <span class="text-xs font-sans align-middle">Next</span></div>`;
-         }
+        const { process_name, steps, connections, bottlenecks, optimizations, kpis } = data;
 
-    });
-    flowchartHtml += "</div></div>"; // Close space-y-2 and p-4
-    flowchartPanel.innerHTML = flowchartHtml;
 
-    // --- 2. Populate Step Details Panel (Keep table) ---
-    const detailsPanel = $("detailsPanel");
-    let detailsHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">Detailed Step Breakdown</h3><div class="overflow-x-auto"><table class="coeff-table styled-table text-sm">
-        <thead><tr><th>ID</th><th>Step Name</th><th>Owner/Role</th><th>Type</th><th>Description</th></tr></thead><tbody>`;
-    steps.forEach((step) => {
-        detailsHtml += `<tr>
-            <td>${step.id}</td>
-            <td class="font-semibold">${step.name}</td>
-            <td>${step.owner || 'N/A'}</td>
-            <td>${step.type}</td>
-            <td class="text-white/80">${step.description}</td></tr>`;
-    });
-    detailsHtml += `</tbody></table></div></div>`;
-    detailsPanel.innerHTML = detailsHtml;
+        // --- Create Tab Navigation (Updated) ---
+        const tabNav = document.createElement("div");
+        tabNav.className = "flex flex-wrap border-b border-white/20 -mx-6 px-6";
+        tabNav.innerHTML = `
+            <button class="analysis-tab-btn active" data-tab="flowchart">🗺️ Process Flowchart</button>
+            <button class="analysis-tab-btn" data-tab="details">📋 Step Details</button>
+            <button class="analysis-tab-btn" data-tab="optimizations">✨ Optimizations</button> <!-- New Tab -->
+            <button class="analysis-tab-btn" data-tab="kpis">📊 KPIs & Bottlenecks</button> <!-- Renamed & Combined -->
+            <button class="analysis-tab-btn" data-tab="mermaid"> Mermaid Diagram</button>
+            <button class="analysis-tab-btn" data-tab="learn">🎓 Learn Mapping</button> <!-- New Tab -->
+        `;
+        container.appendChild(tabNav);
 
-    // --- 3. Populate Optimizations Panel (New) ---
-    const optimizationsPanel = $("optimizationsPanel");
-    let optimizationsHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">✨ Potential Optimizations</h3>`;
-    if (optimizations && optimizations.length > 0) {
-        optimizationsHtml += `<p class="text-sm text-white/70 mb-6 italic">Based on the process description, consider these improvements, particularly for identified bottlenecks.</p>`;
-        optimizationsHtml += `<div class="space-y-6">`;
-        optimizations.forEach((opt, index) => {
-            optimizationsHtml += `
-                <div class="prescription-card border-l-4 border-green-500">
-                    <h4 class="text-xl font-bold">${index + 1}. ${opt.suggestion}</h4>
-                     <p class="text-xs font-semibold my-1 text-indigo-300">TARGET STEP: ${opt.target_step_name || 'N/A'} | TYPE: ${opt.type || 'N/A'}</p>
-                    <p class="rationale"><strong>Rationale:</strong> ${opt.rationale || 'N/A'}</p>
-                </div>`;
+        // --- Create Tab Panels (Updated) ---
+        const tabContent = document.createElement("div");
+        container.appendChild(tabContent);
+        tabContent.innerHTML = `
+            <div id="flowchartPanel" class="analysis-tab-panel active"></div>
+            <div id="detailsPanel" class="analysis-tab-panel"></div>
+            <div id="optimizationsPanel" class="analysis-tab-panel"></div> <!-- New Panel -->
+            <div id="kpisPanel" class="analysis-tab-panel"></div> <!-- Renamed Panel -->
+            <div id="mermaidPanel" class="analysis-tab-panel">
+                <h3 class="text-2xl font-bold mb-4">Mermaid Process Diagram</h3>
+                <div id="diagram-container" class="mermaid"></div>
+            </div>
+            <div id="learnPanel" class="analysis-tab-panel"></div> <!-- New Panel -->
+        `;
+
+        // --- 1. Populate Flowchart Panel (Keep as is, but add better icons) ---
+        const flowchartPanel = $("flowchartPanel");
+        let flowchartHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-6 text-center">${process_name}</h3><div class="space-y-2 max-w-lg mx-auto">`; // Centered flowchart
+
+        const stepMap = new Map(steps.map((step) => [step.id, step]));
+
+        steps.forEach((step, index) => {
+            let stepClass = "bg-black/20 p-3 rounded-lg border-l-4 flex items-center gap-3 ";
+            let icon = "▶️"; // Default
+            switch (step.type.toLowerCase()) {
+                case "start": stepClass += "border-green-400"; icon = "🏁"; break;
+                case "end": stepClass += "border-red-400"; icon = "🛑"; break;
+                case "decision": stepClass += "border-yellow-400"; icon = "🤔"; break;
+                case "sub-process": stepClass += "border-purple-400"; icon = "🧩"; break; // Added sub-process
+                default: stepClass += "border-blue-400"; icon = "⚙️"; // Task
+            }
+            flowchartHtml += `<div class="${stepClass}">
+                                <span class="text-xl">${icon}</span>
+                                <div>
+                                    <p class="font-bold text-md">${step.name}</p>
+                                    <p class="text-xs text-white/70">Owner: ${step.owner || 'N/A'}</p>
+                                </div>
+                            </div>`;
+
+            // Add connection arrow and label if not the last step
+            // Find connections originating FROM this step
+            const outgoingConnections = connections.filter(c => c.from === step.id);
+            if (outgoingConnections.length > 0) {
+                if (outgoingConnections.length === 1) {
+                    // Single outgoing path
+                    const connection = outgoingConnections[0];
+                    const label = connection.label || "Next";
+                    flowchartHtml += `<div class="text-center text-white/50 text-2xl font-light leading-none my-1" aria-hidden="true">↓ <span class="text-xs font-sans align-middle">${label}</span></div>`;
+                } else {
+                    // Multiple outgoing paths (likely from a decision)
+                    flowchartHtml += `<div class="text-center text-white/50 text-lg font-light leading-none my-1 flex justify-around items-center" aria-hidden="true">`;
+                    outgoingConnections.forEach(conn => {
+                        const targetStepName = stepMap.get(conn.to)?.name || `Step ${conn.to}`;
+                        flowchartHtml += `<span class="text-xs font-sans">↘️ ${conn.label || ''} (to ${targetStepName})</span>`;
+                    });
+                    flowchartHtml += `</div>`;
+                }
+            } else if (step.type.toLowerCase() !== 'end' && index < steps.length - 1) {
+                // If no connection defined but not the end, assume 'Next'
+                flowchartHtml += `<div class="text-center text-white/50 text-2xl font-light leading-none my-1" aria-hidden="true">↓ <span class="text-xs font-sans align-middle">Next</span></div>`;
+            }
+
         });
+        flowchartHtml += "</div></div>"; // Close space-y-2 and p-4
+        flowchartPanel.innerHTML = flowchartHtml;
+
+        // --- 2. Populate Step Details Panel (Keep table) ---
+        const detailsPanel = $("detailsPanel");
+        let detailsHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">Detailed Step Breakdown</h3><div class="overflow-x-auto"><table class="coeff-table styled-table text-sm">
+            <thead><tr><th>ID</th><th>Step Name</th><th>Owner/Role</th><th>Type</th><th>Description</th></tr></thead><tbody>`;
+        steps.forEach((step) => {
+            detailsHtml += `<tr>
+                <td>${step.id}</td>
+                <td class="font-semibold">${step.name}</td>
+                <td>${step.owner || 'N/A'}</td>
+                <td>${step.type}</td>
+                <td class="text-white/80">${step.description}</td></tr>`;
+        });
+        detailsHtml += `</tbody></table></div></div>`;
+        detailsPanel.innerHTML = detailsHtml;
+
+        // --- 3. Populate Optimizations Panel (New) ---
+        const optimizationsPanel = $("optimizationsPanel");
+        let optimizationsHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">✨ Potential Optimizations</h3>`;
+        if (optimizations && optimizations.length > 0) {
+            optimizationsHtml += `<p class="text-sm text-white/70 mb-6 italic">Based on the process description, consider these improvements, particularly for identified bottlenecks.</p>`;
+            optimizationsHtml += `<div class="space-y-6">`;
+            optimizations.forEach((opt, index) => {
+                optimizationsHtml += `
+                    <div class="prescription-card border-l-4 border-green-500">
+                        <h4 class="text-xl font-bold">${index + 1}. ${opt.suggestion}</h4>
+                        <p class="text-xs font-semibold my-1 text-indigo-300">TARGET STEP: ${opt.target_step_name || 'N/A'} | TYPE: ${opt.type || 'N/A'}</p>
+                        <p class="rationale"><strong>Rationale:</strong> ${opt.rationale || 'N/A'}</p>
+                    </div>`;
+            });
+            optimizationsHtml += `</div>`;
+        } else {
+            optimizationsHtml += `<p class="text-center text-white/70 italic">No specific optimization opportunities were clearly identified from the provided process description.</p>`;
+        }
         optimizationsHtml += `</div>`;
-    } else {
-        optimizationsHtml += `<p class="text-center text-white/70 italic">No specific optimization opportunities were clearly identified from the provided process description.</p>`;
-    }
-    optimizationsHtml += `</div>`;
-    optimizationsPanel.innerHTML = optimizationsHtml;
+        optimizationsPanel.innerHTML = optimizationsHtml;
 
-    // --- 4. Populate KPIs & Bottlenecks Panel (New/Combined) ---
-    const kpisPanel = $("kpisPanel");
-    let kpisHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">📊 KPIs & Bottlenecks</h3>`;
-    // Bottlenecks first
-    if (bottlenecks && bottlenecks.length > 0) {
-        kpisHtml += `<h4 class="text-xl font-semibold mb-3 text-red-300">⚠️ Identified Potential Bottlenecks</h4><div class="space-y-3 mb-8">`;
-        bottlenecks.forEach((b) => {
-            kpisHtml += `<div class="metric-card border-l-4 border-red-400">
-                             <p class="font-bold">${b.step_name}</p>
-                             <p class="text-sm text-white/80 italic">${b.reason}</p>
-                         </div>`;
-        });
-        kpisHtml += `</div>`;
-    } else {
-         kpisHtml += `<p class="text-center text-white/70 italic mb-8">No clear bottlenecks were identified from the provided description.</p>`;
-    }
-    // Then KPIs
-    if (kpis && kpis.length > 0) {
-        kpisHtml += `<h4 class="text-xl font-semibold mb-3 text-green-300">✅ Recommended KPIs</h4><div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
-        kpis.forEach((k) => {
-            kpisHtml += `<div class="summary-stat-card text-left p-4 border-l-4 border-green-400">
-                            <p class="font-bold text-lg text-white">${k.name}</p>
-                            <p class="text-sm text-white/80">${k.description}</p>
-                         </div>`;
-        });
-        kpisHtml += `</div>`;
-    } else {
-        kpisHtml += `<p class="text-center text-white/70 italic">No specific KPIs were recommended based on the description.</p>`;
-    }
-    kpisHtml += `</div>`; // Close p-4
-    kpisPanel.innerHTML = kpisHtml;
+        // --- 4. Populate KPIs & Bottlenecks Panel (New/Combined) ---
+        const kpisPanel = $("kpisPanel");
+        let kpisHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">📊 KPIs & Bottlenecks</h3>`;
+        // Bottlenecks first
+        if (bottlenecks && bottlenecks.length > 0) {
+            kpisHtml += `<h4 class="text-xl font-semibold mb-3 text-red-300">⚠️ Identified Potential Bottlenecks</h4><div class="space-y-3 mb-8">`;
+            bottlenecks.forEach((b) => {
+                kpisHtml += `<div class="metric-card border-l-4 border-red-400">
+                                <p class="font-bold">${b.step_name}</p>
+                                <p class="text-sm text-white/80 italic">${b.reason}</p>
+                            </div>`;
+            });
+            kpisHtml += `</div>`;
+        } else {
+            kpisHtml += `<p class="text-center text-white/70 italic mb-8">No clear bottlenecks were identified from the provided description.</p>`;
+        }
+        // Then KPIs
+        if (kpis && kpis.length > 0) {
+            kpisHtml += `<h4 class="text-xl font-semibold mb-3 text-green-300">✅ Recommended KPIs</h4><div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
+            kpis.forEach((k) => {
+                kpisHtml += `<div class="summary-stat-card text-left p-4 border-l-4 border-green-400">
+                                <p class="font-bold text-lg text-white">${k.name}</p>
+                                <p class="text-sm text-white/80">${k.description}</p>
+                            </div>`;
+            });
+            kpisHtml += `</div>`;
+        } else {
+            kpisHtml += `<p class="text-center text-white/70 italic">No specific KPIs were recommended based on the description.</p>`;
+        }
+        kpisHtml += `</div>`; // Close p-4
+        kpisPanel.innerHTML = kpisHtml;
 
 
-    // --- 5. Populate Learn Mapping Panel (New) ---
-    const learnPanel = $("learnPanel");
-    learnPanel.innerHTML = `
-    <div class="p-6 space-y-6 text-white/90">
-        <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding Process Mapping</h3>
-        [Image of a business process map]
-        <div class="bg-black/20 p-4 rounded-lg">
-            <h4 class="text-lg font-bold mb-2 text-indigo-300">What is Process Mapping?</h4>
-            <p class="text-sm text-white/80">Process mapping is a technique used to visually represent the sequence of steps, decisions, and handoffs involved in a specific work process from beginning to end. It helps teams understand, analyze, and improve workflows.</p>
-        </div>
+        // --- Populate Mermaid Panel and Render Diagram ---
+        const mermaidPanel = $("mermaidPanel");
+        if (mermaidPanel) {
+            const mermaidCode = generateProcessMappingMermaidCode(data); // Generate Mermaid code
+            const diagramContainer = mermaidPanel.querySelector("#diagram-container");
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-white/5 p-4 rounded-lg border border-white/10">
-                <h4 class="text-lg font-bold mb-2">Common Symbols (Simplified):</h4>
-                <ul class="space-y-2 text-sm">
-                    <li><span class="font-mono text-xl mr-2">🏁</span> <strong>Start/End:</strong> Oval shapes indicating the beginning or end points.</li>
-                    <li><span class="font-mono text-xl mr-2">⚙️</span> <strong>Task/Activity:</strong> Rectangles representing a specific action or step.</li>
-                    <li><span class="font-mono text-xl mr-2">🤔</span> <strong>Decision:</strong> Diamonds indicating a point where a choice is made (usually with Yes/No branches).</li>
-                    <li><span class="font-mono text-xl mr-2">🧩</span> <strong>Sub-process:</strong> Rectangle with double vertical lines, representing a predefined, separate process.</li>
-                    <li><span class="font-mono text-xl mr-2">↓→</span> <strong>Flow Lines:</strong> Arrows showing the direction and sequence of steps.</li>
-                    <li><span class="font-mono text-xl mr-2">📄</span> <strong>Document/Data:</strong> Often represented by a rectangle with a wavy bottom.</li>
-                </ul>
-            </div>
-            <div class="bg-white/5 p-4 rounded-lg border border-white/10">
-                <h4 class="text-lg font-bold mb-2">Why Map Processes?</h4>
-                 <ul class="list-disc list-inside space-y-1 text-sm">
-                    <li><strong>Clarity & Understanding:</strong> Provides a clear visual representation of how work gets done.</li>
-                    <li><strong>Identify Inefficiencies:</strong> Highlights bottlenecks, redundancies, delays, and unnecessary steps.</li>
-                    <li><strong>Improvement Foundation:</strong> Serves as a baseline for optimization efforts (simplification, automation).</li>
-                    <li><strong>Standardization:</strong> Helps define and communicate standard operating procedures.</li>
-                    <li><strong>Training:</strong> Useful tool for onboarding new team members.</li>
-                    <li><strong>Role Clarity:</strong> Shows who is responsible for each step.</li>
-                 </ul>
-            </div>
-        </div>
-
-        <details class="styled-details text-sm mt-4">
-            <summary class="font-semibold">Tips for Effective Process Mapping</summary>
-            <div class="bg-black/20 p-4 rounded-b-lg space-y-2">
-                <p><strong>1. Define Scope Clearly:</strong> Know where the process starts and ends.</p>
-                <p><strong>2. Involve the Right People:</strong> Include those who actually perform the work.</p>
-                <p><strong>3. Observe the Real Process:</strong> Don't just rely on documented procedures; see how it actually happens.</p>
-                <p><strong>4. Keep it Simple Initially:</strong> Start with a high-level map, then add detail as needed.</p>
-                <p><strong>5. Use Consistent Symbols:</strong> Stick to a standard set of shapes for clarity.</p>
-                <p><strong>6. Focus on Flow, Not Just Steps:</strong> Show handoffs, decisions, and potential loops.</p>
-                <p><strong>7. Validate the Map:</strong> Review with stakeholders to ensure accuracy.</p>
-                <p><strong>8. Use it for Action:</strong> The map is a tool for analysis and improvement, not just documentation.</p>
-            </div>
-        </details>
-    </div>
-    `;
-
-
-    // --- Final Touches ---
-    analysisCache[currentTemplateId] = container.innerHTML; // Cache result
-
-    // Tab switching logic
-    tabNav.addEventListener("click", (e) => {
-        if (e.target.tagName === "BUTTON") {
-            // Deactivate all
-            tabNav.querySelectorAll(".analysis-tab-btn").forEach(btn => btn.classList.remove("active"));
-            tabContent.querySelectorAll(".analysis-tab-panel").forEach(pnl => pnl.classList.remove("active"));
-
-            // Activate clicked
-            e.target.classList.add("active");
-            const targetPanelId = e.target.dataset.tab + "Panel";
-            const targetPanel = $(targetPanelId);
-            if (targetPanel) {
-                targetPanel.classList.add("active");
-                 // No Plotly charts expected in this version, so no resize needed
-            } else {
-                 console.warn("Target panel not found:", targetPanelId);
+            if (diagramContainer) { // Store mermaidCode and container for deferred rendering
+                diagramContainer.dataset.mermaidCode = mermaidCode; // Store code in a data attribute
+                diagramContainer.innerHTML = `<pre class="mermaid">${mermaidCode}</pre>`; // Display code for debugging/inspection
+                // window.renderMermaidDiagram(diagramContainer, mermaidCode);
             }
         }
-    });
 
-    $("analysisActions").classList.remove("hidden"); // Show save buttons
-    // setLoading('generate', false); // Handled in the calling function
-}
+
+        // --- 5. Populate Learn Mapping Panel (New) ---
+        const learnPanel = $("learnPanel");
+        learnPanel.innerHTML = `
+        <div class="p-6 space-y-6 text-white/90">
+            <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding Process Mapping</h3>
+            [Image of a business process map]
+            <div class="bg-black/20 p-4 rounded-lg">
+                <h4 class="text-lg font-bold mb-2 text-indigo-300">What is Process Mapping?</h4>
+                <p class="text-sm text-white/80">Process mapping is a technique used to visually represent the sequence of steps, decisions, and handoffs involved in a specific work process from beginning to end. It helps teams understand, analyze, and improve workflows.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white/5 p-4 rounded-lg border border-white/10">
+                    <h4 class="text-lg font-bold mb-2">Common Symbols (Simplified):</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><span class="font-mono text-xl mr-2">🏁</span> <strong>Start/End:</strong> Oval shapes indicating the beginning or end points.</li>
+                        <li><span class="font-mono text-xl mr-2">⚙️</span> <strong>Task/Activity:</strong> Rectangles representing a specific action or step.</li>
+                        <li><span class="font-mono text-xl mr-2">🤔</span> <strong>Decision:</strong> Diamonds indicating a point where a choice is made (usually with Yes/No branches).</li>
+                        <li><span class="font-mono text-xl mr-2">🧩</span> <strong>Sub-process:</strong> Rectangle with double vertical lines, representing a predefined, separate process.</li>
+                        <li><span class="font-mono text-xl mr-2">↓→</span> <strong>Flow Lines:</strong> Arrows showing the direction and sequence of steps.</li>
+                        <li><span class="font-mono text-xl mr-2">📄</span> <strong>Document/Data:</strong> Often represented by a rectangle with a wavy bottom.</li>
+                    </ul>
+                </div>
+                <div class="bg-white/5 p-4 rounded-lg border border-white/10">
+                    <h4 class="text-lg font-bold mb-2">Why Map Processes?</h4>
+                    <ul class="list-disc list-inside space-y-1 text-sm">
+                        <li><strong>Clarity & Understanding:</strong> Provides a clear visual representation of how work gets done.</li>
+                        <li><strong>Identify Inefficiencies:</strong> Highlights bottlenecks, redundancies, delays, and unnecessary steps.</li>
+                        <li><strong>Improvement Foundation:</strong> Serves as a baseline for optimization efforts (simplification, automation).</li>
+                        <li><strong>Standardization:</strong> Helps define and communicate standard operating procedures.</li>
+                        <li><strong>Training:</strong> Useful tool for onboarding new team members.</li>
+                        <li><strong>Role Clarity:</strong> Shows who is responsible for each step.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <details class="styled-details text-sm mt-4">
+                <summary class="font-semibold">Tips for Effective Process Mapping</summary>
+                <div class="bg-black/20 p-4 rounded-b-lg space-y-2">
+                    <p><strong>1. Define Scope Clearly:</strong> Know where the process starts and ends.</p>
+                    <p><strong>2. Involve the Right People:</strong> Include those who actually perform the work.</p>
+                    <p><strong>3. Observe the Real Process:</strong> Don't just rely on documented procedures; see how it actually happens.</p>
+                    <p><strong>4. Keep it Simple Initially:</strong> Start with a high-level map, then add detail as needed.</p>
+                    <p><strong>5. Use Consistent Symbols:</strong> Stick to a standard set of shapes for clarity.</p>
+                    <p><strong>6. Focus on Flow, Not Just Steps:</strong> Show handoffs, decisions, and potential loops.</p>
+                    <p><strong>7. Validate the Map:</strong> Review with stakeholders to ensure accuracy.</p>
+                    <p><strong>8. Use it for Action:</strong> The map is a tool for analysis and improvement, not just documentation.</p>
+                </div>
+            </details>
+        </div>
+        `;
+
+
+        // --- Final Touches ---
+        analysisCache[currentTemplateId] = container.innerHTML; // Cache result
+
+        // Tab switching logic
+        tabNav.addEventListener("click", (e) => {
+            if (e.target.tagName === "BUTTON") {
+                // Deactivate all
+                tabNav.querySelectorAll(".analysis-tab-btn").forEach(btn => btn.classList.remove("active"));
+                tabContent.querySelectorAll(".analysis-tab-panel").forEach(pnl => pnl.classList.remove("active"));
+
+                // Activate clicked
+                e.target.classList.add("active");
+                const targetPanelId = e.target.dataset.tab + "Panel";
+                const targetPanel = $(targetPanelId);
+                if (targetPanel) {
+                    targetPanel.classList.add("active");
+                    // No Plotly charts expected in this version, so no resize needed
+                } else {
+                    console.warn("Target panel not found:", targetPanelId);
+                }
+
+                // If the Mermaid tab is activated, render the diagram
+                if (e.target.dataset.tab === "mermaid") {
+                    const mermaidContainer = targetPanel.querySelector("#diagram-container");
+                    if (mermaidContainer && mermaidContainer.dataset.mermaidCode) {
+                        // Clear previous content and render
+                        mermaidContainer.innerHTML = ``; // Clear raw code or placeholder
+                        renderMermaidDiagram(mermaidContainer, mermaidContainer.dataset.mermaidCode);
+                    }
+                }
+            }
+        });
+
+        $("analysisActions").classList.remove("hidden"); // Show save buttons
+        // setLoading('generate', false); // Handled in the calling function
+    }
+
+
+    /**
+         * Generates Mermaid flowchart code from process mapping data.
+         * @param {object} data - The process mapping data containing steps and connections.
+         * @returns {string} Mermaid flowchart code.
+         */
+    function generateProcessMappingMermaidCode(processData) {
+        const { process_name, steps, connections } = processData;
+        if (!steps || !connections) {
+            return "graph LR\n    A[Error: Incomplete data for Mermaid diagram]";
+        }
+
+        let mermaidCode = `graph LR\n`; // Start with graph declaration
+        mermaidCode += `%% Process: ${processData.process_name}\n`;
+        let roleIdCounter = 0;
+        const roleNameToMermaidId = new Map();
+        // const roleTaskCounters = new Map(); // Maps role letter to its next task number (e.g., "A" -> 1)
+        let taskIdCounter = 0;
+        const stepIdToMermaidId = new Map(); // Maps original step.id to generated Mermaid Task_ID (e.g., 1 -> "A1")
+        const processedSteps = []; // Temporary structure to hold steps with their generated IDs and role letters
+        const stepsByRole = new Map();  // Group processed steps by roleLetter
+        
+        // First Pass: Assign unique alphanumeric IDs to roles
+        processData.steps.forEach(step => {
+            if (step.owner && !roleNameToMermaidId.has(step.owner)) {
+                roleNameToMermaidId.set(step.owner, generateAlphaNumericId(roleIdCounter++));
+            }
+        });
+
+        // Second Pass: Generate Task IDs and populate processedSteps.
+        processData.steps.forEach(step => {
+            const mermaidId = generateAlphaNumericId(taskIdCounter++); // Global task ID counter
+            stepIdToMermaidId.set(step.id, mermaidId);
+            processedSteps.push({ ...step, mermaidId, roleLetter: roleNameToMermaidId.get(step.owner) });
+        });
+
+        // Group processed steps by roleLetter
+        processedSteps.forEach(step => {
+            const role = step.owner;
+            if (role) {
+                if (!stepsByRole.has(role)) {
+                    stepsByRole.set(role, []);
+                }
+                stepsByRole.get(role).push(step);
+            }
+        });
+
+        // Generate subgraphs for roles.
+        roleNameToMermaidId.forEach((mermaidRoleLetter, roleName) => {
+            mermaidCode += `    subgraph Role_${mermaidRoleLetter}[\"${roleName}\"]\n`;
+            // Filter processedSteps by owner
+            const roleSteps = processedSteps.filter(step => step.owner === roleName) || [];
+
+            let hasStartInRole = false;
+            let hasEndInRole = false;
+
+            // Check for Start/End nodes within this role
+            roleSteps.forEach(step => {
+                if (step.type.toLowerCase() === "start") {
+                    hasStartInRole = true;
+                }
+                if (step.type.toLowerCase() === "end") {
+                    hasEndInRole = true;
+                }
+            });
+
+            if (hasStartInRole) {
+                mermaidCode += `        Start(("Start"))\n`;
+            }
+            if (hasEndInRole) {
+                mermaidCode += `        End(("End"))\n`;
+            }
+
+            roleSteps.forEach(step => {
+                let nodeShape;
+                switch (step.type.toLowerCase()) {
+                    case "start":
+                        nodeShape = `(("${step.name}"))`; // Use double parentheses for start/end tasks
+                        break;
+                    case "end":
+                        nodeShape = `((${step.name}))`; // Use double parentheses for start/end tasks
+                        break;
+                    case "task":
+                        nodeShape = `[\"${step.id}. ${step.name}\"]`;
+                        break;
+                    case "decision":
+                        nodeShape = `{\"${step.id}. ${step.name}\"}`;
+                        break;
+                    default:
+                        nodeShape = `[\"${step.id}. ${step.name}\"]`;
+                }
+                mermaidCode += `        ${step.mermaidId}${nodeShape}\n`;
+            });
+            mermaidCode += `    end\n`;
+        });
+        
+        // Generate connections.
+        mermaidCode += `%% Flow Connections\n`;
+        processData.connections.forEach(conn => {
+            const fromMermaidId = stepIdToMermaidId.get(conn.from);
+            const toMermaidId = stepIdToMermaidId.get(conn.to);
+            if (fromMermaidId && toMermaidId) {
+                mermaidCode += `    ${fromMermaidId} --\"${conn.label}\"--> ${toMermaidId}\n`;
+            }
+        });
+
+        // Handle implicit Start/End connections
+        const actualStartTask = processedSteps.find(step => step.type.toLowerCase() === "start");
+        const actualEndTask = processedSteps.find(step => step.type.toLowerCase() === "end");
+
+        if (actualStartTask) {
+            mermaidCode += `    Start --> ${actualStartTask.mermaidId}\n`;
+        }
+
+        if (actualEndTask) {
+            mermaidCode += `    ${actualEndTask.mermaidId} --> End\n`;
+        }
+
+        return mermaidCode;
+    }
+
+    function generateAlphaNumericId(index) {
+        let letterIndex = index % 26; // 0-25 for A-Z
+        let numberSuffix = Math.floor(index / 26) + 1; // 1 for A-Z, 2 for A-Z again, etc.
+        return `${String.fromCharCode(65 + letterIndex)}${numberSuffix}`;
+    }
+
+
 
 /**
  * Handles the submission of the SEM analysis request to the backend.
