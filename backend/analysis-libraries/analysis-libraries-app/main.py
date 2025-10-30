@@ -12,7 +12,8 @@ from fastapi.middleware.cors import CORSMiddleware
 # --- Import analysis functions ---
 from analysis_modules import sem_analysis
 from analysis_modules import predictive_analysis
-from analysis_modules import dematel_analysis # Make sure this is imported
+from analysis_modules import dematel_analysis
+from analysis_modules import descriptive_analysis  # NEW: Import descriptive analysis
 
 # --- Import save functions ---
 # Assuming these exist and work as intended
@@ -21,7 +22,6 @@ from analysis_modules import dematel_analysis # Make sure this is imported
 app = FastAPI(docs_url="/")
 
 # --- CORS ---
-# (Keep your existing CORS configuration)
 origins = [
     "https://data2int.com",      # Main domain
     "https://elijah.data2int.com",  # Dev domain
@@ -57,7 +57,10 @@ async def run_analysis_router(
     modelType: Optional[str] = Form(None),
     # --- DEMATEL PARAMETERS ---
     dematel_factors: Optional[str] = Form(None), # Will be a JSON string list
-    dematel_matrix: Optional[str] = Form(None)  # Will be a JSON string 2D list
+    dematel_matrix: Optional[str] = Form(None),  # Will be a JSON string 2D list
+    # --- DESCRIPTIVE ANALYSIS PARAMETERS ---
+    descriptive_analysis_types: Optional[str] = Form(None),  # JSON string list of analysis types
+    context_file: Optional[UploadFile] = File(None)
 ):
     """
     Routes analysis requests based on analysis_type.
@@ -81,11 +84,7 @@ async def run_analysis_router(
             print(f"Processing pasted text data.")
         else:
             # Raise error only if the specific analysis type *requires* data
-            
-            # --------------------- THIS IS THE FIX ---------------------
-            # "dematel" has been REMOVED from this list
-            if analysis_type in ["sem", "predictive"]: 
-            # -----------------------------------------------------------
+            if analysis_type in ["sem", "predictive", "descriptive"]:  # Added "descriptive"
                  raise HTTPException(status_code=400, detail="No data provided. Please either upload a file or paste text data.")
             # Allow analysis types that might not need data (if any)
 
@@ -143,7 +142,6 @@ async def run_analysis_router(
             model = modelType if modelType else "auto" # Default 'auto'
 
             print(f"Routing to Predictive Analysis...")
-            # (Keep your existing predictive print statements...)
 
             results = await predictive_analysis.perform_prediction(
                 data_payload=data_payload,
@@ -159,7 +157,6 @@ async def run_analysis_router(
 
         # --- DEMATEL ANALYSIS ROUTE ---
         elif analysis_type == "dematel":
-            # This logic will now be reached
             if not dematel_factors or not dematel_matrix:
                 raise HTTPException(status_code=400, detail="Missing AI-generated factors or matrix for DEMATEL analysis.")
             
@@ -176,6 +173,37 @@ async def run_analysis_router(
             results = await dematel_analysis.perform_dematel(
                 factors=factors_list,
                 direct_matrix=matrix_list
+            )
+            return JSONResponse(content=results)
+
+        # --- DESCRIPTIVE ANALYSIS ROUTE ---
+        elif analysis_type == "descriptive":
+            # --- Descriptive-specific file validation ---
+            if is_file_upload:
+                filename_lower = data_file.filename.lower()
+                if not filename_lower.endswith(('.csv', '.xlsx', '.xls')):
+                    raise HTTPException(status_code=400, detail="Invalid file type for Descriptive Analysis. Please upload a CSV or Excel file.")
+
+            if not data_payload: # Descriptive requires data
+                raise HTTPException(status_code=400, detail="Descriptive analysis requires data (file or text).")
+
+            # Parse analysis types (optional parameter)
+            analysis_types_list = None
+            if descriptive_analysis_types:
+                try:
+                    analysis_types_list = json.loads(descriptive_analysis_types)
+                except json.JSONDecodeError:
+                    raise HTTPException(status_code=400, detail="Invalid JSON format for analysis types.")
+            
+            print(f"Routing to Descriptive Analysis...")
+            print(f"   Analysis types requested: {analysis_types_list or 'all (default)'}")
+            
+            results = await descriptive_analysis.perform_descriptive_analysis(
+                data_payload=data_payload,
+                is_file_upload=is_file_upload,
+                input_filename=input_filename,
+                context_file=context_file, # <-- ADD THIS LINE
+                analysis_types=analysis_types_list
             )
             return JSONResponse(content=results)
 

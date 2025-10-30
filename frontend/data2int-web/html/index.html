@@ -3213,7 +3213,18 @@ document.addEventListener("DOMContentLoaded", () => {
                          <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
                          <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">${template.description}</p>
                         <div class="glass-container max-w-2xl mx-auto w-full p-6 space-y-4">
-                             <h3 class="text-xl font-bold mb-4 text-white">Upload Your Dataset & Context</h3>
+                             
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-xl font-bold text-white">Upload Your Dataset & Context</h3>
+                                <button type="button" id="descConfigExamplesBtn" class="text-xs px-2 py-1 border border-white/30 rounded text-white/80 hover:bg-white/10 hover:text-white transition-all">View Examples</button>
+                            </div>
+                            <div id="descConfigExamples" class="hidden mb-4 p-3 bg-black/20 border border-white/15 rounded-lg">
+                                <div class="text-xs font-medium text-white/90 mb-2">📋 How to Use Descriptive Analysis</div>
+                                <div class="space-y-2 text-xs">
+                                    <div id="descExampleContent" class="text-white/80">Loading example...</div>
+                                </div>
+                            </div>
+
                             <div class="space-y-4">
                                 <div>
                                     <label for="descriptiveContextFile" class="block text-sm font-medium text-gray-200 mb-2">Company Document (.txt, .docx)</label>
@@ -3269,10 +3280,112 @@ document.addEventListener("DOMContentLoaded", () => {
         };
         attachListener("descriptiveFile", "descriptiveFileLabel");
         attachListener("descriptiveContextFile", "descriptiveContextFileLabel");
+
+        // --- Add Example Toggle ---
+        const examplesBtn = $("descConfigExamplesBtn");
+        const examplesDiv = $("descConfigExamples");
+        const exampleContentEl = $("descExampleContent");
+
+        if (examplesBtn && examplesDiv && exampleContentEl) {
+            examplesBtn.addEventListener("click", () => {
+                const isHidden = examplesDiv.classList.toggle("hidden");
+                examplesBtn.textContent = isHidden ? "View Examples" : "Hide Examples";
+
+                if (!isHidden && exampleContentEl.textContent === "Loading example...") {
+                    // Populate with relevant descriptive analysis example following DEMATEL pattern
+                    exampleContentEl.innerHTML = `
+                        <div class="mb-4">
+                            <div class="flex items-center mb-2">
+                                <span class="text-green-400 mr-2">✅</span>
+                                <span class="text-sm font-medium text-green-400">GOOD EXAMPLE</span>
+                                <span class="text-xs text-white/60 ml-2">(Results in comprehensive statistical insights with clear patterns)</span>
+                            </div>
+                            
+                            <div class="bg-green-900/20 border border-green-500/30 rounded p-3 mb-3">
+                                <div class="text-xs text-white/90 mb-2"><strong>Company Document:</strong></div>
+                                <div class="text-xs text-white/80 mb-3">
+                                    "TechFlow Solutions seeks to understand performance drivers affecting customer satisfaction and revenue growth. 
+                                    Key areas of focus: regional performance variations, employee productivity trends, and customer retention patterns. 
+                                    Strategic priority: identify underperforming segments and optimization opportunities."
+                                </div>
+                                
+                                <div class="text-xs text-white/90 mb-2"><strong>CSV Data (quarterly metrics):</strong></div>
+                                <div class="bg-black/30 p-2 rounded font-mono text-xs text-white/90">
+Quarter,Revenue_Millions,Customer_Count,Satisfaction_Score,Employee_Count,Regional_Performance
+Q1_2023,12.5,285,4.2,125,North
+Q2_2023,13.8,295,4.1,132,North  
+Q3_2023,15.2,310,4.5,140,South
+Q4_2023,16.9,325,4.8,145,West</div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="flex items-center mb-2">
+                                <span class="text-red-400 mr-2">❌</span>
+                                <span class="text-sm font-medium text-red-400">BAD EXAMPLE</span>
+                                <span class="text-xs text-white/60 ml-2">(Results in limited insights and unclear patterns)</span>
+                            </div>
+                            
+                            <div class="bg-red-900/20 border border-red-500/30 rounded p-3">
+                                <div class="text-xs text-white/80 mb-3">
+                                    "Our company has some data and wants analysis. Please look at everything and tell us what's important."
+                                </div>
+                                
+                                <div class="bg-black/30 p-2 rounded font-mono text-xs text-white/90">
+Data1,Data2,Info,Stuff,$Revenue
+A,Good,5,Things,$15000
+B,Bad,3,Items,$12000</div>
+                            </div>
+                        </div>
+                        
+                        <div class="border-t border-white/20 pt-3">
+                            <div class="text-xs font-medium text-white/90 mb-2">📝 Key Differences Between Good & Bad Input:</div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                                <div>
+                                    <div class="text-green-400 font-medium mb-1">✅ Good Practices:</div>
+                                    <div class="text-white/80 space-y-1">
+                                        <div>• Clear business context and objectives</div>
+                                        <div>• Specific questions or focus areas</div>
+                                        <div>• Consistent column naming</div>
+                                        <div>• Clean numeric data (no symbols)</div>
+                                        <div>• Meaningful time periods</div>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <div class="text-red-400 font-medium mb-1">❌ Bad Practices:</div>
+                                    <div class="text-white/80 space-y-1">
+                                        <div>• Vague or missing context</div>
+                                        <div>• Generic column names</div>
+                                        <div>• Mixed data formats</div>
+                                        <div>• Currency symbols in numbers</div>
+                                        <div>• Inconsistent categorization</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="border-t border-white/20 pt-3 mt-3">
+                            <div class="text-xs font-medium text-white/90 mb-2">💡 How to Use This Tool:</div>
+                            <div class="text-xs text-white/80 space-y-1">
+                                <div>• <strong>Write naturally:</strong> Describe your situation in plain English</div>
+                                <div>• <strong>Be specific:</strong> Mention what you want to understand or improve</div>
+                                <div>• <strong>Clean your data:</strong> Use consistent formatting and clear column headers</div>
+                                <div>• <strong>Include context:</strong> Help the AI understand your business goals</div>
+                                <div>• <strong>Show relationships:</strong> The document explains what the numbers mean</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+        }
+        // --- End of Example Toggle ---
+
         $("generateBtn").addEventListener("click", handleGenerate);
         reattachActionListeners();
     }
-
+    
     function createPrescriptiveLayout_DA(template) {
         const contentContainer = $("templateDetailContent");
         contentContainer.className = "grid lg:grid-cols-1 gap-12";
@@ -8368,15 +8481,11 @@ The AI will read this and build the matrix for you."></textarea>
 
     async function handleDescriptiveAnalysis_DA() {
         const analysisResultContainer = $("analysisResult");
-        analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white mb-4">Performing Calculations...</h3><p class="text-white/80 mb-2">Calculating descriptive statistics...</p></div>`;
+        analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white mb-4">Performing Full Descriptive Analysis...</h3><p class="text-white/80 mb-2">Calculating statistics, generating visualizations, and deriving insights...</p></div>`;
         setLoading("generate", true); // Set loading state
 
-        const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
-        // *** MODEL NAME UPDATED HERE ***
-        const MODEL_NAME = "qwen3:30b-a3b"; // Switched to Qwen model
-        // *******************************
-
         try {
+            // 1. Gather Inputs
             const dataFile = $("descriptiveFile").files[0];
             const contextFile = $("descriptiveContextFile").files[0];
 
@@ -8384,175 +8493,60 @@ The AI will read this and build the matrix for you."></textarea>
                 throw new Error("❌ Please upload a CSV data file.");
             }
 
-            const csvText = await extractTextFromFile(dataFile);
-            // Use existing robust parseCSV function
-            const { header, rows } = parseCSV(csvText);
+            // 2. Prepare FormData for your Python backend
+            const formData = new FormData();
+            formData.append("analysis_type", "descriptive");
+            formData.append("data_file", dataFile, dataFile.name);
 
-            if (rows.length === 0) {
-                 throw new Error("❌ The CSV file appears empty or could not be parsed correctly.");
-            }
-
-            // --- Client-Side Statistical Calculations (Improved) ---
-            console.log(`Calculating stats for ${rows.length} rows and ${header.length} columns.`);
-            const numerical_summary = [];
-            const categorical_summary = [];
-            const visualizations = [];
-
-            // (Keep the existing calculation logic from the previous correct version here)
-            header.forEach((col) => {
-                const values = rows.map(r => r[col]).filter(v => v !== undefined && v !== null && v !== '');
-                if (values.length === 0) { console.warn(`Skipping empty column: ${col}`); return; }
-                const numericValues = values.map(v => typeof v === 'string' ? parseFloat(v.replace(/[^0-9.-]+/g,"")) : Number(v)).filter(n => !isNaN(n));
-                const isNumeric = (numericValues.length / values.length) > 0.8;
-
-                if (isNumeric && numericValues.length > 1) {
-                    const count = numericValues.length;
-                    const sum = numericValues.reduce((a, b) => a + b, 0);
-                    const mean = sum / count;
-                    const sorted = [...numericValues].sort((a, b) => a - b);
-                    const median = count % 2 === 0 ? (sorted[count / 2 - 1] + sorted[count / 2]) / 2 : sorted[Math.floor(count / 2)];
-                    const min = sorted[0];
-                    const max = sorted[sorted.length - 1];
-                    const variance = numericValues.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b, 0) / (count > 1 ? count - 1 : 1);
-                    const std_dev = count > 1 ? Math.sqrt(variance) : 0;
-                    const q1Index = Math.max(0, Math.floor((count + 1) * 0.25) - 1);
-                    const q3Index = Math.min(count - 1, Math.floor((count + 1) * 0.75) - 1);
-                    const q1 = sorted[q1Index];
-                    const q3 = sorted[q3Index];
-                    const iqr = (q3 !== undefined && q1 !== undefined) ? q3 - q1 : undefined;
-                    numerical_summary.push({ variable: col, count, mean, median, std_dev, min, max, q1, q3, iqr });
-                    visualizations.push({ chart_type: "histogram", variable: col, data: numericValues, title: `Distribution of ${col}` });
-                } else {
-                    const frequencies = {};
-                    values.forEach((v) => { const key = String(v); frequencies[key] = (frequencies[key] || 0) + 1; });
-                    const unique_categories = Object.keys(frequencies).length;
-                     const modeEntry = Object.entries(frequencies).sort(([,a],[,b]) => b-a)[0];
-                     const mode = modeEntry ? modeEntry[0] : "N/A";
-                    const freqArray = Object.entries(frequencies).map(([category, count]) => ({ category, count, percentage: (count / values.length) * 100 })).sort((a,b) => b.count - a.count);
-                    categorical_summary.push({ variable: col, count: values.length, unique_categories, mode, frequencies: freqArray });
-                    const MAX_BAR_CATEGORIES = 15;
-                    const topFreq = freqArray.slice(0, MAX_BAR_CATEGORIES);
-                    visualizations.push({ chart_type: "bar", variable: col, data: topFreq.reduce((obj, item) => { obj[item.category] = item.count; return obj; }, {}), title: `Frequency of Top ${topFreq.length} Categories in ${col}` + (freqArray.length > MAX_BAR_CATEGORIES ? ' (Truncated)' : '') });
-                }
-            });
-
-            const summary = {
-                rows: rows.length, columns: header.length, numerical_vars: numerical_summary.length, categorical_vars: categorical_summary.length,
-                interpretation: `The dataset contains ${rows.length} records across ${header.length} variables (${numerical_summary.length} numerical, ${categorical_summary.length} categorical). Analysis summarizes central tendency, dispersion, and frequencies.`
-            };
-
-            // --- LLM Insights Generation ---
-            analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6">...</div><h3 class="text-xl font-semibold text-white mb-4">Generating Accurate Business Insights...</h3><p class="text-white/80 mb-2">Applying strict checks to statistical interpretation...</p></div>`;
-
-            let businessContext = "No additional business context provided.";
+            // Add the context file if it exists
             if (contextFile) {
-                 try { businessContext = await extractTextFromFile(contextFile); } catch(e) { console.warn("Could not read context file:", e.message); }
+                formData.append("context_file", contextFile, contextFile.name); 
+                // NOTE: You will need to add `context_file: Optional[UploadFile] = File(None)` 
+                // to your main.py router to accept this.
             }
-            if (businessContext.length > 7000) { businessContext = businessContext.substring(0, 7000) + "... (truncated)"; }
+            
+            // We are NOT sending analysis_types, so the backend will run all of them.
 
-            // Prepare summary for prompt
-            const statsSummaryForPrompt = {
-                overview: summary,
-                numerical_highlights: numerical_summary.map(n => ({
-                     variable: n.variable,
-                     mean: n.mean?.toFixed(2),
-                     median: n.median?.toFixed(2),
-                     std_dev: n.std_dev?.toFixed(2),
-                     min: n.min?.toFixed(2),
-                     max: n.max?.toFixed(2)
-                 })),
-                categorical_highlights: categorical_summary.map(c => ({
-                     variable: c.variable,
-                     unique_categories: c.unique_categories,
-                     mode: c.mode,
-                     top_category_pct: (c.frequencies[0]?.percentage || 0).toFixed(1) + '%'
-                 }))
-            };
-
-            // --- Prompt with Explicit Accuracy Constraints (kept from previous version) ---
-            const prompt = `
-                You are a meticulous senior data analyst presenting findings from a descriptive analysis. Accuracy is paramount. Use the provided statistics and business context to generate insightful recommendations.
-
-                **BUSINESS CONTEXT:**
-                """
-                ${businessContext}
-                """
-
-                **CALCULATED STATISTICAL SUMMARY:**
-                """
-                ${JSON.stringify(statsSummaryForPrompt, null, 2)}
-                """
-
-                **TASK:**
-                Generate **6 to 8** specific, actionable business insights. Each insight MUST be accurate and directly interpret the provided STATISTICAL SUMMARY within the BUSINESS CONTEXT.
-
-                **For each insight:**
-                1.  **Observation:** State the specific statistical finding *exactly* as calculated (e.g., "Mean for 'Age' (XX.X) is [correctly state: higher/lower] than Median (YY.Y)"). Verify all numerical comparisons. Do NOT use terms like 'dominance' or 'concentration' for numerical variable means/medians; use range, mean, median, std dev for interpretation.
-                2.  **Accurate Interpretation:** Explain the practical meaning.
-                    * **SKEWNESS RULE (Apply Strictly):**
-                        * If Mean > Median: Interpret as potential **right-skewness** (tail to higher values, possible high outliers).
-                        * If Mean < Median: Interpret as potential **left-skewness** (tail to lower values, possible low outliers).
-                        * If Mean ≈ Median: Interpret as roughly symmetric.
-                    * **Variability:** High Std Dev relative to Mean implies high variability/inconsistency. Low Std Dev implies consistency.
-                    * **Categorical Mode:** A high percentage for the mode indicates concentration in that category.
-                3.  **Business Implication/Recommendation:** Connect the *accurate* interpretation to the BUSINESS CONTEXT. Suggest potential actions, investigations, or strategic points. **If a finding (e.g., 'Retail_Sales' stats) seems unrelated to the primary Business Context (e.g., an e-commerce description), explicitly note this potential mismatch** but still provide a recommendation based on the statistic itself.
-
-                **CRITICAL REQUIREMENTS:**
-                - **NUMERICAL ACCURACY:** All statements about numbers (e.g., comparisons) MUST be correct.
-                - **CORRECT INTERPRETATION:** Skewness direction MUST follow the Mean vs. Median rule. Variability interpretation must be logical.
-                - **Context Link:** Link insights to BUSINESS CONTEXT where possible, noting mismatches if necessary.
-                - **Actionable:** Insights should lead to potential next steps.
-                - **Synthesize:** Go beyond reporting numbers; explain *why* they matter.
-
-                **RETURN FORMAT:**
-                Provide ONLY a valid JSON object with a list of **6 to 8** insight objects:
-                {
-                  "business_insights": [
-                    {
-                      "observation": "Accurate observation statement...",
-                      "interpretation": "Correct interpretation based on rules...",
-                      "business_implication": "Recommendation linked to context (or noting mismatch)..."
-                    },
-                    // ... 6 to 8 insights total ...
-                  ]
-                }
-            `;
-
-            console.log(`Sending ACCURACY-FOCUSED Descriptive Insights prompt to ${MODEL_NAME}...`);
-            const response = await fetch(OLLAMA_URL, {
+            // 3. Call your FastAPI Backend (NOT Ollama)
+            const API_URL = "https://analysis.data2int.com/api/data-analysis"; // Your main API endpoint
+            
+            const response = await fetch(API_URL, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ model: MODEL_NAME, prompt: prompt, stream: false, format: "json", options: { num_ctx: 32768 }}) // Ensure num_ctx is appropriate
+                body: formData,
+                // Add Authorization headers if your API requires them
             });
 
-            if (!response.ok) throw new Error(`API error: ${response.status}`);
-            const llmData = await response.json();
+            if (!response.ok) {
+                let errorDetail = `API Error: ${response.status}`;
+                try {
+                    const errorJson = await response.json();
+                    errorDetail = errorJson.detail || `API Error: ${response.status}`;
+                } catch (e) {
+                    // Fallback if error response isn't JSON
+                    errorDetail = `API Error: ${response.status} - ${response.statusText}`;
+                }
+                throw new Error(errorDetail);
+            }
 
-            let insightsData;
-             try {
-                 insightsData = JSON.parse(llmData.response);
-                 if (!insightsData.business_insights || !Array.isArray(insightsData.business_insights) || (insightsData.business_insights.length > 0 && typeof insightsData.business_insights[0] !== 'object')) {
-                     console.warn("Insights received but not in the expected object format. Attempting fallback.", insightsData.business_insights);
-                     if (insightsData.business_insights && insightsData.business_insights.length > 0 && typeof insightsData.business_insights[0] === 'string') {
-                          insightsData.business_insights = insightsData.business_insights.map(str => ({ observation: "General Insight", interpretation: str, business_implication: "Review manually." }));
-                     } else { throw new Error("Insights format incorrect."); }
-                 }
-                 console.log(`Successfully parsed ${insightsData.business_insights.length} Insights (Accuracy Check) using ${MODEL_NAME}.`);
-             } catch(e) {
-                 console.error(`Failed to parse Insights JSON (Accuracy Check) using ${MODEL_NAME}:`, llmData.response, e);
-                 insightsData = { business_insights: [{ observation: "Error", interpretation: "Could not generate insights.", business_implication: "Review stats manually." }] };
-             }
+            const parsedData = await response.json();
+            
+            // 4. Check if the backend returned its *own* error
+            if (parsedData.error) {
+                throw new Error(`Backend Analysis Error: ${parsedData.error}`);
+            }
 
-            // --- Assemble Final Data Object ---
-            const finalData = { summary, numerical_summary, categorical_summary, visualizations, business_insights: insightsData.business_insights || [] };
-
-            renderDescriptivePage_DA(analysisResultContainer, finalData); // Use the existing (corrected) renderer
+            // 5. Pass the *entire response* to your teammate's render function
+            // This is the critical step. We are now trusting the Python backend
+            // to send the *exact* JSON structure that renderDescriptivePage_DA expects.
+            renderDescriptivePage_DA(analysisResultContainer, parsedData);
 
         } catch (error) {
-            console.error(`Error during Descriptive Analysis (Accuracy Check) using ${MODEL_NAME}:`, error);
+            console.error(`Error in handleDescriptiveAnalysis_DA:`, error);
             analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
             setLoading("generate", false);
         }
+        // 'finally' block is not needed here because setLoading(false) is handled 
+        // by renderDescriptivePage_DA on success and by the catch block on error.
     }
 
     async function handleParetoFishboneAnalysis() {
