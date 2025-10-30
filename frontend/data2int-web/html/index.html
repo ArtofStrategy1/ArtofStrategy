@@ -7769,51 +7769,259 @@ function reattachActionListeners() {
     }
 }
 
-    function createDematelLayout(template) {
-        const contentContainer = $("templateDetailContent");
-        contentContainer.className = "grid lg:grid-cols-1 gap-12";
-        contentContainer.innerHTML = `
-            <div class="lg:col-span-1">
-                <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
-                <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">${template.description}</p>
-                <div class="max-w-2xl mx-auto w-full">
-                    <div class="glass-container p-6 space-y-4">
-                        <h3 class="text-xl font-bold mb-4 text-white">System or Problem Description</h3>
-                        <div class="input-radio-group">
-                            <input type="radio" name="inputType" id="textInput" class="input-radio" checked>
-                            <label for="textInput" class="input-radio-label">Text Input</label>
-                            <input type="radio" name="inputType" id="docUpload" class="input-radio">
-                            <label for="docUpload" class="input-radio-label">Document Upload</label>
+/**
+ * Creates the DOM layout for the DEMATEL analysis page.
+ * --- UPDATED WITH ENHANCED EXAMPLE ---
+ * - Removed the AI Preview step.
+ * - Added a text preview for uploaded files, just like the SEM layout.
+ * - Enhanced example with full spectrum of relationship intensities.
+ * @param {object} template - The template object with title and description.
+ */
+function createDematelLayout(template) {
+    const contentContainer = $("templateDetailContent");
+    contentContainer.className = "grid lg:grid-cols-1 gap-12"; // Single column layout
+
+    // --- HTML Structure ---
+contentContainer.innerHTML = `
+    <div class="lg:col-span-1">
+        <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
+        <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">${template.description}</p>
+
+        <div class="max-w-2xl mx-auto w-full">
+            <div class="glass-container p-6 space-y-6">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-xl font-bold text-white">Analysis Configuration</h3>
+                    <button type="button" id="configExamplesBtn" class="text-xs px-2 py-1 border border-white/30 rounded text-white/80 hover:bg-white/10 hover:text-white transition-all">View Examples</button>
+                </div>
+                
+                <div id="configExamples" class="hidden mb-4 p-3 bg-black/20 border border-white/15 rounded-lg">
+                    <div class="text-xs font-medium text-white/90 mb-3">📋 Good vs Bad DEMATEL Input Examples</div>
+                    
+                    <!-- GOOD EXAMPLE -->
+                    <div class="mb-6">
+                        <div class="flex items-center mb-2">
+                            <span class="text-green-300 font-semibold text-xs mr-2">✅ GOOD EXAMPLE</span>
+                            <span class="text-green-200 text-xs">(Results in stable analysis with clear cause/effect separation)</span>
                         </div>
-                        <div id="textInputArea">
-                            <textarea id="dematelContent" class="input-field h-48" placeholder="Describe the system and its interacting factors. For example, 'Factors affecting product adoption include perceived usefulness, ease of use, social influence, and cost...'"></textarea>
+                        <div class="bg-green-900/20 border border-green-500/30 p-3 rounded font-mono text-white/90 relative text-xs">
+                            <button class="absolute top-1 right-1 text-xs px-1 py-0.5 bg-white/10 rounded hover:bg-white/20" onclick="copyToClipboard(this, 'We identified five factors: (1) Product Quality, (2) Website Usability, (3) Customer Service, (4) Delivery Speed, and (5) Price Competitiveness.\\n\\nProduct Quality causes a very strong increase in Customer Service complaints. Bad Website Usability also strongly influences Customer Service. Slow Delivery Speed has a moderate impact on Price Competitiveness. Price Competitiveness has little influence on Product Quality since we maintain standards. Delivery Speed weakly influences Price Competitiveness because faster shipping costs more. Customer Service has very little impact on Website Usability since support issues rarely lead to website changes.')">Copy</button>
+                            We identified five factors: (1) Product Quality, (2) Website Usability, (3) Customer Service, (4) Delivery Speed, and (5) Price Competitiveness.<br><br>
+                            Product Quality causes a <strong>very strong</strong> increase in Customer Service complaints. Bad Website Usability also <strong>strongly</strong> influences Customer Service. Slow Delivery Speed has a <strong>moderate</strong> impact on Price Competitiveness. Price Competitiveness has <strong>little influence</strong> on Product Quality since we maintain standards. Delivery Speed <strong>weakly influences</strong> Price Competitiveness because faster shipping costs more. Customer Service has <strong>very little impact</strong> on Website Usability since support issues rarely lead to website changes.
                         </div>
-                        <div id="docUploadArea" class="hidden">
-                            <div class="input-file-wrapper">
-                                <label for="dematelFile" id="dematelFileLabel" class="input-file-btn">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
-                                    <span class="file-name">Select .txt or .docx file...</span>
-                                </label>
-                                <input type="file" id="dematelFile" class="input-file" accept=".txt,.docx">
+                    </div>
+
+                    <!-- BAD EXAMPLE -->
+                    <div class="mb-6">
+                        <div class="flex items-center mb-2">
+                            <span class="text-red-300 font-semibold text-xs mr-2">❌ BAD EXAMPLE</span>
+                            <span class="text-red-200 text-xs">(Results in mathematical instability and unclear insights)</span>
+                        </div>
+                        <div class="bg-red-900/20 border border-red-500/30 p-3 rounded font-mono text-white/90 relative text-xs">
+                            <button class="absolute top-1 right-1 text-xs px-1 py-0.5 bg-white/10 rounded hover:bg-white/20" onclick="copyToClipboard(this, 'Our company has these success factors: Leadership, Innovation, Market Position, Financial Performance, Employee Satisfaction, Customer Relationships, Technology Infrastructure, Brand Reputation.\\n\\nLeadership affects everything in the company very strongly. Innovation influences all other factors significantly. Market Position impacts everything else. Financial Performance drives all business decisions and affects every single factor. Employee Satisfaction influences everything because happy employees work better. All factors influence each other bidirectionally with maximum strength.')">Copy</button>
+                            Our company has these success factors: Leadership, Innovation, Market Position, Financial Performance, Employee Satisfaction, Customer Relationships, Technology Infrastructure, Brand Reputation.<br><br>
+                            Leadership affects <strong>everything</strong> in the company <strong>very strongly</strong>. Innovation influences <strong>all other factors significantly</strong>. Market Position impacts <strong>everything else</strong>. Financial Performance drives all business decisions and affects <strong>every single factor</strong>. Employee Satisfaction influences <strong>everything</strong> because happy employees work better. <strong>All factors influence each other bidirectionally with maximum strength.</strong>
+                        </div>
+                    </div>
+
+                    <!-- KEY DIFFERENCES -->
+                    <div class="text-white/60 text-xs space-y-1 mb-4">
+                        <div class="font-medium text-white/80">Key Differences Between Good & Bad Input:</div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+                            <div>
+                                <div class="text-green-300 font-medium">✅ Good Practices:</div>
+                                <div>• Varied intensity words (very strong → very little)</div>
+                                <div>• Specific explanations for each relationship</div>
+                                <div>• Realistic relationship patterns</div>
+                                <div>• 5-7 factors (manageable complexity)</div>
+                                <div>• Not everything affects everything</div>
+                            </div>
+                            <div>
+                                <div class="text-red-300 font-medium">❌ Bad Practices:</div>
+                                <div>• "Everything affects everything" mentality</div>
+                                <div>• All relationships are "maximum strength"</div>
+                                <div>• Too many factors (8+ creates complexity)</div>
+                                <div>• Vague language without explanations</div>
+                                <div>• "Bidirectional with maximum strength"</div>
                             </div>
                         </div>
-                        <button id="generateBtn" class="btn btn-primary w-full text-lg py-3">
-                            <span id="generateBtnText">Analyze Causal Factors</span>
-                            <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
-                        </button>
+                    </div>
+
+                    <!-- HOW TO USE INSTRUCTIONS -->
+                    <div class="bg-blue-900/20 border border-blue-500/30 p-3 rounded">
+                        <div class="text-blue-300 font-semibold text-xs mb-2">📝 How to Use This Tool:</div>
+                        <div class="text-white/80 text-xs space-y-1">
+                            <div>• <strong>Just write naturally!</strong> Describe your system in plain English.</div>
+                            <div>• <strong>List your factors:</strong> Use a numbered list like "(1) Factor Name" for clarity.</div>
+                            <div>• <strong>Describe relationships:</strong> Use words like "strongly influences," "moderately affects," "weakly impacts," or "has little impact on."</div>
+                            <div>• <strong>Show the full spectrum:</strong> Mix very strong, strong, moderate, weak, and very weak relationships.</div>
+                            <div>• <strong>Explain WHY:</strong> Add "because..." to help the AI understand the logic.</div>
+                            <div>• <strong>The AI does the rest:</strong> You don't need to provide scales or matrices.</div>
+                        </div>
                     </div>
                 </div>
-                <div class="mt-12">
-                    <h2 class="text-3xl font-bold mb-4 text-center">Analysis Results</h2>
-                    <div id="analysisResult" class="glass-container min-h-[300px] overflow-x-auto"></div>
-                    <div id="analysisActions" class="text-center mt-4 space-x-2 hidden">
-                        <button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>
-                        <button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
+
+                <div class="input-radio-group">
+                    <input type="radio" name="dematelInputType" id="dematelInputTextToggle" class="input-radio" checked>
+                    <label for="dematelInputTextToggle" class="input-radio-label">Text Input</label>
+                    <input type="radio" name="dematelInputType" id="dematelInputFileToggle" class="input-radio">
+                    <label for="dematelInputFileToggle" class="input-radio-label">Document Upload</label>
+                </div>
+
+                <div id="dematelTextInputArea">
+                    <label for="dematelContent" class="block text-sm font-medium text-gray-200 mb-2">System or Problem Description</label>
+                    <textarea id="dematelContent" class="input-field h-48" placeholder="Describe your system in natural language. 
+List your factors, like '(1) My First Factor'.
+Then, describe their relationships using varied intensities: 
+'Factor A strongly influences Factor B...'
+'Factor C has little impact on Factor D...'
+'Factor E very weakly affects Factor F...'
+The AI will read this and build the matrix for you."></textarea>
+                    <div id="dematelTextError" class="text-red-400 text-sm mt-2"></div>
+                </div>
+
+                <div id="dematelFileUploadArea" class="hidden">
+                    <label for="dematelFile" class="block text-sm font-medium text-gray-200 mb-2">Upload Document (.txt, .docx)</label>
+                    <div class="input-file-wrapper">
+                        <label for="dematelFile" id="dematelFileLabel" class="input-file-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                            <span class="file-name">Select .txt or .docx file...</span>
+                        </label>
+                        <input type="file" id="dematelFile" class="input-file" accept=".txt,.docx">
+                    </div>
+                    <div id="dematelFileError" class="text-red-400 text-sm mt-2"></div>
+
+                    <div id="dematelFilePreviewContainer" class="hidden space-y-2 mt-4">
+                        <label class="block text-sm font-medium text-gray-200">File Content Preview (First 10 lines)</label>
+                        <pre id="dematelFilePreview" class="bg-black/20 p-3 rounded-lg text-white/80 text-xs overflow-x-auto h-32"></pre>
                     </div>
                 </div>
-            </div>`;
-        setupInputToggle("dematelFile", "dematelFileLabel", "textInputArea", "docUploadArea");
+
+                <button id="generateBtn" class="btn btn-primary w-full text-lg py-3">
+                    <span id="generateBtnText">Analyze Causal Factors</span>
+                    <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
+                </button>
+            </div>
+        </div>
+
+        <div class="mt-12">
+            <h2 class="text-3xl font-bold mb-4 text-center">Analysis Results</h2>
+            <div id="analysisResult" class="glass-container min-h-[300px] overflow-x-auto">
+            </div>
+            <div id="analysisActions" class="text-center mt-4 space-x-2 hidden">
+                <button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>
+                <button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
+            </div>
+        </div>
+    </div>
+`;
+
+    // --- Helper function for copying to clipboard ---
+    if (!window.copyToClipboard) {
+        window.copyToClipboard = function(button, text) {
+            navigator.clipboard.writeText(text.replace(/\\n/g, '\n')).then(() => {
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                }, 2000);
+            });
+        };
     }
+
+    // --- Attach Core Event Listeners ---
+    // This button now correctly calls your main 'handleGenerate' router
+    $("generateBtn").addEventListener("click", handleGenerate); 
+    
+    reattachActionListeners(); 
+
+    // --- Add Example Toggle Event Listener ---
+    $("configExamplesBtn").addEventListener("click", function() {
+        const exampleDiv = $("configExamples");
+        const isHidden = exampleDiv.classList.contains("hidden");
+        exampleDiv.classList.toggle("hidden");
+        this.textContent = isHidden ? "Hide Examples" : "View Examples";
+    });
+
+    // --- Restore Cached Results (if any) ---
+    if (analysisCache[currentTemplateId]) {
+        $("analysisResult").innerHTML = analysisCache[currentTemplateId];
+        $("analysisActions").classList.remove("hidden");
+        if (window.reattachTabListeners) {
+             reattachTabListeners($("analysisResult"));
+        }
+    } else {
+        $("analysisResult").innerHTML = '<div class="text-white/60 p-8 text-center">Your generated analysis will appear here.</div>';
+        $("analysisActions").classList.add("hidden");
+    }
+
+    // --- Get References to DEMATEL-Specific DOM Elements ---
+    const fileInput = $("dematelFile");
+    const textInput = $("dematelContent");
+    const fileToggle = $("dematelInputFileToggle");
+    const textToggle = $("dematelInputTextToggle");
+    const fileArea = $("dematelFileUploadArea");
+    const textArea = $("dematelTextInputArea");
+    const filePreviewContainer = $("dematelFilePreviewContainer");
+    const filePreview = $("dematelFilePreview");
+
+    // --- Attach Input Event Listeners ---
+    fileToggle.addEventListener("change", () => {
+        fileArea.classList.remove("hidden");
+        textArea.classList.add("hidden");
+        // Show preview if a file is already selected
+        if (fileInput.files.length > 0) {
+            filePreviewContainer.classList.remove("hidden");
+        }
+    });
+    textToggle.addEventListener("change", () => {
+        fileArea.classList.add("hidden");
+        textArea.classList.remove("hidden");
+        // Hide file preview when switching to text input
+        filePreviewContainer.classList.add("hidden");
+    });
+
+    if (fileInput) {
+        fileInput.addEventListener("change", async () => { // Make async
+            const label = $("dematelFileLabel");
+            const fileNameSpan = label.querySelector(".file-name");
+            const fileError = $("dematelFileError");
+            
+            fileError.textContent = ""; // Clear errors
+            
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                fileNameSpan.textContent = file.name;
+                label.classList.add("has-file");
+                
+                // --- NEW PREVIEW LOGIC ---
+                try {
+                    // extractTextFromFile is a global function in your script
+                    const text = await extractTextFromFile(file); 
+                    const first10Lines = text.split('\n').slice(0, 10).join('\n');
+                    filePreview.textContent = first10Lines || "(File appears to be empty)";
+                    filePreviewContainer.classList.remove("hidden");
+                } catch (err) {
+                    console.error("File preview error:", err);
+                    fileError.textContent = `Error reading file: ${err.message}`;
+                    filePreviewContainer.classList.add("hidden");
+                }
+                // --- END NEW PREVIEW LOGIC ---
+
+            } else { 
+                fileNameSpan.textContent = "Select .txt or .docx file...";
+                label.classList.remove("has-file");
+                filePreviewContainer.classList.add("hidden"); // Hide on file deselect
+                filePreview.textContent = "";
+            }
+        });
+    }
+
+    if (textInput) {
+        textInput.addEventListener("input", () => {
+             $("dematelTextError").textContent = "";
+        });
+    }
+}
 
     function setupInputToggle(fileInputId, fileLabelId, textInputAreaId, docUploadAreaId) {
         $("generateBtn").addEventListener("click", handleGenerate);
@@ -11544,359 +11752,1179 @@ function renderPredictiveLearnPanel(learnPanel, data) {
     `;
 }
 
-function renderDematelAnalysisPage(container, data) {
+/**
+ * Handles the DEMATEL analysis request.
+ * --- THIS IS THE "REAL" VERSION - v2 ---
+ * Step 1: Gets user text and sends it to OLLAMA with a highly-structured,
+ * "chain-of-thought" prompt to force accurate factor/matrix generation.
+ * Step 2: Sends the OLLAMA result to our Python backend for math.
+ * Step 3: Renders the final result from the Python backend.
+ */
+async function handleDematelAnalysis() {
+    // API URLs
+    const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
+    const PYTHON_BACKEND_URL = "https://analysis.data2int.com/api/data-analysis";
+    
+    // Model to use for AI analysis
+    const MODEL_NAME = "llama3.1:latest"; // Sticking with Llama 3.1
+
+    const analysisResultContainer = $("analysisResult");
+    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div></div><div></div><div></div></div><h3 class="text-xl font-semibold text-white">Starting DEMATEL Analysis...</h3><p class="text-white/80 mb-2">Please wait...</p></div>`;
+    
+    // Get references to input elements
+    const textInput = $("dematelContent");
+    const fileInput = $("dematelFile");
+    const textError = $("dematelTextError");
+    const fileError = $("dematelFileError");
+
+    // Determine input type
+    const isFileInput = $("dematelInputFileToggle").checked;
+    
+    // Clear previous errors
+    textError.textContent = "";
+    fileError.textContent = "";
+
+    try {
+        // 1. Set loading state
+        setLoading("generate", true); 
+        analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div></div><div></div><div></div></div><h3 class="text-xl font-semibold text-white">Step 1/3: Reading and Understanding Text...</h3><p class="text-white/80 mb-2">Extracting key factors from your document...</p></div>`;
+
+        // 2. Get User Text (from file or textarea)
+        let userText = "";
+        if (isFileInput) {
+            const file = fileInput.files[0];
+            if (!file) throw new Error("Please select a .txt or .docx file.");
+            userText = await extractTextFromFile(file); 
+        } else {
+            userText = textInput.value.trim();
+            if (!userText) throw new Error("Please enter a system or problem description.");
+        }
+        
+        // Truncate if necessary (Llama 3.1 has a large context)
+        const MAX_CONTEXT_LENGTH = 16000;
+        if (userText.length > MAX_CONTEXT_LENGTH) {
+            console.warn(`Text truncated to ${MAX_CONTEXT_LENGTH} characters for analysis.`);
+            userText = userText.substring(0, MAX_CONTEXT_LENGTH);
+        }
+
+        // 3. --- STEP 1: CALL OLLAMA (with new, much better prompt) ---
+        analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div></div><div></div><div></div></div><h3 class="text-xl font-semibold text-white">Step 2/3: Generating Influence Matrix...</h3><p class="text-white/80 mb-2">AI is quantifying the causal relationships (this may take a moment)...</p></div>`;
+
+        // --- NEW ADVANCED PROMPT ---
+        const prompt = `
+            You are a meticulous DEMATEL analyst. Your task is to perform a rigorous analysis of the provided text.
+
+            **USER TEXT:**
+            """
+            ${userText}
+            """
+
+            **YOUR TASKS (Follow this order):**
+
+            **TASK 1: Extract Factors**
+            First, carefully read the text and identify the key named factors. List them.
+            *Example:*
+            * Factors: ["Factor 1", "Factor 2", "Factor 3"]
+
+            **TASK 2: Analyze Relationships (Chain of Thought)**
+            Second, think step-by-step. For each *pair* of factors, analyze the influence from the row factor to the column factor.
+            - Use this scale ONLY: 0=No, 1=Low, 2=Moderate, 3=Strong, 4=Very Strong.
+            - You MUST justify your rating with a quote or direct inference from the text.
+            - If the text does not describe an influence, the rating MUST be 0.
+            
+            *Example of thinking process:*
+            * (Factor 1 -> Factor 1): 0 (Self-influence is zero)
+            * (Factor 1 -> Factor 2): Rating 3 (Strong). Justification: The text states "Factor 1 strongly influences Factor 2."
+            * (Factor 1 -> Factor 3): Rating 0. Justification: The text does not mention any relationship.
+            * (Factor 2 -> Factor 1): Rating 1 (Low). Justification: The text implies "Factor 2 has some small impact on Factor 1."
+            * ... (continue for all pairs)
+
+            **TASK 3: Create Final JSON**
+            Finally, use your step-by-step analysis to build the final JSON object.
+            - The "factors" list must match the factors you identified.
+            - The "matrix" must be an N x N matrix corresponding to your justified ratings.
+            - The matrix row/column order MUST match the factor list order.
+
+            You must return ONLY the valid JSON object. Do not add any other text or explanations outside the JSON structure.
+
+            **JSON FORMAT:**
+            {
+              "factors": [
+                "Factor Name 1",
+                "Factor Name 2",
+                "..."
+              ],
+              "matrix": [
+                [0, 3, 0, ...], 
+                [1, 0, 0, ...],
+                [...],
+                ...
+              ]
+            }
+        `;
+        // --- END OF NEW PROMPT ---
+
+        const ollamaResponse = await fetch(OLLAMA_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ model: MODEL_NAME, prompt: prompt, stream: false, format: "json" })
+        });
+
+        if (!ollamaResponse.ok) {
+            throw new Error(`Ollama AI server error: ${ollamaResponse.statusText}`);
+        }
+
+        const ollamaResult = await ollamaResponse.json();
+        let aiData;
+        try {
+            aiData = JSON.parse(ollamaResult.response);
+            if (!aiData.factors || !aiData.matrix || !Array.isArray(aiData.factors) || !Array.isArray(aiData.matrix)) {
+                throw new Error("AI response missing 'factors' or 'matrix' key, or they are not arrays.");
+            }
+            if (aiData.factors.length !== aiData.matrix.length) {
+                throw new Error("AI returned a matrix size that does not match the factors list.");
+            }
+        } catch (e) {
+            console.error("Failed to parse AI response:", ollamaResult.response);
+            throw new Error(`AI returned invalid JSON. Error: ${e.message}`);
+        }
+
+        // 4. --- STEP 2: CALL PYTHON BACKEND ---
+        analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div></div><div></div><div></div></div><h3 class="text-xl font-semibold text-white">Step 3/3: Calculating DEMATEL Mathematics...</h3><p class="text-white/80 mb-2">Running matrix calculations and generating insights...</p></div>`;
+        
+        const backendFormData = new FormData();
+        backendFormData.append("analysis_type", "dematel");
+        backendFormData.append("dematel_factors", JSON.stringify(aiData.factors));
+        backendFormData.append("dematel_matrix", JSON.stringify(aiData.matrix));
+
+        const backendResponse = await fetch(PYTHON_BACKEND_URL, {
+            method: "POST",
+            body: backendFormData,
+        });
+
+        if (!backendResponse.ok) {
+            let errorDetail = `Python Backend Error: ${backendResponse.statusText}`;
+            try {
+                const errorData = await backendResponse.json();
+                errorDetail = errorData.detail || `Python Backend Error: ${backendResponse.statusText}`;
+            } catch (e) {}
+            throw new Error(errorDetail);
+        }
+
+        // 5. Process Final Response
+        const finalResults = await backendResponse.json();
+
+        // Check for the *data* object, not the HTML
+        if (finalResults.analysis_insights && finalResults.chart_data) {
+            renderDematelAnalysisPage(finalResults);
+        } else {
+            throw new Error("Received an invalid response from the Python backend.");
+        }
+
+    } catch (error) {
+        console.error("DEMATEL Analysis Error:", error);
+        const errorMessage = error.message || "An unknown error occurred.";
+        
+        analysisResultContainer.innerHTML = `<div class="error-message">${errorMessage}</div>`;
+        
+        if (isFileInput) {
+            fileError.textContent = errorMessage;
+        } else {
+            textError.textContent = errorMessage;
+        }
+
+    } finally {
+        // 6. Reset loading state
+        setLoading("generate", false);
+    }
+}
+
+/**
+ * Renders the full DEMATEL analysis page from the backend results.
+ * --- UPDATED ---
+ * This function now includes a smarter tab-switching logic
+ * that calls the chart rendering function *only when* the
+ * diagram tab is clicked, solving the visibility issue.
+ * @param {object} data - The full JSON response from the backend.
+ */
+function renderDematelAnalysisPage(data) {
+    const container = $("analysisResult");
+    if (!container) return;
+
     container.innerHTML = ""; // Clear loading state
 
-    // *** Validation for NUMERICAL data ***
-    if (!data || !data.factors || !data.total_influence_matrix || !data.influence_metrics || !data.analysis || !data.business_recommendations ||
-        data.factors.length !== data.total_influence_matrix.length || data.factors.length !== data.influence_metrics.length ||
-        (data.influence_metrics.length > 0 && (typeof data.influence_metrics[0].prominence !== 'number' || typeof data.influence_metrics[0].relation !== 'number'))) // Check for numbers
-    {
-        console.error("Inconsistent or incomplete NUMERICAL data passed to renderDematelAnalysisPage:", data);
-        container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete or inconsistent NUMERICAL analysis data received. Cannot render DEMATEL results.</div>`;
-        $("analysisActions").classList.add("hidden");
-        return;
-    }
-
-    const { factors, total_influence_matrix, influence_metrics, analysis, business_recommendations } = data;
-
+    // --- Create Tab Navigation (5 Tabs) ---
     const tabNav = document.createElement("div");
     tabNav.className = "flex flex-wrap border-b border-white/20 -mx-6 px-6";
-    // Adding back 'Influence Matrix' and adding 'Recommendations' + 'Learn'
     tabNav.innerHTML = `
-        <button class="analysis-tab-btn active" data-tab="summary">📋 Summary & Insights</button>
-        <button class="analysis-tab-btn" data-tab="diagram">📊 Causal Diagram</button>
-        <button class="analysis-tab-btn" data-tab="metrics">🔢 Influence Metrics</button>
-        <button class="analysis-tab-btn" data-tab="matrix">▦ Total Influence Matrix</button>
-        <button class="analysis-tab-btn" data-tab="rec">💡 Recommendations</button>
-        <button class="analysis-tab-btn" data-tab="learn">🎓 Learn DEMATEL</button>
+        <button class="analysis-tab-btn active py-3 px-5 text-white font-medium border-b-2 border-indigo-400 transition" data-tab="summary">📋 Summary & Insights</button>
+        <button class="analysis-tab-btn py-3 px-5 text-white/60 hover:text-white border-b-2 border-transparent transition" data-tab="diagram">📊 Causal Diagram</button>
+        <button class="analysis-tab-btn py-3 px-5 text-white/60 hover:text-white border-b-2 border-transparent transition" data-tab="metrics">🔢 Metrics & Matrix</button>
+        <button class="analysis-tab-btn py-3 px-5 text-white/60 hover:text-white border-b-2 border-transparent transition" data-tab="diagnostics">⚠️ Diagnostics</button>
+        <button class="analysis-tab-btn py-3 px-5 text-white/60 hover:text-white border-b-2 border-transparent transition" data-tab="learn">🎓 Learn DEMATEL</button>
     `;
     container.appendChild(tabNav);
 
+    // --- Create Tab Panels (5 Panels) ---
     const tabContent = document.createElement("div");
     container.appendChild(tabContent);
-    // Adding back matrix panel and adding rec + learn panels
     tabContent.innerHTML = `
-        <div id="summaryPanel" class="analysis-tab-panel active"></div>
-        <div id="diagramPanel" class="analysis-tab-panel"></div>
-        <div id="metricsPanel" class="analysis-tab-panel"></div>
-        <div id="matrixPanel" class="analysis-tab-panel"></div>
-        <div id="recPanel" class="analysis-tab-panel"></div>
-        <div id="learnPanel" class="analysis-tab-panel"></div>
+        <div id="dematelSummaryPanel" class="analysis-tab-panel active p-6"></div>
+        <div id="dematelDiagramPanel" class="analysis-tab-panel p-6"></div>
+        <div id="dematelMetricsPanel" class="analysis-tab-panel p-6"></div>
+        <div id="dematelDiagnosticsPanel" class="analysis-tab-panel p-6"></div>
+        <div id="dematelLearnPanel" class="analysis-tab-panel p-6"></div>
     `;
 
-    // --- 1. Render Summary Tab (Using NUMERICAL analysis data) ---
-    const summaryPanel = $("summaryPanel");
-    let summaryHtml = `<div class="p-4">
-        <h3 class="text-2xl font-bold mb-4">Analysis Summary</h3>
-        <blockquote class="p-4 rounded-lg bg-black/20 border-l-4 border-gray-500 mb-6 text-white/90 italic text-sm">${analysis.summary || "Summary unavailable."}</blockquote>`;
+    // --- Populate Each Tab ---
+    renderDematelSummaryTab("dematelSummaryPanel", data);
+    renderDematelDiagramTab("dematelDiagramPanel", data); // This just creates the placeholder
+    renderDematelMetricsTab("dematelMetricsPanel", data);
+    renderDematelDiagnosticsTab("dematelDiagnosticsPanel", data.diagnostics);
+    renderLearnDematelTab("dematelLearnPanel");
 
-    summaryHtml += `<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div class="bg-blue-900/20 p-4 rounded border border-blue-500/50">
-            <h4 class="text-xl font-semibold mb-3 text-blue-300">Dispatchers (Cause Factors)</h4>
-            <p class="text-xs text-white/70 mb-3">Factors with high positive Relation (R-C), strongly influencing others.</p>
-            ${analysis.dispatchers?.length > 0
-                ? analysis.dispatchers.map( d => `
-                    <div class="mb-3 text-sm">
-                        <p class="font-bold">${d.factor} (R-C: ${d.relation_value?.toFixed(3) ?? 'N/A'})</p>
-                        <p class="text-white/70 text-xs italic">${d.reason}</p>
-                    </div>`).join("")
-                : '<p class="text-sm italic text-white/60">(None clearly identified)</p>'
+    // --- Final Touches ---
+    analysisCache[currentTemplateId] = container.innerHTML; // Cache the new HTML
+    $("analysisActions").classList.remove("hidden"); // Show save buttons
+
+    // --- UPDATED: Tab Switching Logic ---
+    // This logic now *replaces* the reattachTabListeners call for this specific tool.
+    const allTabButtons = tabNav.querySelectorAll(".analysis-tab-btn");
+    const allTabPanels = tabContent.querySelectorAll(".analysis-tab-panel");
+    let chartRendered = false; // Flag to prevent re-rendering
+
+    allTabButtons.forEach(button => {
+        button.addEventListener("click", (e) => {
+            const clickedTab = e.currentTarget;
+            if (!clickedTab || clickedTab.classList.contains("active")) return;
+
+            // Deactivate all
+            allTabButtons.forEach((btn) => {
+                btn.classList.remove("active", "text-white", "font-medium", "border-indigo-400");
+                btn.classList.add("text-white/60", "hover:text-white", "border-transparent");
+            });
+            allTabPanels.forEach((pnl) => pnl.classList.remove("active"));
+
+            // Activate clicked tab
+            clickedTab.classList.add("active", "text-white", "font-medium", "border-indigo-400");
+            clickedTab.classList.remove("text-white/70", "hover:text-white", "border-transparent");
+            
+            // Activate corresponding panel
+            const targetPanelId = "dematel" + clickedTab.dataset.tab.charAt(0).toUpperCase() + clickedTab.dataset.tab.slice(1) + "Panel";
+            const targetPanel = $(targetPanelId);
+            
+            if (targetPanel) {
+                targetPanel.classList.add("active");
+                
+                // --- THIS IS THE FIX ---
+                // If the user clicked the "diagram" tab and the chart hasn't been rendered yet...
+                if (clickedTab.dataset.tab === "diagram" && !chartRendered) {
+                    // We call the render function *now*, while the tab is visible.
+                    setTimeout(() => { // Use a tiny timeout to ensure the panel is fully visible
+                        renderDematelChart(data.chart_data);
+                        chartRendered = true; // Set flag so we don't render it again
+                    }, 50);
+                } 
+                // If the chart *has* been rendered, just resize it
+                else if (clickedTab.dataset.tab === "diagram") {
+                     setTimeout(() => {
+                        const chartDiv = $("dematel-chart-container");
+                        if (chartDiv && chartDiv.layout && typeof Plotly !== 'undefined') {
+                            try { Plotly.Plots.resize(chartDiv); } catch (e) { console.error("Resize error:", e); }
+                        }
+                    }, 50);
+                }
+                // --- END OF FIX ---
             }
+        });
+    });
+
+    // --- Initial Chart Render ---
+    // This is no longer needed because the Summary tab is active by default,
+    // and the chart will be rendered when the user clicks the Diagram tab.
+    // setTimeout(() => { ... }, 200);
+}
+
+/**
+ * Updated renderDematelDiagramTab function with proper container sizing
+ */
+function renderDematelDiagramTab(containerId, data) {
+    const container = $(containerId);
+    if (!container) return;
+
+    container.innerHTML = `
+        <h3 class="result-subheader text-2xl font-bold text-center mb-4">Causal Influence Diagram</h3>
+        <p class="text-white/70 mb-6 text-center mx-auto max-w-3xl">This diagram visualizes the relationships. Factors are plotted by their Prominence (importance) and Relation (cause/effect).</p>
+        
+        <!-- Fixed chart container with proper sizing -->
+        <div class="w-full mb-6">
+            <div id="dematel-chart-container" class="w-full bg-black/10 rounded-lg border border-white/10" style="height: 600px; min-height: 600px;">
+                <p class="text-white/60 flex items-center justify-center h-full">Chart will render when this tab is active...</p>
+            </div>
         </div>
-        <div class="bg-red-900/20 p-4 rounded border border-red-500/50">
-            <h4 class="text-xl font-semibold mb-3 text-red-300">Receivers (Effect Factors)</h4>
-            <p class="text-xs text-white/70 mb-3">Factors with high negative Relation (R-C), primarily influenced by others.</p>
-             ${analysis.receivers?.length > 0
-                ? analysis.receivers.map( r => `
-                    <div class="mb-3 text-sm">
-                        <p class="font-bold">${r.factor} (R-C: ${r.relation_value?.toFixed(3) ?? 'N/A'})</p>
-                        <p class="text-white/70 text-xs italic">${r.reason}</p>
-                    </div>`).join("")
-                : '<p class="text-sm italic text-white/60">(None clearly identified)</p>'
+        
+        <div class="chart-interpretation mx-auto bg-black/20 p-4 rounded-lg border border-white/10">
+            <strong class="text-white">How to Read:</strong>
+            <ul class="list-disc list-inside text-sm mt-2 space-y-1 text-white/80">
+                <li><strong>Quadrant Lines:</strong> The chart is divided into four quadrants by a horizontal line (at 0) and a vertical line (at the average prominence).</li>
+                <li><strong>Horizontal Axis (Prominence):</strong> Factors to the right are more important/central to the system.</li>
+                <li><strong>Vertical Axis (Relation):</strong> Factors in the top-half (positive) are 'Cause' factors (net drivers). Factors in the bottom-half (negative) are 'Effect' factors (net receivers).</li>
+            </ul>
+        </div>
+    `;
+}
+
+/**
+     * Renders the Summary & Insights tab for DEMATEL.
+     * --- UPDATED ---
+     * Checks for a "fail" status in the diagnostics data
+     * and directs the user to the Diagnostics tab.
+     */
+    function renderDematelSummaryTab(containerId, data) {
+        const container = $(containerId);
+        if (!container) return;
+
+        // --- This code only runs if insights are valid ---
+        let insights_html = "";
+        const insights = data.analysis_insights || [];
+        const centralInsight = insights.find(i => i.observation.includes("most central"));
+        const causeInsight = insights.find(i => i.observation.includes("'Cause' factor"));
+        const effectInsight = insights.find(i => i.observation.includes("'Effect' factor"));
+        const centralFactorName = centralInsight ? centralInsight.observation.split(":")[0].replace(/\*\*/g, '').trim() : null;
+        const effectFactorName = effectInsight ? effectInsight.observation.split(":")[0].replace(/\*\*/g, '').trim() : null;
+        const isCentralAlsoEffect = centralInsight && effectInsight && centralFactorName === effectFactorName;
+
+        if (centralInsight) {
+            let interpretation = centralInsight.interpretation;
+            if (isCentralAlsoEffect) {
+                interpretation += `<br/><strong>Causal Role:</strong> This factor is also the system's primary <strong>'Effect' factor</strong> (net receiver).`;
             }
-        </div>
-    </div>`;
+            insights_html += `
+            <div class="insight-card-detailed border-l-4 border-yellow-500 bg-black/20 p-4 rounded-lg shadow-lg mb-4">
+                <h5 class="text-lg font-semibold">${centralInsight.observation}</h5>
+                <p class="text-sm text-white/80 mt-2 pl-2"><strong>Interpretation:</strong> ${interpretation}</p>
+                <p class="text-sm text-white/90 mt-2 pl-2"><strong>Recommendation:</strong> ${centralInsight.recommendation}</p>
+            </div>`;
+        }
+        if (causeInsight) {
+            insights_html += `
+            <div class="insight-card-detailed border-l-4 border-blue-500 bg-black/20 p-4 rounded-lg shadow-lg mb-4">
+                <h5 class="text-lg font-semibold">${causeInsight.observation}</h5>
+                <p class="text-sm text-white/80 mt-2 pl-2"><strong>Interpretation:</strong> ${causeInsight.interpretation}</p>
+                <p class="text-sm text-white/90 mt-2 pl-2"><strong>Recommendation:</strong> ${causeInsight.recommendation}</p>
+            </div>`;
+        }
+        if (effectInsight && !isCentralAlsoEffect) {
+            insights_html += `
+            <div class="insight-card-detailed border-l-4 border-red-500 bg-black/20 p-4 rounded-lg shadow-lg mb-4">
+                <h5 class="text-lg font-semibold">${effectInsight.observation}</h5>
+                <p class="text-sm text-white/80 mt-2 pl-2"><strong>Interpretation:</strong> ${effectInsight.interpretation}</p>
+                <p class="text-sm text-white/90 mt-2 pl-2"><strong>Recommendation:</strong> ${effectInsight.recommendation}</p>
+            </div>`;
+        }
 
-    if (analysis.key_factor) {
-        summaryHtml += `<div class="mt-8 bg-yellow-900/20 p-4 rounded border border-yellow-500/50">
-            <h4 class="text-xl font-semibold mb-3 text-yellow-300">Most Central Factor</h4>
-            <p class="font-bold">${analysis.key_factor.factor} (Prominence: ${analysis.key_factor.prominence_value?.toFixed(3) ?? 'N/A'})</p>
-            <p class="text-sm text-white/70 text-xs italic">${analysis.key_factor.reason}</p>
-        </div>`;
+        let cause_group_html = "<div class='space-y-2'>";
+        if (data.cause_group && data.cause_group.length > 0) {
+            data.cause_group.forEach(row => {
+                cause_group_html += `
+                <div class='p-2 bg-blue-900/20 rounded border border-blue-500/30'>
+                    <span class='font-semibold'>${row['Factor']}</span>
+                    <span class='text-xs float-right text-blue-300' style="margin-top: 4px;">Net Influence: +${row['Relation (D-R)'].toFixed(3)}</span>
+                </div>
+                `;
+            });
+        } else {
+            cause_group_html += "<p class='text-sm text-white/60 italic'>No cause factors identified.</p>";
+        }
+        cause_group_html += "</div>";
+
+        let effect_group_html = "<div class='space-y-2'>";
+        if (data.effect_group && data.effect_group.length > 0) {
+            data.effect_group.forEach(row => {
+                if (!(isCentralAlsoEffect && row['Factor'] === centralFactorName)) {
+                    effect_group_html += `
+                    <div class='p-2 bg-red-900/20 rounded border border-red-500/30'>
+                        <span class='font-semibold'>${row['Factor']}</span>
+                        <span class='text-xs float-right text-red-300' style="margin-top: 4px;">Net Receiver: ${row['Relation (D-R)'].toFixed(3)}</span>
+                    </div>
+                    `;
+                }
+            });
+             if (effect_group_html === "<div class='space-y-2'>") {
+                 effect_group_html += "<p class='text-sm text-white/60 italic'>No other effect factors identified.</p>";
+            }
+        } else {
+            effect_group_html += "<p class='text-sm text-white/60 italic'>No effect factors identified.</p>";
+        }
+        effect_group_html += "</div>";
+
+        container.innerHTML = `
+            <h3 class="result-subheader">Key Insights</h3>
+            <div class="insights-container space-y-4">
+                ${insights_html}
+            </div>
+            
+            <h3 class="result-subheader mt-8">Causal Groups</h3>
+            <div class="cause-effect-container grid grid-cols-1 gap-6">
+                <div>
+                    <h4 class="result-subheader text-blue-300">Cause Group (Drivers)</h4>
+                    ${cause_group_html}
+                </div>
+                <div>
+                    <h4 class="result-subheader text-red-300">Effect Group (Outcomes)</h4>
+                    ${effect_group_html}
+                </div>
+            </div>
+        `;
     }
-    summaryHtml += `</div>`; // Close p-4 div
-    summaryPanel.innerHTML = summaryHtml;
 
+/**
+     * Renders the Metrics & Matrix tab.
+     * --- UPDATED ---
+     * Checks for a "fail" status in the diagnostics data
+     * and shows an error message instead of tables.
+     */
+    function renderDematelMetricsTab(containerId, data) {
+        const container = $(containerId);
+        if (!container) return;
 
-    // --- 2. Render Causal Diagram Tab (Plotly R+C vs R-C - Numerical) ---
-    const diagramPanel = $("diagramPanel");
-    diagramPanel.innerHTML = `<div class="p-4">
-         <h3 class="text-2xl font-bold mb-4 text-center">DEMATEL Causal Diagram</h3>
-         <blockquote class="p-3 italic border-l-4 border-gray-500 bg-black/20 text-white/90 text-sm mb-6 max-w-3xl mx-auto">
-             Plotting Prominence (R+C) vs. Relation (R-C) visualizes factor importance and causal role. Factors in the top right are central causes.
-         </blockquote>
-        <div id="dematelDiagramPlot" class="w-full h-[600px] plotly-chart bg-black/10 rounded-lg"></div>
-         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 text-xs text-center">
-             <div class="bg-blue-900/30 p-2 rounded border border-blue-500/50"><strong>Dispatchers (Causes):</strong> High positive R-C. Focus intervention here.</div>
-             <div class="bg-red-900/30 p-2 rounded border border-red-500/50"><strong>Receivers (Effects):</strong> High negative R-C. Monitor impact here.</div>
-             <div class="bg-yellow-900/30 p-2 rounded border border-yellow-500/50"><strong>Central Factor:</strong> Highest R+C (${analysis.key_factor?.factor || 'N/A'}). Most interconnected.</div>
-        </div>
-    </div>`;
+        // --- This code only runs if data is valid ---
+        let summaryTableHtml = "";
+        let matrixTableHtml = "";
+        const summaryData = data.summary_table || [];
+        const matrixData = data.total_relation_matrix || [];
+        const factors = data.raw_data ? data.raw_data.factors : [];
 
-    // Render Plotly Scatter Chart (using numerical R+C, R-C)
-    try {
-        const plotData = [{
-            x: influence_metrics.map(m => m.prominence ?? 0), // R+C
-            y: influence_metrics.map(m => m.relation ?? 0), // R-C
-            text: influence_metrics.map(m => m.factor || 'N/A'),
-            mode: 'markers+text',
-            textposition: 'top right',
-            marker: {
-                size: 12,
-                color: influence_metrics.map(m => m.relation ?? 0),
-                colorscale: 'RdBu',
-                colorbar: { title: 'Relation (R-C)<br>Cause -> Effect' }
-            },
-            type: 'scatter'
-        }];
-
-        const avgProminence = (influence_metrics.reduce((sum, m) => sum + (m.prominence ?? 0), 0)) / (influence_metrics.length || 1);
-        const yRange = [Math.min(...plotData[0].y) - 0.1, Math.max(...plotData[0].y) + 0.1]; // Dynamic y-range
-
-        const layoutDiagram = {
-            title: 'DEMATEL Causal Diagram',
-            paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: 'white' },
-            xaxis: { title: 'Prominence (R+C) - Importance', gridcolor: 'rgba(255,255,255,0.1)', zeroline: false },
-            yaxis: { title: 'Relation (R-C) - Net Causal Role', range: yRange, gridcolor: 'rgba(255,255,255,0.1)', zeroline: true, zerolinecolor: 'rgba(255,255,255,0.5)' },
-             annotations: [
-                { x: avgProminence, y: yRange[1], text: 'Dispatchers (Causes)', showarrow: false, xanchor: 'left', yanchor: 'top', font: {color: 'rgba(173, 216, 230, 0.7)'} },
-                { x: avgProminence, y: yRange[0], text: 'Receivers (Effects)', showarrow: false, xanchor: 'left', yanchor: 'bottom', font: {color: 'rgba(255, 182, 193, 0.7)'} }
-             ],
-            hovermode: 'closest',
-            margin: { t: 50, b: 60, l: 60, r: 30 }
-        };
-        Plotly.newPlot('dematelDiagramPlot', plotData, layoutDiagram, { responsive: true });
-    } catch(e) {
-        console.error("Error creating DEMATEL Plotly chart:", e);
-        $("dematelDiagramPlot").innerHTML = "<p class='p-4 text-center text-red-400'>Could not render causal diagram.</p>";
-    }
-
-
-    // --- 3. Render Influence Metrics Tab (Numerical) ---
-    const metricsPanel = $("metricsPanel");
-    let metricsHtml = `<div class="p-4">
-        <h3 class="text-2xl font-bold mb-4">Influence Metrics</h3>
-         <p class="text-sm text-white/70 mb-6 italic">These metrics quantify the influence dispatched (R), received (C), total involvement (Prominence R+C), and net causal role (Relation R-C) for each factor.</p>
-        <div class="overflow-x-auto mb-6">
-            <table class="coeff-table styled-table text-sm">
+        // Build Summary Table HTML
+        if (summaryData.length > 0) {
+            const avgProminence = summaryData.reduce((sum, row) => sum + row['Prominence (D+R)'], 0) / summaryData.length;
+            
+            summaryTableHtml = `<div class="overflow-x-auto"><table class="coeff-table styled-table text-sm">
                 <thead><tr>
                     <th>Factor</th>
-                    <th title="Total influence dispatched by this factor">Dispatch (R)</th>
-                    <th title="Total influence received by this factor">Receive (C)</th>
-                    <th title="Total involvement (importance)">Prominence (R+C)</th>
-                    <th title="Net causal role (+ = Cause, - = Effect)">Relation (R-C)</th>
+                    <th>D (Influence Given)</th>
+                    <th>R (Influence Received)</th>
+                    <th>Prominence (D+R)</th>
+                    <th>Relation (D-R)</th>
                 </tr></thead>
                 <tbody>`;
-    // Sort by Prominence (numerical)
-    influence_metrics.sort((a,b) => (b.prominence ?? 0) - (a.prominence ?? 0)).forEach(m => {
-        let relationClass = '';
-        const relationVal = m.relation ?? 0;
-        if (relationVal > 0.01) relationClass = 'text-blue-300'; // Threshold for dispatcher color
-        else if (relationVal < -0.01) relationClass = 'text-red-300'; // Threshold for receiver color
+            
+            summaryData.forEach(row => {
+                const prominenceClass = row['Prominence (D+R)'] > avgProminence ? 'font-bold text-yellow-300' : '';
+                let relationClass = 'text-white/70';
+                if (row['Relation (D-R)'] > 0.1) relationClass = 'font-medium text-blue-300'; // Cause
+                if (row['Relation (D-R)'] < -0.1) relationClass = 'font-medium text-red-300'; // Effect
 
-        metricsHtml += `<tr>
-                        <td class="font-semibold">${m.factor || 'N/A'}</td>
-                        <td>${m.r_sum?.toFixed(3) ?? 'N/A'}</td>
-                        <td>${m.c_sum?.toFixed(3) ?? 'N/A'}</td>
-                        <td>${m.prominence?.toFixed(3) ?? 'N/A'}</td>
-                        <td class="${relationClass} font-medium">${m.relation?.toFixed(3) ?? 'N/A'}</td>
-                    </tr>`;
-    });
-    metricsHtml += `</tbody></table></div>`;
-    metricsHtml += `</div>`; // Close p-4 div
-    metricsPanel.innerHTML = metricsHtml;
+                summaryTableHtml += `
+                    <tr>
+                        <td class="font-semibold">${row['Factor']}</td>
+                        <td>${row['D (Influence Given)'].toFixed(4)}</td>
+                        <td>${row['R (Influence Received)'].toFixed(4)}</td>
+                        <td class="${prominenceClass}">${row['Prominence (D+R)'].toFixed(4)}</td>
+                        <td class="${relationClass}">${row['Relation (D-R)'].toFixed(4)}</td>
+                    </tr>
+                `;
+            });
+            summaryTableHtml += `</tbody></table></div>`;
+        } else {
+            summaryTableHtml = "<p class='text-white/70'>Summary table data is missing.</p>";
+        }
 
+        // Build Total Relation Matrix HTML
+        if (matrixData.length > 0 && factors.length > 0) {
+            let sum = 0;
+            let count = 0;
+            matrixData.forEach(row => row.forEach(cell => {
+                if (cell > 0) {
+                    sum += cell;
+                    count++;
+                }
+            }));
+            const avgInfluence = (count > 0) ? (sum / count) : 0.1;
 
-    // --- 4. Render Total Influence Matrix Tab (Heatmap - Numerical) ---
-    const matrixPanel = $("matrixPanel");
-    matrixPanel.innerHTML = `<div class="p-4">
-        <h3 class="text-2xl font-bold mb-4">Total Influence Matrix (T)</h3>
-        <p class="text-sm text-white/70 mb-4 italic">Heatmap showing the total direct and indirect influence of the row factor ON the column factor. Brighter colors indicate stronger influence.</p>
-        <div id="dematelMatrixHeatmap" class="w-full h-[600px] plotly-chart bg-black/10 rounded-lg"></div>
-    </div>`;
+            matrixTableHtml = `<div class="overflow-x-auto"><table class="coeff-table styled-table text-sm dematel-matrix">
+                <thead><tr><th class="bg-black/10">Influencer ↓ | Influenced →</th>`;
+            
+            factors.forEach(factor => {
+                matrixTableHtml += `<th>${factor}</th>`;
+            });
+            matrixTableHtml += `</tr></thead><tbody>`;
 
-    // Render Plotly Heatmap
-    try {
-        const heatmapTrace = {
-            z: data.total_influence_matrix,
-            x: data.factors,
-            y: data.factors,
-            type: 'heatmap',
-            colorscale: 'Plasma', // Or 'Viridis', 'Jet', 'Portland'
-            reversescale: false, // Adjust as needed
-            hovertemplate: "Influencer (Row): %{y}<br>Influenced (Col): %{x}<br>Total Influence: %{z:.3f}<extra></extra>",
-            text: data.total_influence_matrix.map(row => row.map(val => val.toFixed(2))),
-            textfont: { color: "white", size: 9 }, // Smaller font size
-            texttemplate: "%{text}",
-            showscale: true,
-            colorbar: { title: 'Total Influence', titleside: 'right' }
-        };
-        const layoutMatrix = {
-            title: { text: 'Total Influence Matrix (T)', y: 0.98 },
-            xaxis: { ticks: "", side: "top", automargin: true, tickangle: -45 },
-            yaxis: { ticks: "", automargin: true },
-            margin: { l: 150, t: 150, b: 50, r: 50 }, // Adjusted margins
-            paper_bgcolor: 'rgba(0,0,0,0)',
-            plot_bgcolor: 'rgba(0,0,0,0)',
-            font: { color: 'white' }
-        };
-        Plotly.newPlot('dematelMatrixHeatmap', [heatmapTrace], layoutMatrix, { responsive: true });
-    } catch (e) {
-        console.error("Error creating DEMATEL Heatmap:", e);
-        $("dematelMatrixHeatmap").innerHTML = "<p class='p-4 text-center text-red-400'>Could not render influence matrix heatmap.</p>";
+            matrixData.forEach((row, index) => {
+                matrixTableHtml += `<tr><th class="font-semibold">${factors[index]}</th>`;
+                row.forEach(cell => {
+                    const cellClass = cell > avgInfluence ? 'font-bold text-yellow-300' : 'text-white/7Two';
+                    matrixTableHtml += `<td class="${cellClass}">${cell.toFixed(4)}</td>`;
+                });
+                matrixTableHtml += `</tr>`;
+            });
+            matrixTableHtml += `</tbody></table></div>`;
+        } else {
+            matrixTableHtml = "<p class='text-white/70'>Total relation matrix data is missing.</p>";
+        }
+
+        // Assemble Final Tab HTML
+        container.innerHTML = `
+            <h3 class="result-subheader">Factor Summary (D+R, D-R)</h3>
+            <p class="text-white/70 mb-4">This table quantifies each factor's role. 
+                <strong>Prominence (D+R)</strong> = Total Importance. 
+                <strong>Relation (D-R)</strong> = Causal Role (<strong>+</strong> is Cause, <strong>-</strong> is Effect).
+            </p>
+            <div class="table-container mb-8">
+                ${summaryTableHtml}
+            </div>
+            
+            <h3 class="result-subheader">Total Relation Matrix (T)</h3>
+            <p class="text-white/70 mb-4">This matrix shows the total (direct + indirect) influence. 
+                Read as: <strong>Row Factor</strong> → <strong>Column Factor</strong>. 
+                Values above the average influence (approx. ${matrixData.length > 0 ? (matrixData.flat().reduce((a,b)=>a+b,0) / (matrixData.length*matrixData.length)).toFixed(3) : '0.1'}) are highlighted.
+            </p>
+            <div class="table-container">
+                ${matrixTableHtml}
+            </div>
+            
+            <div class="chart-interpretation mt-6 max-w-none mx-auto bg-black/20 p-4 rounded-lg border border-white/10">
+                <strong>How to Read the Matrix:</strong>
+                <ul class="list-disc list-inside text-sm mt-2 space-y-1">
+                    <li><strong>What does a "zero row" mean?</strong> (e.g., "Customer Service" or "Price Competitiveness" in the test data). This is <strong>correct</strong> and means the factor is a <strong>"pure effect"</strong>. It does not influence any other factors in the system.</li>
+                    <li><strong>What does a "zero column" mean?</strong> This would mean the factor is a <strong>"pure cause"</strong> and is not influenced by any other factor (this is very rare).</li>
+                    <li><strong>Highlighted Values:</strong> These are the strongest causal relationships in your system. They represent the primary pathways of influence.</li>
+                </ul>
+            </div>
+        `;
     }
 
-    // --- 5. Populate Recommendations Panel (using enhanced rationale) ---
-    const recPanel = $("recPanel");
-    let recHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">💡 Actionable Recommendations</h3>`;
-    if (business_recommendations && business_recommendations.length > 0) {
-        recHtml += `<p class="text-sm text-white/70 mb-6 italic">These recommendations focus on leveraging the calculated causal structure (influencing Dispatchers, managing Receivers) to achieve strategic goals implied in the context.</p>`;
-        recHtml += `<div class="space-y-6">`;
-        business_recommendations.forEach((rec, index) => {
-             // Determine if targeting dispatcher or receiver for styling based on NUMERICAL R-C
-             let targetRole = "Neutral";
-             const metric = influence_metrics.find(m => m.factor === rec.focus_factor);
-             const relationVal = metric?.relation ?? 0;
-             if (relationVal > 0.01) targetRole = "Dispatcher";
-             else if (relationVal < -0.01) targetRole = "Receiver";
+/**
+ * Renders the comprehensive Diagnostics tab with enhanced data quality assessment.
+ * --- FULL ENHANCED VERSION ---
+ * Detects critical issues like mathematical instability, extreme values, and poor data quality.
+ * Provides specific guidance for fixing common problems.
+ */
+function renderDematelDiagnosticsTab(containerId, diagnostics) {
+    const container = $(containerId);
+    if (!container) return;
 
-             let cardBorderClass = "border-gray-500";
-             if (targetRole === "Dispatcher") cardBorderClass = "border-blue-500";
-             else if (targetRole === "Receiver") cardBorderClass = "border-red-500";
-
-
-            recHtml += `
-                <div class="prescription-card border-l-4 ${cardBorderClass}">
-                    <h4 class="text-xl font-bold">${index + 1}. ${rec.recommendation ?? 'N/A'}</h4>
-                     <p class="text-xs font-semibold my-1 text-indigo-300">TARGET FACTOR: ${rec.focus_factor ?? 'N/A'} (${targetRole}, R-C: ${relationVal.toFixed(3)})</p>
-                    <p class="rationale"><strong>Strategic Rationale:</strong> ${rec.rationale ?? 'N/A'}</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 text-sm">
-                        <div class="bg-black/20 p-3 rounded">
-                            <h5 class="font-bold text-yellow-300 mb-2">Action Items</h5>
-                            <ul class="list-disc list-inside space-y-1 text-white/90">${(rec.action_items || []).map(a => `<li>${a}</li>`).join("")}</ul>
-                             ${!(rec.action_items && rec.action_items.length > 0) ? '<p class="text-white/60 italic text-xs">No specific action items defined.</p>' : ''}
-                        </div>
-                        <div class="bg-black/20 p-3 rounded">
-                             <h5 class="font-bold text-yellow-300 mb-2">KPIs to Track</h5>
-                            <ul class="list-disc list-inside space-y-1 text-white/90 text-xs">${(rec.kpis_to_track || []).map(k => `<li>${k}</li>`).join("")}</ul>
-                             ${!(rec.kpis_to_track && rec.kpis_to_track.length > 0) ? '<p class="text-white/60 italic text-xs">No specific KPIs defined.</p>' : ''}
-                        </div>
-                    </div>
-                </div>`;
-        });
-        recHtml += `</div>`;
-    } else {
-        recHtml += `<p class="text-center text-white/70 italic">No specific business recommendations generated based on the DEMATEL analysis.</p>`;
-    }
-    recHtml += `</div>`;
-    recPanel.innerHTML = recHtml;
-
-
-    // --- 6. Populate Learn DEMATEL Tab (Keep as is) ---
-    const learnPanel = $("learnPanel");
-    learnPanel.innerHTML = `
-    <div class="p-6 space-y-6 text-white/90">
-        <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding DEMATEL</h3>
+    // Enhanced diagnostic analysis with specific checks for bad data
+    let overallStatus = "good";
+    let criticalIssues = 0;
+    let warningIssues = 0;
+    let mathematicalInstability = false;
+    let extremeValues = false;
+    let poorDataQuality = false;
+    
+    // Check for mathematical instability (astronomical values)
+    if (diagnostics && diagnostics.statistics) {
+        const stats = diagnostics.statistics;
         
-        <div class="bg-black/20 p-4 rounded-lg">
-            <h4 class="text-lg font-bold mb-2 text-indigo-300">What is DEMATEL?</h4>
-            <p class="text-sm text-white/80">The Decision Making Trial and Evaluation Laboratory (DEMATEL) method is a structural modeling technique used to analyze the causal relationships among complex factors. It helps visualize the structure of intricate systems and identify the most influential elements.</p>
+        // Check for extreme prominence values (indicates mathematical overflow)
+        if (stats.max_prominence && parseFloat(stats.max_prominence) > 1000) {
+            mathematicalInstability = true;
+            criticalIssues++;
+            overallStatus = "critical";
+        }
+        
+        // Check for AI scale violations
+        if (stats.ai_max_value && parseFloat(stats.ai_max_value) > 4) {
+            poorDataQuality = true;
+            criticalIssues++;
+            overallStatus = "critical";
+        }
+        
+        // Check for extreme matrix density
+        if (stats.matrix_density && parseFloat(stats.matrix_density) > 90) {
+            poorDataQuality = true;
+            if (overallStatus !== "critical") overallStatus = "warning";
+            warningIssues++;
+        }
+    }
+
+    // Analyze diagnostic checks
+    if (diagnostics && diagnostics.checks) {
+        diagnostics.checks.forEach(check => {
+            if (check.status === 'fail') {
+                criticalIssues++;
+                overallStatus = "critical";
+                
+                // Detect specific failure types
+                if (check.metric === 'Model Stability') {
+                    mathematicalInstability = true;
+                }
+                if (check.metric === 'AI Scale Adherence') {
+                    poorDataQuality = true;
+                }
+            } else if (check.status === 'warn') {
+                warningIssues++;
+                if (overallStatus !== "critical") overallStatus = "warning";
+            }
+        });
+    }
+
+    // Generate enhanced status summary
+    let statusHtml = "";
+    let statusClass = "";
+    let statusIcon = "";
+    let actionableAdvice = "";
+    
+    if (overallStatus === "critical") {
+        statusClass = "bg-red-900/40 border-red-500/60 text-red-200";
+        statusIcon = "🚨";
+        
+        if (mathematicalInstability) {
+            statusHtml = `<strong>MATHEMATICAL INSTABILITY DETECTED</strong> - The calculations have failed due to extreme values.`;
+            actionableAdvice = `This usually means your input described relationships that are too strong or contradictory. Try simplifying your system description.`;
+        } else if (poorDataQuality) {
+            statusHtml = `<strong>POOR DATA QUALITY DETECTED</strong> - The AI misunderstood your input or used extreme values.`;
+            actionableAdvice = `Try rewriting your description with clearer intensity words like "strongly influences" or "has moderate impact on."`;
+        } else {
+            statusHtml = `<strong>CRITICAL ISSUES DETECTED</strong> - The analysis has significant problems that affect reliability.`;
+            actionableAdvice = `Please review the detailed checks below and consider revising your input data.`;
+        }
+    } else if (overallStatus === "warning") {
+        statusClass = "bg-yellow-900/40 border-yellow-500/60 text-yellow-200";
+        statusIcon = "⚠️";
+        statusHtml = `<strong>WARNINGS PRESENT</strong> - The analysis has some issues that may affect interpretation.`;
+        actionableAdvice = `The results are usable but could be improved with better input data.`;
+    } else {
+        statusClass = "bg-green-900/40 border-green-500/60 text-green-200";
+        statusIcon = "✅";
+        statusHtml = `<strong>ANALYSIS LOOKS GOOD</strong> - No major issues detected with the model.`;
+        actionableAdvice = `Your results should be reliable and actionable.`;
+    }
+
+    // Enhanced checks with comprehensive explanations
+    let checksHtml = "";
+    if (diagnostics && diagnostics.checks && diagnostics.checks.length > 0) {
+        // Sort checks: fail, warn, pass
+        const levelOrder = { "fail": 1, "warn": 2, "pass": 3, "success": 3 };
+        diagnostics.checks.sort((a, b) => (levelOrder[a.status] || 4) - (levelOrder[b.status] || 4));
+
+        diagnostics.checks.forEach(check => {
+            let statusClass = "text-blue-300"; 
+            let icon = "ℹ️";
+            let recommendation = "";
+            let severity = "";
+            
+            if (check.status === 'fail') {
+                statusClass = "text-red-300";
+                icon = "🔴";
+                severity = "CRITICAL";
+                
+                // Enhanced recommendations for specific failures
+                if (check.metric === 'AI Scale Adherence') {
+                    recommendation = `
+                        <div class="mt-3 p-3 bg-red-900/30 rounded-lg text-xs border border-red-500/30">
+                            <div class="font-medium text-red-200 mb-2">🔧 How to Fix This:</div>
+                            <div class="space-y-1 text-red-100">
+                                <div>• <strong>Use specific intensity words:</strong> "strongly influences", "moderately affects", "weakly impacts"</div>
+                                <div>• <strong>Avoid extreme language:</strong> Instead of "completely controls" use "strongly influences"</div>
+                                <div>• <strong>Be more explicit:</strong> Instead of "affects" use "has a moderate impact on"</div>
+                                <div>• <strong>Review your relationships:</strong> Make sure they're realistic, not maximum intensity</div>
+                            </div>
+                        </div>
+                    `;
+                } else if (check.metric === 'Model Stability') {
+                    recommendation = `
+                        <div class="mt-3 p-3 bg-red-900/30 rounded-lg text-xs border border-red-500/30">
+                            <div class="font-medium text-red-200 mb-2">🔧 How to Fix This:</div>
+                            <div class="space-y-1 text-red-100">
+                                <div>• <strong>Simplify your system:</strong> Focus on 3-7 key factors instead of many</div>
+                                <div>• <strong>Avoid circular logic:</strong> Don't make A→B and B→A equally strong</div>
+                                <div>• <strong>Reduce over-connectivity:</strong> Not everything should influence everything</div>
+                                <div>• <strong>Use varied intensities:</strong> Mix strong, moderate, and weak relationships</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            } else if (check.status === 'warn') {
+                statusClass = "text-yellow-300";
+                icon = "🟡";
+                severity = "WARNING";
+                
+                if (check.metric === 'Matrix Density') {
+                    recommendation = `
+                        <div class="mt-3 p-3 bg-yellow-900/30 rounded-lg text-xs border border-yellow-500/30">
+                            <div class="font-medium text-yellow-200 mb-2">💡 Suggestion:</div>
+                            <div class="space-y-1 text-yellow-100">
+                                <div>• <strong>Focus on key relationships:</strong> Describe only the most important connections</div>
+                                <div>• <strong>Use "little to no impact":</strong> For weak relationships instead of ignoring them</div>
+                                <div>• <strong>Consider system boundaries:</strong> Maybe some factors should be external</div>
+                            </div>
+                        </div>
+                    `;
+                } else if (check.metric === 'Low Factor Count') {
+                    recommendation = `
+                        <div class="mt-3 p-3 bg-yellow-900/30 rounded-lg text-xs border border-yellow-500/30">
+                            <div class="font-medium text-yellow-200 mb-2">💡 Suggestion:</div>
+                            <div class="space-y-1 text-yellow-100">
+                                <div>• <strong>Add more factors:</strong> Try to identify 4-7 key factors for better analysis</div>
+                                <div>• <strong>Break down broad factors:</strong> "Performance" could become "Speed" + "Quality"</div>
+                                <div>• <strong>Consider sub-components:</strong> What are the parts of your main factors?</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            } else if (check.status === 'pass' || check.status === 'success') {
+                statusClass = "text-green-300";
+                icon = "✅";
+                severity = "PASS";
+            }
+
+            checksHtml += `
+                <tr class="border-b border-white/10">
+                    <td class="p-4">
+                        <div class="flex items-center">
+                            <span class="${statusClass} text-lg mr-2">${icon}</span>
+                            <div>
+                                <div class="font-semibold text-white">${check.metric}</div>
+                                <div class="text-xs ${statusClass} font-medium">${severity}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="p-4">
+                        <div class="text-white/90">${check.message || 'No message provided.'}</div>
+                        ${recommendation}
+                    </td>
+                </tr>
+            `;
+        });
+    } else {
+        checksHtml = "<tr><td colspan='2' class='p-4 text-white/70 text-center'>No diagnostic checks were generated.</td></tr>";
+    }
+
+    // Enhanced statistics with critical value detection
+    let statsHtml = "";
+    if (diagnostics && diagnostics.statistics) {
+        const stats = diagnostics.statistics;
+        
+        // AI Max Value with enhanced interpretation
+        let aiValueInterpretation = "";
+        let aiValueClass = "text-white/80";
+        const aiMax = parseFloat(stats.ai_max_value) || 0;
+        if (aiMax > 4) {
+            aiValueInterpretation = `<div class="text-xs text-red-300 mt-1 font-medium">🚨 CRITICAL: Outside 0-4 scale</div>`;
+            aiValueClass = "text-red-300";
+        } else if (aiMax === 0) {
+            aiValueInterpretation = `<div class="text-xs text-yellow-300 mt-1">⚠️ No relationships detected</div>`;
+            aiValueClass = "text-yellow-300";
+        } else {
+            aiValueInterpretation = `<div class="text-xs text-green-300 mt-1">✓ Within expected range</div>`;
+            aiValueClass = "text-green-300";
+        }
+        
+        // Stability with interpretation
+        let stabilityInterpretation = "";
+        let stabilityClass = "text-white/80";
+        const stability = parseFloat(stats.max_norm_row_sum) || 0;
+        if (stability > 5) {
+            stabilityInterpretation = `<div class="text-xs text-red-300 mt-1 font-medium">🚨 UNSTABLE</div>`;
+            stabilityClass = "text-red-300";
+        } else if (stability > 2) {
+            stabilityInterpretation = `<div class="text-xs text-yellow-300 mt-1">⚠️ Borderline</div>`;
+            stabilityClass = "text-yellow-300";
+        } else {
+            stabilityInterpretation = `<div class="text-xs text-green-300 mt-1">✓ Stable</div>`;
+            stabilityClass = "text-green-300";
+        }
+        
+        // Matrix Density with enhanced interpretation
+        let densityInterpretation = "";
+        let densityClass = "text-white/80";
+        const density = parseFloat(stats.matrix_density) || 0;
+        if (density >= 100) {
+            densityInterpretation = `<div class="text-xs text-red-300 mt-1 font-medium">🚨 TOTAL CONNECTIVITY</div>`;
+            densityClass = "text-red-300";
+        } else if (density > 80) {
+            densityInterpretation = `<div class="text-xs text-yellow-300 mt-1">⚠️ Over-connected</div>`;
+            densityClass = "text-yellow-300";
+        } else if (density < 20) {
+            densityInterpretation = `<div class="text-xs text-blue-300 mt-1">ℹ️ Sparse system</div>`;
+            densityClass = "text-blue-300";
+        } else {
+            densityInterpretation = `<div class="text-xs text-green-300 mt-1">✓ Good balance</div>`;
+            densityClass = "text-green-300";
+        }
+        
+        // Cause Factors interpretation
+        let causeInterpretation = "";
+        let causeClass = "text-white/80";
+        const causeCount = parseInt(stats.cause_factors_found) || 0;
+        const totalFactors = parseInt(stats.total_factors) || parseInt(stats.factor_count) || 5;
+        if (causeCount === 0) {
+            causeInterpretation = `<div class="text-xs text-red-300 mt-1 font-medium">🚨 No drivers found</div>`;
+            causeClass = "text-red-300";
+        } else if (causeCount === 1 && totalFactors > 4) {
+            causeInterpretation = `<div class="text-xs text-yellow-300 mt-1">⚠️ Only one driver</div>`;
+            causeClass = "text-yellow-300";
+        } else if (causeCount === totalFactors) {
+            causeInterpretation = `<div class="text-xs text-yellow-300 mt-1">⚠️ All are drivers</div>`;
+            causeClass = "text-yellow-300";
+        } else {
+            causeInterpretation = `<div class="text-xs text-green-300 mt-1">✓ Good balance</div>`;
+            causeClass = "text-green-300";
+        }
+
+        statsHtml = `
+            <div class="summary-stat-card border-l-4 ${aiMax > 4 ? 'border-red-500' : aiMax === 0 ? 'border-yellow-500' : 'border-green-500'}">
+                <div class="stat-value ${aiValueClass}">${stats.ai_max_value || 'N/A'}</div>
+                <div class="stat-label">Max AI Value</div>
+                <div class="text-xs text-white/60 mt-1">(Should be 0-4)</div>
+                ${aiValueInterpretation}
+            </div>
+            <div class="summary-stat-card border-l-4 ${stability > 5 ? 'border-red-500' : stability > 2 ? 'border-yellow-500' : 'border-green-500'}">
+                <div class="stat-value ${stabilityClass}">${stats.max_norm_row_sum || 'N/A'}</div>
+                <div class="stat-label">Stability</div>
+                <div class="text-xs text-white/60 mt-1">(Max Row Sum)</div>
+                ${stabilityInterpretation}
+            </div>
+            <div class="summary-stat-card border-l-4 ${density >= 100 ? 'border-red-500' : density > 80 ? 'border-yellow-500' : 'border-green-500'}">
+                <div class="stat-value ${densityClass}">${stats.matrix_density || 'N/A'}</div>
+                <div class="stat-label">Matrix Density</div>
+                <div class="text-xs text-white/60 mt-1">(% Connected)</div>
+                ${densityInterpretation}
+            </div>
+            <div class="summary-stat-card border-l-4 ${causeCount === 0 ? 'border-red-500' : (causeCount === 1 && totalFactors > 4) ? 'border-yellow-500' : 'border-green-500'}">
+                <div class="stat-value ${causeClass}">${stats.cause_factors_found || 'N/A'} / ${totalFactors}</div>
+                <div class="stat-label">Cause Factors</div>
+                <div class="text-xs text-white/60 mt-1">(Drivers Found)</div>
+                ${causeInterpretation}
+            </div>
+        `;
+    }
+
+    // Enhanced Data Quality Tips section
+    const dataQualityTips = `
+        <div class="bg-gradient-to-r from-blue-900/20 to-purple-900/20 p-6 rounded-lg border border-blue-500/30 mt-8">
+            <h5 class="text-xl font-semibold mb-4 text-blue-300 flex items-center">
+                <span class="mr-2">💡</span> Complete Guide to Better DEMATEL Data
+            </h5>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h6 class="font-semibold text-green-300 mb-2">✅ DO This:</h6>
+                    <div class="space-y-2 text-sm text-white/80">
+                        <div><strong>Use Specific Intensity Words:</strong><br>"strongly influences", "moderately affects", "weakly impacts", "has little effect on"</div>
+                        <div><strong>Vary Relationship Strengths:</strong><br>Mix strong, moderate, and weak relationships realistically</div>
+                        <div><strong>Explain WHY:</strong><br>"A influences B because..." gives AI better context</div>
+                        <div><strong>Focus on Key Relationships:</strong><br>Describe the most important connections, not every possible one</div>
+                        <div><strong>Use 3-7 Factors:</strong><br>This range gives the best analysis results</div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h6 class="font-semibold text-red-300 mb-2">❌ AVOID This:</h6>
+                    <div class="space-y-2 text-sm text-white/80">
+                        <div><strong>Everything is "Strong":</strong><br>Don't make all relationships maximum intensity</div>
+                        <div><strong>Circular Logic:</strong><br>Avoid A→B and B→A with equal strength</div>
+                        <div><strong>Vague Language:</strong><br>"affects", "impacts", "influences" without intensity</div>
+                        <div><strong>"Everything affects everything":</strong><br>This creates mathematical instability</div>
+                        <div><strong>Too Many Factors:</strong><br>8+ factors often lead to over-complexity</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4 p-3 bg-blue-900/30 rounded border border-blue-500/50">
+                <h6 class="font-semibold text-blue-200 mb-2">📝 Example of Good Input:</h6>
+                <div class="text-xs text-blue-100 font-mono">
+                    "Product Quality <strong>strongly influences</strong> Customer Satisfaction because defects create complaints. 
+                    Price <strong>moderately affects</strong> Sales Volume through demand elasticity. 
+                    Marketing <strong>weakly impacts</strong> Product Quality since it doesn't change the actual product."
+                </div>
+            </div>
         </div>
+    `;
+
+    container.innerHTML = `
+        <h3 class="result-subheader text-2xl font-bold">Model Diagnostics & Health Check</h3>
+        <p class="text-white/70 mb-6">This tab analyzes the quality and reliability of your DEMATEL analysis to help you get better results.</p>
+        
+        <!-- Enhanced Overall Status Banner -->
+        <div class="p-6 rounded-xl border-2 ${statusClass} mb-8 shadow-lg">
+            <div class="flex items-start">
+                <span class="text-3xl mr-4 mt-1">${statusIcon}</span>
+                <div class="flex-1">
+                    <div class="text-lg font-bold mb-2">${statusHtml}</div>
+                    <div class="text-sm opacity-90 mb-3">${criticalIssues} critical issues, ${warningIssues} warnings detected</div>
+                    <div class="text-sm font-medium">${actionableAdvice}</div>
+                </div>
+            </div>
+        </div>
+
+        <h4 class="text-xl font-semibold mb-4">📊 Model Statistics</h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            ${statsHtml}
+        </div>
+
+        <h4 class="text-xl font-semibold mb-4">🔍 Detailed Health Check Results</h4>
+        <div class="overflow-x-auto mb-8">
+            <table class="coeff-table styled-table text-sm w-full">
+                <thead>
+                    <tr>
+                        <th class="w-1/3 text-left">Diagnostic Check</th>
+                        <th class="w-2/3 text-left">Status & Recommendations</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${checksHtml}
+                </tbody>
+            </table>
+        </div>
+        
+        ${dataQualityTips}
+    `;
+}
+
+/**
+ * Renders the new "Learn DEMATEL" tab.
+ * --- UPDATED ---
+ * This version explains our AI-powered methodology, not the
+ * manual, academic process, to build user trust and
+ * clarify how the tool actually works.
+ */
+function renderLearnDematelTab(containerId) {
+    const container = $(containerId);
+    if (!container) return;
+
+    // This is static content, but now it's accurate to our tool
+    container.innerHTML = `
+        <h3 class="text-3xl font-bold text-center mb-6">🎓 Understanding Our AI-Powered DEMATEL Analysis</h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-black/20 p-4 rounded-lg border border-white/10">
+                <h4 class="text-lg font-bold mb-2 text-indigo-300">What is DEMATEL?</h4>
+                <p class="text-sm text-white/80">The <strong>DEMATEL</strong> method is a powerful tool used to analyze a complex system and understand the *causal relationships* between its parts.</p>
+                <p class="text-sm text-white/80 mt-2">Its main goal is to separate factors into two simple groups:</p>
+                <ul class="list-disc list-inside space-y-1 text-sm mt-2 pl-4">
+                    <li><strong>'Cause' Factors (Drivers):</strong> The root factors that *influence* the rest of the system.</li>
+                    <li><strong>'Effect' Factors (Outcomes):</strong> The factors that are *influenced by* others (the symptoms or results).</li>
+                </ul>
+            </div>
+            
+            <div class="bg-black/20 p-4 rounded-lg border border-white/10">
+                <h4 class="text-lg font-bold mb-2 text-indigo-300">How This Tool Works (Our Methodology)</h4>
+                <p class="text-sm text-white/80">You don't need to be an expert. Our tool automates the hard parts:</p>
+                <ol class="list-decimal list-inside space-y-2 text-sm mt-2 pl-4">
+                    <li><strong>1. You Describe:</strong> You provide a natural language description of your system, its factors, and their relationships (e.g., "Factor A strongly influences Factor B").</li>
+                    <li><strong>2. AI Analyzes:</strong> The AI (Llama 3.1) reads your text, identifies your key factors, and builds the complex "Direct Influence Matrix" for you, using a 0-4 scale based on your wording.</li>
+                    <li><strong>3. You Validate:</strong> You check the AI's work in the "Preview" step to ensure it understood you correctly.</li>
+                    <li><strong>4. Backend Calculates:</strong> Our Python backend takes the confirmed matrix and performs all the complex DEMATEL math (normalization, matrix inversion, etc.) to get the final, accurate results.</li>
+                </ol>
+            </div>
+        </div>
+
+        <h3 class="result-subheader text-2xl font-bold text-center mt-8 mb-4">How to Interpret Your Results</h3>
+        <p class="text-white/70 mb-4 text-center max-w-3xl mx-auto">The analysis gives you two key numbers for each factor. Use them to decide where to focus your efforts.</p>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-white/5 p-4 rounded-lg border border-white/10">
-                <h4 class="text-lg font-bold mb-2">Core Concepts:</h4>
-                <ul class="list-disc list-inside space-y-1 text-sm">
-                    <li><strong>Factors:</strong> The key elements or variables within the system being studied.</li>
-                    <li><strong>Direct Influence:</strong> The immediate impact one factor has on another (often rated by experts).</li>
-                    <li><strong>Total Influence (Matrix T):</strong> Captures both direct and indirect influences between all pairs of factors.</li>
-                    <li><strong>Dispatch (R):</strong> The sum of influences a factor exerts on *all other* factors (Row Sum of T). High R = Influential Cause.</li>
-                    <li><strong>Receive (C):</strong> The sum of influences a factor receives from *all other* factors (Column Sum of T). High C = Easily Influenced Effect.</li>
-                    <li><strong>Prominence (R+C):</strong> The total involvement of a factor (sum of influences dispatched and received). High R+C = Central/Important.</li>
-                    <li><strong>Relation (R-C):</strong> The net causal role. High positive R-C = Net Cause ("Dispatcher"). High negative R-C = Net Effect ("Receiver").</li>
-                </ul>
+                <h4 class="text-lg font-bold mb-2 text-yellow-300">Prominence (D+R): "Importance"</h4>
+                <p class="text-sm text-white/80">This number shows how "connected" a factor is. A high prominence means the factor has many strong relationships (both giving and receiving influence). This is your system's "central hub."</p>
+                <p class="text-sm text-white/90 font-semibold mt-2"><strong>Rule:</strong> The higher the Prominence, the more central and important the factor is to the overall system.</p>
             </div>
+            
             <div class="bg-white/5 p-4 rounded-lg border border-white/10">
-                <h4 class="text-lg font-bold mb-2">Interpretation of Causal Roles:</h4>
-                <p class="text-sm mb-2">Analysis typically categorizes factors based on Prominence (Importance) and Relation (Net Cause/Effect):</p>
-                 <ul class="list-[circle] list-inside pl-4 text-xs mb-3 space-y-1">
-                    <li><strong>Dispatchers (Causes):</strong> Have high positive Relation (R-C). These factors significantly influence others. Interventions targeting dispatchers tend to have widespread effects.</li>
-                    <li><strong>Receivers (Effects):</strong> Have high negative Relation (R-C). These factors are primarily influenced by others. They are good indicators of system performance but less effective points for direct intervention.</li>
-                    <li><strong>Central Factors:</strong> Have high Prominence (R+C). These are highly interconnected factors, playing a key role in the system's dynamics, whether as causes or effects.</li>
-                 </ul>
-                 <p class="text-sm mt-3"><strong>Strategic Focus:</strong> Identify the key Dispatchers to understand root causes and leverage points for change. Monitor Receivers to track the impact of interventions.</p>
+                <h4 class="text-lg font-bold mb-2 text-blue-300">Relation (D-R): "Causal Role"</h4>
+                <p class="text-sm text-white/80">This is the most critical number. It tells you if a factor is a driver or an outcome.</p>
+                <ul class="list-none space-y-2 text-sm mt-2">
+                    <li><strong class="text-blue-300">Positive (D-R > 0) = 'Cause' Factor:</strong> This factor *gives* more influence than it receives. It is a root driver.</li>
+                    <li><strong class="text-red-300">Negative (D-R < 0) = 'Effect' Factor:</strong> This factor *receives* more influence than it gives. It is a symptom or outcome.</li>
+                </ul>
             </div>
         </div>
 
-        <details class="styled-details text-sm mt-4">
-            <summary class="font-semibold">DEMATEL Steps (Simplified)</summary>
-            <div class="bg-black/20 p-4 rounded-b-lg space-y-2">
-                <p>1. Identify key factors.</p>
-                <p>2. Create a Direct-Influence Matrix (Z) - often through expert surveys rating influence between pairs (e.g., 0-4 scale).</p>
-                <p>3. Normalize the Direct-Influence Matrix (X).</p>
-                <p>4. Calculate the Total-Influence Matrix (T = X * (I - X)^-1).</p>
-                <p>5. Calculate R (row sums) and C (column sums) from T.</p>
-                <p>6. Calculate Prominence (R+C) and Relation (R-C) for each factor.</p>
-                <p>7. Analyze R+C and R-C to understand causal structure (e.g., using a causal diagram).</p>
-                <p>8. Develop strategies based on dispatcher/receiver roles.</p>
-            </div>
-        </details>
-    </div>
+        <div class="p-6 rounded-lg bg-green-900/20 border border-green-500/30 text-center mt-8">
+            <h4 class="text-xl font-bold mb-2 text-green-300">Your Strategic Action Plan</h4>
+            <p class="text-white/90">To fix a complex problem, **focus your energy on the 'Cause' factors** (positive D-R). By improving them, you will automatically fix the 'Effect' factors.</p>
+            <p class="text-white/90 mt-1">Use the **'Effect' factors as your KPIs** to monitor if your changes are working.</p>
+        </div>
+
+        <div class="p-4 rounded-lg bg-black/20 border border-white/10 text-center mt-8">
+             <h4 class="text-lg font-bold mb-2 text-indigo-300">Check Your Model's Health</h4>
+             <p class="text-sm text-white/80">Always check the <strong>"Diagnostics"</strong> tab. It will tell you if the AI's analysis was stable and if any potential issues (like no 'Cause' factors) were found.</p>
+        </div>
     `;
+}
 
+/**
+ * Renders the DEMATEL Causal Diagram chart into its container.
+ * --- FIXED VERSION - Minimal changes to existing function ---
+ * Fixes alignment issues and adds color bar
+ */
+function renderDematelChart(chartData) {
+    const chartContainer = $("dematel-chart-container");
+    if (!chartContainer) {
+        console.warn("DEMATEL chart container not found.");
+        return;
+    }
 
-    // --- Final Touches ---
-    analysisCache[currentTemplateId] = container.innerHTML; // Cache result
+    // Check for all zero data (from a failed calculation)
+    const isAllZero = chartData.data.every(d => d.x === 0 && d.y === 0);
+    if (isAllZero) {
+        chartContainer.innerHTML = `
+            <div class="p-6 text-center text-white/70 flex items-center justify-center h-full">
+                <div>
+                    <h4 class="text-xl font-bold text-yellow-300 mb-4">Chart Cannot Be Rendered</h4>
+                    <p>The analysis resulted in zero prominence and relation for all factors.</p>
+                    <p>This is a valid result but cannot be plotted. Please see the <strong class="text-red-400">Diagnostics</strong> tab.</p>
+                </div>
+            </div>
+        `;
+        return;
+    }
 
-    // Tab switching logic (copied from your provided function)
-    tabNav.addEventListener("click", (e) => {
-        if (e.target.tagName === "BUTTON") {
-            tabNav.querySelectorAll(".analysis-tab-btn").forEach((btn) => btn.classList.remove("active"));
-            tabContent.querySelectorAll(".analysis-tab-panel").forEach((pnl) => pnl.classList.remove("active"));
-            e.target.classList.add("active");
-            const targetPanel = $(e.target.dataset.tab + "Panel");
-            targetPanel.classList.add("active");
-            // Resize BOTH potential charts when switching tabs
-            const diagramChart = targetPanel.querySelector('#dematelDiagramPlot');
-            const matrixChart = targetPanel.querySelector('#dematelMatrixHeatmap');
-            if (diagramChart && diagramChart.layout && typeof Plotly !== 'undefined') {
-                try { Plotly.Plots.resize(diagramChart); } catch (err) { console.error("Resize err (Diagram):", err); }
+    chartContainer.innerHTML = ""; // Clear placeholder
+
+    try {
+        // Calculate intelligent text positions to avoid overlap
+        const textPositions = chartData.data.map((point, index) => {
+            const x = point.x;
+            const y = point.y;
+            const avgX = chartData.data.reduce((sum, p) => sum + p.x, 0) / chartData.data.length;
+            
+            // Position labels based on quadrant and avoid clustering
+            if (x > avgX && y > 0) {
+                // Top right quadrant - alternate positions
+                return index % 2 === 0 ? 'top left' : 'bottom right';
+            } else if (x <= avgX && y > 0) {
+                // Top left quadrant - alternate positions  
+                return index % 2 === 0 ? 'top right' : 'bottom left';
+            } else if (x > avgX && y <= 0) {
+                // Bottom right quadrant
+                return index % 2 === 0 ? 'top right' : 'bottom left';
+            } else {
+                // Bottom left quadrant
+                return index % 2 === 0 ? 'top left' : 'bottom right';
             }
-            if (matrixChart && matrixChart.layout && typeof Plotly !== 'undefined') {
-                 try { Plotly.Plots.resize(matrixChart); } catch (err) { console.error("Resize err (Matrix):", err); }
-            }
-        }
-    });
+        });
 
-     // Attempt initial resize for chart in the default active tab (summaryPanel - no chart)
-     // Attempt initial resize for charts in DIAGRAM and MATRIX tabs after a short delay
-     setTimeout(() => {
-         const initialDiagramChart = $('dematelDiagramPlot');
-         const initialMatrixChart = $('dematelMatrixHeatmap');
-         if (initialDiagramChart && initialDiagramChart.layout && typeof Plotly !== 'undefined') {
-             try { Plotly.Plots.resize(initialDiagramChart); } catch (err) { console.error("Initial Resize err (Diagram):", err); }
-         }
-         if (initialMatrixChart && initialMatrixChart.layout && typeof Plotly !== 'undefined') {
-             try { Plotly.Plots.resize(initialMatrixChart); } catch (err) { console.error("Initial Resize err (Matrix):", err); }
-         }
-     }, 150);
+        const plotData = [{
+            x: chartData.data.map(m => m.x), // Prominence (D+R)
+            y: chartData.data.map(m => m.y), // Relation (D-R)
+            text: chartData.data.map(m => m.name),
+            mode: 'markers+text',
+            textposition: textPositions,
+            textfont: {
+                size: 11,
+                color: 'white'
+            },
+            marker: {
+                size: 12,
+                color: chartData.data.map(m => m.y),
+                colorscale: 'RdBu',
+                showscale: true, // Show the color bar
+                colorbar: {
+                    title: {
+                        text: "Relation (D-R)<br>Cause ↔ Effect",
+                        font: { color: 'white', size: 12 }
+                    },
+                    titleside: "right",
+                    tickfont: { color: 'white', size: 10 },
+                    x: 1.02, // Position colorbar to the right
+                    len: 0.8,
+                    thickness: 15
+                }
+            },
+            type: 'scatter',
+            hovertemplate: '<b>%{text}</b><br>Prominence: %{x:.3f}<br>Relation: %{y:.3f}<extra></extra>'
+        }];
 
+        // Calculate context lines with better spacing
+        const avgProminence = chartData.data.reduce((sum, p) => sum + p.x, 0) / chartData.data.length;
+        const maxRelation = Math.max(...chartData.data.map(p => Math.abs(p.y)));
+        const yPadding = maxRelation * 0.15 || 0.1; 
+        const yRange = [-(maxRelation + yPadding), maxRelation + yPadding];
+        const minProminence = Math.min(...chartData.data.map(p => p.x));
+        const maxProminence = Math.max(...chartData.data.map(p => p.x));
+        const xPadding = (maxProminence - minProminence) * 0.1 || 0.1;
+        const xRange = [minProminence - xPadding, maxProminence + xPadding];
 
-    $("analysisActions").classList.remove("hidden"); // Show save buttons
-    // setLoading('generate', false); // Handled in the calling function
-}   
-    // =========================================================================
+        const layout = {
+            title: {
+                text: chartData.title,
+                font: { color: 'white' } 
+            },
+            paper_bgcolor: 'rgba(0,0,0,0)', 
+            plot_bgcolor: 'rgba(0,0,0,0.1)', 
+            font: { color: 'white' }, 
+            xaxis: { 
+                title: {
+                    text: chartData.x_axis_label,
+                    font: { color: 'white' } 
+                },
+                gridcolor: 'rgba(255, 255, 255, 0.2)', 
+                zeroline: false,
+                tickfont: { color: 'white' },
+                range: xRange // Use calculated range instead of automargin
+            },
+            yaxis: { 
+                title: {
+                    text: chartData.y_axis_label,
+                    font: { color: 'white' } 
+                },
+                gridcolor: 'rgba(255, 255, 255, 0.2)', 
+                zeroline: true, 
+                zerolinecolor: 'rgba(255, 255, 255, 0.5)', 
+                tickfont: { color: 'white' },
+                range: yRange // Use calculated range for proper alignment
+            },
+            hovermode: 'closest',
+            margin: { t: 50, b: 60, l: 80, r: 120 }, // Fixed margins instead of automargin
+            autosize: true,
+
+            shapes: [
+                { 
+                    type: 'line',
+                    xref: 'paper', x0: 0, x1: 1,
+                    yref: 'y', y0: 0, y1: 0,
+                    line: { color: 'rgba(255, 255, 255, 0.5)', width: 1, dash: 'dot' }
+                },
+                { 
+                    type: 'line',
+                    xref: 'x', x0: avgProminence, x1: avgProminence,
+                    yref: 'paper', y0: 0, y1: 1,
+                    line: { color: 'rgba(255, 255, 255, 0.5)', width: 1, dash: 'dot' }
+                }
+            ],
+            annotations: [
+                {
+                    text: 'Core Drivers',
+                    x: maxProminence - xPadding * 0.5, 
+                    y: yRange[1] - yPadding * 0.5,
+                    showarrow: false, 
+                    font: { color: 'rgba(255, 255, 255, 0.4)' }
+                },
+                {
+                    text: 'Independent Drivers',
+                    x: minProminence + xPadding * 0.5, 
+                    y: yRange[1] - yPadding * 0.5,
+                    showarrow: false, 
+                    font: { color: 'rgba(255, 255, 255, 0.4)' }
+                },
+                {
+                    text: 'Central Outcomes',
+                    x: maxProminence - xPadding * 0.5, 
+                    y: yRange[0] + yPadding * 0.5,
+                    showarrow: false, 
+                    font: { color: 'rgba(255, 255, 255, 0.4)' }
+                },
+                {
+                    text: 'Independent Outcomes',
+                    x: minProminence + xPadding * 0.5, 
+                    y: yRange[0] + yPadding * 0.5,
+                    showarrow: false, 
+                    font: { color: 'rgba(255, 255, 255, 0.4)' }
+                }
+            ]
+        };
+
+        Plotly.newPlot(chartContainer, plotData, layout, { responsive: true });
+
+    } catch (e) {
+        console.error("Chart rendering failed (is Plotly.js loaded?):", e);
+        chartContainer.innerHTML = `<div class="error-message">Chart rendering failed: ${e.message}.<br><pre class="text-xs bg-black/30 p-2 rounded mt-2">${JSON.stringify(chartData.data, null, 2)}</pre></div>`;
+    }
+}
+
+// =========================================================================
     // ===== VISUALIZATION & RENDERING FUNCTIONS (FOR SEM)                =====
     // =========================================================================
 

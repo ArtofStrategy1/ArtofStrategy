@@ -11,8 +11,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 # --- Import analysis functions ---
 from analysis_modules import sem_analysis
-# Make sure predictive_analysis is importable
-from analysis_modules import predictive_analysis # ADDED IMPORT
+from analysis_modules import predictive_analysis
+from analysis_modules import dematel_analysis # Make sure this is imported
 
 # --- Import save functions ---
 # Assuming these exist and work as intended
@@ -23,13 +23,13 @@ app = FastAPI(docs_url="/")
 # --- CORS ---
 # (Keep your existing CORS configuration)
 origins = [
-    "https://data2int.com",    # Main domain
+    "https://data2int.com",      # Main domain
     "https://elijah.data2int.com",  # Dev domain
     "http://localhost:8080",       # For local testing
-    "http://127.0.0.1:8080",        # For local testing
+    "http://127.0.0.1:8080",      # For local testing
     "http://localhost:8000",       # For python -m http.server
-    "http://127.0.0.1:8000",        # For python -m http.server
-    "http://10.0.0.243:8000"        # From server log
+    "http://127.0.0.1:8000",       # For python -m http.server
+    "http://10.0.0.243:8000"       # From server log
 ]
 
 app.add_middleware(
@@ -50,12 +50,14 @@ async def run_analysis_router(
     measurement_syntax: Optional[str] = Form(None),
     structural_syntax: Optional[str] = Form(None),
     # --- Predictive Analysis specific inputs ---
-    # These names match the keys sent from the JS generatePredictiveAnalysis function
-    dateColumn: Optional[str] = Form(None), # Matches JS key
-    targetColumn: Optional[str] = Form(None), # Matches JS key
-    forecastPeriods: Optional[str] = Form(None), # Matches JS key, received as string
-    confidenceLevel: Optional[str] = Form(None), # Matches JS key, received as string
-    modelType: Optional[str] = Form(None) # Matches JS key
+    dateColumn: Optional[str] = Form(None), 
+    targetColumn: Optional[str] = Form(None),
+    forecastPeriods: Optional[str] = Form(None),
+    confidenceLevel: Optional[str] = Form(None),
+    modelType: Optional[str] = Form(None),
+    # --- DEMATEL PARAMETERS ---
+    dematel_factors: Optional[str] = Form(None), # Will be a JSON string list
+    dematel_matrix: Optional[str] = Form(None)  # Will be a JSON string 2D list
 ):
     """
     Routes analysis requests based on analysis_type.
@@ -66,30 +68,35 @@ async def run_analysis_router(
     is_file_upload: bool = False
 
     try:
-        # --- Determine data source ---
+        # --- Determine data source (for analysis types that need it) ---
         if data_file:
-            # Basic validation (can be more robust)
-            filename_lower = data_file.filename.lower()
-            # Allow common extensions
-            if not filename_lower.endswith(('.csv', '.xlsx', '.xls')):
-                raise HTTPException(status_code=400, detail="Invalid file type. Please upload a CSV or Excel file.")
             data_payload = data_file
             input_filename = data_file.filename
             is_file_upload = True
             print(f"Processing uploaded file: {input_filename}")
         elif data_text:
             data_payload = data_text
-            input_filename = "pasted_data.csv" # Assign a default name
+            input_filename = "pasted_data" # Assign a default name
             is_file_upload = False
             print(f"Processing pasted text data.")
         else:
             # Raise error only if the specific analysis type *requires* data
-            if analysis_type in ["sem", "predictive"]: # Add other types needing data
+            
+            # --------------------- THIS IS THE FIX ---------------------
+            # "dematel" has been REMOVED from this list
+            if analysis_type in ["sem", "predictive"]: 
+            # -----------------------------------------------------------
                  raise HTTPException(status_code=400, detail="No data provided. Please either upload a file or paste text data.")
             # Allow analysis types that might not need data (if any)
 
         # --- Route based on analysis_type ---
         if analysis_type == "sem":
+            # --- SEM-specific file validation ---
+            if is_file_upload:
+                filename_lower = data_file.filename.lower()
+                if not filename_lower.endswith(('.csv', '.xlsx', '.xls')):
+                    raise HTTPException(status_code=400, detail="Invalid file type for SEM. Please upload a CSV or Excel file.")
+            
             if not measurement_syntax and not structural_syntax:
                 raise HTTPException(status_code=400, detail="SEM requires at least Measurement Syntax or Structural Syntax.")
             if not data_payload: # SEM requires data
@@ -107,6 +114,12 @@ async def run_analysis_router(
 
         # --- PREDICTIVE ANALYSIS ROUTE ---
         elif analysis_type == "predictive":
+            # --- Predictive-specific file validation ---
+            if is_file_upload:
+                filename_lower = data_file.filename.lower()
+                if not filename_lower.endswith(('.csv', '.xlsx', '.xls')):
+                    raise HTTPException(status_code=400, detail="Invalid file type for Predictive Analysis. Please upload a CSV or Excel file.")
+
             if not data_payload: # Predictive requires data
                 raise HTTPException(status_code=400, detail="Predictive analysis requires data (file or text).")
             if not dateColumn:
@@ -114,48 +127,57 @@ async def run_analysis_router(
             if not targetColumn:
                 raise HTTPException(status_code=400, detail="Predictive analysis requires a target column selection.")
 
-            # Safely convert string parameters from Form to expected types
+            # (Keep all your existing predictive param conversion logic...)
             try:
                 periods = int(forecastPeriods) if forecastPeriods else 12 # Default 12
             except (ValueError, TypeError):
                 raise HTTPException(status_code=400, detail="Invalid format for Forecast Periods (must be an integer).")
-
+            
             try:
-                # Ensure confidence level is treated as float between 0 and 1
                 level = float(confidenceLevel) if confidenceLevel else 0.90 # Default 0.90
                 if not (0 < level < 1):
                     raise ValueError("Confidence level must be between 0 and 1 (exclusive).")
             except (ValueError, TypeError):
                 raise HTTPException(status_code=400, detail="Invalid format for Confidence Level (e.g., use 0.95 for 95%).")
 
-            # Use model type directly, provide default if missing
             model = modelType if modelType else "auto" # Default 'auto'
 
             print(f"Routing to Predictive Analysis...")
-            print(f"  Date Column: {dateColumn}")
-            print(f"  Target Column: {targetColumn}")
-            print(f"  Periods: {periods}")
-            print(f"  Confidence: {level}")
-            print(f"  Model Type: {model}")
+            # (Keep your existing predictive print statements...)
 
-            # Call the predictive analysis function with validated parameters
-            # Using Pythonic names for parameters passed to the function
             results = await predictive_analysis.perform_prediction(
                 data_payload=data_payload,
                 is_file_upload=is_file_upload,
                 input_filename=input_filename,
-                date_column=dateColumn, # Pass the original string name
-                target_column=targetColumn, # Pass the original string name
-                forecast_periods=periods, # Pass the converted integer
-                confidence_level=level, # Pass the converted float
-                model_type=model # Pass the string
+                date_column=dateColumn,
+                target_column=targetColumn,
+                forecast_periods=periods,
+                confidence_level=level,
+                model_type=model
             )
             return JSONResponse(content=results)
 
-        # --- Add other analysis types here ---
-        # elif analysis_type == "some_other_analysis":
-        #     results = await some_other_module.run(...)
-        #     return JSONResponse(content=results)
+        # --- DEMATEL ANALYSIS ROUTE ---
+        elif analysis_type == "dematel":
+            # This logic will now be reached
+            if not dematel_factors or not dematel_matrix:
+                raise HTTPException(status_code=400, detail="Missing AI-generated factors or matrix for DEMATEL analysis.")
+            
+            try:
+                # Convert the JSON strings from the form back into Python lists
+                factors_list = json.loads(dematel_factors)
+                matrix_list = json.loads(dematel_matrix)
+            except json.JSONDecodeError:
+                raise HTTPException(status_code=400, detail="Invalid JSON format for DEMATEL factors or matrix.")
+            
+            print(f"Routing to DEMATEL Analysis with {len(factors_list)} factors...")
+            
+            # Call the backend math function with the *real* AI data
+            results = await dematel_analysis.perform_dematel(
+                factors=factors_list,
+                direct_matrix=matrix_list
+            )
+            return JSONResponse(content=results)
 
         else:
             raise HTTPException(status_code=400, detail=f"Unsupported analysis_type: {analysis_type}")
@@ -177,6 +199,7 @@ async def run_analysis_router(
                 print(f"Closed uploaded file: {input_filename}")
             except Exception as close_err:
                 print(f"Warning: Could not close file {input_filename}. Error: {close_err}")
+                
 # Currently being worked on.
 # --- Save Document Endpoint ---
 @app.post("/api/export")
@@ -196,23 +219,25 @@ async def export_analysis_report(
 
         if format == "pdf":
             # Call your new PDF module
-            pdf_bytes = save_pdf.create_pdf_report(analysis_data)
-            
-            return StreamingResponse(
-                io.BytesIO(pdf_bytes),
-                media_type="application/pdf",
-                headers={"Content-Disposition": "attachment; filename=SAGE_Analysis.pdf"}
-            )
+            # pdf_bytes = save_pdf.create_pdf_report(analysis_data)
+            # 
+            # return StreamingResponse(
+            #     io.BytesIO(pdf_bytes),
+            #     media_type="application/pdf",
+            #     headers={"Content-Disposition": "attachment; filename=SAGE_Analysis.pdf"}
+            # )
+            raise HTTPException(status_code=501, detail="PDF export not yet implemented.")
             
         elif format == "docx":
             # Call your new DOCX module
-            docx_bytes = save_docx.create_docx_report(analysis_data)
-            
-            return StreamingResponse(
-                io.BytesIO(docx_bytes),
-                media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                headers={"Content-Disposition": "attachment; filename=SAGE_Analysis.docx"}
-            )
+            # docx_bytes = save_docx.create_docx_report(analysis_data)
+            # 
+            # return StreamingResponse(
+            #     io.BytesIO(docx_bytes),
+            #     media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            #     headers={"Content-Disposition": "attachment; filename=SAGE_Analysis.docx"}
+            # )
+            raise HTTPException(status_code=501, detail="DOCX export not yet implemented.")
             
         else:
             raise HTTPException(status_code=400, detail="Invalid format. Must be 'pdf' or 'docx'.")
