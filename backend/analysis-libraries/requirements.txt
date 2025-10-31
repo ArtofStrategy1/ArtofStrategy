@@ -12,6 +12,7 @@ python-docx>=1.1.2
 fpdf2>=2.7.9
 pygraphviz>=1.13
 graphviz
+httpx>=0.25.0
 
 # Additional packages for enhanced predictive analysis (optional)
 # statsmodels>=0.14.0  # For ARIMA and advanced time series
