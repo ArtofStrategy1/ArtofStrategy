@@ -1363,6 +1363,8 @@ select.input-field option {
                 <a href="#" class="text-2xl font-bold text-white nav-link" data-page="home">S.A.G.E.</a>
                 <div>
                     <a href="#" class="text-white/80 hover:text-white px-3 py-2 rounded-md text-sm font-medium nav-link"
+                        data-page="feedback">Give Us Feedback</a>
+                    <a href="#" class="text-white/80 hover:text-white px-3 py-2 rounded-md text-sm font-medium nav-link"
                         data-page="home">Home</a>
                     <a href="#" class="text-white/80 hover:text-white px-3 py-2 rounded-md text-sm font-medium nav-link"
                         data-page="login">Login</a>
@@ -1610,6 +1612,76 @@ select.input-field option {
                     <p class="text-white/60 text-sm mb-6">Don't forget to check your spam folder.</p>
                     <div class="text-center">
                         <button class="btn-tertiary nav-link" data-page="login">Return to Login</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="feedback" class="page flex items-center justify-center min-h-[80vh]">
+            <div class="w-full max-w-lg">
+                <div class="glass-container">
+                    <h2 class="text-3xl font-bold mb-4 text-center text-white">Give Us Feedback</h2>
+                    <p class="text-white/80 mb-6 text-center">We'd love to hear your thoughts on a specific tool or the website in general.</p>
+                    
+                    <div class="space-y-4">
+
+                        <div>
+                            <label for="feedbackToolName" class="block text-sm font-medium text-gray-200 mb-2">Which tool is this feedback for?</label>
+                            <div class="select-wrapper"> <select id="feedbackToolName" class="input-field">
+                                    <option value="general">General Website / Other</option>
+                                    </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="feedbackReason" class="block text-sm font-medium text-gray-200 mb-2">What is the reason for your feedback?</label>
+                            <div class="select-wrapper">
+                                <select id="feedbackReason" class="input-field">
+                                    <option value="">-- Select a reason --</option>
+                                    <option value="Bug / Error">Bug / Error</option>
+                                    <option value="Suggestion / Improvement">Suggestion / Improvement</option>
+                                    <option value="Not Satisfied">Not Satisfied</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-200 mb-2">How would you rate this tool? (Optional)</label>
+                            <div class="input-radio-group text-sm">
+                                <input type="radio" name="feedbackRating" id="rating0" value="0" class="input-radio" checked>
+                                <label for="rating0" class="input-radio-label">N/A</label>
+                                
+                                <input type="radio" name="feedbackRating" id="rating1" value="1" class="input-radio">
+                                <label for="rating1" class="input-radio-label">1 ★</label>
+                                
+                                <input type="radio" name="feedbackRating" id="rating2" value="2" class="input-radio">
+                                <label for="rating2" class="input-radio-label">2 ★</label>
+                                
+                                <input type="radio" name="feedbackRating" id="rating3" value="3" class="input-radio">
+                                <label for="rating3" class="input-radio-label">3 ★</label>
+                                
+                                <input type="radio" name="feedbackRating" id="rating4" value="4" class="input-radio">
+                                <label for="rating4" class="input-radio-label">4 ★</label>
+                                
+                                <input type="radio" name="feedbackRating" id="rating5" value="5" class="input-radio">
+                                <label for="rating5" class="input-radio-label">5 ★</label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="feedbackTextPage" class="block text-sm font-medium text-gray-200 mb-2">Please provide details (min. 10 characters)</label>
+                            <textarea id="feedbackTextPage" class="input-field h-32" placeholder="Type your feedback here..."></textarea>
+                        </div>
+                        
+                        <div id="feedbackMessagePage" class="hidden"></div>
+                        <button id="submitFeedbackPageBtn" class="btn btn-primary w-full">
+                            <span id="submitFeedbackPageBtnText">Submit Feedback</span>
+                            <span id="submitFeedbackPageSpinner" class="loading-spinner hidden ml-2"></span>
+                        </button>
+                        <div class="text-center mt-4">
+                            <button class="btn-tertiary nav-link" data-page="home">Back to Home</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -20945,6 +21017,97 @@ function renderMiscPage_MSC(container, data) {
     closeModalBtn.addEventListener("click", () => {
         versionModal.classList.add("hidden");
     });
+
+    // --- NEW FEEDBACK PAGE LOGIC (CALLING EDGE FUNCTION) ---
+
+    // 1. Populate the tool dropdown (This part stays the same)
+    const feedbackToolSelect = $("feedbackToolName");
+    if (feedbackToolSelect) {
+        for (const templateId in templates) {
+            if (templates.hasOwnProperty(templateId)) {
+                const title = templates[templateId].title;
+                feedbackToolSelect.add(new Option(title, templateId));
+            }
+        }
+    }
+
+    // 2. Add the submit button listener (This part is updated)
+    const submitFeedbackPageBtn = $("submitFeedbackPageBtn");
+    if (submitFeedbackPageBtn) {
+        submitFeedbackPageBtn.addEventListener("click", async () => { // Make it async
+            
+            // Get all values from the new form
+            const tool_name = $("feedbackToolName").value;
+            const reason = $("feedbackReason").value;
+            const content = $("feedbackTextPage").value.trim();
+            const ratingInput = document.querySelector('input[name="feedbackRating"]:checked');
+            
+            // Convert rating: "0" becomes null (for optional rating), others become integers
+            const rating = ratingInput ? (ratingInput.value === "0" ? null : parseInt(ratingInput.value)) : null;
+
+            // --- Front-end Validation (mirrors your test script) ---
+            if (!currentUser) {
+                showMessage("feedbackMessagePage", "You must be logged in to submit feedback.", "error");
+                return;
+            }
+            if (!reason) {
+                showMessage("feedbackMessagePage", "Please select a reason.", "error");
+                return;
+            }
+            // Your test script checks for "Too short", so we check for > 10
+            if (content.length <= 10) { 
+                showMessage("feedbackMessagePage", "Please enter at least 10 characters in the details box.", "error");
+                return;
+            }
+
+            setLoading("submitFeedbackPage", true); // Shows spinner
+            
+            try {
+                // --- Supabase Edge Function Logic ---
+                
+                // 1. Construct the feedback object matching your function's body
+                const feedbackObject = {
+                    tool_name: tool_name,
+                    reason: reason,
+                    content: content,
+                    rating: rating 
+                    // The function will get the user_id from the auth token
+                };
+                
+                // 2. Invoke the 'insert-feedback' Edge Function
+                // supabase.functions.invoke automatically sends the Authorization header (Bearer $TOKEN)
+                // and the apikey header for you.
+                const { data, error: invokeError } = await supabase.functions.invoke(
+                    'insert-feedback', 
+                    { body: feedbackObject }
+                );
+
+                if (invokeError) {
+                    // This will catch auth errors, validation errors (like "content too short"),
+                    // and server errors from your function.
+                    throw invokeError; 
+                }
+
+                // --- Success ---
+                setLoading("submitFeedbackPage", false); // Hides spinner
+                showMessage("feedbackMessagePage", "Thank you! Your feedback has been received.", "success");
+                
+                // Navigate home after 2 seconds
+                setTimeout(() => {
+                    navigateTo("home"); // Navigate to home page
+                }, 2000);
+
+            } catch (error) {
+                // --- Error Handling ---
+                console.error("Feedback submission error:", error);
+                setLoading("submitFeedbackPage", false); // Hides spinner
+                // Your function should return a JSON error with a 'message' field,
+                // which will be in error.message.
+                showMessage("feedbackMessagePage", `Error: ${error.message || 'An unknown error occurred.'}`, "error");
+            }
+        });
+    }
+    // --- END OF NEW FEEDBACK PAGE LOGIC ---
 
     $("loginBtn").addEventListener("click", handleLogin);
     $("registerBtn").addEventListener("click", handleRegister);
