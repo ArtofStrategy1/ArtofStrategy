@@ -1,6 +1,10 @@
 // =====================================================================================================
 // ===================          Systems Thinking Page Rendering Functions           ====================
 // =====================================================================================================
+import { dom } from "../../utils/dom-utils.mjs";
+import { appState } from "../../state/app-state.mjs";
+import { generateProcessMappingMermaidCode } from '../../diagrams/diagram-generation.mjs'
+import { renderMermaidDiagram } from '../../diagrams/diagram-renderer.mjs'
 
 function renderProcessMappingPage(container, data) {
     container.innerHTML = ""; // Clear the loading indicator
@@ -8,7 +12,7 @@ function renderProcessMappingPage(container, data) {
     if (!data || !data.process_name || !data.steps || !data.connections || !data.bottlenecks || !data.optimizations || !data.kpis) {
         console.error("Incomplete data passed to renderProcessMappingPage:", data);
         container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render Process Map results.</div>`;
-        $("analysisActions").classList.add("hidden");
+        dom.$("analysisActions").classList.add("hidden");
         return;
     }
 
@@ -44,7 +48,7 @@ function renderProcessMappingPage(container, data) {
     `;
 
     // --- 1. Populate Flowchart Panel (Keep as is, but add better icons) ---
-    const flowchartPanel = $("flowchartPanel");
+    const flowchartPanel = dom.$("flowchartPanel");
     let flowchartHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-6 text-center">${process_name}</h3><div class="space-y-2 max-w-lg mx-auto">`; // Centered flowchart
 
     const stepMap = new Map(steps.map((step) => [step.id, step]));
@@ -95,7 +99,7 @@ function renderProcessMappingPage(container, data) {
     flowchartPanel.innerHTML = flowchartHtml;
 
     // --- 2. Populate Step Details Panel (Keep table) ---
-    const detailsPanel = $("detailsPanel");
+    const detailsPanel = dom.$("detailsPanel");
     let detailsHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">Detailed Step Breakdown</h3><div class="overflow-x-auto"><table class="coeff-table styled-table text-sm">
         <thead><tr><th>ID</th><th>Step Name</th><th>Owner/Role</th><th>Type</th><th>Description</th></tr></thead><tbody>`;
     steps.forEach((step) => {
@@ -110,7 +114,7 @@ function renderProcessMappingPage(container, data) {
     detailsPanel.innerHTML = detailsHtml;
 
     // --- 3. Populate Optimizations Panel (New) ---
-    const optimizationsPanel = $("optimizationsPanel");
+    const optimizationsPanel = dom.$("optimizationsPanel");
     let optimizationsHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">✨ Potential Optimizations</h3>`;
     if (optimizations && optimizations.length > 0) {
         optimizationsHtml += `<p class="text-sm text-white/70 mb-6 italic">Based on the process description, consider these improvements, particularly for identified bottlenecks.</p>`;
@@ -131,7 +135,7 @@ function renderProcessMappingPage(container, data) {
     optimizationsPanel.innerHTML = optimizationsHtml;
 
     // --- 4. Populate KPIs & Bottlenecks Panel (New/Combined) ---
-    const kpisPanel = $("kpisPanel");
+    const kpisPanel = dom.$("kpisPanel");
     let kpisHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">📊 KPIs & Bottlenecks</h3>`;
     // Bottlenecks first
     if (bottlenecks && bottlenecks.length > 0) {
@@ -164,7 +168,7 @@ function renderProcessMappingPage(container, data) {
 
 
     // --- Populate Mermaid Panel and Render Diagram ---
-    const mermaidPanel = $("mermaidPanel");
+    const mermaidPanel = dom.$("mermaidPanel");
     if (mermaidPanel) {
         const mermaidCode = generateProcessMappingMermaidCode(data); // Generate Mermaid code
         const diagramContainer = mermaidPanel.querySelector("#diagram-container");
@@ -178,7 +182,7 @@ function renderProcessMappingPage(container, data) {
 
 
     // --- 5. Populate Learn Mapping Panel (New) ---
-    const learnPanel = $("learnPanel");
+    const learnPanel = dom.$("learnPanel");
     learnPanel.innerHTML = `
     <div class="p-6 space-y-6 text-white/90">
         <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding Process Mapping</h3>
@@ -231,7 +235,7 @@ function renderProcessMappingPage(container, data) {
 
 
     // --- Final Touches ---
-    analysisCache[currentTemplateId] = container.innerHTML; // Cache result
+    appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache result
 
     // Tab switching logic
     tabNav.addEventListener("click", (e) => {
@@ -243,7 +247,7 @@ function renderProcessMappingPage(container, data) {
             // Activate clicked
             e.target.classList.add("active");
             const targetPanelId = e.target.dataset.tab + "Panel";
-            const targetPanel = $(targetPanelId);
+            const targetPanel = dom.$(targetPanelId);
             if (targetPanel) {
                 targetPanel.classList.add("active");
                 // No Plotly charts expected in this version, so no resize needed
@@ -263,7 +267,7 @@ function renderProcessMappingPage(container, data) {
         }
     });
 
-    $("analysisActions").classList.remove("hidden"); // Show save buttons
+    dom.$("analysisActions").classList.remove("hidden"); // Show save buttons
     // setLoading('generate', false); // Handled in the calling function
 }
 
@@ -275,7 +279,7 @@ function renderParetoFishbonePage(container, data) {
     if (!data || !data.problem_statement || !data.fishbone || !data.pareto_analysis || !data.action_plan) {
         console.error("Incomplete data passed to renderParetoFishbonePage:", data);
         container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render Pareto/Fishbone results.</div>`;
-        $("analysisActions").classList.add("hidden");
+        dom.$("analysisActions").classList.add("hidden");
         return;
     }
 
@@ -303,7 +307,7 @@ function renderParetoFishbonePage(container, data) {
     `;
 
     // --- 1. Populate Pareto Chart & Summary Tab ---
-    const paretoPanel = $("paretoPanel");
+    const paretoPanel = dom.$("paretoPanel");
     paretoPanel.innerHTML = `<div class="p-4">
         <h3 class="text-2xl font-bold mb-4 text-center">Pareto Analysis (80/20 Rule)</h3>
         <p class="text-center text-lg italic text-white/80 mb-6">Problem: ${problem_statement}</p>
@@ -334,11 +338,11 @@ function renderParetoFishbonePage(container, data) {
         createParetoChartJS(pareto_analysis, "paretoChartContainer"); // Use the existing chart function
     } catch(e) {
         console.error("Error rendering Pareto chart:", e);
-        $("paretoChartContainer").innerHTML = "<p class='p-4 text-center text-red-400'>Could not render Pareto chart.</p>";
+        dom.$("paretoChartContainer").innerHTML = "<p class='p-4 text-center text-red-400'>Could not render Pareto chart.</p>";
     }
 
     // --- 2. Populate Fishbone Diagram Tab (Textual) ---
-    const fishbonePanel = $("fishbonePanel");
+    const fishbonePanel = dom.$("fishbonePanel");
     let fishboneHtml = `<div class="p-4">
         <h3 class="text-2xl font-bold mb-4 text-center">Fishbone Diagram (Ishikawa) - Potential Causes</h3>
         <p class="text-center text-lg italic text-white/80 mb-6">Problem: ${problem_statement}</p>
@@ -368,7 +372,7 @@ function renderParetoFishbonePage(container, data) {
 
 
     // --- 3. Populate Action Plan Tab ---
-    const actionPanel = $("actionPanel");
+    const actionPanel = dom.$("actionPanel");
     let actionHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">🎯 Action Plan (Focus on Vital Few)</h3>`;
     if (action_plan && action_plan.length > 0) {
         actionHtml += `<p class="text-sm text-white/70 mb-6 italic">Concentrate resources on addressing these high-impact causes identified in the Pareto analysis.</p>`;
@@ -394,7 +398,7 @@ function renderParetoFishbonePage(container, data) {
     actionPanel.innerHTML = actionHtml;
 
     // --- 4. Populate Learn Techniques Tab ---
-    const learnPanel = $("learnPanel");
+    const learnPanel = dom.$("learnPanel");
     learnPanel.innerHTML = `
     <div class="p-6 space-y-6 text-white/90">
         <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding Pareto & Fishbone Analysis</h3>
@@ -440,7 +444,7 @@ function renderParetoFishbonePage(container, data) {
     `;
 
     // --- Final Touches ---
-    analysisCache[currentTemplateId] = container.innerHTML; // Cache result
+    appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache result
 
     // Tab switching logic
     tabNav.addEventListener("click", (e) => {
@@ -452,7 +456,7 @@ function renderParetoFishbonePage(container, data) {
             // Activate clicked
             e.target.classList.add("active");
             const targetPanelId = e.target.dataset.tab + "Panel";
-            const targetPanel = $(targetPanelId);
+            const targetPanel = dom.$(targetPanelId);
             if (targetPanel) {
                 targetPanel.classList.add("active");
                 // Resize chart if the Pareto tab is activated
@@ -468,14 +472,14 @@ function renderParetoFishbonePage(container, data) {
 
     // Attempt initial resize for chart in the default active tab (Pareto)
     setTimeout(() => {
-        const initialChart = $('paretoChartContainer');
+        const initialChart = dom.$('paretoChartContainer');
         if (initialChart && initialChart.layout && typeof Plotly !== 'undefined') {
             try { Plotly.Plots.resize(initialChart); } catch (err) { console.error("Initial Resize err:", err); }
         }
     }, 150);
 
 
-    $("analysisActions").classList.remove("hidden"); // Show save buttons
+    dom.$("analysisActions").classList.remove("hidden"); // Show save buttons
     // setLoading('generate', false); // Handled in the calling function
 }
 
@@ -488,7 +492,7 @@ function renderSystemThinkingPage(container, data) {
     if (!data || !data.elements || !data.feedback_loops || !data.summary || !data.leverage_points) {
         console.error("Incomplete data passed to renderSystemThinkingPage:", data);
         container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render System Thinking results.</div>`;
-        $("analysisActions").classList.add("hidden");
+        dom.$("analysisActions").classList.add("hidden");
         return;
     }
     const { elements, feedback_loops, summary, leverage_points } = data;
@@ -516,7 +520,7 @@ function renderSystemThinkingPage(container, data) {
     `;
 
     // --- 1. Populate Gist & Elements Panel (Updated) ---
-    const gistPanel = $("gistPanel");
+    const gistPanel = dom.$("gistPanel");
     let gistHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">System Overview</h3>`;
     gistHtml += `<blockquote class="p-4 italic border-l-4 border-gray-500 bg-black/20 text-white/90 mb-6 text-sm">"${summary}"</blockquote>`; // Use enhanced summary
     gistHtml += `<h4 class="text-xl font-semibold mb-3">Key System Elements Identified</h4>`;
@@ -544,7 +548,7 @@ function renderSystemThinkingPage(container, data) {
     gistPanel.innerHTML = gistHtml;
 
     // --- 2. Populate Feedback Loops Panel (Updated for detail) ---
-    const loopsPanel = $("loopsPanel");
+    const loopsPanel = dom.$("loopsPanel");
     let loopsHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">Identified Feedback Loops</h3><div class="space-y-6">`; // Increased spacing
     feedback_loops.forEach((loop) => {
         const isReinforcing = loop.type.toLowerCase() === "reinforcing";
@@ -561,7 +565,7 @@ function renderSystemThinkingPage(container, data) {
     loopsPanel.innerHTML = loopsHtml;
 
     // --- 3. Populate Leverage Points Panel (Updated for detail) ---
-    const leveragePanel = $("leveragePanel");
+    const leveragePanel = dom.$("leveragePanel");
     let leverageHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">⚡ High-Impact Leverage Points</h3>`;
     if (leverage_points && leverage_points.length > 0) {
         leverageHtml += `<p class="text-sm text-white/70 mb-6 italic">Interventions at these points are likely to cause significant shifts in the system's behavior by influencing the core feedback loops.</p>`;
@@ -586,7 +590,7 @@ function renderSystemThinkingPage(container, data) {
 
 
     // --- 4. Populate Learn System Thinking Panel (New) ---
-    const learnPanel = $("learnPanel");
+    const learnPanel = dom.$("learnPanel");
      learnPanel.innerHTML = `
     <div class="p-6 space-y-6 text-white/90">
         <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding System Thinking</h3>
@@ -638,7 +642,7 @@ function renderSystemThinkingPage(container, data) {
 
 
     // --- Final Touches ---
-    analysisCache[currentTemplateId] = container.innerHTML; // Cache result
+    appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache result
 
     // Tab switching logic
     tabNav.addEventListener("click", (e) => {
@@ -650,7 +654,7 @@ function renderSystemThinkingPage(container, data) {
             // Activate clicked
             e.target.classList.add("active");
             const targetPanelId = e.target.dataset.tab + "Panel";
-            const targetPanel = $(targetPanelId);
+            const targetPanel = dom.$(targetPanelId);
             if (targetPanel) {
                 targetPanel.classList.add("active");
                 // No Plotly charts expected in this version, so no resize needed
@@ -660,7 +664,7 @@ function renderSystemThinkingPage(container, data) {
         }
     });
 
-    $("analysisActions").classList.remove("hidden"); // Show save buttons
+    dom.$("analysisActions").classList.remove("hidden"); // Show save buttons
     // setLoading('generate', false); // Handled in the calling function
 }
 
@@ -673,7 +677,7 @@ function renderLeveragePointsPage(container, data) {
     if (!data || !data.elements || !data.feedback_loops || !data.summary || !data.leverage_points) {
         console.error("Incomplete data passed to renderLeveragePointsPage:", data);
         container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render Leverage Points results.</div>`;
-        $("analysisActions").classList.add("hidden");
+        dom.$("analysisActions").classList.add("hidden");
         return;
     }
     const { elements, feedback_loops, summary, leverage_points } = data;
@@ -701,7 +705,7 @@ function renderLeveragePointsPage(container, data) {
     `;
 
     // --- 1. Populate Gist & Elements Panel (Reusing logic from System Thinking) ---
-    const gistPanel = $("gistPanel");
+    const gistPanel = dom.$("gistPanel");
     let gistHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">System Overview</h3>`;
     gistHtml += `<blockquote class="p-4 italic border-l-4 border-gray-500 bg-black/20 text-white/90 mb-6 text-sm">"${summary}"</blockquote>`;
     gistHtml += `<h4 class="text-xl font-semibold mb-3">Key System Elements Identified</h4>`;
@@ -721,7 +725,7 @@ function renderLeveragePointsPage(container, data) {
     gistPanel.innerHTML = gistHtml;
 
     // --- 2. Populate Feedback Loops Panel (Reusing logic from System Thinking) ---
-    const loopsPanel = $("loopsPanel");
+    const loopsPanel = dom.$("loopsPanel");
     let loopsHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">Identified Feedback Loops</h3><div class="space-y-6">`;
     feedback_loops.forEach((loop) => {
         const isReinforcing = loop.type.toLowerCase() === "reinforcing";
@@ -738,7 +742,7 @@ function renderLeveragePointsPage(container, data) {
     loopsPanel.innerHTML = loopsHtml;
 
     // --- 3. Populate Leverage Points Panel (Updated for detailed interventions) ---
-    const leveragePanel = $("leveragePanel");
+    const leveragePanel = dom.$("leveragePanel");
     let leverageHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">⚡ High-Impact Leverage Points & Interventions</h3>`;
     if (leverage_points && leverage_points.length > 0) {
         leverageHtml += `<p class="text-sm text-white/70 mb-6 italic">These are ranked intervention points where actions can significantly shift system behavior, ordered from potentially highest to lowest impact based on system principles.</p>`;
@@ -778,7 +782,7 @@ function renderLeveragePointsPage(container, data) {
 
 
     // --- 4. Populate Learn Leverage Points Panel (New) ---
-    const learnPanel = $("learnPanel");
+    const learnPanel = dom.$("learnPanel");
      learnPanel.innerHTML = `
     <div class="p-6 space-y-6 text-white/90">
         <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding Leverage Points</h3>
@@ -818,7 +822,7 @@ function renderLeveragePointsPage(container, data) {
 
 
     // --- Final Touches ---
-    analysisCache[currentTemplateId] = container.innerHTML; // Cache result
+    appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache result
 
     // Tab switching logic
     tabNav.addEventListener("click", (e) => {
@@ -830,7 +834,7 @@ function renderLeveragePointsPage(container, data) {
             // Activate clicked
             e.target.classList.add("active");
             const targetPanelId = e.target.dataset.tab + "Panel";
-            const targetPanel = $(targetPanelId);
+            const targetPanel = dom.$(targetPanelId);
             if (targetPanel) {
                 targetPanel.classList.add("active");
             } else {
@@ -839,7 +843,7 @@ function renderLeveragePointsPage(container, data) {
         }
     });
 
-    $("analysisActions").classList.remove("hidden"); // Show save buttons
+    dom.$("analysisActions").classList.remove("hidden"); // Show save buttons
     // setLoading('generate', false); // Handled in the calling function
 }
 
@@ -860,14 +864,14 @@ function renderArchetypeAnalysisPage(container, data) {
     renderArchetypesTab(topArchetypes, "archetypesPanel");
     renderLeveragePointsTab(topLeveragePoints, "leveragePanel");
 
-    analysisCache[currentTemplateId] = container.innerHTML;
+    appState.analysisCache[appState.currentTemplateId] = container.innerHTML;
 
     tabNav.addEventListener("click", (e) => {
         if (e.target.tagName === "BUTTON") {
             tabNav.querySelectorAll(".analysis-tab-btn").forEach((btn) => btn.classList.remove("active"));
             tabContent.querySelectorAll(".analysis-tab-panel").forEach((pnl) => pnl.classList.remove("active"));
             e.target.classList.add("active");
-            const targetPanel = $(e.target.dataset.tab + "Panel");
+            const targetPanel = dom.$(e.target.dataset.tab + "Panel");
             targetPanel.classList.add("active");
             const chart = targetPanel.querySelector(".plotly-chart");
             if (chart) Plotly.Plots.resize(chart);
@@ -884,7 +888,7 @@ function renderSystemGoalsPage(container, data) {
     if (!data || !data.system_goal || !data.key_loops || !data.strategic_initiatives || !data.key_loops.reinforcing_loop || !data.key_loops.balancing_loop) {
         console.error("Incomplete data passed to renderSystemGoalsPage:", data);
         container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render System Goals results.</div>`;
-        $("analysisActions").classList.add("hidden");
+        dom.$("analysisActions").classList.add("hidden");
         return;
     }
 
@@ -913,7 +917,7 @@ function renderSystemGoalsPage(container, data) {
     `;
 
     // --- 1. Populate Dashboard Panel (Updated) ---
-    const dashboardPanel = $("dashboardPanel");
+    const dashboardPanel = dom.$("dashboardPanel");
     let dashboardHtml = `<div class="p-4 space-y-8">
         <div class="p-6 rounded-lg bg-black/20 border border-white/10 text-center">
             <h3 class="text-xl font-bold mb-2 text-indigo-300">🎯 Overarching System Goal</h3>
@@ -947,7 +951,7 @@ function renderSystemGoalsPage(container, data) {
 
 
     // --- 2. Populate Strategic Map Panel (Reusing existing logic) ---
-    const mapPanel = $("mapPanel");
+    const mapPanel = dom.$("mapPanel");
     let mapHtml = `<div class="strategy-map-container p-4">
                 <div class="p-4 rounded-lg bg-black/20 border border-white/10 text-center w-full max-w-lg">
                     <h3 class="text-lg font-bold text-indigo-300">🎯 GOAL</h3>
@@ -996,7 +1000,7 @@ function renderSystemGoalsPage(container, data) {
 
 
     // --- 3. Populate Initiatives & KPIs Panel (Updated) ---
-    const initiativesPanel = $("initiativesPanel");
+    const initiativesPanel = dom.$("initiativesPanel");
     let initiativesHtml = `<div class="p-4 space-y-6">`;
     strategic_initiatives.forEach((initiative, index) => {
         initiativesHtml += `
@@ -1021,7 +1025,7 @@ function renderSystemGoalsPage(container, data) {
 
 
     // --- 4. Populate Learn System Goals Panel (New) ---
-    const learnPanel = $("learnPanel");
+    const learnPanel = dom.$("learnPanel");
      learnPanel.innerHTML = `
     <div class="p-6 space-y-6 text-white/90">
         <h3 class="text-2xl font-bold text-center mb-4">🎓 Setting Goals in a Systems Context</h3>
@@ -1075,7 +1079,7 @@ function renderSystemGoalsPage(container, data) {
 
 
     // --- Final Touches ---
-    analysisCache[currentTemplateId] = container.innerHTML; // Cache result
+    appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache result
 
     // Tab switching logic
     tabNav.addEventListener("click", (e) => {
@@ -1087,7 +1091,7 @@ function renderSystemGoalsPage(container, data) {
             // Activate clicked
             e.target.classList.add("active");
             const targetPanelId = e.target.dataset.tab + "Panel";
-            const targetPanel = $(targetPanelId);
+            const targetPanel = dom.$(targetPanelId);
             if (targetPanel) {
                 targetPanel.classList.add("active");
                  // No Plotly charts expected in this tool, so no resize needed
@@ -1097,7 +1101,7 @@ function renderSystemGoalsPage(container, data) {
         }
     });
 
-    $("analysisActions").classList.remove("hidden"); // Show save buttons
+    dom.$("analysisActions").classList.remove("hidden"); // Show save buttons
     // setLoading('generate', false); // Handled in the calling function
 }
 
@@ -1121,7 +1125,7 @@ function renderSystemObjectivesPage_ST(container, data) {
     tabContent.innerHTML = `<div id="dashboardPanel" class="analysis-tab-panel active"></div><div id="strategiesPanel" class="analysis-tab-panel"></div><div id="initiativesPanel" class="analysis-tab-panel"></div>`;
 
     // --- 1. Dashboard Panel ---
-    const dashboardPanel = $("dashboardPanel");
+    const dashboardPanel = dom.$("dashboardPanel");
     let dashboardHtml = `<div class="st-dashboard-container">
                 <div class="st-objective-card">
                     <h3 class="text-xl font-bold text-indigo-300">MAIN OBJECTIVE</h3>
@@ -1145,7 +1149,7 @@ function renderSystemObjectivesPage_ST(container, data) {
     dashboardPanel.innerHTML = dashboardHtml;
 
     // --- 2. Goals & Strategies Panel ---
-    const strategiesPanel = $("strategiesPanel");
+    const strategiesPanel = dom.$("strategiesPanel");
     let strategiesHtml = `<div class="p-4 space-y-6">`;
     strategies_and_initiatives.forEach((item) => {
         strategiesHtml += `<div class="prescription-card">
@@ -1158,7 +1162,7 @@ function renderSystemObjectivesPage_ST(container, data) {
     strategiesPanel.innerHTML = strategiesHtml;
 
     // --- 3. Initiatives & KPIs Panel ---
-    const initiativesPanel = $("initiativesPanel");
+    const initiativesPanel = dom.$("initiativesPanel");
     let initiativesHtml = `<div class="p-4"><div class="overflow-x-auto"><table class="coeff-table"><thead><tr><th>Initiative</th><th>Related Goal</th><th>KPIs to Track</th></tr></thead><tbody>`;
     strategies_and_initiatives.forEach((item) => {
         item.initiatives.forEach((initiative) => {
@@ -1168,16 +1172,16 @@ function renderSystemObjectivesPage_ST(container, data) {
     initiativesHtml += `</tbody></table></div></div>`;
     initiativesPanel.innerHTML = initiativesHtml;
 
-    analysisCache[currentTemplateId] = container.innerHTML;
+    appState.analysisCache[appState.currentTemplateId] = container.innerHTML;
     tabNav.addEventListener("click", (e) => {
         if (e.target.tagName === "BUTTON") {
             tabNav.querySelectorAll(".analysis-tab-btn").forEach((btn) => btn.classList.remove("active"));
             tabContent.querySelectorAll(".analysis-tab-panel").forEach((pnl) => pnl.classList.remove("active"));
             e.target.classList.add("active");
-            $(e.target.dataset.tab + "Panel").classList.add("active");
+            dom.$(e.target.dataset.tab + "Panel").classList.add("active");
         }
     });
-    $("analysisActions").classList.remove("hidden");
+    dom.$("analysisActions").classList.remove("hidden");
 }
 
 
@@ -1189,7 +1193,7 @@ function renderSystemActionsPage_ST(container, data) {
     if (!data || !data.problem_diagnosis || !data.system_archetype || !data.actions) {
          console.error("Incomplete data passed to renderSystemActionsPage_ST:", data);
          container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render System Actions results.</div>`;
-         $("analysisActions").classList.add("hidden");
+         dom.$("analysisActions").classList.add("hidden");
          return;
     }
     const { problem_diagnosis, system_archetype, actions } = data; // leverage_points are inside system_archetype now
@@ -1217,7 +1221,7 @@ function renderSystemActionsPage_ST(container, data) {
     `;
 
     // --- 1. Dashboard Panel (Updated) ---
-    const dashboardPanel = $("dashboardPanel");
+    const dashboardPanel = dom.$("dashboardPanel");
     let dashboardHtml = `<div class="p-4 space-y-8">
         <blockquote class="p-4 italic border-l-4 border-gray-500 bg-black/20 text-white/90">
             <strong>Diagnosis/Goal:</strong> ${problem_diagnosis} <!-- Updated Label -->
@@ -1245,7 +1249,7 @@ function renderSystemActionsPage_ST(container, data) {
             title: 'Action Type Breakdown', paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
             font: { color: 'white' }, showlegend: true, legend: { orientation: 'h', y: -0.1 }, margin: { t: 40, b: 40, l: 20, r: 20 }
         }, { responsive: true });
-    } catch(e){ console.error("Chart err 1:",e); $("actionTypeChart").innerHTML = "<p class='text-red-400 text-center pt-10'>Chart render error.</p>"; }
+    } catch(e){ console.error("Chart err 1:",e); dom.$("actionTypeChart").innerHTML = "<p class='text-red-400 text-center pt-10'>Chart render error.</p>"; }
 
     // Chart 2: Impact vs Effort (ensure mapping exists)
     try {
@@ -1264,11 +1268,11 @@ function renderSystemActionsPage_ST(container, data) {
             legend: { x: 0.5, y: -0.2, xanchor: 'center', orientation: 'h' }, // Center legend below
             margin: { t: 40, b: 60, l: 150, r: 20 } // Adjust margins maybe
         }, { responsive: true });
-     } catch(e){ console.error("Chart err 2:",e); $("actionCompareChart").innerHTML = "<p class='text-red-400 text-center pt-10'>Chart render error.</p>"; }
+     } catch(e){ console.error("Chart err 2:",e); dom.$("actionCompareChart").innerHTML = "<p class='text-red-400 text-center pt-10'>Chart render error.</p>"; }
 
 
     // --- 2. Action Plan Panel (Updated) ---
-    const actionsPanel = $("actionsPanel");
+    const actionsPanel = dom.$("actionsPanel");
     let actionsHtml = `<div class="p-4 space-y-6">`;
     // Separate actions by type
     const shortTermActions = actions.filter(a => a.type === "Short-Term Fix");
@@ -1312,7 +1316,7 @@ function renderSystemActionsPage_ST(container, data) {
 
 
     // --- 3. System Dynamics Panel (Updated) ---
-    const dynamicsPanel = $("dynamicsPanel");
+    const dynamicsPanel = dom.$("dynamicsPanel");
     let dynamicsHtml = `<div class="p-4 space-y-6">
         <div class="archetype-card">
             <h3 class="text-lg font-bold text-indigo-300">SYSTEM DYNAMIC / ARCHETYPE IDENTIFIED</h3> <!-- Updated Label -->
@@ -1338,7 +1342,7 @@ function renderSystemActionsPage_ST(container, data) {
 
 
     // --- 4. Populate Learn Actions & Archetypes Panel (Keep as is) ---
-    const learnPanel = $("learnPanel");
+    const learnPanel = dom.$("learnPanel");
      learnPanel.innerHTML = `
     <div class="p-6 space-y-6 text-white/90">
         <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding Actions in Systems</h3>
@@ -1389,7 +1393,7 @@ function renderSystemActionsPage_ST(container, data) {
 
 
     // --- Final Touches ---
-    analysisCache[currentTemplateId] = container.innerHTML; // Cache result
+    appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache result
 
     // Tab switching logic (ensure resizing happens)
     tabNav.addEventListener("click", (e) => {
@@ -1401,7 +1405,7 @@ function renderSystemActionsPage_ST(container, data) {
             // Activate clicked
             e.target.classList.add("active");
             const targetPanelId = e.target.dataset.tab + "Panel";
-            const targetPanel = $(targetPanelId);
+            const targetPanel = dom.$(targetPanelId);
             if (targetPanel) {
                 targetPanel.classList.add("active");
                 // Resize charts if the Dashboard tab is activated
@@ -1438,14 +1442,14 @@ function renderSystemActionsPage_ST(container, data) {
      }, 150);
 
 
-    $("analysisActions").classList.remove("hidden"); // Show save buttons
+    dom.$("analysisActions").classList.remove("hidden"); // Show save buttons
     // setLoading('generate', false); // Handled in the calling function
 }
 
 
 
 function renderConceptsTab(concepts, containerId) {
-    const container = $(containerId);
+    const container = dom.$(containerId);
     const positiveCount = concepts.filter((c) => c.effect === "+").length;
     const negativeCount = concepts.filter((c) => c.effect === "-").length;
     const neutralCount = concepts.filter((c) => c.effect === "0").length;
@@ -1478,7 +1482,7 @@ function renderConceptsTab(concepts, containerId) {
 }
 
 function renderNetworkTab(concepts, containerId) {
-    const container = $(containerId);
+    const container = dom.$(containerId);
     container.innerHTML = `<div id="conceptNetworkChart" class="w-full h-[600px] plotly-chart"></div>`;
     const nodes = concepts.map((c) => ({ id: c.name, ...c }));
     const edges = [];
@@ -1545,7 +1549,7 @@ function renderNetworkTab(concepts, containerId) {
 }
 
 function renderArchetypesTab(topArchetypes, containerId) {
-    const container = $(containerId);
+    const container = dom.$(containerId);
     let contentHtml = `<h3 class="text-2xl font-bold mb-4">🎯 80/20 Analysis - Most Relevant Archetypes</h3><p class="text-white/70 mb-6">This analysis focuses on the top 20% of system archetypes that are most likely driving 80% of the system's behavior.</p><div id="archetypeBarChart" class="w-full h-[400px] mb-8 plotly-chart"></div>`;
     topArchetypes.forEach((archetype) => {
         contentHtml += `<div class="metric-card mb-4"><h4 class="text-xl font-bold">🏛️ ${archetype.name}</h4><p class="text-sm font-semibold text-yellow-300 mb-2">Relevance Score: ${archetype.relevance_score}/10</p><p class="text-sm text-white/80 mb-3">${archetype.description}</p><div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm"><div><h5 class="font-semibold">Leverage Points:</h5><ul class="list-disc list-inside">${archetype.leverage_points.map((lp) => `<li>${lp}</li>`).join("")}</ul></div><div><h5 class="font-semibold">Interventions:</h5><ul class="list-disc list-inside">${archetype.interventions.map((i) => `<li>${i}</li>`).join("")}</ul></div></div></div>`;
@@ -1575,7 +1579,7 @@ function renderArchetypesTab(topArchetypes, containerId) {
 }
 
 function renderLeveragePointsTab(topLeveragePoints, containerId) {
-    const container = $(containerId);
+    const container = dom.$(containerId);
     let contentHtml = `<h3 class="text-2xl font-bold mb-4">⚡ 80/20 Analysis - Top Leverage Points</h3><p class="text-white/70 mb-6">These are the top 20% of concepts where small changes can lead to the largest (80%) improvements in the system.</p><div id="leverageBarChart" class="w-full h-[400px] mb-8 plotly-chart"></div>`;
     topLeveragePoints.forEach((point) => {
         let priorityClass = "";
@@ -1615,4 +1619,123 @@ function renderLeveragePointsTab(topLeveragePoints, containerId) {
         },
         { responsive: true }
     );
+}
+
+
+
+// Ensure createParetoChartJS is available (it was defined in a previous step, but include it here for completeness if needed)
+function createParetoChartJS(paretoData, containerId) {
+    const container = dom.$(containerId);
+    if (!container) {
+        console.error(`Container with ID ${containerId} not found for Pareto chart.`);
+        return;
+    }
+    container.innerHTML = ""; // Clear previous chart
+
+    // Ensure paretoData exists and has the expected structure
+    if (!paretoData || (!paretoData.vital_few && !paretoData.useful_many)) {
+        container.innerHTML = "<p class='p-4 text-center text-red-400'>Pareto data is missing or incomplete.</p>";
+        return;
+    }
+
+    const allCauses = (paretoData.vital_few || []).concat(paretoData.useful_many || []);
+    if (allCauses.length === 0) {
+        container.innerHTML = "<p class='p-4 text-center text-white/70'>No causes identified for Pareto analysis.</p>";
+        return;
+    }
+
+
+    allCauses.sort((a, b) => (b.impact_score || 0) - (a.impact_score || 0));
+
+    const causes = allCauses.map((item) => item.cause || "Unknown Cause");
+    const impacts = allCauses.map((item) => item.impact_score || 0);
+    const categories = allCauses.map((item) => item.category || "Uncategorized");
+
+    const cumulative = impacts.reduce((acc, val) => {
+        acc.push((acc.length > 0 ? acc[acc.length - 1] : 0) + val);
+        return acc;
+    }, []);
+    // Ensure totalImpact is not zero before dividing
+    const totalImpact = impacts.reduce((a, b) => a + b, 0);
+    const cumulativePct = totalImpact > 0 ? cumulative.map((val) => (val / totalImpact) * 100) : cumulative.map(() => 0);
+
+
+    const trace1 = {
+        x: causes,
+        y: impacts,
+        name: "Impact Score",
+        type: "bar",
+        text: impacts.map((imp) => `${imp}%`),
+        textposition: "outside",
+        marker: { color: "var(--primary)" }, // Consistent color
+        hovertemplate: "<b>%{x}</b><br>Impact: %{y}%<br>Category: %{customdata}<extra></extra>",
+        customdata: categories
+    };
+
+    const trace2 = {
+        x: causes,
+        y: cumulativePct,
+        name: "Cumulative %",
+        type: "scatter",
+        mode: "lines+markers",
+        line: { color: "var(--accent)", width: 3 }, // Accent color for line
+        marker: { size: 8 },
+        yaxis: "y2",
+        hovertemplate: "<b>%{x}</b><br>Cumulative: %{y:.1f}%<extra></extra>"
+    };
+
+    // Find the index where cumulative percentage crosses 80%
+    const eightyPercentIndex = cumulativePct.findIndex(p => p >= 80);
+    let vitalFewCount = eightyPercentIndex !== -1 ? eightyPercentIndex + 1 : allCauses.length;
+    // Ensure vitalFewCount matches the actual vital_few array length if provided, otherwise use calculated
+    vitalFewCount = paretoData.vital_few ? paretoData.vital_few.length : vitalFewCount;
+
+
+    const layout = {
+        title: "Pareto Analysis - Vital Few vs. Useful Many Causes",
+        xaxis: { title: "Potential Root Causes", tickangle: -45, automargin: true },
+        yaxis: { title: "Estimated Impact Score (%)", gridcolor: "rgba(255,255,255,0.1)" },
+        yaxis2: {
+            title: "Cumulative Impact (%)",
+            overlaying: "y",
+            side: "right",
+            range: [0, 101],
+            gridcolor: "rgba(255,255,255,0.05)",
+            zeroline: false
+        },
+        shapes: [
+            // 80% cumulative line
+            { type: "line", xref: "paper", x0: 0, x1: 1, yref: "y2", y0: 80, y1: 80, line: { color: "orange", width: 2, dash: "dot" } },
+            // Vertical line separating vital few
+            vitalFewCount > 0 && vitalFewCount < allCauses.length ? { type: "line", xref: "x", x0: vitalFewCount - 0.5, x1: vitalFewCount - 0.5, yref: "paper", y0: 0, y1: 1, line: { color: "rgba(255, 0, 0, 0.5)", width: 2, dash: "dash" } } : {}
+        ],
+        annotations: [
+            vitalFewCount > 0 ? { xref: 'x', yref: 'paper', x: (vitalFewCount - 1) / 2, y: 1.05, text: '🔥 Vital Few', showarrow: false, font: {color: 'red'} } : {},
+            vitalFewCount < allCauses.length ? { xref: 'x', yref: 'paper', x: vitalFewCount + (allCauses.length - vitalFewCount -1) / 2, y: 1.05, text: '📋 Useful Many', showarrow: false, font: {color: 'grey'} } : {},
+            { xref: 'paper', yref: 'y2', x: 0.95, y: 80, text: '80% Impact', showarrow: false, font: {color: 'orange'}, xanchor: 'right', yanchor: 'bottom' }
+        ],
+        showlegend: true,
+        height: 550, // Increased height slightly
+        hovermode: "x unified",
+        paper_bgcolor: "rgba(0,0,0,0)",
+        plot_bgcolor: "rgba(0,0,0,0)",
+        font: { color: "white" },
+        legend: { orientation: "h", y: -0.3 }, // Adjusted legend position
+        margin: { t: 60, b: 150, l: 60, r: 60 } // Adjusted margins
+    };
+
+    Plotly.newPlot(containerId, [trace1, trace2], layout, { responsive: true });
+}
+
+
+export {
+    renderProcessMappingPage,
+    renderParetoFishbonePage,
+    renderSystemThinkingPage,
+    renderLeveragePointsPage,
+    renderArchetypeAnalysisPage,
+    renderSystemGoalsPage,
+    renderSystemObjectivesPage_ST,
+    renderSystemActionsPage_ST,
+    createParetoChartJS
 }

@@ -2,6 +2,10 @@
 // ===================            Data Analysis Page Rendering Functions            ====================
 // =====================================================================================================
 
+import { dom } from '../../utils/dom-utils.mjs';
+import { appState } from '../../state/app-state.mjs';
+import { setLoading } from '../../utils/ui-utils.mjs';
+
 function renderDescriptivePage_DA(container, data) {
     container.innerHTML = ""; // Clear loading state
     const { summary, numerical_summary, categorical_summary, visualizations, business_insights } = data;
@@ -9,7 +13,7 @@ function renderDescriptivePage_DA(container, data) {
     // Basic validation
     if (!summary || !numerical_summary || !categorical_summary || !visualizations || !business_insights ) {
         container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Incomplete or invalid analysis data received. Cannot render Descriptive Analysis.</div>`;
-        $("analysisActions").classList.add("hidden");
+        dom.$("analysisActions").classList.add("hidden");
         setLoading("generate", false);
         return;
     }
@@ -38,8 +42,8 @@ function renderDescriptivePage_DA(container, data) {
     `;
 
     // --- 1. Populate Summary Panel ---
-    const summaryPanel = $("summaryPanel");
-        const fileName = $("descriptiveFile")?.files[0]?.name || "N/A"; // Get filename if available
+    const summaryPanel = dom.$("summaryPanel");
+        const fileName = dom.$("descriptiveFile")?.files[0]?.name || "N/A"; // Get filename if available
     summaryPanel.innerHTML = `<div class="p-4">
         <h3 class="text-2xl font-bold mb-6 text-center">Dataset Overview</h3>
             <p class="text-sm text-center text-white/70 mb-6">Analysis based on file: ${fileName}</p>
@@ -53,7 +57,7 @@ function renderDescriptivePage_DA(container, data) {
     </div>`;
 
     // --- 2. Populate Statistics Panel ---
-    const statsPanel = $("statsPanel");
+    const statsPanel = dom.$("statsPanel");
     let statsHtml = `<div class="p-4 space-y-8">`;
     // Numerical Stats Table
     if (numerical_summary.length > 0) {
@@ -124,7 +128,7 @@ function renderDescriptivePage_DA(container, data) {
 
 
     // --- 3. Populate Visualizations Panel ---
-    const visualsPanel = $("visualsPanel");
+    const visualsPanel = dom.$("visualsPanel");
     let visualsHtml = `<div class="p-4 space-y-8">
                         <h3 class="text-2xl font-bold mb-4 text-center">Data Distributions & Frequencies</h3>`;
     if (visualizations.length > 0) {
@@ -144,8 +148,8 @@ function renderDescriptivePage_DA(container, data) {
 
     // Render the Plotly charts and add simple interpretations
     visualizations.forEach((viz, index) => {
-        const chartContainer = $(`viz-chart-${index}`);
-        const interpContainer = $(`viz-interp-${index}`);
+        const chartContainer = dom.$(`viz-chart-${index}`);
+        const interpContainer = dom.$(`viz-interp-${index}`);
         if (!chartContainer || !interpContainer) return;
 
         let trace, layout, simpleInterp = "";
@@ -188,7 +192,7 @@ function renderDescriptivePage_DA(container, data) {
 
 
     // --- 4. Populate Insights Panel ---
-    const insightsPanel = $("insightsPanel");
+    const insightsPanel = dom.$("insightsPanel");
     let insightsHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">💡 Actionable Business Insights</h3>`;
         let insightsAvailable = false;
         if (business_insights && business_insights.length > 0) {
@@ -228,7 +232,7 @@ function renderDescriptivePage_DA(container, data) {
     insightsPanel.innerHTML = insightsHtml;
 
     // --- 5. Populate Learn Stats Panel ---
-    const learnPanel = $("learnPanel");
+    const learnPanel = dom.$("learnPanel");
         // Reuse the learn panel content
         learnPanel.innerHTML = `
         <div class="p-6 space-y-6 text-white/90">
@@ -285,7 +289,7 @@ function renderDescriptivePage_DA(container, data) {
 
 
     // --- Final Touches ---
-    analysisCache[currentTemplateId] = container.innerHTML; // Cache result
+    appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache result
 
     // Tab switching logic (ensure resizing happens)
     tabNav.addEventListener("click", (e) => {
@@ -294,7 +298,7 @@ function renderDescriptivePage_DA(container, data) {
             tabContent.querySelectorAll(".analysis-tab-panel").forEach((pnl) => pnl.classList.remove("active"));
             e.target.classList.add("active");
             const targetPanelId = e.target.dataset.tab + "Panel";
-            const targetPanel = $(targetPanelId);
+            const targetPanel = dom.$(targetPanelId);
             if (targetPanel) {
                     targetPanel.classList.add("active");
                     const chartsInPanel = targetPanel.querySelectorAll('.plotly-chart');
@@ -329,7 +333,7 @@ function renderDescriptivePage_DA(container, data) {
             }
     }, 150);
 
-    $("analysisActions").classList.remove("hidden"); // Show save buttons
+    dom.$("analysisActions").classList.remove("hidden"); // Show save buttons
     setLoading("generate", false); // Stop loading indicator AFTER rendering
 }
 
@@ -342,7 +346,7 @@ function renderPredictiveAnalysisPage(container, data) {
     if (!data || !data.predictions || !data.data_summary || !data.model_performance || !data.insights) {
         console.error("Incomplete data passed to renderPredictiveAnalysisPage:", data);
         container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render results.</div>`;
-        $("analysisActions").classList.add("hidden");
+        dom.$("analysisActions").classList.add("hidden");
         return;
     }
 
@@ -368,7 +372,7 @@ function renderPredictiveAnalysisPage(container, data) {
     `;
 
     // --- Render Summary & Performance Tab (Updated) ---
-    const summaryPanel = $("summaryPanel");
+    const summaryPanel = dom.$("summaryPanel");
     const summary = data.data_summary;
     const performance = data.model_performance;
     summaryPanel.innerHTML = `
@@ -419,7 +423,7 @@ function renderPredictiveAnalysisPage(container, data) {
     `;
 
     // --- Render Forecast Chart Tab (No changes needed here) ---
-    const chartPanel = $("chartPanel");
+    const chartPanel = dom.$("chartPanel");
     chartPanel.innerHTML = `<div class="p-4"><div id="forecastChart" class="w-full h-[500px] plotly-chart"></div></div>`;
     if (data.predictions && data.predictions.length > 0) {
         try {
@@ -462,7 +466,7 @@ function renderPredictiveAnalysisPage(container, data) {
 
 
     // --- Render Insights Tab (Updated for new object structure) ---
-    const insightsPanel = $("insightsPanel");
+    const insightsPanel = dom.$("insightsPanel");
      let insightsHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">💡 Key Insights & Observations</h3>`;
      if (data.insights && data.insights.length > 0 && typeof data.insights[0] === 'object') {
          insightsHtml += `<div class="space-y-6">`;
@@ -485,7 +489,7 @@ function renderPredictiveAnalysisPage(container, data) {
     insightsPanel.innerHTML = insightsHtml;
 
     // --- Render Learn Forecast Tab (New Content) ---
-    const learnPanel = $("learnPanel");
+    const learnPanel = dom.$("learnPanel");
     learnPanel.innerHTML = `
     <div class="p-6 space-y-6 text-white/90">
         <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding Time-Series Forecasting</h3>
@@ -535,8 +539,8 @@ function renderPredictiveAnalysisPage(container, data) {
     `;
 
     // --- Activate Listeners ---
-    analysisCache[currentTemplateId] = container.innerHTML; // Cache the result HTML
-    $("analysisActions").classList.remove("hidden"); // Show save buttons
+    appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache the result HTML
+    dom.$("analysisActions").classList.remove("hidden"); // Show save buttons
 
     // Re-attach tab switching logic, including chart resizing
     tabNav.addEventListener("click", (e) => {
@@ -548,13 +552,13 @@ function renderPredictiveAnalysisPage(container, data) {
             // Activate the clicked tab and corresponding panel
             e.target.classList.add("active");
             const targetPanelId = e.target.dataset.tab + "Panel";
-            const targetPanel = $(targetPanelId);
+            const targetPanel = dom.$(targetPanelId);
             if (targetPanel) {
                 targetPanel.classList.add("active");
 
                 // If the activated panel is the chart panel, resize the chart
                 if (e.target.dataset.tab === "chart") {
-                     const chartDiv = $("forecastChart");
+                     const chartDiv = dom.$("forecastChart");
                      // Check if Plotly chart exists before resizing
                      if (chartDiv && chartDiv.layout && typeof Plotly !== 'undefined') {
                          try {
@@ -573,7 +577,7 @@ function renderPredictiveAnalysisPage(container, data) {
 
      // Attempt initial resize after a short delay for Plotly to potentially render
      setTimeout(() => {
-         const initialChartDiv = $("forecastChart");
+         const initialChartDiv = dom.$("forecastChart");
          if (initialChartDiv && initialChartDiv.layout && typeof Plotly !== 'undefined') {
              try {
                   Plotly.Plots.resize(initialChartDiv);
@@ -597,7 +601,7 @@ function renderPrescriptivePage_DA(container, data) {
     if (!data || !data.main_goal || !data.data_insights || !data.prescriptions || !Array.isArray(data.data_insights) || !Array.isArray(data.prescriptions)) {
          console.error("Incomplete data passed to renderPrescriptivePage_DA:", data);
          container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render results.</div>`;
-         $("analysisActions").classList.add("hidden");
+         dom.$("analysisActions").classList.add("hidden");
          return;
      }
 
@@ -630,7 +634,7 @@ function renderPrescriptivePage_DA(container, data) {
     `;
 
     // --- 1. Populate Dashboard Panel (No major changes needed, uses existing fields) ---
-    const dashboardPanel = $("dashboardPanel");
+    const dashboardPanel = dom.$("dashboardPanel");
     let dashboardHtml = `<div class="p-4">
                 <div class="p-6 rounded-lg bg-white/10 border border-white/20 text-center mb-8">
                     <h3 class="text-xl font-bold mb-2 text-indigo-300">🎯 Business Goal</h3>
@@ -654,7 +658,7 @@ function renderPrescriptivePage_DA(container, data) {
     dashboardPanel.innerHTML = dashboardHtml;
 
     // --- 2. Populate Prescriptions Panel (Uses new detailed fields) ---
-    const prescriptionsPanel = $("prescriptionsPanel");
+    const prescriptionsPanel = dom.$("prescriptionsPanel");
     let prescriptionsHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">💊 Detailed Prescriptions</h3>`;
      if (prescriptions.length > 0) {
          prescriptionsHtml += `<div class="space-y-6">`;
@@ -688,7 +692,7 @@ function renderPrescriptivePage_DA(container, data) {
 
 
     // --- 3. Populate Insights Panel (Uses new structure) ---
-    const insightsPanel = $("insightsPanel");
+    const insightsPanel = dom.$("insightsPanel");
     let insightsHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">🔍 Key Data Insights Driving Prescriptions</h3>`;
      if (data_insights.length > 0) {
          insightsHtml += `<div class="space-y-6">`;
@@ -709,7 +713,7 @@ function renderPrescriptivePage_DA(container, data) {
 
 
     // --- 4. Populate Prioritization Matrix Panel (Plotly chart, no changes needed if structure is same) ---
-    const matrixPanel = $("matrixPanel");
+    const matrixPanel = dom.$("matrixPanel");
     matrixPanel.innerHTML = `<div class="p-4"><h3 class="text-2xl font-bold mb-4 text-center">🗺️ Prescription Prioritization Matrix</h3><div id="matrixPlot" class="w-full h-[600px] plotly-chart"></div></div>`;
      if (prescriptions.length > 0) {
          try {
@@ -746,7 +750,7 @@ function renderPrescriptivePage_DA(container, data) {
 
 
     // --- 5. Populate KPI Tracker Panel (Uses new kpis_to_track) ---
-    const kpisPanel = $("kpisPanel");
+    const kpisPanel = dom.$("kpisPanel");
     let kpisHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">📈 Consolidated KPI Tracker</h3>`;
      let kpisAvailable = prescriptions.some(p => p.kpis_to_track && p.kpis_to_track.length > 0);
      if (kpisAvailable) {
@@ -766,7 +770,7 @@ function renderPrescriptivePage_DA(container, data) {
     kpisPanel.innerHTML = kpisHtml;
 
     // --- 6. Populate Learn Prescriptive Tab (New Content) ---
-    const learnPanel = $("learnPanel");
+    const learnPanel = dom.$("learnPanel");
     learnPanel.innerHTML = `
     <div class="p-6 space-y-6 text-white/90">
         <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding Prescriptive Analytics</h3>
@@ -825,8 +829,8 @@ function renderPrescriptivePage_DA(container, data) {
     `;
 
     // --- Activate Listeners ---
-    analysisCache[currentTemplateId] = container.innerHTML; // Cache the result HTML
-    $("analysisActions").classList.remove("hidden"); // Show save buttons
+    appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache the result HTML
+    dom.$("analysisActions").classList.remove("hidden"); // Show save buttons
 
     // Re-attach tab switching logic, including chart resizing
     tabNav.addEventListener("click", (e) => {
@@ -838,13 +842,13 @@ function renderPrescriptivePage_DA(container, data) {
             // Activate clicked
             e.target.classList.add("active");
             const targetPanelId = e.target.dataset.tab + "Panel";
-            const targetPanel = $(targetPanelId);
+            const targetPanel = dom.$(targetPanelId);
             if (targetPanel) {
                 targetPanel.classList.add("active");
 
                 // Resize chart if matrix tab is activated
                 if (e.target.dataset.tab === "matrix") {
-                    const chartDiv = $("matrixPlot");
+                    const chartDiv = dom.$("matrixPlot");
                      if (chartDiv && chartDiv.layout && typeof Plotly !== 'undefined') {
                          try { Plotly.Plots.resize(chartDiv); } catch (e) { console.error("Resize error:", e); }
                      }
@@ -857,7 +861,7 @@ function renderPrescriptivePage_DA(container, data) {
 
      // Attempt initial resize after a short delay for Plotly
      setTimeout(() => {
-         const initialMatrixChart = $("matrixPlot");
+         const initialMatrixChart = dom.$("matrixPlot");
          // Check if the initial active tab IS the matrix tab before resizing
          if (tabNav.querySelector(".analysis-tab-btn.active")?.dataset.tab === "matrix" &&
              initialMatrixChart && initialMatrixChart.layout && typeof Plotly !== 'undefined') {
@@ -878,7 +882,7 @@ function renderVisualizationPage_DA(container, data) {
      if (!data || !data.chart_selection_rationale || !data.visualizations || !Array.isArray(data.visualizations) || data.visualizations.length === 0) {
          console.error("Incomplete data passed to renderVisualizationPage_DA:", data);
          container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render visualizations.</div>`;
-         $("analysisActions").classList.add("hidden");
+         dom.$("analysisActions").classList.add("hidden");
          return;
      }
 
@@ -914,7 +918,7 @@ function renderVisualizationPage_DA(container, data) {
     tabContent.innerHTML = tabPanelsHtml;
 
     // --- 1. Populate Rationale Panel ---
-    const rationalePanel = $("rationalePanel");
+    const rationalePanel = dom.$("rationalePanel");
     rationalePanel.innerHTML = `
         <div class="p-6">
             <h3 class="text-2xl font-bold mb-4 text-center">Chart Selection Rationale</h3>
@@ -927,7 +931,7 @@ function renderVisualizationPage_DA(container, data) {
 
     // --- 2. Populate Individual Visualization Panels ---
     visualizations.forEach((viz, index) => {
-        const panel = $(`viz-${index}Panel`);
+        const panel = dom.$(`viz-${index}Panel`);
         if (!panel) {
             console.error(`Could not find panel for viz-${index}`);
             return; // Skip if panel doesn't exist
@@ -945,7 +949,7 @@ function renderVisualizationPage_DA(container, data) {
                 </div>`;
         panel.innerHTML = panelHtml;
 
-        const chartContainer = $(`viz-chart-${index}`);
+        const chartContainer = dom.$(`viz-chart-${index}`);
         if (!chartContainer) {
              console.error(`Chart container viz-chart-${index} not found after setting innerHTML.`);
              return; // Skip if container isn't found
@@ -987,7 +991,7 @@ function renderVisualizationPage_DA(container, data) {
 
 
     // --- 3. Populate Learn Visualization Tab ---
-    const learnPanel = $("learnPanel");
+    const learnPanel = dom.$("learnPanel");
     learnPanel.innerHTML = `
     <div class="p-6 space-y-6 text-white/90">
         <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding Data Visualization</h3>
@@ -1046,8 +1050,8 @@ function renderVisualizationPage_DA(container, data) {
     `;
 
     // --- Final Touches ---
-    analysisCache[currentTemplateId] = container.innerHTML; // Cache the result HTML
-    $("analysisActions").classList.remove("hidden"); // Show save buttons
+    appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache the result HTML
+    dom.$("analysisActions").classList.remove("hidden"); // Show save buttons
 
     // Re-attach tab switching logic, including chart resizing
     tabNav.addEventListener("click", (e) => {
@@ -1059,7 +1063,7 @@ function renderVisualizationPage_DA(container, data) {
             // Activate clicked
             e.target.classList.add("active");
             const targetPanelId = e.target.dataset.tab + "Panel";
-            const targetPanel = $(targetPanelId);
+            const targetPanel = dom.$(targetPanelId);
             if (targetPanel) {
                 targetPanel.classList.add("active");
 
@@ -1099,7 +1103,7 @@ function renderRegressionPage_DA(container, data) {
      if (!data || !data.model_summary || !data.coefficients || !data.residuals_analysis || !data.business_recommendations) {
          console.error("Incomplete data passed to renderRegressionPage_DA:", data);
          container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render results.</div>`;
-         $("analysisActions").classList.add("hidden");
+         dom.$("analysisActions").classList.add("hidden");
          return;
      }
 
@@ -1131,7 +1135,7 @@ function renderRegressionPage_DA(container, data) {
     `;
 
     // --- 1. Dashboard Panel (Updated interpretation source) ---
-    const dashboardPanel = $("dashboardPanel");
+    const dashboardPanel = dom.$("dashboardPanel");
     let dashboardHtml = `<div class="p-4">
                 <h3 class="text-2xl font-bold mb-4 text-center">Regression Dashboard</h3>
                 <div class="cascade-objective mb-6 text-center mx-auto max-w-4xl"><h4 class="text-lg font-bold text-indigo-300">Regression Equation</h4><p class="text-xl font-semibold break-words">${model_summary.regression_equation ?? 'N/A'}</p></div>
@@ -1144,7 +1148,7 @@ function renderRegressionPage_DA(container, data) {
     dashboardPanel.innerHTML = dashboardHtml;
 
     // --- 2. Model Fit & Diagnostics Panel (Updated interpretation source) ---
-    const fitPanel = $("fitPanel");
+    const fitPanel = dom.$("fitPanel");
     let fitHtml = `<div class="p-4">
                 <h3 class="text-2xl font-bold mb-6 text-center">Model Fit & Diagnostics</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto mb-8">
@@ -1176,16 +1180,16 @@ function renderRegressionPage_DA(container, data) {
              Plotly.newPlot('residualsPlot', [residualsTrace], residualsLayout, { responsive: true });
          } catch(e) {
              console.error("Error rendering residuals plot:", e);
-             $("residualsPlot").innerHTML = `<div class="p-4 text-center text-red-400">Could not render residuals plot.</div>`;
+             dom.$("residualsPlot").innerHTML = `<div class="p-4 text-center text-red-400">Could not render residuals plot.</div>`;
          }
      } else {
-         $("residualsPlot").innerHTML = `<div class="p-4 text-center text-white/60">Residual data points not available for plotting.</div>`;
+         dom.$("residualsPlot").innerHTML = `<div class="p-4 text-center text-white/60">Residual data points not available for plotting.</div>`;
      }
 
 
     // --- 3. Variable Importance Panel (Conditional, updated rationale source) ---
     if (variable_importance && variable_importance.length > 0) {
-        const importancePanel = $("importancePanel");
+        const importancePanel = dom.$("importancePanel");
         if (importancePanel) {
             let importanceHtml = `<div class="p-4">
                         <h3 class="text-2xl font-bold mb-4 text-center">Variable Importance</h3>
@@ -1220,13 +1224,13 @@ function renderRegressionPage_DA(container, data) {
                  Plotly.newPlot('importancePlot', [importanceTrace], importanceLayout, { responsive: true });
              } catch(e) {
                   console.error("Error rendering importance plot:", e);
-                  $("importancePlot").innerHTML = `<div class="p-4 text-center text-red-400">Could not render importance plot.</div>`;
+                  dom.$("importancePlot").innerHTML = `<div class="p-4 text-center text-red-400">Could not render importance plot.</div>`;
              }
         }
     }
 
     // --- 4. Coefficient Details Panel (Updated significance source) ---
-    const coeffsPanel = $("coeffsPanel");
+    const coeffsPanel = dom.$("coeffsPanel");
     let coeffsHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">Coefficient Interpretation Details</h3><div class="space-y-4">`;
     coefficients.forEach((c) => {
         const isSignificant = (c.p_value != null && c.p_value <= 0.05); // Check p-value exists
@@ -1249,7 +1253,7 @@ function renderRegressionPage_DA(container, data) {
     coeffsPanel.innerHTML = coeffsHtml;
 
     // --- 5. Recommendations Panel (Updated insight link source) ---
-    const recPanel = $("recPanel");
+    const recPanel = dom.$("recPanel");
     let recHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">💡 Actionable Recommendations</h3>`;
      if (business_recommendations.length > 0) {
          recHtml += `<div class="space-y-6">`;
@@ -1280,7 +1284,7 @@ function renderRegressionPage_DA(container, data) {
 
 
     // --- 6. Populate Learn Regression Tab ---
-    const learnPanel = $("learnPanel");
+    const learnPanel = dom.$("learnPanel");
      learnPanel.innerHTML = `
     <div class="p-6 space-y-6 text-white/90">
         <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding Regression Analysis</h3>
@@ -1341,7 +1345,7 @@ function renderRegressionPage_DA(container, data) {
 
 
     // --- Final Touches ---
-    analysisCache[currentTemplateId] = container.innerHTML; // Cache result
+    appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache result
 
     // Tab switching logic (including chart resizing)
     tabNav.addEventListener("click", (e) => {
@@ -1353,7 +1357,7 @@ function renderRegressionPage_DA(container, data) {
             // Activate clicked
             e.target.classList.add("active");
             const targetPanelId = e.target.dataset.tab + "Panel";
-            const targetPanel = $(targetPanelId);
+            const targetPanel = dom.$(targetPanelId);
             if (targetPanel) {
                 targetPanel.classList.add("active");
 
@@ -1379,7 +1383,7 @@ function renderRegressionPage_DA(container, data) {
      setTimeout(() => {
          const activeTabButton = tabNav.querySelector(".analysis-tab-btn.active");
          if (activeTabButton && activeTabButton.dataset.tab === "fit") {
-             const residualsChart = $("residualsPlot");
+             const residualsChart = dom.$("residualsPlot");
              if (residualsChart && residualsChart.layout && typeof Plotly !== 'undefined') {
                  try { Plotly.Plots.resize(residualsChart); } catch (e) { console.error("Initial resize error (residuals):", e); }
              }
@@ -1387,7 +1391,7 @@ function renderRegressionPage_DA(container, data) {
          // Add similar checks if other default tabs have charts
      }, 150);
 
-    $("analysisActions").classList.remove("hidden"); // Show save buttons
+    dom.$("analysisActions").classList.remove("hidden"); // Show save buttons
     // setLoading('generate', false); // Already handled in the calling function's finally block
 }
 
@@ -1400,7 +1404,7 @@ function renderPlsPage_DA(container, data) {
     if (!data || !data.model_evaluation || !data.path_coefficients || !data.reliability_validity || !data.business_recommendations || !data.userInput) {
         console.error("Incomplete data passed to renderPlsPage_DA:", data);
         container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render results.</div>`;
-        $("analysisActions").classList.add("hidden");
+        dom.$("analysisActions").classList.add("hidden");
         return;
     }
 
@@ -1433,7 +1437,7 @@ function renderPlsPage_DA(container, data) {
     `;
 
     // --- 1. Populate Path Diagram Panel (Improved Rendering) ---
-    const diagramPanel = $("diagramPanel");
+    const diagramPanel = dom.$("diagramPanel");
     if (constructNames && constructNames.length > 0 && path_coefficients) {
         try {
             // Basic logic to determine exogenous/endogenous based on paths
@@ -1515,7 +1519,7 @@ function renderPlsPage_DA(container, data) {
 
 
     // --- 2. Populate Path Analysis Panel (Added significance boolean) ---
-    const pathsPanel = $("pathsPanel");
+    const pathsPanel = dom.$("pathsPanel");
     if (path_coefficients && path_coefficients.length > 0) {
         let pathsHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">Structural Model - Path Coefficients</h3><div class="overflow-x-auto"><table class="coeff-table styled-table text-sm"><thead><tr><th>Path</th><th>Coefficient (β)</th><th>T-Statistic</th><th>P-value</th><th>Significant?</th></tr></thead><tbody>`;
         path_coefficients.forEach((p) => {
@@ -1547,7 +1551,7 @@ function renderPlsPage_DA(container, data) {
     }
 
     // --- 3. Populate Reliability Panel (Added assessment text) ---
-    const reliabilityPanel = $("reliabilityPanel");
+    const reliabilityPanel = dom.$("reliabilityPanel");
     if (reliability_validity && reliability_validity.length > 0 && model_evaluation) {
         let reliabilityHtml = `<div class="p-4">
             <h3 class="text-2xl font-bold mb-4">Model Fit & Reliability Assessment</h3>
@@ -1603,7 +1607,7 @@ function renderPlsPage_DA(container, data) {
     }
 
     // --- 4. Populate Recommendations Panel (Added insight link) ---
-    const recPanel = $("recPanel");
+    const recPanel = dom.$("recPanel");
     if (business_recommendations && business_recommendations.length > 0) {
         let recHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">💡 Actionable Recommendations</h3><div class="space-y-6">`;
         business_recommendations.forEach((rec, index) => {
@@ -1629,7 +1633,7 @@ function renderPlsPage_DA(container, data) {
     }
 
     // --- 5. Populate Learn PLS-SEM Tab ---
-    const learnPanel = $("learnPanel");
+    const learnPanel = dom.$("learnPanel");
     learnPanel.innerHTML = `
     <div class="p-6 space-y-6 text-white/90">
         <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding PLS-SEM</h3>
@@ -1688,7 +1692,7 @@ function renderPlsPage_DA(container, data) {
     `;
 
     // --- Final Touches ---
-    analysisCache[currentTemplateId] = container.innerHTML; // Cache result
+    appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache result
 
     // Tab switching logic
     tabNav.addEventListener("click", (e) => {
@@ -1700,7 +1704,7 @@ function renderPlsPage_DA(container, data) {
             // Activate clicked
             e.target.classList.add("active");
             const targetPanelId = e.target.dataset.tab + "Panel";
-            const targetPanel = $(targetPanelId);
+            const targetPanel = dom.$(targetPanelId);
             if (targetPanel) {
                 targetPanel.classList.add("active");
                 // No charts to resize in this specific PLS render function currently
@@ -1710,7 +1714,7 @@ function renderPlsPage_DA(container, data) {
         }
     });
 
-    $("analysisActions").classList.remove("hidden"); // Show save buttons
+    dom.$("analysisActions").classList.remove("hidden"); // Show save buttons
     // setLoading('generate', false); // Handled in the calling function
 }
 
@@ -1726,7 +1730,7 @@ function renderDematelAnalysisPage(container, data) {
     {
         console.error("Inconsistent or incomplete NUMERICAL data passed to renderDematelAnalysisPage:", data);
         container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete or inconsistent NUMERICAL analysis data received. Cannot render DEMATEL results.</div>`;
-        $("analysisActions").classList.add("hidden");
+        dom.$("analysisActions").classList.add("hidden");
         return;
     }
 
@@ -1758,7 +1762,7 @@ function renderDematelAnalysisPage(container, data) {
     `;
 
     // --- 1. Render Summary Tab (Using NUMERICAL analysis data) ---
-    const summaryPanel = $("summaryPanel");
+    const summaryPanel = dom.$("summaryPanel");
     let summaryHtml = `<div class="p-4">
         <h3 class="text-2xl font-bold mb-4">Analysis Summary</h3>
         <blockquote class="p-4 rounded-lg bg-black/20 border-l-4 border-gray-500 mb-6 text-white/90 italic text-sm">${analysis.summary || "Summary unavailable."}</blockquote>`;
@@ -1802,7 +1806,7 @@ function renderDematelAnalysisPage(container, data) {
 
 
     // --- 2. Render Causal Diagram Tab (Plotly R+C vs R-C - Numerical) ---
-    const diagramPanel = $("diagramPanel");
+    const diagramPanel = dom.$("diagramPanel");
     diagramPanel.innerHTML = `<div class="p-4">
          <h3 class="text-2xl font-bold mb-4 text-center">DEMATEL Causal Diagram</h3>
          <blockquote class="p-3 italic border-l-4 border-gray-500 bg-black/20 text-white/90 text-sm mb-6 max-w-3xl mx-auto">
@@ -1851,12 +1855,12 @@ function renderDematelAnalysisPage(container, data) {
         Plotly.newPlot('dematelDiagramPlot', plotData, layoutDiagram, { responsive: true });
     } catch(e) {
         console.error("Error creating DEMATEL Plotly chart:", e);
-        $("dematelDiagramPlot").innerHTML = "<p class='p-4 text-center text-red-400'>Could not render causal diagram.</p>";
+        dom.$("dematelDiagramPlot").innerHTML = "<p class='p-4 text-center text-red-400'>Could not render causal diagram.</p>";
     }
 
 
     // --- 3. Render Influence Metrics Tab (Numerical) ---
-    const metricsPanel = $("metricsPanel");
+    const metricsPanel = dom.$("metricsPanel");
     let metricsHtml = `<div class="p-4">
         <h3 class="text-2xl font-bold mb-4">Influence Metrics</h3>
          <p class="text-sm text-white/70 mb-6 italic">These metrics quantify the influence dispatched (R), received (C), total involvement (Prominence R+C), and net causal role (Relation R-C) for each factor.</p>
@@ -1891,7 +1895,7 @@ function renderDematelAnalysisPage(container, data) {
 
 
     // --- 4. Render Total Influence Matrix Tab (Heatmap - Numerical) ---
-    const matrixPanel = $("matrixPanel");
+    const matrixPanel = dom.$("matrixPanel");
     matrixPanel.innerHTML = `<div class="p-4">
         <h3 class="text-2xl font-bold mb-4">Total Influence Matrix (T)</h3>
         <p class="text-sm text-white/70 mb-4 italic">Heatmap showing the total direct and indirect influence of the row factor ON the column factor. Brighter colors indicate stronger influence.</p>
@@ -1926,11 +1930,11 @@ function renderDematelAnalysisPage(container, data) {
         Plotly.newPlot('dematelMatrixHeatmap', [heatmapTrace], layoutMatrix, { responsive: true });
     } catch (e) {
         console.error("Error creating DEMATEL Heatmap:", e);
-        $("dematelMatrixHeatmap").innerHTML = "<p class='p-4 text-center text-red-400'>Could not render influence matrix heatmap.</p>";
+        dom.$("dematelMatrixHeatmap").innerHTML = "<p class='p-4 text-center text-red-400'>Could not render influence matrix heatmap.</p>";
     }
 
     // --- 5. Populate Recommendations Panel (using enhanced rationale) ---
-    const recPanel = $("recPanel");
+    const recPanel = dom.$("recPanel");
     let recHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">💡 Actionable Recommendations</h3>`;
     if (business_recommendations && business_recommendations.length > 0) {
         recHtml += `<p class="text-sm text-white/70 mb-6 italic">These recommendations focus on leveraging the calculated causal structure (influencing Dispatchers, managing Receivers) to achieve strategic goals implied in the context.</p>`;
@@ -1976,7 +1980,7 @@ function renderDematelAnalysisPage(container, data) {
 
 
     // --- 6. Populate Learn DEMATEL Tab (Keep as is) ---
-    const learnPanel = $("learnPanel");
+    const learnPanel = dom.$("learnPanel");
     learnPanel.innerHTML = `
     <div class="p-6 space-y-6 text-white/90">
         <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding DEMATEL</h3>
@@ -2029,7 +2033,7 @@ function renderDematelAnalysisPage(container, data) {
 
 
     // --- Final Touches ---
-    analysisCache[currentTemplateId] = container.innerHTML; // Cache result
+    appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache result
 
     // Tab switching logic (copied from your provided function)
     tabNav.addEventListener("click", (e) => {
@@ -2037,7 +2041,7 @@ function renderDematelAnalysisPage(container, data) {
             tabNav.querySelectorAll(".analysis-tab-btn").forEach((btn) => btn.classList.remove("active"));
             tabContent.querySelectorAll(".analysis-tab-panel").forEach((pnl) => pnl.classList.remove("active"));
             e.target.classList.add("active");
-            const targetPanel = $(e.target.dataset.tab + "Panel");
+            const targetPanel = dom.$(e.target.dataset.tab + "Panel");
             targetPanel.classList.add("active");
             // Resize BOTH potential charts when switching tabs
             const diagramChart = targetPanel.querySelector('#dematelDiagramPlot');
@@ -2054,8 +2058,8 @@ function renderDematelAnalysisPage(container, data) {
      // Attempt initial resize for chart in the default active tab (summaryPanel - no chart)
      // Attempt initial resize for charts in DIAGRAM and MATRIX tabs after a short delay
      setTimeout(() => {
-         const initialDiagramChart = $('dematelDiagramPlot');
-         const initialMatrixChart = $('dematelMatrixHeatmap');
+         const initialDiagramChart = dom.$('dematelDiagramPlot');
+         const initialMatrixChart = dom.$('dematelMatrixHeatmap');
          if (initialDiagramChart && initialDiagramChart.layout && typeof Plotly !== 'undefined') {
              try { Plotly.Plots.resize(initialDiagramChart); } catch (err) { console.error("Initial Resize err (Diagram):", err); }
          }
@@ -2065,7 +2069,7 @@ function renderDematelAnalysisPage(container, data) {
      }, 150);
 
 
-    $("analysisActions").classList.remove("hidden"); // Show save buttons
+    dom.$("analysisActions").classList.remove("hidden"); // Show save buttons
     // setLoading('generate', false); // Handled in the calling function
 }  
 

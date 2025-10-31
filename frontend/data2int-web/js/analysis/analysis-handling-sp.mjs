@@ -1,9 +1,13 @@
 // =====================================================================================================
 // ===================        Strategic Planning Analysis Handling Functions        ====================
 // =====================================================================================================
+import { dom } from '../utils/dom-utils.mjs';
+import { setLoading } from '../utils/ui-utils.mjs';
+import { extractTextFromFile } from '../utils/file-utils.mjs';
+import * as renderSP from '../ui/analysis-rendering/analysis-rendering-sp.mjs';
 
 async function handleFactorAnalysis() {
-    const analysisResultContainer = $("analysisResult");
+    const analysisResultContainer = dom.$("analysisResult");
     analysisResultContainer.innerHTML = `
         <div class="text-center text-white/70 p-8">
             <div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div>
@@ -18,15 +22,15 @@ async function handleFactorAnalysis() {
 
     try {
         // 1. Gather Inputs
-        const useDoc = $("docUpload").checked;
+        const useDoc = dom.$("docUpload").checked;
         let documentText = "";
 
         if (useDoc) {
-            const file = $("factorFile").files[0];
+            const file = dom.$("factorFile").files[0];
             if (!file) throw new Error("Please select a document to upload.");
             documentText = await extractTextFromFile(file);
         } else {
-            documentText = $("factorContent").value.trim();
+            documentText = dom.$("factorContent").value.trim();
             if (!documentText.trim()) throw new Error("Please enter business information in the text area.");
         }
 
@@ -153,7 +157,7 @@ async function handleFactorAnalysis() {
 
 
         // 5. Render Results
-        renderFactorAnalysisPage(analysisResultContainer, {
+        renderSP.renderFactorAnalysisPage(analysisResultContainer, {
             external: prioritizedExternal,
             internal: prioritizedInternal
         });
@@ -164,7 +168,7 @@ async function handleFactorAnalysis() {
         setLoading("generate", false);
     } finally {
         // Ensure loading stops reliably
-         if ($("generateSpinner") && !$("generateSpinner").classList.contains("hidden")) {
+         if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
             setLoading("generate", false);
          }
     }
@@ -173,7 +177,7 @@ async function handleFactorAnalysis() {
 
 
 async function handleSwotTowsAnalysis() {
-    const analysisResultContainer = $("analysisResult");
+    const analysisResultContainer = dom.$("analysisResult");
     analysisResultContainer.innerHTML = `
         <div class="text-center text-white/70 p-8">
             <div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div>
@@ -183,22 +187,22 @@ async function handleSwotTowsAnalysis() {
         </div>`;
     setLoading("generate", true); // Ensure loading state is set
 
-    const statusEl = $("analysisStatus");
+    const statusEl = dom.$("analysisStatus");
     const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
     const MODEL_NAME = "llama3.1:latest"; // Consistent model
 
     try {
         // --- Step 0: Gather Input ---
         statusEl.textContent = "Reading your business content...";
-        const useDoc = $("docUpload").checked;
+        const useDoc = dom.$("docUpload").checked;
         let businessContent = "";
 
         if (useDoc) {
-            const file = $("swotFile").files[0];
+            const file = dom.$("swotFile").files[0];
             if (!file) throw new Error("Please select a document to upload.");
             businessContent = await extractTextFromFile(file);
         } else {
-            businessContent = $("businessContent").value.trim();
+            businessContent = dom.$("businessContent").value.trim();
             if (!businessContent.trim()) throw new Error("Please enter business information in the text area.");
         }
 
@@ -453,7 +457,7 @@ async function handleSwotTowsAnalysis() {
             tows_strategies: tows_strategies,
             key_insights_80_20: key_insights_80_20
         };
-        renderFullSwotTowsPage(analysisResultContainer, finalData); // Use the updated renderer
+        renderSP.renderFullSwotTowsPage(analysisResultContainer, finalData); // Use the updated renderer
 
     } catch (error) {
         console.error("Error during SWOT/TOWS analysis:", error);
@@ -461,7 +465,7 @@ async function handleSwotTowsAnalysis() {
         setLoading("generate", false); // Ensure loading stops on error
     } finally {
         // Ensure loading stops reliably if missed
-        if ($("generateSpinner") && !$("generateSpinner").classList.contains("hidden")) {
+        if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
             setLoading("generate", false);
         }
     }
@@ -470,7 +474,7 @@ async function handleSwotTowsAnalysis() {
 
 
 async function handleGoalsAndInitiativesAnalysis_SP() {
-    const analysisResultContainer = $("analysisResult");
+    const analysisResultContainer = dom.$("analysisResult");
     analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white mb-4">Building OGSM Framework...</h3><p class="text-white/80 mb-2">Cascading your objective into actionable strategies based *only* on your provided text...</p></div>`; // Updated text
     setLoading("generate", true);
 
@@ -480,15 +484,15 @@ async function handleGoalsAndInitiativesAnalysis_SP() {
 
     try {
         // 1. Gather Inputs
-        const useDoc = $("docUpload").checked;
+        const useDoc = dom.$("docUpload").checked;
         let text = "";
 
         if (useDoc) {
-            const file = $("goalsFile").files[0];
+            const file = dom.$("goalsFile").files[0];
             if (!file) throw new Error("Please select a document to upload.");
             text = await extractTextFromFile(file);
         } else {
-            text = $("goalsContent").value.trim();
+            text = dom.$("goalsContent").value.trim();
             if (!text.trim()) throw new Error("Please enter your high-level goal or business context in the text area.");
         }
 
@@ -612,7 +616,7 @@ async function handleGoalsAndInitiativesAnalysis_SP() {
         }
 
         // 4. Render Results
-        renderGoalsAndInitiativesPage_SP(analysisResultContainer, parsedData); // Use the updated renderer
+        renderSP.renderGoalsAndInitiativesPage_SP(analysisResultContainer, parsedData); // Use the updated renderer
 
     } catch (error) {
         console.error(`Error in handleGoalsAndInitiativesAnalysis_SP (Enhanced) using ${MODEL_NAME}:`, error);
@@ -620,7 +624,7 @@ async function handleGoalsAndInitiativesAnalysis_SP() {
         setLoading("generate", false);
     } finally {
         // Ensure loading stops reliably
-         if ($("generateSpinner") && !$("generateSpinner").classList.contains("hidden")) {
+         if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
             setLoading("generate", false);
          }
     }
@@ -629,7 +633,7 @@ async function handleGoalsAndInitiativesAnalysis_SP() {
 
 
 async function handleActionPlansAnalysis_AP() {
-    const analysisResultContainer = $("analysisResult");
+    const analysisResultContainer = dom.$("analysisResult");
     analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white mb-4">Generating Detailed Action Plan...</h3><p class="text-white/80 mb-2">Breaking down your objective into actionable tasks based *only* on your text...</p></div>`; // Updated text
     setLoading("generate", true);
 
@@ -639,15 +643,15 @@ async function handleActionPlansAnalysis_AP() {
 
     try {
         // 1. Gather Inputs
-        const useDoc = $("docUpload").checked;
+        const useDoc = dom.$("docUpload").checked;
         let text = "";
 
         if (useDoc) {
-            const file = $("actionPlanFile").files[0];
+            const file = dom.$("actionPlanFile").files[0];
             if (!file) throw new Error("Please select a document to upload.");
             text = await extractTextFromFile(file);
         } else {
-            text = $("actionPlanContent").value.trim();
+            text = dom.$("actionPlanContent").value.trim();
             if (!text.trim()) throw new Error("Please describe the objective for your action plan.");
         }
 
@@ -769,7 +773,7 @@ async function handleActionPlansAnalysis_AP() {
         }
 
         // 4. Render Results
-        renderActionPlansPage_AP(analysisResultContainer, parsedData); // Use the updated renderer
+        renderSP.renderActionPlansPage_AP(analysisResultContainer, parsedData); // Use the updated renderer
 
     } catch (error) {
         console.error(`Error in handleActionPlansAnalysis_AP (Enhanced) using ${MODEL_NAME}:`, error);
@@ -777,7 +781,7 @@ async function handleActionPlansAnalysis_AP() {
         setLoading("generate", false);
     } finally {
         // Ensure loading stops reliably
-         if ($("generateSpinner") && !$("generateSpinner").classList.contains("hidden")) {
+         if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
             setLoading("generate", false);
          }
     }
@@ -786,7 +790,7 @@ async function handleActionPlansAnalysis_AP() {
 
 
 async function handleKpiAnalysis_KE() {
-    const analysisResultContainer = $("analysisResult");
+    const analysisResultContainer = dom.$("analysisResult");
     analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white mb-4">Defining Performance Metrics & Milestones...</h3><p class="text-white/80 mb-2">Identifying key indicators and critical events based *only* on your text...</p></div>`; // Updated text
     setLoading("generate", true);
 
@@ -796,14 +800,14 @@ async function handleKpiAnalysis_KE() {
 
     try {
         // 1. Gather Inputs
-        const useDoc = $("docUpload").checked;
+        const useDoc = dom.$("docUpload").checked;
         let text = "";
         if (useDoc) {
-            const file = $("kpiFile").files[0];
+            const file = dom.$("kpiFile").files[0];
             if (!file) throw new Error("Please select a document.");
             text = await extractTextFromFile(file);
         } else {
-            text = $("kpiContent").value.trim();
+            text = dom.$("kpiContent").value.trim();
             if (!text.trim()) throw new Error("Please describe the project or goal.");
         }
 
@@ -932,7 +936,7 @@ async function handleKpiAnalysis_KE() {
         }
 
         // 4. Render Results
-        renderKpiPage_KE(analysisResultContainer, parsedData); // Use the updated renderer
+        renderSP.renderKpiPage_KE(analysisResultContainer, parsedData); // Use the updated renderer
 
     } catch (error) {
         console.error(`Error in handleKpiAnalysis_KE (Enhanced) using ${MODEL_NAME}:`, error);
@@ -940,7 +944,7 @@ async function handleKpiAnalysis_KE() {
         setLoading("generate", false);
     } finally {
         // Ensure loading stops reliably
-         if ($("generateSpinner") && !$("generateSpinner").classList.contains("hidden")) {
+         if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
             setLoading("generate", false);
          }
     }
@@ -949,7 +953,7 @@ async function handleKpiAnalysis_KE() {
 
 
 async function handleMiscAnalysis_MSC() {
-    const analysisResultContainer = $("analysisResult");
+    const analysisResultContainer = dom.$("analysisResult");
     analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white mb-4">Compiling Final Report Sections...</h3><p class="text-white/80 mb-2">Generating summary, risks, governance, and conclusion based *only* on your provided document...</p></div>`; // Updated text
     setLoading("generate", true);
 
@@ -959,14 +963,14 @@ async function handleMiscAnalysis_MSC() {
 
     try {
         // 1. Gather Inputs
-        const useDoc = $("docUpload").checked;
+        const useDoc = dom.$("docUpload").checked;
         let text = "";
         if (useDoc) {
-            const file = $("miscFile").files[0];
+            const file = dom.$("miscFile").files[0];
             if (!file) throw new Error("Please select a document.");
             text = await extractTextFromFile(file);
         } else {
-            text = $("miscContent").value.trim();
+            text = dom.$("miscContent").value.trim();
             if (!text.trim()) throw new Error("Please provide your document content.");
         }
 
@@ -1094,7 +1098,7 @@ async function handleMiscAnalysis_MSC() {
         }
 
         // 4. Render Results
-        renderMiscPage_MSC(analysisResultContainer, parsedData); // Use the updated renderer
+        renderSP.renderMiscPage_MSC(analysisResultContainer, parsedData); // Use the updated renderer
 
     } catch (error) {
         console.error(`Error in handleMiscAnalysis_MSC (Enhanced) using ${MODEL_NAME}:`, error);
@@ -1102,11 +1106,48 @@ async function handleMiscAnalysis_MSC() {
         setLoading("generate", false);
     } finally {
         // Ensure loading stops reliably
-         if ($("generateSpinner") && !$("generateSpinner").classList.contains("hidden")) {
+         if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
             setLoading("generate", false);
          }
     }
 }
+
+
+
+// Keep applyParetoAnalysisJS as it's used to process AI output
+function applyParetoAnalysisJS(factors) {
+    if (!factors || factors.length === 0) return [];
+
+    // Ensure impact_score is numeric before sorting
+    const validFactors = factors.filter(f => typeof f.impact_score === 'number' && !isNaN(f.impact_score));
+    if (validFactors.length === 0) {
+        console.warn("No factors with valid numeric impact scores found for Pareto analysis.");
+        // Return original factors with default priority/rank if scores were bad
+        return factors.map((f, i) => ({ ...f, cumulative_percentage: 0, priority: "Low", rank: i + 1 }));
+    }
+
+
+    const sorted_factors = [...validFactors].sort((a, b) => b.impact_score - a.impact_score);
+    const total_impact = sorted_factors.reduce((sum, f) => sum + f.impact_score, 0);
+
+    if (total_impact === 0) {
+        // Handle case where all scores are 0
+        return sorted_factors.map((f, i) => ({ ...f, cumulative_percentage: 0, priority: "Low", rank: i + 1 }));
+    }
+
+    let cumulative_impact = 0;
+    return sorted_factors.map((factor, i) => {
+        cumulative_impact += factor.impact_score;
+        const cumulative_percentage = (cumulative_impact / total_impact) * 100;
+        return {
+            ...factor,
+            cumulative_percentage: parseFloat(cumulative_percentage.toFixed(1)),
+            priority: cumulative_percentage <= 80 ? "High" : "Low",
+            rank: i + 1
+        };
+    });
+}
+
 
 export {
     handleFactorAnalysis,

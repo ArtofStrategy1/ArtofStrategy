@@ -1,10 +1,121 @@
 // =====================================================================================================
 // ===================              Template Creation Helper Functions              ====================
 // =====================================================================================================
+import { appState } from "../../state/app-state.mjs";
+import { dom } from "../../utils/dom-utils.mjs";
+import { templateConfig } from "./template-config.mjs";
+import { handleGenerate } from "../../analysis/handle-generate.mjs"
+import { handleSaveAsPdf, handleSaveAsDocx } from "../../utils/file-utils.mjs"
+import { navigateTo } from '../navigation.mjs';
+import { configureFrameworkSelector, frameworkCheckboxChangeHandler } from "./framework-selection.mjs";
+import * as createSP from "./template-creation-sp.mjs";
+import * as createST from "./template-creation-st.mjs";
+import * as createNS from "./template-creation-ns.mjs";
+import * as createDA from "./template-creation-da.mjs";
+
+
+function showTemplateDetail(templateId) {
+    appState.currentTemplateId = templateId;
+    const rule = templateConfig.templateRules[templateId] || {};
+
+    // Dynamically get template info from the clicked card if not in the predefined list
+    let template = templateConfig.templates[templateId];
+    if (!template) {
+        const card = document.querySelector(`.home-template-link[data-template-id="${templateId}"]`);
+        if (card) {
+            const title = card.querySelector("h3").innerText;
+            const descriptionEl = card.querySelector("p");
+            const description = descriptionEl
+                ? descriptionEl.innerText
+                : `Generate a detailed analysis for ${title}.`;
+            template = { title: title, description: description };
+            templateConfig.templates[templateId] = template; // Cache it
+        } else {
+            // Generic fallback if card isn't found
+            template = {
+                title: templateId.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
+                description: `Generate a detailed analysis.`
+            };
+            templateConfig.templates[templateId] = template;
+        }
+    }
+
+    // Handle special layouts that replace the whole content area
+    if (rule.useSwotLayout) {
+        createSP.createSwotTowsLayout(template);
+    } else if (rule.useArchetypeLayout) {
+        createST.createArchetypeAnalysisLayout(template);
+    } else if (rule.useThinkingSystemLayout_NS) {
+        // <-- ADD THIS BLOCK
+        createNS.createThinkingSystemLayout_NS(template);
+    } else if (rule.useLivingSystemLayout_NS) {
+        // <-- ADD THIS BLOCK
+        createNS.createLivingSystemLayout_NS(template);
+    } else if (rule.useVisualizationLayout_DA) {
+        // <-- ADD THIS BLOCK
+        createDA.createVisualizationLayout_DA(template);
+    } else if (rule.useSystemObjectivesLayout_ST) {
+        // <-- ADD THIS BLOCK
+        createST.createSystemObjectivesLayout_ST(template);
+    } else if (rule.useCreativeDissonanceLayout_NS) {
+        // <-- ADD THIS BLOCK
+        createNS.createCreativeDissonanceLayout_NS(template);
+    } else if (rule.useSystemActionsLayout_ST) {
+        // <-- ADD THIS BLOCK
+        createST.createSystemActionsLayout_ST(template);
+    } else if (rule.usePrescriptiveLayout_DA) {
+        // <-- ADD THIS BLOCK
+        createDA.createPrescriptiveLayout_DA(template);
+    } else if (rule.usePlsLayout_DA) {
+        // <-- ADD THIS BLOCK
+        createDA.createPlsLayout_DA(template);
+    } else if (rule.useDescriptiveLayout_DA) {
+        // <-- ADD THIS BLOCK
+        createDA.createDescriptiveLayout_DA(template);
+    } else if (rule.useFactorAnalysisLayout) {
+        createSP.createFactorAnalysisLayout(template);
+    } else if (rule.useSemAnalysisLayout) {
+        // <-- ADD THIS BLOCK
+        createDA.createSemAnalysisLayout(template);
+    } else if (rule.useActionPlansLayout_AP) {
+        createSP.createActionPlansLayout_AP(template);
+    } else if (rule.useLeveragePointsLayout) {
+        createST.createLeveragePointsLayout(template);
+    } else if (rule.useMiscLayout_MSC) {
+        createSP.createMiscLayout_MSC(template);
+    } else if (rule.useNovelGoalsLayout_NS) {
+        // <-- ADD THIS BLOCK
+        createNS.createNovelGoalsLayout_NS(template);
+    } else if (rule.useKpiLayout_KE) {
+        createSP.createKpiLayout_KE(template);
+    } else if (rule.useGoalsAndInitiativesLayout_SP) {
+        createSP.createGoalsAndInitiativesLayout_SP(template);
+    } else if (rule.useRegressionLayout_DA) {
+        // <-- ADD THIS BLOCK
+        createDA.createRegressionLayout_DA(template);
+    } else if (rule.useParetoLayout) {
+        createST.createParetoLayout(template);
+    } else if (rule.useProcessMappingLayout) {
+        createST.createProcessMappingLayout(template);
+    } else if (rule.useSystemGoalsLayout) {
+        createST.createSystemGoalsLayout(template);
+    } else if (rule.useSystemThinkingLayout) {
+        createST.createSystemThinkingLayout(template);
+    } else if (rule.usePredictiveAnalysisLayout) {
+        createDA.createPredictiveAnalysisLayout(template);
+    } else if (rule.useDematelLayout) {
+        createDA.createDematelLayout(template);
+    } else {
+        createDefaultLayout(template, rule);
+    }
+    navigateTo("templateDetail");
+}
+
+
 
 function reattachActionListeners() {
-    const savePdfBtn = $("savePdfBtn");
-    const saveDocxBtn = $("saveDocxBtn");
+    const savePdfBtn = dom.$("savePdfBtn");
+    const saveDocxBtn = dom.$("saveDocxBtn");
     if (savePdfBtn) savePdfBtn.addEventListener("click", handleSaveAsPdf);
     if (saveDocxBtn) saveDocxBtn.addEventListener("click", handleSaveAsDocx);
 }
@@ -21,7 +132,7 @@ function reattachTabListeners(container) {
                 tabContent.querySelectorAll(".analysis-tab-panel").forEach((pnl) => pnl.classList.remove("active"));
                 e.target.classList.add("active");
                 const targetPanelId = e.target.dataset.tab + "Panel";
-                const targetPanel = $(targetPanelId);
+                const targetPanel = dom.$(targetPanelId);
                 if (targetPanel) {
                     targetPanel.classList.add("active");
                     const chart = targetPanel.querySelector(".plotly-chart");
@@ -36,110 +147,9 @@ function reattachTabListeners(container) {
 
 
 
-function showTemplateDetail(templateId) {
-    currentTemplateId = templateId;
-    const rule = templateRules[templateId] || {};
-
-    // Dynamically get template info from the clicked card if not in the predefined list
-    let template = templates[templateId];
-    if (!template) {
-        const card = document.querySelector(`.home-template-link[data-template-id="${templateId}"]`);
-        if (card) {
-            const title = card.querySelector("h3").innerText;
-            const descriptionEl = card.querySelector("p");
-            const description = descriptionEl
-                ? descriptionEl.innerText
-                : `Generate a detailed analysis for ${title}.`;
-            template = { title: title, description: description };
-            templates[templateId] = template; // Cache it
-        } else {
-            // Generic fallback if card isn't found
-            template = {
-                title: templateId.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
-                description: `Generate a detailed analysis.`
-            };
-            templates[templateId] = template;
-        }
-    }
-
-    // Handle special layouts that replace the whole content area
-    if (rule.useSwotLayout) {
-        createSwotTowsLayout(template);
-    } else if (rule.useArchetypeLayout) {
-        createArchetypeAnalysisLayout(template);
-    } else if (rule.useThinkingSystemLayout_NS) {
-        // <-- ADD THIS BLOCK
-        createThinkingSystemLayout_NS(template);
-    } else if (rule.useLivingSystemLayout_NS) {
-        // <-- ADD THIS BLOCK
-        createLivingSystemLayout_NS(template);
-    } else if (rule.useVisualizationLayout_DA) {
-        // <-- ADD THIS BLOCK
-        createVisualizationLayout_DA(template);
-    } else if (rule.useSystemObjectivesLayout_ST) {
-        // <-- ADD THIS BLOCK
-        createSystemObjectivesLayout_ST(template);
-    } else if (rule.useCreativeDissonanceLayout_NS) {
-        // <-- ADD THIS BLOCK
-        createCreativeDissonanceLayout_NS(template);
-    } else if (rule.useSystemActionsLayout_ST) {
-        // <-- ADD THIS BLOCK
-        createSystemActionsLayout_ST(template);
-    } else if (rule.usePrescriptiveLayout_DA) {
-        // <-- ADD THIS BLOCK
-        createPrescriptiveLayout_DA(template);
-    } else if (rule.usePlsLayout_DA) {
-        // <-- ADD THIS BLOCK
-        createPlsLayout_DA(template);
-    } else if (rule.useDescriptiveLayout_DA) {
-        // <-- ADD THIS BLOCK
-        createDescriptiveLayout_DA(template);
-    } else if (rule.useFactorAnalysisLayout) {
-        createFactorAnalysisLayout(template);
-    } else if (rule.useSemAnalysisLayout) {
-        // <-- ADD THIS BLOCK
-        createSemAnalysisLayout(template);
-    } else if (rule.useActionPlansLayout_AP) {
-        createActionPlansLayout_AP(template);
-    } else if (rule.useLeveragePointsLayout) {
-        createLeveragePointsLayout(template);
-    } else if (rule.useMiscLayout_MSC) {
-        createMiscLayout_MSC(template);
-    } else if (rule.useNovelGoalsLayout_NS) {
-        // <-- ADD THIS BLOCK
-        createNovelGoalsLayout_NS(template);
-    } else if (rule.useKpiLayout_KE) {
-        createKpiLayout_KE(template);
-    } else if (rule.useGoalsAndInitiativesLayout_SP) {
-        createGoalsAndInitiativesLayout_SP(template);
-    } else if (rule.useRegressionLayout_DA) {
-        // <-- ADD THIS BLOCK
-        createRegressionLayout_DA(template);
-    } else if (rule.useParetoLayout) {
-        createParetoLayout(template);
-    } else if (rule.useProcessMappingLayout) {
-        createProcessMappingLayout(template);
-    } else if (rule.useSystemGoalsLayout) {
-        createSystemGoalsLayout(template);
-    } else if (rule.useSystemThinkingLayout) {
-        createSystemThinkingLayout(template);
-    } else if (rule.useSemAnalysisLayout) {
-        createSemAnalysisLayout(template);
-    } else if (rule.usePredictiveAnalysisLayout) {
-        createPredictiveAnalysisLayout(template);
-    } else if (rule.useDematelLayout) {
-        createDematelLayout(template);
-    } else {
-        createDefaultLayout(template, rule);
-    }
-    navigateTo("templateDetail");
-}
-
-
-
 function createDefaultLayout(template, rule) {
     // --- Default Layout Handling (Rebuilds the DOM for consistency) ---
-    const contentContainer = $("templateDetailContent");
+    const contentContainer = dom.$("templateDetailContent");
     contentContainer.className = "grid lg:grid-cols-2 gap-12"; // Reset to default grid class
     contentContainer.innerHTML = `
                 <div>
@@ -197,17 +207,17 @@ function createDefaultLayout(template, rule) {
             `;
 
     // Populate the form fields into the newly created div
-    populateDefaultFormFields(currentTemplateId);
+    populateDefaultFormFields(appState.currentTemplateId);
 
     // Restore from cache or set default
-    if (analysisCache[currentTemplateId]) {
-        $("analysisResult").innerHTML = analysisCache[currentTemplateId];
-        $("analysisActions").classList.remove("hidden");
-        reattachTabListeners($("analysisResult"));
+    if (appState.analysisCache[appState.currentTemplateId]) {
+        dom.$("analysisResult").innerHTML = appState.analysisCache[appState.currentTemplateId];
+        dom.$("analysisActions").classList.remove("hidden");
+        reattachTabListeners(dom.$("analysisResult"));
     } else {
-        $("analysisResult").innerHTML =
+        dom.$("analysisResult").innerHTML =
             '<div class="text-white/60 p-8 text-center">Your generated analysis will appear here.</div>';
-        $("analysisActions").classList.add("hidden");
+        dom.$("analysisActions").classList.add("hidden");
     }
 
     // Reset and configure frameworks, re-attaching listeners to new elements
@@ -228,15 +238,15 @@ function createDefaultLayout(template, rule) {
     }
 
     // Re-attach all necessary event listeners for the new elements
-    $("generateBtn").addEventListener("click", handleGenerate);
+    dom.$("generateBtn").addEventListener("click", handleGenerate);
     reattachActionListeners();
-    configureFrameworkSelector(currentSelectionLimit);
+    configureFrameworkSelector(appState.currentSelectionLimit);
 }
 
 
 
 function populateDefaultFormFields(templateId) {
-    const templateFormFields = $("templateFormFields");
+    const templateFormFields = dom.$("templateFormFields");
     templateFormFields.innerHTML = ""; // Clear previous fields
 
     // For Fishbone/Pareto, we only need the problem statement.
@@ -276,10 +286,10 @@ function populateDefaultFormFields(templateId) {
 
         templateFormFields.innerHTML = formHtml;
 
-        const fileInput = $("companyDocumentsFile");
+        const fileInput = dom.$("companyDocumentsFile");
         if (fileInput) {
             fileInput.addEventListener("change", (e) => {
-                const label = $("companyDocumentsFileLabel");
+                const label = dom.$("companyDocumentsFileLabel");
                 const fileNameSpan = label.querySelector(".file-name");
                 if (e.target.files.length > 0) {
                     fileNameSpan.textContent = e.target.files[0].name;
@@ -291,4 +301,11 @@ function populateDefaultFormFields(templateId) {
             });
         }
     }
+}
+
+
+export {
+    showTemplateDetail,
+    reattachTabListeners,
+    reattachActionListeners,
 }

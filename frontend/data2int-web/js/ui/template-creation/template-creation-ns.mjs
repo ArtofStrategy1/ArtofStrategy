@@ -1,9 +1,13 @@
 // =====================================================================================================
 // ===================      Novel Strategies Page Template Creation Functions       ====================
 // =====================================================================================================
+import { handleGenerate } from "../../analysis/handle-generate.mjs"
+import { reattachActionListeners } from "./template-creation.mjs";
+import { dom } from "../../utils/dom-utils.mjs";
+import { setupInputToggle } from "../../utils/ui-utils.mjs";
 
 function createNovelGoalsLayout_NS(template) {
-    const contentContainer = $("templateDetailContent");
+    const contentContainer = dom.$("templateDetailContent");
     contentContainer.className = "grid lg:grid-cols-1 gap-12";
     contentContainer.innerHTML = `
                 <div class="lg-col-span-1">
@@ -48,7 +52,7 @@ function createNovelGoalsLayout_NS(template) {
 }
 
 function createCreativeDissonanceLayout_NS(template) {
-    const contentContainer = $("templateDetailContent");
+    const contentContainer = dom.$("templateDetailContent");
     contentContainer.className = "grid lg:grid-cols-1 gap-12";
     contentContainer.innerHTML = `
                 <div class="lg:col-span-1">
@@ -105,10 +109,10 @@ function createCreativeDissonanceLayout_NS(template) {
                 </div>
             `;
     const attachListener = (inputId, labelId) => {
-        const fileInput = $(inputId);
+        const fileInput = dom.$(inputId);
         if (fileInput) {
             fileInput.addEventListener("change", (e) => {
-                const label = $(labelId);
+                const label = dom.$(labelId);
                 const fileNameSpan = label.querySelector(".file-name");
                 if (e.target.files.length > 0) {
                     fileNameSpan.textContent = e.target.files[0].name;
@@ -120,7 +124,7 @@ function createCreativeDissonanceLayout_NS(template) {
     };
     attachListener("dissonanceContextFile", "dissonanceContextFileLabel");
     attachListener("dissonanceDataFile", "dissonanceDataFileLabel");
-    $("generateBtn").addEventListener("click", handleGenerate);
+    dom.$("generateBtn").addEventListener("click", handleGenerate);
     reattachActionListeners();
 }
 
@@ -128,7 +132,7 @@ function createCreativeDissonanceLayout_NS(template) {
 
 
 function createLivingSystemLayout_NS(template) {
-    const contentContainer = $("templateDetailContent");
+    const contentContainer = dom.$("templateDetailContent");
     contentContainer.className = "grid lg:grid-cols-1 gap-12";
     contentContainer.innerHTML = `
                 <div class="lg:col-span-1">
@@ -192,7 +196,7 @@ function createLivingSystemLayout_NS(template) {
 
 
 function createThinkingSystemLayout_NS(template) {
-    const contentContainer = $("templateDetailContent");
+    const contentContainer = dom.$("templateDetailContent");
     contentContainer.className = "grid lg:grid-cols-1 gap-12";
     contentContainer.innerHTML = `
                 <div class="lg:col-span-1">
@@ -234,4 +238,12 @@ function createThinkingSystemLayout_NS(template) {
                 </div>
             `;
     setupInputToggle("tsFile", "tsFileLabel", "textInputArea", "docUploadArea");
+}
+
+
+export {
+    createNovelGoalsLayout_NS,
+    createCreativeDissonanceLayout_NS,
+    createLivingSystemLayout_NS,
+    createThinkingSystemLayout_NS
 }

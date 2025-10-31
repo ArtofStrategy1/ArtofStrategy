@@ -2,8 +2,13 @@
 // ===================         Systems Thinking Analysis Handling Functions         ====================
 // =====================================================================================================
 
+import { dom } from '../utils/dom-utils.mjs';
+import { setLoading } from '../utils/ui-utils.mjs';
+import { extractTextFromFile } from '../utils/file-utils.mjs';
+import * as renderST from '../ui/analysis-rendering/analysis-rendering-st.mjs';
+
 async function handleProcessMappingAnalysis() {
-    const analysisResultContainer = $("analysisResult");
+    const analysisResultContainer = dom.$("analysisResult");
     analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white">Mapping and Analyzing Your Process...</h3><p class="text-white/80 mb-2">Identifying steps, bottlenecks, and potential optimizations...</p></div>`; // Updated text
     setLoading("generate", true);
 
@@ -16,11 +21,11 @@ async function handleProcessMappingAnalysis() {
         const useDoc = document.querySelector('input[name="inputType"]:checked').id === "docUpload";
         let content = "";
         if (useDoc) {
-            const file = $("processFile").files[0];
+            const file = dom.$("processFile").files[0];
             if (!file) throw new Error("Please select a document.");
             content = await extractTextFromFile(file);
         } else {
-            content = $("processContent").value.trim();
+            content = dom.$("processContent").value.trim();
             if (!content) throw new Error("Please describe the process.");
         }
 
@@ -177,7 +182,7 @@ async function handleProcessMappingAnalysis() {
         }
 
         // 4. Render Results
-        renderProcessMappingPage(analysisResultContainer, parsedData);
+        renderST.renderProcessMappingPage(analysisResultContainer, parsedData);
 
     } catch (error) {
         console.error(`Error in handleProcessMappingAnalysis (Enhanced) using ${MODEL_NAME}:`, error);
@@ -185,7 +190,7 @@ async function handleProcessMappingAnalysis() {
         setLoading("generate", false);
     } finally {
         // Ensure loading stops reliably
-         if ($("generateSpinner") && !$("generateSpinner").classList.contains("hidden")) {
+         if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
             setLoading("generate", false);
          }
     }
@@ -194,7 +199,7 @@ async function handleProcessMappingAnalysis() {
 
 
 async function handleParetoFishboneAnalysis() {
-    const analysisResultContainer = $("analysisResult");
+    const analysisResultContainer = dom.$("analysisResult");
     analysisResultContainer.innerHTML = `
         <div class="text-center text-white/70 p-8">
             <div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div>
@@ -209,15 +214,15 @@ async function handleParetoFishboneAnalysis() {
 
     try {
         // 1. Gather Inputs
-        const useDoc = $("docUpload").checked;
+        const useDoc = dom.$("docUpload").checked;
         let problemContext = "";
 
         if (useDoc) {
-            const file = $("paretoFile").files[0];
+            const file = dom.$("paretoFile").files[0];
             if (!file) throw new Error("Please select a document (.txt, .docx) to upload.");
             problemContext = await extractTextFromFile(file);
         } else {
-            problemContext = $("problemStatement").value.trim(); // Use ID from createParetoLayout
+            problemContext = dom.$("problemStatement").value.trim(); // Use ID from createParetoLayout
             if (!problemContext) throw new Error("Please enter a problem statement or description in the text area.");
         }
 
@@ -356,7 +361,7 @@ async function handleParetoFishboneAnalysis() {
         }
 
         // 4. Render Results using a new dedicated function
-        renderParetoFishbonePage(analysisResultContainer, parsedData);
+        renderST.renderParetoFishbonePage(analysisResultContainer, parsedData);
 
     } catch (error) {
         console.error(`Error in handleParetoFishboneAnalysis (Enhanced) using ${MODEL_NAME}:`, error);
@@ -364,7 +369,7 @@ async function handleParetoFishboneAnalysis() {
         setLoading("generate", false);
     } finally {
         // Ensure loading stops reliably
-        if ($("generateSpinner") && !$("generateSpinner").classList.contains("hidden")) {
+        if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
             setLoading("generate", false);
         }
     }
@@ -373,7 +378,7 @@ async function handleParetoFishboneAnalysis() {
 
 
 async function handleSystemThinkingAnalysis() {
-    const analysisResultContainer = $("analysisResult");
+    const analysisResultContainer = dom.$("analysisResult");
     analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white">Analyzing System Dynamics...</h3><p class="text-white/80 mb-2">Identifying elements, loops, and leverage points based on your description...</p></div>`; // Updated text
     setLoading("generate", true);
 
@@ -386,11 +391,11 @@ async function handleSystemThinkingAnalysis() {
         const useDoc = document.querySelector('input[name="inputType"]:checked').id === "docUpload";
         let content = "";
         if (useDoc) {
-            const file = $("systemFile").files[0];
+            const file = dom.$("systemFile").files[0];
             if (!file) throw new Error("Please select a document.");
             content = await extractTextFromFile(file);
         } else {
-            content = $("systemContent").value.trim();
+            content = dom.$("systemContent").value.trim();
             if (!content) throw new Error("Please describe the system.");
         }
 
@@ -529,7 +534,7 @@ async function handleSystemThinkingAnalysis() {
         }
 
         // 4. Render Results
-        renderSystemThinkingPage(analysisResultContainer, parsedData);
+        renderST.renderSystemThinkingPage(analysisResultContainer, parsedData);
 
     } catch (error) {
         console.error(`Error in handleSystemThinkingAnalysis (Enhanced) using ${MODEL_NAME}:`, error);
@@ -537,7 +542,7 @@ async function handleSystemThinkingAnalysis() {
         setLoading("generate", false);
     } finally {
         // Ensure loading stops reliably
-         if ($("generateSpinner") && !$("generateSpinner").classList.contains("hidden")) {
+         if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
             setLoading("generate", false);
          }
     }
@@ -546,7 +551,7 @@ async function handleSystemThinkingAnalysis() {
 
 
 async function handleLeveragePointsAnalysis() {
-    const analysisResultContainer = $("analysisResult");
+    const analysisResultContainer = dom.$("analysisResult");
     analysisResultContainer.innerHTML = `
         <div class="text-center text-white/70 p-8">
             <div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div>
@@ -561,15 +566,15 @@ async function handleLeveragePointsAnalysis() {
 
     try {
         // 1. Gather Inputs
-        const useDoc = $("docUpload").checked;
+        const useDoc = dom.$("docUpload").checked;
         let text = "";
 
         if (useDoc) {
-            const file = $("leverageFile").files[0];
+            const file = dom.$("leverageFile").files[0];
             if (!file) throw new Error("Please select a document to upload.");
             text = await extractTextFromFile(file);
         } else {
-            text = $("leverageContent").value.trim();
+            text = dom.$("leverageContent").value.trim();
             if (!text.trim()) throw new Error("Please enter system information in the text area.");
         }
 
@@ -703,7 +708,7 @@ async function handleLeveragePointsAnalysis() {
         }
 
         // 4. Render Results
-        renderLeveragePointsPage(analysisResultContainer, parsedData);
+        renderST.renderLeveragePointsPage(analysisResultContainer, parsedData);
 
     } catch (error) {
         console.error(`Error in handleLeveragePointsAnalysis (Enhanced) using ${MODEL_NAME}:`, error);
@@ -711,7 +716,7 @@ async function handleLeveragePointsAnalysis() {
         setLoading("generate", false);
     } finally {
         // Ensure loading stops reliably
-         if ($("generateSpinner") && !$("generateSpinner").classList.contains("hidden")) {
+         if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
             setLoading("generate", false);
          }
     }
@@ -720,7 +725,7 @@ async function handleLeveragePointsAnalysis() {
 
 
 async function handleArchetypeAnalysis() {
-    const analysisResultContainer = $("analysisResult");
+    const analysisResultContainer = dom.$("analysisResult");
 
     analysisResultContainer.innerHTML = `
                 <div class="text-center text-white/70 p-8">
@@ -730,21 +735,21 @@ async function handleArchetypeAnalysis() {
                     <p id="analysisStatus" class="text-white/60 text-sm">Initializing...</p>
                 </div>`;
 
-    const statusEl = $("analysisStatus");
+    const statusEl = dom.$("analysisStatus");
     const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
     const MODEL_NAME = "llama3.1:latest";
 
     try {
         statusEl.textContent = "Reading and processing your document...";
-        const useDoc = $("docUpload").checked;
+        const useDoc = dom.$("docUpload").checked;
         let text = "";
 
         if (useDoc) {
-            const file = $("archetypeFile").files[0];
+            const file = dom.$("archetypeFile").files[0];
             if (!file) throw new Error("Please select a document to upload.");
             text = await extractTextFromFile(file);
         } else {
-            text = $("archetypeContent").value;
+            text = dom.$("archetypeContent").value;
             if (!text.trim()) throw new Error("Please enter system information in the text area.");
         }
         if (!text) throw new Error("Could not get text from the document or text area.");
@@ -860,7 +865,7 @@ async function handleArchetypeAnalysis() {
 
         // Final step: Render the full page
         statusEl.textContent = "Analysis complete! Rendering results...";
-        renderArchetypeAnalysisPage(analysisResultContainer, {
+        renderST.renderArchetypeAnalysisPage(analysisResultContainer, {
             concepts,
             topArchetypes,
             topLeveragePoints
@@ -876,7 +881,7 @@ async function handleArchetypeAnalysis() {
 
 
 async function handleSystemGoalsAnalysis() {
-    const analysisResultContainer = $("analysisResult");
+    const analysisResultContainer = dom.$("analysisResult");
     analysisResultContainer.innerHTML = `
         <div class="text-center text-white/70 p-8">
             <div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div>
@@ -892,15 +897,15 @@ async function handleSystemGoalsAnalysis() {
 
     try {
         // 1. Gather Inputs
-        const useDoc = $("docUpload").checked;
+        const useDoc = dom.$("docUpload").checked;
         let text = "";
 
         if (useDoc) {
-            const file = $("systemGoalsFile").files[0];
+            const file = dom.$("systemGoalsFile").files[0];
             if (!file) throw new Error("Please select a document to upload.");
             text = await extractTextFromFile(file);
         } else {
-            text = $("systemGoalsContent").value.trim();
+            text = dom.$("systemGoalsContent").value.trim();
             if (!text.trim()) throw new Error("Please enter system information and desired outcome in the text area.");
         }
 
@@ -1033,7 +1038,7 @@ async function handleSystemGoalsAnalysis() {
         }
 
         // 4. Render Results
-        renderSystemGoalsPage(analysisResultContainer, parsedData); // Use the updated renderer
+        renderST.renderSystemGoalsPage(analysisResultContainer, parsedData); // Use the updated renderer
 
     } catch (error) {
         console.error(`Error in handleSystemGoalsAnalysis (Enhanced) using ${MODEL_NAME}:`, error);
@@ -1041,7 +1046,7 @@ async function handleSystemGoalsAnalysis() {
         setLoading("generate", false);
     } finally {
         // Ensure loading stops reliably
-         if ($("generateSpinner") && !$("generateSpinner").classList.contains("hidden")) {
+         if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
             setLoading("generate", false);
          }
     }
@@ -1050,18 +1055,18 @@ async function handleSystemGoalsAnalysis() {
 
 
 async function handleSystemObjectivesAnalysis_ST() {
-    const analysisResultContainer = $("analysisResult");
+    const analysisResultContainer = dom.$("analysisResult");
     analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white mb-4">Analyzing System Dynamics...</h3><p class="text-white/80 mb-2">Formulating objectives based on feedback loops...</p></div>`;
 
     try {
-        const useDoc = $("docUpload").checked;
+        const useDoc = dom.$("docUpload").checked;
         let text = "";
         if (useDoc) {
-            const file = $("systemObjFile").files[0];
+            const file = dom.$("systemObjFile").files[0];
             if (!file) throw new Error("Please select a document.");
             text = await extractTextFromFile(file);
         } else {
-            text = $("systemObjContent").value;
+            text = dom.$("systemObjContent").value;
             if (!text.trim()) throw new Error("Please describe your system and goal.");
         }
         if (text.length > 15000) {
@@ -1133,7 +1138,7 @@ async function handleSystemObjectivesAnalysis_ST() {
         if (!response.ok) throw new Error(`API error: ${response.status}`);
         const data = await response.json();
         const parsedData = JSON.parse(data.response);
-        renderSystemObjectivesPage_ST(analysisResultContainer, parsedData);
+        renderST.renderSystemObjectivesPage_ST(analysisResultContainer, parsedData);
     } catch (error) {
         console.error("Error during System Objectives analysis:", error);
         analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">An error occurred: ${error.message}</div>`;
@@ -1145,7 +1150,7 @@ async function handleSystemObjectivesAnalysis_ST() {
 
 
 async function handleSystemActionsAnalysis_ST() {
-    const analysisResultContainer = $("analysisResult");
+    const analysisResultContainer = dom.$("analysisResult");
     analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white mb-4">Diagnosing System Behavior & Formulating Actions...</h3><p class="text-white/80 mb-2">Generating analysis strictly based on your provided context...</p></div>`;
     setLoading("generate", true);
 
@@ -1155,14 +1160,14 @@ async function handleSystemActionsAnalysis_ST() {
 
     try {
         // 1. Gather Inputs
-        const useDoc = $("docUpload").checked;
+        const useDoc = dom.$("docUpload").checked;
         let text = "";
         if (useDoc) {
-            const file = $("systemActionFile").files[0];
+            const file = dom.$("systemActionFile").files[0];
             if (!file) throw new Error("Please select a document.");
             text = await extractTextFromFile(file);
         } else {
-            text = $("systemActionContent").value.trim();
+            text = dom.$("systemActionContent").value.trim();
             if (!text.trim()) throw new Error("Please describe the system problem.");
         }
 
@@ -1295,7 +1300,7 @@ async function handleSystemActionsAnalysis_ST() {
         }
 
         // 4. Render Results (Using the existing renderer)
-        renderSystemActionsPage_ST(analysisResultContainer, parsedData);
+        renderST.renderSystemActionsPage_ST(analysisResultContainer, parsedData);
 
     } catch (error) {
         console.error(`Error in handleSystemActionsAnalysis_ST (Refined v2) using ${MODEL_NAME}:`, error);
@@ -1303,7 +1308,7 @@ async function handleSystemActionsAnalysis_ST() {
         setLoading("generate", false);
     } finally {
         // Ensure loading stops reliably
-         if ($("generateSpinner") && !$("generateSpinner").classList.contains("hidden")) {
+         if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
             setLoading("generate", false);
          }
     }

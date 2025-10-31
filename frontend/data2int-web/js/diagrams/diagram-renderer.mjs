@@ -7,7 +7,7 @@ let panzoomInstance = null;
  * @param {HTMLElement} diagramContainerElement - The DOM element where the Mermaid diagram should be rendered.
  * @param {string} mermaidCode - The Mermaid.js code used to render the Mermaid.js diagram.
  */
-export async function renderMermaidDiagram(diagramContainerElement, mermaidCode) {
+async function renderMermaidDiagram(diagramContainerElement, mermaidCode) {
     try {
         if (panzoomInstance) {
             panzoomInstance.destroy();
@@ -40,4 +40,8 @@ export async function renderMermaidDiagram(diagramContainerElement, mermaidCode)
         diagramContainerElement.innerHTML = `<div class="text-red-400">Error rendering diagram: 
         ${error.message || error.str || 'Unknown error'}</div>`;
     }
+}
+
+export {
+    renderMermaidDiagram
 }

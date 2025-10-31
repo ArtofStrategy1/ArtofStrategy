@@ -1,9 +1,14 @@
 // =====================================================================================================
 // ===================      Systems Thinking Page Template Creation Functions       ====================
 // =====================================================================================================
+import { appState } from "../../state/app-state.mjs";
+import { dom } from "../../utils/dom-utils.mjs";
+import { handleGenerate } from "../../analysis/handle-generate.mjs"
+import { reattachActionListeners, reattachTabListeners } from "./template-creation.mjs";
+import { setupInputToggle } from "../../utils/ui-utils.mjs";
 
 function createProcessMappingLayout(template) {
-    const contentContainer = $("templateDetailContent");
+    const contentContainer = dom.$("templateDetailContent");
     contentContainer.className = "grid lg:grid-cols-1 gap-12";
     contentContainer.innerHTML = `
                 <div class="lg:col-span-1">
@@ -53,7 +58,7 @@ function createProcessMappingLayout(template) {
 
 
 function createParetoLayout(template) {
-    const contentContainer = $("templateDetailContent");
+    const contentContainer = dom.$("templateDetailContent");
     contentContainer.className = "grid lg:grid-cols-1 gap-12";
     contentContainer.innerHTML = `
                 <div>
@@ -100,33 +105,33 @@ function createParetoLayout(template) {
             `;
 
     // Restore from cache or set default
-    if (analysisCache[currentTemplateId]) {
-        $("analysisResult").innerHTML = analysisCache[currentTemplateId];
-        $("analysisActions").classList.remove("hidden");
-        reattachTabListeners($("analysisResult"));
+    if (appState.analysisCache[appState.currentTemplateId]) {
+        dom.$("analysisResult").innerHTML = appState.analysisCache[appState.currentTemplateId];
+        dom.$("analysisActions").classList.remove("hidden");
+        reattachTabListeners(dom.$("analysisResult"));
     } else {
-        $("analysisResult").innerHTML =
+        dom.$("analysisResult").innerHTML =
             '<div class="text-white/60 p-8 text-center">Your generated analysis will appear here.</div>';
-        $("analysisActions").classList.add("hidden");
+        dom.$("analysisActions").classList.add("hidden");
     }
 
-    $("generateBtn").addEventListener("click", handleGenerate);
+    dom.$("generateBtn").addEventListener("click", handleGenerate);
     reattachActionListeners();
 
     // Add listeners for radio buttons and file input
-    $("textInput").addEventListener("change", () => {
-        $("textInputArea").classList.remove("hidden");
-        $("docUploadArea").classList.add("hidden");
+    dom.$("textInput").addEventListener("change", () => {
+        dom.$("textInputArea").classList.remove("hidden");
+        dom.$("docUploadArea").classList.add("hidden");
     });
-    $("docUpload").addEventListener("change", () => {
-        $("textInputArea").classList.add("hidden");
-        $("docUploadArea").classList.remove("hidden");
+    dom.$("docUpload").addEventListener("change", () => {
+        dom.$("textInputArea").classList.add("hidden");
+        dom.$("docUploadArea").classList.remove("hidden");
     });
 
-    const fileInput = $("paretoFile");
+    const fileInput = dom.$("paretoFile");
     if (fileInput) {
         fileInput.addEventListener("change", (e) => {
-            const label = $("paretoFileLabel");
+            const label = dom.$("paretoFileLabel");
             const fileNameSpan = label.querySelector(".file-name");
             if (e.target.files.length > 0) {
                 fileNameSpan.textContent = e.target.files[0].name;
@@ -142,7 +147,7 @@ function createParetoLayout(template) {
 
 
 function createSystemThinkingLayout(template) {
-    const contentContainer = $("templateDetailContent");
+    const contentContainer = dom.$("templateDetailContent");
     contentContainer.className = "grid lg:grid-cols-1 gap-12";
     contentContainer.innerHTML = `
                     <div class="lg:col-span-1">
@@ -190,7 +195,7 @@ function createSystemThinkingLayout(template) {
 
 
 function createLeveragePointsLayout(template) {
-    const contentContainer = $("templateDetailContent");
+    const contentContainer = dom.$("templateDetailContent");
     contentContainer.className = "grid lg:grid-cols-1 gap-12"; // Single column layout
     contentContainer.innerHTML = `
                 <div class="lg:col-span-1">
@@ -240,7 +245,7 @@ function createLeveragePointsLayout(template) {
 }
 
 function createArchetypeAnalysisLayout(template) {
-    const contentContainer = $("templateDetailContent");
+    const contentContainer = dom.$("templateDetailContent");
     contentContainer.className = "grid lg:grid-cols-1 gap-12"; // Change layout to single column
     contentContainer.innerHTML = `
                 <div class="lg:col-span-1">
@@ -286,34 +291,34 @@ function createArchetypeAnalysisLayout(template) {
             `;
 
     // Attach event listeners
-    $("generateBtn").addEventListener("click", handleGenerate);
+    dom.$("generateBtn").addEventListener("click", handleGenerate);
     reattachActionListeners();
 
     // Restore from cache or set default
-    if (analysisCache[currentTemplateId]) {
-        $("analysisResult").innerHTML = analysisCache[currentTemplateId];
-        $("analysisActions").classList.remove("hidden");
-        reattachTabListeners($("analysisResult"));
+    if (appState.analysisCache[appState.currentTemplateId]) {
+        dom.$("analysisResult").innerHTML = appState.analysisCache[appState.currentTemplateId];
+        dom.$("analysisActions").classList.remove("hidden");
+        reattachTabListeners(dom.$("analysisResult"));
     } else {
-        $("analysisResult").innerHTML =
+        dom.$("analysisResult").innerHTML =
             '<div class="text-white/60 p-8 text-center">Your generated analysis will appear here.</div>';
-        $("analysisActions").classList.add("hidden");
+        dom.$("analysisActions").classList.add("hidden");
     }
 
     // Add listeners for radio buttons and file input
-    $("textInput").addEventListener("change", () => {
-        $("textInputArea").classList.remove("hidden");
-        $("docUploadArea").classList.add("hidden");
+    dom.$("textInput").addEventListener("change", () => {
+        dom.$("textInputArea").classList.remove("hidden");
+        dom.$("docUploadArea").classList.add("hidden");
     });
-    $("docUpload").addEventListener("change", () => {
-        $("textInputArea").classList.add("hidden");
-        $("docUploadArea").classList.remove("hidden");
+    dom.$("docUpload").addEventListener("change", () => {
+        dom.$("textInputArea").classList.add("hidden");
+        dom.$("docUploadArea").classList.remove("hidden");
     });
 
-    const fileInput = $("archetypeFile");
+    const fileInput = dom.$("archetypeFile");
     if (fileInput) {
         fileInput.addEventListener("change", (e) => {
-            const label = $("archetypeFileLabel");
+            const label = dom.$("archetypeFileLabel");
             const fileNameSpan = label.querySelector(".file-name");
             if (e.target.files.length > 0) {
                 fileNameSpan.textContent = e.target.files[0].name;
@@ -329,7 +334,7 @@ function createArchetypeAnalysisLayout(template) {
 
 
 function createSystemGoalsLayout(template) {
-    const contentContainer = $("templateDetailContent");
+    const contentContainer = dom.$("templateDetailContent");
     contentContainer.className = "grid lg:grid-cols-1 gap-12"; // Single column layout
     contentContainer.innerHTML = `
                 <div class="lg:col-span-1">
@@ -381,7 +386,7 @@ function createSystemGoalsLayout(template) {
 
 
 function createSystemObjectivesLayout_ST(template) {
-    const contentContainer = $("templateDetailContent");
+    const contentContainer = dom.$("templateDetailContent");
     contentContainer.className = "grid lg:grid-cols-1 gap-12";
     contentContainer.innerHTML = `
                 <div class="lg:col-span-1">
@@ -428,7 +433,7 @@ function createSystemObjectivesLayout_ST(template) {
 
 
 function createSystemActionsLayout_ST(template) {
-    const contentContainer = $("templateDetailContent");
+    const contentContainer = dom.$("templateDetailContent");
     contentContainer.className = "grid lg:grid-cols-1 gap-12";
     contentContainer.innerHTML = `
                 <div class="lg:col-span-1">
@@ -473,4 +478,13 @@ function createSystemActionsLayout_ST(template) {
 }
 
 
-
+export {
+    createProcessMappingLayout,
+    createParetoLayout,
+    createSystemThinkingLayout,
+    createLeveragePointsLayout,
+    createArchetypeAnalysisLayout,
+    createSystemGoalsLayout,
+    createSystemObjectivesLayout_ST,
+    createSystemActionsLayout_ST
+}
