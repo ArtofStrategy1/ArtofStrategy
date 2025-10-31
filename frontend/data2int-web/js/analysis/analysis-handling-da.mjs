@@ -1,9 +1,13 @@
 // =====================================================================================================
 // ===================               Data Analysis Handling Functions               ====================
 // =====================================================================================================
+import { dom } from '../utils/dom-utils.mjs';
+import { setLoading } from '../utils/ui-utils.mjs';
+import { extractTextFromFile } from '../utils/file-utils.mjs';
+import * as renderDA from '../ui/analysis-rendering/analysis-rendering-da.mjs';
 
 async function handleDescriptiveAnalysis_DA() {
-    const analysisResultContainer = $("analysisResult");
+    const analysisResultContainer = dom.$("analysisResult");
     analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white mb-4">Performing Calculations...</h3><p class="text-white/80 mb-2">Calculating descriptive statistics...</p></div>`;
     setLoading("generate", true); // Set loading state
 
@@ -13,8 +17,8 @@ async function handleDescriptiveAnalysis_DA() {
     // *******************************
 
     try {
-        const dataFile = $("descriptiveFile").files[0];
-        const contextFile = $("descriptiveContextFile").files[0];
+        const dataFile = dom.$("descriptiveFile").files[0];
+        const contextFile = dom.$("descriptiveContextFile").files[0];
 
         if (!dataFile) {
             throw new Error("❌ Please upload a CSV data file.");
@@ -182,7 +186,7 @@ async function handleDescriptiveAnalysis_DA() {
         // --- Assemble Final Data Object ---
         const finalData = { summary, numerical_summary, categorical_summary, visualizations, business_insights: insightsData.business_insights || [] };
 
-        renderDescriptivePage_DA(analysisResultContainer, finalData); // Use the existing (corrected) renderer
+        renderDA.renderDescriptivePage_DA(analysisResultContainer, finalData); // Use the existing (corrected) renderer
 
     } catch (error) {
         console.error(`Error during Descriptive Analysis (Accuracy Check) using ${MODEL_NAME}:`, error);
@@ -194,7 +198,7 @@ async function handleDescriptiveAnalysis_DA() {
 
 
 async function handlePredictiveAnalysis() {
-    const analysisResultContainer = $("analysisResult");
+    const analysisResultContainer = dom.$("analysisResult");
     analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div></div><div></div><div></div></div><h3 class="text-xl font-semibold text-white">Generating Enhanced Forecast...</h3><p class="text-white/80 mb-2">Applying detailed prompt engineering & accuracy checks...</p></div>`;
     setLoading("generate", true);
 
@@ -206,10 +210,10 @@ async function handlePredictiveAnalysis() {
 
     try {
         // 1. Gather all inputs from the UI
-        const file = $("predictiveFile").files[0];
-        const dateColumn = $("dateColumnSelect").value;
-        const metricColumn = $("metricSelect").value;
-        const horizon = $("horizonSelect").value;
+        const file = dom.$("predictiveFile").files[0];
+        const dateColumn = dom.$("dateColumnSelect").value;
+        const metricColumn = dom.$("metricSelect").value;
+        const horizon = dom.$("horizonSelect").value;
         const modelType = document.querySelector('input[name="model"]:checked').value;
 
         if (!file || !dateColumn || !metricColumn) {
@@ -329,7 +333,7 @@ async function handlePredictiveAnalysis() {
         }
 
         // 4. Render the results
-        renderPredictiveAnalysisPage(analysisResultContainer, parsedData);
+        renderDA.renderPredictiveAnalysisPage(analysisResultContainer, parsedData);
 
     } catch (error) {
         console.error(`Error in handlePredictiveAnalysis (Enhanced) using ${MODEL_NAME}:`, error);
@@ -337,7 +341,7 @@ async function handlePredictiveAnalysis() {
         setLoading("generate", false);
     } finally {
         // Ensure loading stops even if rendering fails
-         if ($("generateSpinner") && !$("generateSpinner").classList.contains("hidden")) {
+         if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
             setLoading("generate", false);
          }
     }
@@ -346,7 +350,7 @@ async function handlePredictiveAnalysis() {
 
 
 async function handlePrescriptiveAnalysis_DA() {
-    const analysisResultContainer = $("analysisResult");
+    const analysisResultContainer = dom.$("analysisResult");
     analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div></div><div></div><div></div></div><h3 class="text-xl font-semibold text-white">Running Enhanced Prescriptive Analysis...</h3><p class="text-white/80 mb-2">Linking data insights directly to actionable recommendations...</p></div>`;
     setLoading("generate", true);
 
@@ -358,8 +362,8 @@ async function handlePrescriptiveAnalysis_DA() {
 
     try {
         // 1. Gather Inputs
-        const businessGoal = $("prescriptiveGoal").value.trim();
-        const file = $("prescriptiveFile").files[0];
+        const businessGoal = dom.$("prescriptiveGoal").value.trim();
+        const file = dom.$("prescriptiveFile").files[0];
 
         if (!businessGoal || !file) {
             throw new Error("❌ Please describe your business goal and upload a CSV data file.");
@@ -487,7 +491,7 @@ async function handlePrescriptiveAnalysis_DA() {
         }
 
         // 4. Render Results
-        renderPrescriptivePage_DA(analysisResultContainer, parsedData);
+        renderDA.renderPrescriptivePage_DA(analysisResultContainer, parsedData);
 
     } catch (error) {
         console.error(`Error in handlePrescriptiveAnalysis_DA (Enhanced) using ${MODEL_NAME}:`, error);
@@ -495,7 +499,7 @@ async function handlePrescriptiveAnalysis_DA() {
         setLoading("generate", false);
     } finally {
         // Ensure loading stops
-         if ($("generateSpinner") && !$("generateSpinner").classList.contains("hidden")) {
+         if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
             setLoading("generate", false);
          }
     }
@@ -504,7 +508,7 @@ async function handlePrescriptiveAnalysis_DA() {
 
 
 async function handleVisualizationAnalysis_DA() {
-    const analysisResultContainer = $("analysisResult");
+    const analysisResultContainer = dom.$("analysisResult");
     analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div></div><div></div><div></div> </div><h3 class="text-xl font-semibold text-white mb-4">Generating Advanced Visualizations...</h3><p class="text-white/80 mb-2">Analyzing data, selecting optimal charts, and crafting insights...</p></div>`;
     setLoading("generate", true);
 
@@ -516,8 +520,8 @@ async function handleVisualizationAnalysis_DA() {
 
     try {
         // 1. Gather Inputs
-        const vizRequest = $("vizRequest").value.trim();
-        const file = $("vizFile").files[0];
+        const vizRequest = dom.$("vizRequest").value.trim();
+        const file = dom.$("vizFile").files[0];
 
         if (!vizRequest || !file) {
             throw new Error("❌ Please describe your visualization request and upload a CSV data file.");
@@ -630,7 +634,7 @@ async function handleVisualizationAnalysis_DA() {
         }
 
         // 4. Render Results
-        renderVisualizationPage_DA(analysisResultContainer, parsedData);
+        renderDA.renderVisualizationPage_DA(analysisResultContainer, parsedData);
 
     } catch (error) {
         console.error(`Error in handleVisualizationAnalysis_DA (Enhanced) using ${MODEL_NAME}:`, error);
@@ -638,7 +642,7 @@ async function handleVisualizationAnalysis_DA() {
         setLoading("generate", false);
     } finally {
         // Ensure loading stops
-         if ($("generateSpinner") && !$("generateSpinner").classList.contains("hidden")) {
+         if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
             setLoading("generate", false);
          }
     }
@@ -647,7 +651,7 @@ async function handleVisualizationAnalysis_DA() {
 
 
 async function handleRegressionAnalysis_DA() {
-    const analysisResultContainer = $("analysisResult");
+    const analysisResultContainer = dom.$("analysisResult");
     analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div></div><div></div><div></div> </div><h3 class="text-xl font-semibold text-white mb-4">Running Comprehensive Regression...</h3><p class="text-white/80 mb-2">Building model, running diagnostics, and generating actionable insights...</p></div>`;
     setLoading("generate", true);
 
@@ -659,10 +663,10 @@ async function handleRegressionAnalysis_DA() {
 
     try {
         // 1. Gather Inputs
-        const dependentVar = $("dependentVar").value.trim();
-        const independentVarsRaw = $("independentVars").value.trim();
-        const dataFile = $("regressionFile").files[0];
-        const contextFile = $("regressionContextFile").files[0];
+        const dependentVar = dom.$("dependentVar").value.trim();
+        const independentVarsRaw = dom.$("independentVars").value.trim();
+        const dataFile = dom.$("regressionFile").files[0];
+        const contextFile = dom.$("regressionContextFile").files[0];
 
         if (!dependentVar || !independentVarsRaw || !dataFile) {
             throw new Error("❌ Please specify Dependent Variable, at least one Independent Variable, and upload a CSV data file.");
@@ -840,7 +844,7 @@ async function handleRegressionAnalysis_DA() {
         }
 
         // 4. Render Results
-        renderRegressionPage_DA(analysisResultContainer, parsedData);
+        renderDA.renderRegressionPage_DA(analysisResultContainer, parsedData);
 
     } catch (error) {
         console.error(`Error in handleRegressionAnalysis_DA (Enhanced) using ${MODEL_NAME}:`, error);
@@ -848,7 +852,7 @@ async function handleRegressionAnalysis_DA() {
         setLoading("generate", false);
     } finally {
         // Ensure loading stops
-         if ($("generateSpinner") && !$("generateSpinner").classList.contains("hidden")) {
+         if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
             setLoading("generate", false);
          }
     }
@@ -858,7 +862,7 @@ async function handleRegressionAnalysis_DA() {
 
 
 async function handlePlsAnalysis_DA() {
-    const analysisResultContainer = $("analysisResult");
+    const analysisResultContainer = dom.$("analysisResult");
     analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div></div><div></div><div></div> </div><h3 class="text-xl font-semibold text-white mb-4">Running Comprehensive PLS-SEM...</h3><p class="text-white/80 mb-2">Estimating paths, evaluating model fit, and generating insights...</p></div>`;
     setLoading("generate", true);
 
@@ -870,9 +874,9 @@ async function handlePlsAnalysis_DA() {
 
     try {
         // 1. Gather Inputs
-        const measurementModel = $("plsMeasurementModel").value.trim();
-        const structuralModel = $("plsStructuralModel").value.trim();
-        const file = $("plsFile").files[0];
+        const measurementModel = dom.$("plsMeasurementModel").value.trim();
+        const structuralModel = dom.$("plsStructuralModel").value.trim();
+        const file = dom.$("plsFile").files[0];
 
         if (!measurementModel || !structuralModel || !file) {
             throw new Error("❌ Please define the Measurement Model, Structural Model, and upload a CSV data file.");
@@ -1010,7 +1014,7 @@ async function handlePlsAnalysis_DA() {
 
 
         // 4. Render Results
-        renderPlsPage_DA(analysisResultContainer, parsedData);
+        renderDA.renderPlsPage_DA(analysisResultContainer, parsedData);
 
     } catch (error) {
         console.error(`Error in handlePlsAnalysis_DA (Enhanced) using ${MODEL_NAME}:`, error);
@@ -1018,7 +1022,7 @@ async function handlePlsAnalysis_DA() {
         setLoading("generate", false);
     } finally {
         // Ensure loading stops
-         if ($("generateSpinner") && !$("generateSpinner").classList.contains("hidden")) {
+         if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
             setLoading("generate", false);
          }
     }
@@ -1031,18 +1035,18 @@ async function handlePlsAnalysis_DA() {
  * Sends data (file or text) and separate measurement/structural syntax.
  */
 async function handleSemAnalysis() {
-    const analysisResultContainer = $("analysisResult"); // Get the results container element
+    const analysisResultContainer = dom.$("analysisResult"); // Get the results container element
     // Display loading indicator
     analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div><h3 class="text-xl font-semibold text-white">Running Structural Equation Model...</h3></div>`;
     setLoading("generate", true); // Assumes setLoading function exists to disable button and show spinner
 
     try {
         // --- 1. Get Inputs from UI ---
-        const measurementSyntax = $("semMeasurementSyntax").value.trim();
-        const structuralSyntax = $("semStructuralSyntax").value.trim();
-        const dataFile = $("semFile").files[0]; // Get the selected file object
-        const dataText = $("semDataText").value.trim(); // Get pasted text
-        const isUsingFile = $("semInputFileToggle").checked; // Check which input type is selected
+        const measurementSyntax = dom.$("semMeasurementSyntax").value.trim();
+        const structuralSyntax = dom.$("semStructuralSyntax").value.trim();
+        const dataFile = dom.$("semFile").files[0]; // Get the selected file object
+        const dataText = dom.$("semDataText").value.trim(); // Get pasted text
+        const isUsingFile = dom.$("semInputFileToggle").checked; // Check which input type is selected
 
         let fileToSend = null;
         let dataContentToSend = null; // Use this variable if your backend accepts raw text
@@ -1126,7 +1130,7 @@ async function handleSemAnalysis() {
 
         // Render the results using the SEM-specific rendering function
         // Assumes renderSemAnalysisPage exists and handles the parsedData structure
-        renderSemAnalysisPage(analysisResultContainer, parsedData);
+        renderDA.renderSemAnalysisPage(analysisResultContainer, parsedData);
 
     } catch (error) { // Catch errors from input validation, fetch, or response handling
         console.error("Error during SEM analysis:", error);
@@ -1141,7 +1145,7 @@ async function handleSemAnalysis() {
 
     
 async function handleDematelAnalysis() {
-    const analysisResultContainer = $("analysisResult");
+    const analysisResultContainer = dom.$("analysisResult");
     // Using the exact loading message structure you provided
     analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div></div><div></div><div></div></div><h3 class="text-xl font-semibold text-white">Running DEMATEL Analysis...</h3><p id="analysisStatus" class="text-white/60 text-sm">This may take a moment.</p></div>`;
     // Added setLoading call
@@ -1156,11 +1160,11 @@ async function handleDematelAnalysis() {
         const useDoc = document.querySelector('input[name="inputType"]:checked').id === "docUpload";
         let content = "";
         if (useDoc) {
-            const file = $("dematelFile").files[0];
+            const file = dom.$("dematelFile").files[0];
             if (!file) throw new Error("Please select a document.");
             content = await extractTextFromFile(file);
         } else {
-            content = $("dematelContent").value.trim();
+            content = dom.$("dematelContent").value.trim();
             if (!content) throw new Error("Please describe the system's factors.");
         }
 
@@ -1311,7 +1315,7 @@ async function handleDematelAnalysis() {
         }
 
         // 4. Render Results (using the modified render function below)
-        renderDematelAnalysisPage(analysisResultContainer, parsedData);
+        renderDA.renderDematelAnalysisPage(analysisResultContainer, parsedData);
 
     } catch (error) {
         console.error(`Error in handleDematelAnalysis (Enhanced Numerical) using ${MODEL_NAME}:`, error);
@@ -1319,7 +1323,7 @@ async function handleDematelAnalysis() {
         setLoading("generate", false);
     } finally {
         // Ensure loading stops reliably
-         if ($("generateSpinner") && !$("generateSpinner").classList.contains("hidden")) {
+         if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
             setLoading("generate", false);
          }
     }

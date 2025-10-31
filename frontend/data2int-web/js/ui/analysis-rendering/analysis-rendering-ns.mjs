@@ -1,7 +1,10 @@
 // =====================================================================================================
 // ===================          Novel Strategies Page Rendering Functions           ====================
 // =====================================================================================================
-import { dom } from "../../utils/domUtils";
+
+import { dom } from '../../utils/dom-utils.mjs';
+import { appState } from '../../state/app-state.mjs';
+import { setLoading } from '../../utils/ui-utils.mjs';
 
 function renderNovelGoalsPage_NS(container, data) {
     container.innerHTML = ""; // Clear loading state
@@ -10,7 +13,7 @@ function renderNovelGoalsPage_NS(container, data) {
     // Basic validation
     if (!main_goal || !horizons || !Array.isArray(horizons) || horizons.length !== 3) {
         container.innerHTML = `<div class="p-4 text-center text-red-400">Incomplete or invalid analysis data received. Cannot render Three Horizons plan.</div>`;
-        $("analysisActions").classList.add("hidden"); // Hide save buttons
+        dom.$("analysisActions").classList.add("hidden"); // Hide save buttons
         setLoading("generate", false); // Ensure loading indicator stops
         return;
     }
@@ -37,7 +40,7 @@ function renderNovelGoalsPage_NS(container, data) {
     `;
 
     // --- 1. Populate Dashboard Panel ---
-    const dashboardPanel = $("dashboardPanel");
+    const dashboardPanel = dom.$("dashboardPanel");
     let dashboardHtml = `<div class="p-4 space-y-8">
         <div class="p-6 rounded-lg bg-white/10 border border-white/20 text-center">
             <h3 class="text-xl font-bold mb-2 text-indigo-300">🎯 Overarching Goal</h3>
@@ -68,7 +71,7 @@ function renderNovelGoalsPage_NS(container, data) {
 
 
     // --- 2. Populate Horizons Visual Panel ---
-    const horizonsPanel = $("horizonsPanel");
+    const horizonsPanel = dom.$("horizonsPanel");
     let horizonsHtml = `<div class="horizons-container">
                 <div id="h3-circle" class="horizon-circle"><span class="horizon-label">Horizon 3 (${horizons[2]?.timeframe || '3-7+ Yrs'})</span></div>
                 <div id="h2-circle" class="horizon-circle"><span class="horizon-label">Horizon 2 (${horizons[1]?.timeframe || '12-36 Mos'})</span></div>
@@ -104,7 +107,7 @@ function renderNovelGoalsPage_NS(container, data) {
 
 
     // --- 3. Populate Detailed Plan Panel ---
-    const detailsPanel = $("detailsPanel");
+    const detailsPanel = dom.$("detailsPanel");
     let detailsHtml = `<div class="p-4 space-y-6">
             <div class="p-4 rounded-lg bg-black/20 text-center mb-6">
             <h3 class="text-lg font-bold text-indigo-300">🎯 Overarching Goal</h3>
@@ -137,7 +140,7 @@ function renderNovelGoalsPage_NS(container, data) {
 
 
     // --- 4. Populate Learn Framework Panel ---
-    const learnPanel = $("learnPanel");
+    const learnPanel = dom.$("learnPanel");
     // (Keep the exact same HTML content for the learn panel as in the previous response)
     learnPanel.innerHTML = `
         <div class="p-6 space-y-6 text-white/90">
@@ -181,7 +184,7 @@ function renderNovelGoalsPage_NS(container, data) {
     `;
 
     // --- Final Touches ---
-    analysisCache[currentTemplateId] = container.innerHTML; // Cache the result
+    appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache the result
 
     // Add event listener for tab switching
     tabNav.addEventListener("click", (e) => {
@@ -190,7 +193,7 @@ function renderNovelGoalsPage_NS(container, data) {
             tabContent.querySelectorAll(".analysis-tab-panel").forEach((pnl) => pnl.classList.remove("active"));
             e.target.classList.add("active");
             const targetPanelId = e.target.dataset.tab + "Panel";
-            const targetPanel = $(targetPanelId);
+            const targetPanel = dom.$(targetPanelId);
             if (targetPanel) {
                     targetPanel.classList.add("active");
                     // const chart = targetPanel.querySelector(".plotly-chart"); // If charts added later
@@ -201,7 +204,7 @@ function renderNovelGoalsPage_NS(container, data) {
         }
     });
 
-    $("analysisActions").classList.remove("hidden"); // Show save buttons
+    dom.$("analysisActions").classList.remove("hidden"); // Show save buttons
     setLoading("generate", false); // Stop loading indicator AFTER rendering
 }
 
@@ -218,7 +221,7 @@ function renderCreativeDissonancePage_NS(container, data) {
     // Basic validation
     if (!dissonance_points || !gap_analysis || !strategic_initiatives || !Array.isArray(dissonance_points) || !Array.isArray(gap_analysis) || !Array.isArray(strategic_initiatives) ) {
         container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Incomplete or invalid analysis data received. Cannot render Creative Dissonance plan.</div>`;
-        $("analysisActions").classList.add("hidden");
+        dom.$("analysisActions").classList.add("hidden");
         setLoading("generate", false);
         return;
     }
@@ -249,7 +252,7 @@ function renderCreativeDissonancePage_NS(container, data) {
         // <div id="kpisPanel" class="analysis-tab-panel"></div>
 
     // --- 1. Populate Dashboard Panel ---
-    const dashboardPanel = $("dashboardPanel");
+    const dashboardPanel = dom.$("dashboardPanel");
     // Simplified dashboard focusing on the core tension and initiative count
     let dashboardHtml = `<div class="p-4 space-y-8">
         <h3 class="text-2xl font-bold text-center mb-4">Creative Dissonance Overview</h3>
@@ -278,7 +281,7 @@ function renderCreativeDissonancePage_NS(container, data) {
     dashboardPanel.innerHTML = dashboardHtml;
 
     // --- 2. Populate Gap Analysis Panel ---
-    const gapPanel = $("gapPanel");
+    const gapPanel = dom.$("gapPanel");
     let gapHtml = `<div class="p-4 space-y-6"><h3 class="text-2xl font-bold mb-4">🔍 Detailed Gap Analysis</h3>`;
     if (gap_analysis.length > 0) {
         gap_analysis.forEach((gap) => {
@@ -298,7 +301,7 @@ function renderCreativeDissonancePage_NS(container, data) {
     gapPanel.innerHTML = gapHtml;
 
     // --- 3. Populate Strategic Initiatives Panel (Including KPIs) ---
-    const initiativesPanel = $("initiativesPanel");
+    const initiativesPanel = dom.$("initiativesPanel");
     let initiativesHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">🚀 Strategic Initiatives</h3>`;
         if (strategic_initiatives.length > 0) {
         initiativesHtml += `<div class="space-y-6">`;
@@ -330,7 +333,7 @@ function renderCreativeDissonancePage_NS(container, data) {
 
 
     // --- 4. Populate Prioritization Matrix Panel ---
-    const matrixPanel = $("matrixPanel");
+    const matrixPanel = dom.$("matrixPanel");
     matrixPanel.innerHTML = `<div class="p-4"><h3 class="text-2xl font-bold mb-4 text-center">🗺️ Initiative Prioritization Matrix</h3><div id="initiativeMatrixPlot" class="w-full h-[600px] plotly-chart"></div></div>`;
 
     if (strategic_initiatives.length > 0) {
@@ -358,11 +361,11 @@ function renderCreativeDissonancePage_NS(container, data) {
         };
         Plotly.newPlot("initiativeMatrixPlot", [matrixData], matrixLayout, { responsive: true });
     } else {
-            $("initiativeMatrixPlot").innerHTML = `<p class="text-center text-white/70 pt-10">No initiatives identified to plot.</p>`;
+            dom.$("initiativeMatrixPlot").innerHTML = `<p class="text-center text-white/70 pt-10">No initiatives identified to plot.</p>`;
     }
 
     // --- 5. Populate Learn Framework Panel ---
-    const learnPanel = $("learnPanel");
+    const learnPanel = dom.$("learnPanel");
     learnPanel.innerHTML = `
         <div class="p-6 space-y-6 text-white/90">
             <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding Creative Dissonance (Structural Tension)</h3>
@@ -405,7 +408,7 @@ function renderCreativeDissonancePage_NS(container, data) {
     `;
 
     // --- Final Touches ---
-    analysisCache[currentTemplateId] = container.innerHTML; // Cache result
+    appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache result
 
     // Tab switching logic
     tabNav.addEventListener("click", (e) => {
@@ -414,7 +417,7 @@ function renderCreativeDissonancePage_NS(container, data) {
             tabContent.querySelectorAll(".analysis-tab-panel").forEach((pnl) => pnl.classList.remove("active"));
             e.target.classList.add("active");
             const targetPanelId = e.target.dataset.tab + "Panel";
-            const targetPanel = $(targetPanelId);
+            const targetPanel = dom.$(targetPanelId);
             if (targetPanel) {
                     targetPanel.classList.add("active");
                     const chart = targetPanel.querySelector(".plotly-chart");
@@ -425,7 +428,7 @@ function renderCreativeDissonancePage_NS(container, data) {
         }
     });
 
-    $("analysisActions").classList.remove("hidden"); // Show save buttons
+    dom.$("analysisActions").classList.remove("hidden"); // Show save buttons
     setLoading("generate", false); // Stop loading indicator
 }
 
@@ -438,7 +441,7 @@ function renderLivingSystemPage_NS(container, data) {
     // Basic validation
     if (!overall_diagnosis || !system_analysis || !Array.isArray(system_analysis) || system_analysis.length < 4 || !strategic_interventions ) {
         container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Incomplete or invalid analysis data received. Cannot render Living System plan.</div>`;
-        $("analysisActions").classList.add("hidden");
+        dom.$("analysisActions").classList.add("hidden");
         setLoading("generate", false);
         return;
     }
@@ -477,7 +480,7 @@ function renderLivingSystemPage_NS(container, data) {
 
 
     // --- 1. Populate Dashboard Panel ---
-    const dashboardPanel = $("dashboardPanel");
+    const dashboardPanel = dom.$("dashboardPanel");
     // Get Core Identity text either from original inputs or analysis if available
         const coreIdentityText = original_inputs?.coreIdentity || system_analysis.find(s => s.system_name.includes("Core Identity"))?.analysis || "Core Identity not specified in detail.";
 
@@ -516,7 +519,7 @@ function renderLivingSystemPage_NS(container, data) {
 
 
     // --- 2. Populate Deep Dive Panel ---
-    const deepdivePanel = $("deepdivePanel");
+    const deepdivePanel = dom.$("deepdivePanel");
     let deepdiveHtml = `<div class="p-4 space-y-6"><h3 class="text-2xl font-bold mb-4">Deep Dive Analysis</h3>`;
     orderedSystems.forEach((sysName) => {
         const sys = systemMap[sysName];
@@ -540,7 +543,7 @@ function renderLivingSystemPage_NS(container, data) {
 
 
     // --- 3. Populate Interventions Panel ---
-    const interventionsPanel = $("interventionsPanel");
+    const interventionsPanel = dom.$("interventionsPanel");
     let interventionsHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">💊 Strategic Interventions</h3>`;
     if (strategic_interventions && strategic_interventions.length > 0) {
             interventionsHtml += `<div class="space-y-6">`;
@@ -565,7 +568,7 @@ function renderLivingSystemPage_NS(container, data) {
 
 
     // --- 4. Populate KPI Tracker Panel ---
-    const kpisPanel = $("kpisPanel");
+    const kpisPanel = dom.$("kpisPanel");
     let kpisHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">📈 Consolidated KPI Tracker</h3>`;
     if (strategic_interventions && strategic_interventions.length > 0 && strategic_interventions.some(p => p.kpis_to_track && p.kpis_to_track.length > 0)) {
         kpisHtml += `<div class="overflow-x-auto"><table class="coeff-table">
@@ -585,7 +588,7 @@ function renderLivingSystemPage_NS(container, data) {
 
 
     // --- 5. Populate Learn Framework Panel ---
-    const learnPanel = $("learnPanel");
+    const learnPanel = dom.$("learnPanel");
     learnPanel.innerHTML = `
         <div class="p-6 space-y-6 text-white/90">
             <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding the Living System / Viable System Model (VSM)</h3>
@@ -633,7 +636,7 @@ function renderLivingSystemPage_NS(container, data) {
     `;
 
     // --- Final Touches ---
-    analysisCache[currentTemplateId] = container.innerHTML; // Cache result
+    appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache result
 
     // Tab switching logic
     tabNav.addEventListener("click", (e) => {
@@ -642,7 +645,7 @@ function renderLivingSystemPage_NS(container, data) {
             tabContent.querySelectorAll(".analysis-tab-panel").forEach((pnl) => pnl.classList.remove("active"));
             e.target.classList.add("active");
             const targetPanelId = e.target.dataset.tab + "Panel";
-            const targetPanel = $(targetPanelId);
+            const targetPanel = dom.$(targetPanelId);
             if (targetPanel) {
                     targetPanel.classList.add("active");
                     // const chart = targetPanel.querySelector(".plotly-chart"); // If charts added later
@@ -653,7 +656,7 @@ function renderLivingSystemPage_NS(container, data) {
         }
     });
 
-    $("analysisActions").classList.remove("hidden"); // Show save buttons
+    dom.$("analysisActions").classList.remove("hidden"); // Show save buttons
     setLoading("generate", false); // Stop loading indicator AFTER rendering
 }
 
@@ -666,7 +669,7 @@ function renderThinkingSystemPage_NS(container, data) {
     // Basic validation
     if (!deconstruction || !reframing || !new_actions || !Array.isArray(new_actions) || !deconstruction.observation ) {
         container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Incomplete or invalid analysis data received. Cannot render Ladder of Inference analysis.</div>`;
-        $("analysisActions").classList.add("hidden");
+        dom.$("analysisActions").classList.add("hidden");
         setLoading("generate", false);
         return;
     }
@@ -693,7 +696,7 @@ function renderThinkingSystemPage_NS(container, data) {
     `;
 
     // --- 1. Populate Ladder Deconstruction Panel ---
-    const ladderPanel = $("ladderPanel");
+    const ladderPanel = dom.$("ladderPanel");
     // Rungs ordered bottom-up for display
     const rungs = [
         { name: "Observation", text: deconstruction.observation },
@@ -717,7 +720,7 @@ function renderThinkingSystemPage_NS(container, data) {
 
 
     // --- 2. Populate Reframing Panel ---
-    const reframingPanel = $("reframingPanel");
+    const reframingPanel = dom.$("reframingPanel");
     reframingPanel.innerHTML = `<div class="p-4 space-y-6">
             <h3 class="text-2xl font-bold mb-4">🧠 Reframing the Perspective</h3>
         <div class="insight-card">
@@ -734,7 +737,7 @@ function renderThinkingSystemPage_NS(container, data) {
     </div>`;
 
     // --- 3. Populate New Actions Panel ---
-    const actionsPanel = $("actionsPanel");
+    const actionsPanel = dom.$("actionsPanel");
     let actionsHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">🚀 New Actions Based on Reframing</h3>`;
         if (new_actions.length > 0) {
         actionsHtml += `<div class="space-y-6">`;
@@ -764,7 +767,7 @@ function renderThinkingSystemPage_NS(container, data) {
     actionsPanel.innerHTML = actionsHtml;
 
     // --- 4. Populate Learn Framework Panel ---
-    const learnPanel = $("learnPanel");
+    const learnPanel = dom.$("learnPanel");
     learnPanel.innerHTML = `
         <div class="p-6 space-y-6 text-white/90">
             <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding the Ladder of Inference</h3>
@@ -810,7 +813,7 @@ function renderThinkingSystemPage_NS(container, data) {
     `;
 
     // --- Final Touches ---
-    analysisCache[currentTemplateId] = container.innerHTML; // Cache result
+    appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache result
 
     // Tab switching logic
     tabNav.addEventListener("click", (e) => {
@@ -819,7 +822,7 @@ function renderThinkingSystemPage_NS(container, data) {
             tabContent.querySelectorAll(".analysis-tab-panel").forEach((pnl) => pnl.classList.remove("active"));
             e.target.classList.add("active");
             const targetPanelId = e.target.dataset.tab + "Panel";
-            const targetPanel = $(targetPanelId);
+            const targetPanel = dom.$(targetPanelId);
             if (targetPanel) {
                     targetPanel.classList.add("active");
                     // const chart = targetPanel.querySelector(".plotly-chart"); // If charts added later
@@ -830,6 +833,13 @@ function renderThinkingSystemPage_NS(container, data) {
         }
     });
 
-    $("analysisActions").classList.remove("hidden"); // Show save buttons
+    dom.$("analysisActions").classList.remove("hidden"); // Show save buttons
     setLoading("generate", false); // Stop loading indicator AFTER rendering
+}
+
+export {
+    renderNovelGoalsPage_NS,
+    renderCreativeDissonancePage_NS,
+    renderLivingSystemPage_NS,
+    renderThinkingSystemPage_NS
 }

@@ -2,6 +2,10 @@
 // ===================            SEM Analysis Page Rendering Functions             ====================
 // =====================================================================================================
 
+import { dom } from '../../utils/dom-utils.mjs';
+import { appState } from '../../state/app-state.mjs';
+
+
 /**
  * Sets up the tab structure for SEM results ('Estimates', 'Model Fit', 'Effects', 'Diagnostics', 'Comparison', 'Diagram', 'Learn SEM').
  * Calls specific functions to render content into each tab panel.
@@ -48,8 +52,8 @@ function renderSemAnalysisPage(container, data) {
     renderLearnSemTab("learnPanel");                // Render general SEM info
 
     // --- Cache and Display Actions ---
-    analysisCache[currentTemplateId] = container.innerHTML;
-    const actionsEl = $("analysisActions");
+    appState.analysisCache[appState.currentTemplateId] = container.innerHTML;
+    const actionsEl = dom.$("analysisActions");
     if (actionsEl) actionsEl.classList.remove("hidden");
 
     // --- Add Tab Switching Logic (No change needed here) ---
@@ -62,7 +66,7 @@ function renderSemAnalysisPage(container, data) {
             // Activate the clicked button and corresponding panel
             e.target.classList.add("active");
             const targetPanelId = e.target.dataset.tab + "Panel";
-            const targetPanel = $(targetPanelId);
+            const targetPanel = dom.$(targetPanelId);
             if (targetPanel) {
                 targetPanel.classList.add("active");
 
@@ -89,7 +93,7 @@ function renderSemAnalysisPage(container, data) {
  * @param {string} dotString - The pre-styled DOT language string from the backend.
  */
 function renderSemDiagramTab(containerId, dotString) {
-    const container = $(containerId);
+    const container = dom.$(containerId);
     if (!container) return;
 
     // --- Start HTML with the Explanation ---
@@ -150,7 +154,7 @@ function renderSemDiagramTab(containerId, dotString) {
     // --- Render the diagram into the placeholder ---
     try {
         const viz = new Viz();
-        const graphContainer = $(graphId); // Get the placeholder div
+        const graphContainer = dom.$(graphId); // Get the placeholder div
 
         viz.renderSVGElement(dotString)
             .then(function (svgElement) {
@@ -175,7 +179,7 @@ function renderSemDiagramTab(containerId, dotString) {
     } catch (error) {
         // --- Initialization Error ---
         console.error("Error initializing Viz.js:", error);
-         const graphContainer = $(graphId);
+         const graphContainer = dom.$(graphId);
          if (graphContainer) {
             graphContainer.innerHTML = `<p class="text-red-400 p-4"><strong>Error initializing path diagram:</strong> ${error.message}</p>`;
          }
@@ -189,7 +193,7 @@ function renderSemDiagramTab(containerId, dotString) {
  * @param {object} data - Backend response containing 'fit_indices_csv_content' or an 'error'.
  */
 function renderSemFitTab(containerId, data) {
-    const container = $(containerId);
+    const container = dom.$(containerId);
     if (!container) return;
 
     // --- Start HTML with the Explanation ---
@@ -265,7 +269,7 @@ function renderSemFitTab(containerId, data) {
  * @param {object} data - Backend response containing estimates, fit indices, variables, or an 'error'.
  */
 function renderSemResultsTab(containerId, data) {
-    const container = $(containerId);
+    const container = dom.$(containerId);
     if (!container) return; // Exit if container not found
 
     // --- Start HTML with the Explanation ---
@@ -370,7 +374,7 @@ function renderSemResultsTab(containerId, data) {
  * @param {string} containerId - The ID of the HTML element to render into.
  */
 function renderSemEffectsTab(containerId) {
-    const container = $(containerId);
+    const container = dom.$(containerId);
     if (!container) return;
 
     container.innerHTML = `
@@ -420,7 +424,7 @@ Proportion Mediated: ≈100% (complete mediation because direct is non-sig.)</pr
  * @param {object | null} warnings - The warnings object from the backend response, or null if none.
  */
 function renderSemDiagnosticsTab(containerId, warnings) {
-    const container = $(containerId);
+    const container = dom.$(containerId);
     if (!container) return;
 
     let html = `<h3 class="text-2xl font-bold mb-4">⚠️ Model Diagnostics & Warnings</h3>`;
@@ -483,7 +487,7 @@ function renderSemDiagnosticsTab(containerId, warnings) {
  * @param {string} containerId - The ID of the HTML element to render into.
  */
 function renderSemComparisonTab(containerId) {
-    const container = $(containerId);
+    const container = dom.$(containerId);
     if (!container) return;
 
     container.innerHTML = `
@@ -524,7 +528,7 @@ function renderSemComparisonTab(containerId) {
  * @param {string} containerId - The ID of the HTML element to render into.
  */
 function renderLearnSemTab(containerId) {
-    const container = $(containerId);
+    const container = dom.$(containerId);
     if (!container) return; // Exit if container not found
 
     // Static HTML content explaining SEM
@@ -780,8 +784,6 @@ function renderFitIndices(indices) {
     return gridHtml;
 }
 
-
-
-    // =========================================================================
-    // ===== VISUALIZATION & RENDERING FUNCTIONS (FOR SEM) END             =====
-    // =========================================================================
+export {
+    renderSemAnalysisPage
+}

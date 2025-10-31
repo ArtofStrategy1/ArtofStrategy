@@ -1,9 +1,15 @@
 // =====================================================================================================
 // ===================        Data Analysis Page Template Creation Functions        ====================
 // =====================================================================================================
+import { appState } from "../../state/app-state.mjs";
+import { dom } from "../../utils/dom-utils.mjs";
+import { handleGenerate } from "../../analysis/handle-generate.mjs"
+import { reattachActionListeners, reattachTabListeners } from "./template-creation.mjs";
+import { setupInputToggle } from "../../utils/ui-utils.mjs";
+import { extractTextFromFile } from "../../utils/file-utils.mjs";
 
 function createDescriptiveLayout_DA(template) {
-    const contentContainer = $("templateDetailContent");
+    const contentContainer = dom.$("templateDetailContent");
     contentContainer.className = "grid lg:grid-cols-1 gap-12";
     contentContainer.innerHTML = `
                 <div class="lg:col-span-1">
@@ -49,10 +55,10 @@ function createDescriptiveLayout_DA(template) {
                 </div>
             `;
     const attachListener = (inputId, labelId) => {
-        const fileInput = $(inputId);
+        const fileInput = dom.$(inputId);
         if (fileInput) {
             fileInput.addEventListener("change", (e) => {
-                const label = $(labelId);
+                const label = dom.$(labelId);
                 const fileNameSpan = label.querySelector(".file-name");
                 if (e.target.files.length > 0) {
                     fileNameSpan.textContent = e.target.files[0].name;
@@ -66,14 +72,14 @@ function createDescriptiveLayout_DA(template) {
     };
     attachListener("descriptiveFile", "descriptiveFileLabel");
     attachListener("descriptiveContextFile", "descriptiveContextFileLabel");
-    $("generateBtn").addEventListener("click", handleGenerate);
+    dom.$("generateBtn").addEventListener("click", handleGenerate);
     reattachActionListeners();
 }
 
 
 
 function createPredictiveAnalysisLayout(template) {
-    const contentContainer = $("templateDetailContent");
+    const contentContainer = dom.$("templateDetailContent");
     contentContainer.className = "grid lg:grid-cols-1 gap-12";
     contentContainer.innerHTML = `
     <div class="lg:col-span-1">
@@ -146,32 +152,32 @@ function createPredictiveAnalysisLayout(template) {
         </div>
     </div>`;
 
-    $("generateBtn").addEventListener("click", handleGenerate);
+    dom.$("generateBtn").addEventListener("click", handleGenerate);
     reattachActionListeners();
-    const fileInput = $("predictiveFile");
+    const fileInput = dom.$("predictiveFile");
 
     // (Paste the corrected fileInput.addEventListener from above here)
     fileInput.addEventListener("change", async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        $("predictiveFileLabel").querySelector(".file-name").textContent = file.name;
-        $("predictiveFileLabel").classList.add("has-file");
+        dom.$("predictiveFileLabel").querySelector(".file-name").textContent = file.name;
+        dom.$("predictiveFileLabel").classList.add("has-file");
         try {
             const text = await extractTextFromFile(file);
             const lines = text.split(/\r?\n/);
             const columns = lines[0].split(",").map((h) => h.trim().replace(/^"|"$/g, ""));
-            $("fileInfo").innerHTML =
+            dom.$("fileInfo").innerHTML =
                 `<strong>File:</strong> ${file.name}<br><strong>Columns Found:</strong> ${columns.length}`;
-            const metricSelect = $("metricSelect");
-            const dateColumnSelect = $("dateColumnSelect");
+            const metricSelect = dom.$("metricSelect");
+            const dateColumnSelect = dom.$("dateColumnSelect");
             metricSelect.innerHTML = '<option value="">Select...</option>';
             dateColumnSelect.innerHTML = '<option value="">Select...</option>';
             columns.forEach((col) => {
                 metricSelect.add(new Option(col, col));
                 dateColumnSelect.add(new Option(col, col));
             });
-            const previewSection = $("previewSection");
-            const dataPreviewTable = $("dataPreviewTable");
+            const previewSection = dom.$("previewSection");
+            const dataPreviewTable = dom.$("dataPreviewTable");
             let tableHTML =
                 '<table class="w-full text-left text-sm text-white/80"><thead><tr class="border-b border-white/20">';
             columns.forEach((col) => {
@@ -189,38 +195,38 @@ function createPredictiveAnalysisLayout(template) {
             tableHTML += "</tbody></table>";
             dataPreviewTable.innerHTML = tableHTML;
             previewSection.classList.remove("hidden");
-            $("configSection").classList.remove("hidden");
-            $("modelSection").classList.remove("hidden");
-            $("generateBtn").disabled = false;
+            dom.$("configSection").classList.remove("hidden");
+            dom.$("modelSection").classList.remove("hidden");
+            dom.$("generateBtn").disabled = false;
         } catch (err) {
-            $("fileInfo").innerHTML =
+            dom.$("fileInfo").innerHTML =
                 `<p class="text-red-400">Error reading file. Please ensure it is a valid CSV or XLSX.</p>`;
-            $("configSection").classList.add("hidden");
-            $("modelSection").classList.add("hidden");
-            $("generateBtn").disabled = true;
+            dom.$("configSection").classList.add("hidden");
+            dom.$("modelSection").classList.add("hidden");
+            dom.$("generateBtn").disabled = true;
         }
     });
 
-    const resetBtn = $("resetBtn");
+    const resetBtn = dom.$("resetBtn");
     resetBtn.addEventListener("click", () => {
         fileInput.value = "";
-        $("predictiveFileLabel").querySelector(".file-name").textContent = "Select .csv or .xlsx file...";
-        $("predictiveFileLabel").classList.remove("has-file");
-        $("fileInfo").innerHTML = "";
-        $("configSection").classList.add("hidden");
-        $("modelSection").classList.add("hidden");
-        $("previewSection").classList.add("hidden");
-        $("generateBtn").disabled = true;
-        $("analysisResult").innerHTML =
+        dom.$("predictiveFileLabel").querySelector(".file-name").textContent = "Select .csv or .xlsx file...";
+        dom.$("predictiveFileLabel").classList.remove("has-file");
+        dom.$("fileInfo").innerHTML = "";
+        dom.$("configSection").classList.add("hidden");
+        dom.$("modelSection").classList.add("hidden");
+        dom.$("previewSection").classList.add("hidden");
+        dom.$("generateBtn").disabled = true;
+        dom.$("analysisResult").innerHTML =
             '<div class="text-white/60 p-8 text-center">Your generated forecast will appear here.</div>';
-        $("analysisActions").classList.add("hidden");
+        dom.$("analysisActions").classList.add("hidden");
     });
 }
 
 
 
 function createPrescriptiveLayout_DA(template) {
-    const contentContainer = $("templateDetailContent");
+    const contentContainer = dom.$("templateDetailContent");
     contentContainer.className = "grid lg:grid-cols-1 gap-12";
     contentContainer.innerHTML = `
                 <div class="lg:col-span-1">
@@ -265,7 +271,7 @@ function createPrescriptiveLayout_DA(template) {
 
 
 function createVisualizationLayout_DA(template) {
-    const contentContainer = $("templateDetailContent");
+    const contentContainer = dom.$("templateDetailContent");
     contentContainer.className = "grid lg:grid-cols-1 gap-12";
     contentContainer.innerHTML = `
                 <div class="lg:col-span-1">
@@ -315,7 +321,7 @@ function createVisualizationLayout_DA(template) {
  * @param {object} template - Object containing template title and description.
  */
 function createSemAnalysisLayout(template) {
-    const contentContainer = $("templateDetailContent");
+    const contentContainer = dom.$("templateDetailContent");
     contentContainer.className = "grid lg:grid-cols-1 gap-12"; // Single column layout
 
     // --- HTML Structure ---
@@ -396,35 +402,35 @@ function createSemAnalysisLayout(template) {
         </div>`;
 
     // --- Attach Core Event Listeners ---
-    $("generateBtn").addEventListener("click", handleGenerate); // Assumes handleGenerate exists and calls handleSemAnalysis
+    dom.$("generateBtn").addEventListener("click", handleGenerate); // Assumes handleGenerate exists and calls handleSemAnalysis
     reattachActionListeners(); // Assumes this function attaches save button listeners
 
     // --- Restore Cached Results (if any) ---
-    if (analysisCache[currentTemplateId]) {
-        $("analysisResult").innerHTML = analysisCache[currentTemplateId];
-        $("analysisActions").classList.remove("hidden");
+    if (appState.analysisCache[appState.currentTemplateId]) {
+        dom.$("analysisResult").innerHTML = appState.analysisCache[appState.currentTemplateId];
+        dom.$("analysisActions").classList.remove("hidden");
         // Re-attach listeners specific to the results content (e.g., tabs)
-        reattachTabListeners($("analysisResult")); // Assumes this function exists
+        reattachTabListeners(dom.$("analysisResult")); // Assumes this function exists
     } else {
         // Default placeholder if no cached results
-        $("analysisResult").innerHTML = '<div class="text-white/60 p-8 text-center">Your generated analysis will appear here.</div>';
-        $("analysisActions").classList.add("hidden");
+        dom.$("analysisResult").innerHTML = '<div class="text-white/60 p-8 text-center">Your generated analysis will appear here.</div>';
+        dom.$("analysisActions").classList.add("hidden");
     }
 
     // --- Get References to SEM-Specific DOM Elements ---
-    const fileInput = $("semFile");
-    const textInput = $("semDataText");
-    const measurementSyntaxBox = $("semMeasurementSyntax");
-    const structuralSyntaxBox = $("semStructuralSyntax");
-    const fileError = $("semFileError");
-    const textError = $("semTextError");
-    const fileToggle = $("semInputFileToggle");
-    const textToggle = $("semInputTextToggle");
-    const fileArea = $("semFileUploadArea");
-    const textArea = $("semTextInputArea");
-    const dataPreviewContainer = $("semDataPreview");
-    const previewTable = $("semPreviewTable");
-    const modelTemplateSelect = $("semModelTemplate");
+    const fileInput = dom.$("semFile");
+    const textInput = dom.$("semDataText");
+    const measurementSyntaxBox = dom.$("semMeasurementSyntax");
+    const structuralSyntaxBox = dom.$("semStructuralSyntax");
+    const fileError = dom.$("semFileError");
+    const textError = dom.$("semTextError");
+    const fileToggle = dom.$("semInputFileToggle");
+    const textToggle = dom.$("semInputTextToggle");
+    const fileArea = dom.$("semFileUploadArea");
+    const textArea = dom.$("semTextInputArea");
+    const dataPreviewContainer = dom.$("semDataPreview");
+    const previewTable = dom.$("semPreviewTable");
+    const modelTemplateSelect = dom.$("semModelTemplate");
     let fullHeaders = []; // Holds the headers extracted from data
 
     // --- SEM Helper Functions --- (Keep all helper functions as they were)
@@ -642,7 +648,7 @@ Profit_USD ~ Marketing + Online_Sales_USD + Retail_Sales_USD`;
     // File input selection
     if (fileInput) {
         fileInput.addEventListener("change", () => {
-            const label = $("semFileLabel");
+            const label = dom.$("semFileLabel");
             const fileNameSpan = label.querySelector(".file-name");
             if (fileInput.files.length > 0) {
                 fileNameSpan.textContent = fileInput.files[0].name;
@@ -709,7 +715,7 @@ Profit_USD ~ Marketing + Online_Sales_USD + Retail_Sales_USD`;
 
 
 function createDematelLayout(template) {
-    const contentContainer = $("templateDetailContent");
+    const contentContainer = dom.$("templateDetailContent");
     contentContainer.className = "grid lg:grid-cols-1 gap-12";
     contentContainer.innerHTML = `
         <div class="lg:col-span-1">
@@ -752,4 +758,14 @@ function createDematelLayout(template) {
             </div>
         </div>`;
     setupInputToggle("dematelFile", "dematelFileLabel", "textInputArea", "docUploadArea");
+}
+
+
+export {
+    createDescriptiveLayout_DA,
+    createPredictiveAnalysisLayout,
+    createPrescriptiveLayout_DA,
+    createVisualizationLayout_DA,
+    createSemAnalysisLayout,
+    createDematelLayout
 }

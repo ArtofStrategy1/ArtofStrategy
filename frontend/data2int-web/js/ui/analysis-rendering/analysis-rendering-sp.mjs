@@ -2,6 +2,9 @@
 // ===================         Strategic Planning Page Rendering Functions          ====================
 // =====================================================================================================
 
+import { dom } from '../../utils/dom-utils.mjs';
+import { appState } from '../../state/app-state.mjs';
+
 function renderFactorAnalysisPage(container, data) {
     container.innerHTML = ""; // Clear loading state
 
@@ -9,7 +12,7 @@ function renderFactorAnalysisPage(container, data) {
      if (!data || !data.external || !data.internal) {
           console.error("Incomplete data passed to renderFactorAnalysisPage:", data);
           container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render Factor Analysis results.</div>`;
-          $("analysisActions").classList.add("hidden");
+          dom.$("analysisActions").classList.add("hidden");
           return;
      }
 
@@ -45,7 +48,7 @@ function renderFactorAnalysisPage(container, data) {
     renderParetoTab("paretoPanel", [...external, ...internal]); // Pass combined factors
 
     // --- 5. Populate Learn Factor Analysis Panel (New) ---
-    const learnPanel = $("learnPanel");
+    const learnPanel = dom.$("learnPanel");
      learnPanel.innerHTML = `
     <div class="p-6 space-y-6 text-white/90">
         <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding Factor Analysis (Strategic Context)</h3>
@@ -101,7 +104,7 @@ function renderFactorAnalysisPage(container, data) {
 
 
     // --- Final Touches ---
-    analysisCache[currentTemplateId] = container.innerHTML; // Cache result
+    appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache result
 
     // Tab switching logic (ensure resizing happens)
     tabNav.addEventListener("click", (e) => {
@@ -113,7 +116,7 @@ function renderFactorAnalysisPage(container, data) {
             // Activate clicked
             e.target.classList.add("active");
             const targetPanelId = e.target.dataset.tab + "Panel";
-            const targetPanel = $(targetPanelId);
+            const targetPanel = dom.$(targetPanelId);
             if (targetPanel) {
                 targetPanel.classList.add("active");
                 // Resize charts if they are in the activated panel
@@ -148,7 +151,7 @@ function renderFactorAnalysisPage(container, data) {
           });
      }, 150); // Delay slightly
 
-    $("analysisActions").classList.remove("hidden"); // Show save buttons
+    dom.$("analysisActions").classList.remove("hidden"); // Show save buttons
     // setLoading('generate', false); // Handled in the calling function
 }
 
@@ -156,7 +159,7 @@ function renderFactorAnalysisPage(container, data) {
 
 // Modified renderSummaryTab to use AI factors
 function renderSummaryTab(containerId, external, internal) {
-    const container = $(containerId);
+    const container = dom.$(containerId);
 
      // Ensure factors are arrays
      external = Array.isArray(external) ? external : [];
@@ -207,7 +210,7 @@ function renderSummaryTab(containerId, external, internal) {
 
 // Modified renderFactorTab to use AI categories and factor details
 function renderFactorTab(containerId, title, factors) {
-    const container = $(containerId);
+    const container = dom.$(containerId);
     let contentHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">${title}</h3>`; // Added p-4
 
     if (factors && factors.length > 0) {
@@ -286,7 +289,7 @@ function renderFactorTab(containerId, title, factors) {
                 },
                 { responsive: true }
             );
-        } catch(e) { console.error(`Chart render error for ${containerId}-chart:`, e); $(`${containerId}-chart`).innerHTML = "<p class='text-red-400 text-center pt-10'>Chart render error.</p>"; }
+        } catch(e) { console.error(`Chart render error for ${containerId}-chart:`, e); dom.$(`${containerId}-chart`).innerHTML = "<p class='text-red-400 text-center pt-10'>Chart render error.</p>"; }
     }
 }
 
@@ -294,7 +297,7 @@ function renderFactorTab(containerId, title, factors) {
 
 // Modified renderParetoTab to use AI factors and details
 function renderParetoTab(containerId, allFactors) {
-    const container = $(containerId);
+    const container = dom.$(containerId);
     let contentHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">📈 80/20 Pareto Analysis - Combined Factors</h3>`; // Added p-4
 
     if (allFactors && allFactors.length > 0) {
@@ -403,7 +406,7 @@ function renderParetoTab(containerId, allFactors) {
 
         try {
             Plotly.newPlot('pareto-chart-container', [trace1, trace2], layout, { responsive: true });
-        } catch(e) { console.error("Pareto chart render error:", e); $("pareto-chart-container").innerHTML = "<p class='text-red-400 text-center pt-10'>Chart render error.</p>"; }
+        } catch(e) { console.error("Pareto chart render error:", e); dom.$("pareto-chart-container").innerHTML = "<p class='text-red-400 text-center pt-10'>Chart render error.</p>"; }
     }
 }
 
@@ -416,7 +419,7 @@ function renderFullSwotTowsPage(container, data) {
     if (!data || !data.swot_analysis || !data.tows_strategies || !data.key_insights_80_20) {
         console.error("Incomplete data passed to renderFullSwotTowsPage:", data);
         container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render SWOT/TOWS results.</div>`;
-        $("analysisActions").classList.add("hidden");
+        dom.$("analysisActions").classList.add("hidden");
         return;
     }
 
@@ -453,7 +456,7 @@ function renderFullSwotTowsPage(container, data) {
     renderDetailedAnalysis(swot_analysis, tows_strategies, "detailsPanel"); // Keep charts
 
     // --- Populate Learn SWOT/TOWS Panel (New) ---
-    const learnPanel = $("learnPanel");
+    const learnPanel = dom.$("learnPanel");
     learnPanel.innerHTML = `
     <div class="p-6 space-y-6 text-white/90">
         <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding SWOT & TOWS Analysis</h3>
@@ -498,7 +501,7 @@ function renderFullSwotTowsPage(container, data) {
 
 
     // --- Final Touches ---
-    analysisCache[currentTemplateId] = container.innerHTML; // Cache result
+    appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache result
 
     // Tab switching logic (ensure resizing happens)
     tabNav.addEventListener("click", (e) => {
@@ -510,7 +513,7 @@ function renderFullSwotTowsPage(container, data) {
             // Activate clicked
             e.target.classList.add("active");
             const targetPanelId = e.target.dataset.tab + "Panel";
-            const targetPanel = $(targetPanelId);
+            const targetPanel = dom.$(targetPanelId);
             if (targetPanel) {
                 targetPanel.classList.add("active");
                 // Resize charts if they are in the activated panel
@@ -546,14 +549,14 @@ function renderFullSwotTowsPage(container, data) {
      }, 150); // Delay slightly
 
 
-    $("analysisActions").classList.remove("hidden"); // Show save buttons
+    dom.$("analysisActions").classList.remove("hidden"); // Show save buttons
     // setLoading('generate', false); // Handled in the calling function
 }
 
 
 
 function render8020Visualization(insightsData, containerId) {
-    const container = $(containerId);
+    const container = dom.$(containerId);
      // Ensure insightsData exists and has expected arrays/strings
      insightsData = insightsData || {};
      const keyStrategies = insightsData.key_strategies || [];
@@ -619,7 +622,7 @@ function render8020Visualization(insightsData, containerId) {
 
 
 function renderSwotVisualization(swotData, containerId) {
-    const container = $(containerId);
+    const container = dom.$(containerId);
     const quadrants = [
         { title: 'Strengths', data: swotData.strengths || [], color: '#2E8B57', icon: '💪' },
         { title: 'Weaknesses', data: swotData.weaknesses || [], color: '#CD5C5C', icon: '⚠️' },
@@ -650,7 +653,7 @@ function renderSwotVisualization(swotData, containerId) {
 
 // Modified renderTowsVisualization to show rationale
 function renderTowsVisualization(towsData, containerId) {
-    const container = $(containerId);
+    const container = dom.$(containerId);
      // Ensure towsData exists and has the expected arrays
      towsData = towsData || {};
      const quadrants = [
@@ -683,7 +686,7 @@ function renderTowsVisualization(towsData, containerId) {
 
 
 function renderDetailedAnalysis(swotData, towsData, containerId) {
-    const container = $(containerId);
+    const container = dom.$(containerId);
      // Ensure data exists and has arrays
      swotData = swotData || {};
      towsData = towsData || {};
@@ -750,7 +753,7 @@ function renderDetailedAnalysis(swotData, towsData, containerId) {
             margin: { t: 50, b: 50, l: 50, r: 20 }
         };
         Plotly.newPlot('strategyBarChart', plotData, layout, { responsive: true });
-    } catch(e) { console.error("Strategy chart err:", e); $("strategyBarChart").innerHTML = "<p class='text-red-400 text-center pt-10'>Chart render error.</p>"; }
+    } catch(e) { console.error("Strategy chart err:", e); dom.$("strategyBarChart").innerHTML = "<p class='text-red-400 text-center pt-10'>Chart render error.</p>"; }
 }
 
 
@@ -762,7 +765,7 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
     if (!data || !data.main_objective || !data.goals) {
         console.error("Incomplete data passed to renderGoalsAndInitiativesPage_SP:", data);
         container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render OGSM results.</div>`;
-        $("analysisActions").classList.add("hidden");
+        dom.$("analysisActions").classList.add("hidden");
         return;
     }
     const { main_objective, goals } = data;
@@ -793,7 +796,7 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
     `;
 
     // --- 1. Populate Strategic Cascade Panel (Keep as is) ---
-    const cascadePanel = $("cascadePanel");
+    const cascadePanel = dom.$("cascadePanel");
     let cascadeHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-6 text-center">🌊 Strategic Cascade (OGSM)</h3><div class="cascade-container">
         <div class="cascade-objective">
             <h3 class="text-lg font-bold text-indigo-300">OBJECTIVE</h3>
@@ -826,7 +829,7 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
     cascadePanel.innerHTML = cascadeHtml;
 
     // --- 2. Populate Objective Panel (New) ---
-    const objectivePanel = $("objectivePanel");
+    const objectivePanel = dom.$("objectivePanel");
     objectivePanel.innerHTML = `
         <div class="p-6">
              <h3 class="text-2xl font-bold mb-4 text-center">🎯 Objective</h3>
@@ -839,7 +842,7 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
 
 
     // --- 3. Populate Goals Panel (New) ---
-    const goalsPanel = $("goalsPanel");
+    const goalsPanel = dom.$("goalsPanel");
     let goalsHtml = `<div class="p-4 space-y-6"><h3 class="text-2xl font-bold mb-4 text-center"> G Goals</h3>`;
     goalsHtml += `<p class="text-sm text-white/70 mb-6 italic text-center">These are the specific, high-level results needed to achieve the main Objective.</p>`;
     goals.forEach((goal, index) => {
@@ -854,7 +857,7 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
 
 
     // --- 4. Populate Strategies Panel (New) ---
-    const strategiesPanel = $("strategiesPanel");
+    const strategiesPanel = dom.$("strategiesPanel");
     let strategiesHtml = `<div class="p-4 space-y-6"><h3 class="text-2xl font-bold mb-4 text-center"> S Strategies</h3>`;
     strategiesHtml += `<p class="text-sm text-white/70 mb-6 italic text-center">These are the key approaches and choices ('how') to achieve each Goal.</p>`;
     goals.forEach((goal, index) => {
@@ -875,7 +878,7 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
 
 
     // --- 5. Populate Measures Panel (New) ---
-    const measuresPanel = $("measuresPanel");
+    const measuresPanel = dom.$("measuresPanel");
     let measuresHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4 text-center"> M Measures (KPIs)</h3>`;
     measuresHtml += `<p class="text-sm text-white/70 mb-6 italic text-center">These metrics track the progress and success of the Strategies.</p>`;
      measuresHtml += `<div class="overflow-x-auto">
@@ -903,7 +906,7 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
 
 
     // --- 6. Populate Learn OGSM Panel (Keep as is) ---
-    const learnPanel = $("learnPanel");
+    const learnPanel = dom.$("learnPanel");
      learnPanel.innerHTML = `
     <div class="p-6 space-y-6 text-white/90">
         <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding the OGSM Framework</h3>
@@ -952,7 +955,7 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
 
 
     // --- Final Touches ---
-    analysisCache[currentTemplateId] = container.innerHTML; // Cache result
+    appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache result
 
     // Tab switching logic
     tabNav.addEventListener("click", (e) => {
@@ -964,7 +967,7 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
             // Activate clicked
             e.target.classList.add("active");
             const targetPanelId = e.target.dataset.tab + "Panel";
-            const targetPanel = $(targetPanelId);
+            const targetPanel = dom.$(targetPanelId);
             if (targetPanel) {
                 targetPanel.classList.add("active");
                  // No Plotly charts expected in this tool
@@ -974,7 +977,7 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
         }
     });
 
-    $("analysisActions").classList.remove("hidden"); // Show save buttons
+    dom.$("analysisActions").classList.remove("hidden"); // Show save buttons
     // setLoading('generate', false); // Handled in the calling function
 }
 
@@ -987,7 +990,7 @@ function renderActionPlansPage_AP(container, data) {
     if (!data || !data.project_name || !data.action_items) {
         console.error("Incomplete data passed to renderActionPlansPage_AP:", data);
         container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render Action Plan results.</div>`;
-        $("analysisActions").classList.add("hidden");
+        dom.$("analysisActions").classList.add("hidden");
         return;
     }
     const { project_name, action_items } = data;
@@ -1016,7 +1019,7 @@ function renderActionPlansPage_AP(container, data) {
     `;
 
     // --- 1. Populate Timeline Panel (Keep as is) ---
-    const timelinePanel = $("timelinePanel");
+    const timelinePanel = dom.$("timelinePanel");
      const sorted_action_items = [...action_items].sort((a, b) => {
          const getTimeValue = (timeline) => {
              timeline = String(timeline || '').toLowerCase(); // Ensure timeline is string
@@ -1053,7 +1056,7 @@ function renderActionPlansPage_AP(container, data) {
 
 
     // --- 2. Populate Task Details Panel (Focus on Name, Desc, Owner, Timeline) ---
-    const detailsPanel = $("detailsPanel");
+    const detailsPanel = dom.$("detailsPanel");
     let detailsHtml = `<div class="p-4 space-y-6"><h2 class="text-3xl font-bold mb-6 text-center">${project_name} - Task Details</h2>`;
      if (action_items.length > 0) {
          action_items.forEach((item, index) => {
@@ -1074,7 +1077,7 @@ function renderActionPlansPage_AP(container, data) {
     detailsPanel.innerHTML = detailsHtml;
 
     // --- 3. Populate Resources & Dependencies Panel (New) ---
-    const resourcesPanel = $("resourcesPanel");
+    const resourcesPanel = dom.$("resourcesPanel");
     let resourcesHtml = `<div class="p-4"><h2 class="text-3xl font-bold mb-6 text-center">${project_name} - Resources & Dependencies</h2>`;
     resourcesHtml += `<div class="overflow-x-auto">
                         <table class="coeff-table styled-table text-sm">
@@ -1096,7 +1099,7 @@ function renderActionPlansPage_AP(container, data) {
 
 
     // --- 4. Populate Priorities & KPIs Panel (New) ---
-    const trackingPanel = $("trackingPanel");
+    const trackingPanel = dom.$("trackingPanel");
     let trackingHtml = `<div class="p-4"><h2 class="text-3xl font-bold mb-6 text-center">${project_name} - Priorities & KPIs</h2>`;
      trackingHtml += `<div class="overflow-x-auto">
                         <table class="coeff-table styled-table text-sm">
@@ -1126,7 +1129,7 @@ function renderActionPlansPage_AP(container, data) {
 
 
     // --- 5. Populate Learn Action Planning Panel (Keep as is) ---
-    const learnPanel = $("learnPanel");
+    const learnPanel = dom.$("learnPanel");
      learnPanel.innerHTML = `
     <div class="p-6 space-y-6 text-white/90">
         <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding Action Planning</h3>
@@ -1182,7 +1185,7 @@ function renderActionPlansPage_AP(container, data) {
 
 
     // --- Final Touches ---
-    analysisCache[currentTemplateId] = container.innerHTML; // Cache result
+    appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache result
 
     // Tab switching logic
     tabNav.addEventListener("click", (e) => {
@@ -1194,7 +1197,7 @@ function renderActionPlansPage_AP(container, data) {
             // Activate clicked
             e.target.classList.add("active");
             const targetPanelId = e.target.dataset.tab + "Panel";
-            const targetPanel = $(targetPanelId);
+            const targetPanel = dom.$(targetPanelId);
             if (targetPanel) {
                 targetPanel.classList.add("active");
                  // No Plotly charts expected in this tool
@@ -1204,7 +1207,7 @@ function renderActionPlansPage_AP(container, data) {
         }
     });
 
-    $("analysisActions").classList.remove("hidden"); // Show save buttons
+    dom.$("analysisActions").classList.remove("hidden"); // Show save buttons
     // setLoading('generate', false); // Handled in the calling function
 }
 
@@ -1222,7 +1225,7 @@ function renderKpiPage_KE(container, data) {
     {
         console.error("Incomplete or invalid data passed to renderKpiPage_KE:", data);
         container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete or invalid analysis data received. Cannot render KPI & Events results. Check console for details.</div>`;
-        $("analysisActions").classList.add("hidden"); // Ensure save buttons are hidden on error
+        dom.$("analysisActions").classList.add("hidden"); // Ensure save buttons are hidden on error
         return; // Stop execution if data is bad
     }
     // Destructure data *after* validation
@@ -1253,7 +1256,7 @@ function renderKpiPage_KE(container, data) {
 
     // --- 1. Populate KPI Dashboard Panel ---
     try {
-        const dashboardPanel = $("dashboardPanel");
+        const dashboardPanel = dom.$("dashboardPanel");
         let dashboardHtml = `<div class="p-4 space-y-8">
             <div class="p-6 rounded-lg bg-black/20 border border-white/10 text-center">
                 <h3 class="text-xl font-bold mb-2 text-indigo-300">🎯 Main Goal</h3>
@@ -1287,12 +1290,12 @@ function renderKpiPage_KE(container, data) {
         dashboardPanel.innerHTML = dashboardHtml;
     } catch (e) {
             console.error("Error rendering Dashboard Panel:", e);
-            $("dashboardPanel").innerHTML = `<div class="p-4 text-center text-red-400">Error rendering dashboard.</div>`;
+            dom.$("dashboardPanel").innerHTML = `<div class="p-4 text-center text-red-400">Error rendering dashboard.</div>`;
     }
 
     // --- 2. Populate KPI Details Panel ---
     try {
-        const kpiDetailsPanel = $("kpiDetailsPanel");
+        const kpiDetailsPanel = dom.$("kpiDetailsPanel");
         let kpiDetailsHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4 text-center">📋 KPI Details</h3>`;
         kpiDetailsHtml += `<div class="overflow-x-auto">
                             <table class="coeff-table styled-table text-sm">
@@ -1320,12 +1323,12 @@ function renderKpiPage_KE(container, data) {
         kpiDetailsPanel.innerHTML = kpiDetailsHtml;
     } catch (e) {
             console.error("Error rendering KPI Details Panel:", e);
-            $("kpiDetailsPanel").innerHTML = `<div class="p-4 text-center text-red-400">Error rendering KPI details.</div>`;
+            dom.$("kpiDetailsPanel").innerHTML = `<div class="p-4 text-center text-red-400">Error rendering KPI details.</div>`;
     }
 
     // --- 3. Populate Events Timeline Panel ---
     try {
-        const timelinePanel = $("timelinePanel");
+        const timelinePanel = dom.$("timelinePanel");
         // Use main_goal for title consistency
         let timelineHtml = `<div class="p-4"><h2 class="text-3xl font-bold text-center mb-8">${main_goal} - Critical Events Timeline</h2><div class="action-plan-container flex flex-col items-center">`;
         if (critical_events.length > 0) {
@@ -1366,12 +1369,12 @@ function renderKpiPage_KE(container, data) {
         timelinePanel.innerHTML = timelineHtml;
     } catch (e) {
         console.error("Error rendering Timeline Panel:", e);
-        $("timelinePanel").innerHTML = `<div class="p-4 text-center text-red-400">Error rendering timeline.</div>`;
+        dom.$("timelinePanel").innerHTML = `<div class="p-4 text-center text-red-400">Error rendering timeline.</div>`;
     }
 
     // --- 4. Populate Event Details Panel ---
     try {
-        const eventDetailsPanel = $("eventDetailsPanel");
+        const eventDetailsPanel = dom.$("eventDetailsPanel");
         let eventDetailsHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4 text-center">📝 Event Details</h3>`;
         eventDetailsHtml += `<div class="overflow-x-auto">
                             <table class="coeff-table styled-table text-sm">
@@ -1398,12 +1401,12 @@ function renderKpiPage_KE(container, data) {
         eventDetailsPanel.innerHTML = eventDetailsHtml;
     } catch (e) {
         console.error("Error rendering Event Details Panel:", e);
-        $("eventDetailsPanel").innerHTML = `<div class="p-4 text-center text-red-400">Error rendering event details.</div>`;
+        dom.$("eventDetailsPanel").innerHTML = `<div class="p-4 text-center text-red-400">Error rendering event details.</div>`;
     }
 
     // --- 5. Populate Learn KPIs & Milestones Panel ---
     try {
-        const learnPanel = $("learnPanel");
+        const learnPanel = dom.$("learnPanel");
         // Re-using the content previously generated for this tab
         learnPanel.innerHTML = `
         <div class="p-6 space-y-6 text-white/90">
@@ -1457,12 +1460,12 @@ function renderKpiPage_KE(container, data) {
         `;
     } catch (e) {
             console.error("Error rendering Learn Panel:", e);
-            $("learnPanel").innerHTML = `<div class="p-4 text-center text-red-400">Error rendering learning content.</div>`;
+            dom.$("learnPanel").innerHTML = `<div class="p-4 text-center text-red-400">Error rendering learning content.</div>`;
     }
 
     // --- Final Touches ---
     try {
-        analysisCache[currentTemplateId] = container.innerHTML; // Cache result
+        appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache result
 
         // Tab switching logic
         tabNav.addEventListener("click", (e) => {
@@ -1474,7 +1477,7 @@ function renderKpiPage_KE(container, data) {
                 // Activate clicked
                 e.target.classList.add("active");
                 const targetPanelId = e.target.dataset.tab + "Panel";
-                const targetPanel = $(targetPanelId);
+                const targetPanel = dom.$(targetPanelId);
                 if (targetPanel) {
                     targetPanel.classList.add("active");
                         // No Plotly charts expected here, no resize needed
@@ -1484,7 +1487,7 @@ function renderKpiPage_KE(container, data) {
             }
         });
 
-        $("analysisActions").classList.remove("hidden"); // Show save buttons
+        dom.$("analysisActions").classList.remove("hidden"); // Show save buttons
     } catch (e) {
             console.error("Error setting up final touches (tabs, cache, buttons):", e);
             // Don't overwrite the container if there was a rendering error earlier
@@ -1517,7 +1520,7 @@ function renderMiscPage_MSC(container, data) {
     if (!data || !data.executive_summary || !data.risk_assessment || !data.governance || !data.conclusion) {
         console.error("Incomplete data passed to renderMiscPage_MSC:", data);
         container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render Final Sections.</div>`;
-        $("analysisActions").classList.add("hidden");
+        dom.$("analysisActions").classList.add("hidden");
         return;
     }
     const { executive_summary, risk_assessment, governance, conclusion } = data;
@@ -1546,11 +1549,11 @@ function renderMiscPage_MSC(container, data) {
     `;
 
     // --- 1. Populate Summary Panel ---
-    const summaryPanel = $("summaryPanel");
+    const summaryPanel = dom.$("summaryPanel");
     summaryPanel.innerHTML = `<div class="p-4"><blockquote class="p-4 italic border-l-4 border-gray-500 bg-black/20 text-white/90">${executive_summary}</blockquote></div>`;
 
     // --- 2. Populate Risks Panel (Added Justification) ---
-    const risksPanel = $("risksPanel");
+    const risksPanel = dom.$("risksPanel");
     let risksHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4 text-center">⚠️ Risk Assessment</h3><div class="overflow-x-auto">
         <table class="w-full text-left styled-table text-sm"> <!-- Use styled-table -->
             <thead>
@@ -1582,7 +1585,7 @@ function renderMiscPage_MSC(container, data) {
     risksPanel.innerHTML = risksHtml;
 
     // --- 3. Populate Governance Panel (Clearer Structure) ---
-    const govPanel = $("govPanel");
+    const govPanel = dom.$("govPanel");
     let govHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4 text-center">🏛️ Governance & Responsibilities</h3><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">`; // Allow 3 columns
      if (governance.length > 0) {
         governance.forEach((item) => {
@@ -1599,11 +1602,11 @@ function renderMiscPage_MSC(container, data) {
     govPanel.innerHTML = govHtml;
 
     // --- 4. Populate Conclusion Panel ---
-    const conclusionPanel = $("conclusionPanel");
+    const conclusionPanel = dom.$("conclusionPanel");
     conclusionPanel.innerHTML = `<div class="p-4"><blockquote class="p-4 italic border-l-4 border-gray-500 bg-black/20 text-white/90">${conclusion}</blockquote></div>`;
 
     // --- 5. Populate Learn Finalizing Plans Panel (New) ---
-    const learnPanel = $("learnPanel");
+    const learnPanel = dom.$("learnPanel");
      learnPanel.innerHTML = `
     <div class="p-6 space-y-6 text-white/90">
         <h3 class="text-2xl font-bold text-center mb-4">🎓 Finalizing Your Strategic Plan</h3>
@@ -1653,7 +1656,7 @@ function renderMiscPage_MSC(container, data) {
 
 
     // --- Final Touches ---
-    analysisCache[currentTemplateId] = container.innerHTML; // Cache result
+    appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache result
 
     // Tab switching logic
     tabNav.addEventListener("click", (e) => {
@@ -1665,7 +1668,7 @@ function renderMiscPage_MSC(container, data) {
             // Activate clicked
             e.target.classList.add("active");
             const targetPanelId = e.target.dataset.tab + "Panel";
-            const targetPanel = $(targetPanelId);
+            const targetPanel = dom.$(targetPanelId);
             if (targetPanel) {
                 targetPanel.classList.add("active");
                  // No Plotly charts expected
@@ -1675,6 +1678,16 @@ function renderMiscPage_MSC(container, data) {
         }
     });
 
-    $("analysisActions").classList.remove("hidden"); // Show save buttons
+    dom.$("analysisActions").classList.remove("hidden"); // Show save buttons
     // setLoading('generate', false); // Handled in the calling function
+}
+
+
+export {
+    renderFactorAnalysisPage,
+    renderFullSwotTowsPage,
+    renderGoalsAndInitiativesPage_SP,
+    renderActionPlansPage_AP,
+    renderKpiPage_KE,
+    renderMiscPage_MSC
 }

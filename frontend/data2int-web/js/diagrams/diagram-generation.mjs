@@ -123,3 +123,7 @@ function generateAlphaNumericId(index) {
     let numberSuffix = Math.floor(index / 26) + 1; // 1 for A-Z, 2 for A-Z again, etc.
     return `${String.fromCharCode(65 + letterIndex)}${numberSuffix}`;
 }
+
+export {
+    generateProcessMappingMermaidCode
+}

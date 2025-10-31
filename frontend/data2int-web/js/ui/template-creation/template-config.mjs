@@ -172,3 +172,8 @@ const templateRules = {
     triz: { preselectFramework: "TRIZ (Theory of Inventive Problem Solving)", hideAnalysisSection: true },
     "reframing-thinking": { preselectFramework: "Reframing Thinking", hideAnalysisSection: true }
 };
+
+export const templateConfig = {
+    templates,
+    templateRules
+}

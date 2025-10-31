@@ -2,8 +2,13 @@
 // ===================         Novel Strategies Analysis Handling Functions         ====================
 // =====================================================================================================
 
+import { dom } from '../utils/dom-utils.mjs';
+import { setLoading } from '../utils/ui-utils.mjs';
+import { extractTextFromFile } from '../utils/file-utils.mjs';
+import * as renderNS from '../ui/analysis-rendering/analysis-rendering-ns.mjs';
+
 async function handleNovelGoalsAnalysis_NS() {
-    const analysisResultContainer = $("analysisResult");
+    const analysisResultContainer = dom.$("analysisResult");
     analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white mb-4">Mapping Horizons of Growth...</h3><p class="text-white/80 mb-2">Analyzing your ambition using a refined, context-aware prompt...</p></div>`;
     setLoading("generate", true);
 
@@ -11,15 +16,15 @@ async function handleNovelGoalsAnalysis_NS() {
     const MODEL_NAME = "llama3.1:latest"; // Using Llama 3.1 as requested
 
     try {
-        const useDoc = $("docUpload").checked;
+        const useDoc = dom.$("docUpload").checked;
         let ambitionText = "";
 
         if (useDoc) {
-            const file = $("novelGoalsFile").files[0];
+            const file = dom.$("novelGoalsFile").files[0];
             if (!file) throw new Error("Please select a document to upload.");
             ambitionText = await extractTextFromFile(file);
         } else {
-            ambitionText = $("novelGoalsContent").value.trim();
+            ambitionText = dom.$("novelGoalsContent").value.trim();
             if (!ambitionText) {
                 throw new Error("Please describe your ambition or goal in the text area.");
             }
@@ -119,7 +124,7 @@ async function handleNovelGoalsAnalysis_NS() {
             throw new Error("AI response did not follow the required Three Horizons structure despite instructions.");
         }
 
-        renderNovelGoalsPage_NS(analysisResultContainer, parsedData); // Pass to the renderer
+        renderNS.renderNovelGoalsPage_NS(analysisResultContainer, parsedData); // Pass to the renderer
 
     } catch (error) {
         console.error("Error during Novel Goals analysis:", error);
@@ -131,7 +136,7 @@ async function handleNovelGoalsAnalysis_NS() {
 
 
 async function handleCreativeDissonanceAnalysis_NS() {
-    const analysisResultContainer = $("analysisResult");
+    const analysisResultContainer = dom.$("analysisResult");
     analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white mb-4">Analyzing Creative Gap (Prioritizing Files)...</h3><p class="text-white/80 mb-2">Generating initiatives based primarily on document and data context...</p></div>`;
     setLoading("generate", true); // Set loading state
 
@@ -140,10 +145,10 @@ async function handleCreativeDissonanceAnalysis_NS() {
 
     try {
         // --- Gather Inputs ---
-        const currentReality = $("currentReality").value.trim();
-        const futureVision = $("futureVision").value.trim();
-        const contextFile = $("dissonanceContextFile").files[0];
-        const dataFile = $("dissonanceDataFile").files[0];
+        const currentReality = dom.$("currentReality").value.trim();
+        const futureVision = dom.$("futureVision").value.trim();
+        const contextFile = dom.$("dissonanceContextFile").files[0];
+        const dataFile = dom.$("dissonanceDataFile").files[0];
 
         if (!currentReality || !futureVision) {
             throw new Error("❌ Please describe both your Current Reality and Future Vision (even if brief summaries).");
@@ -271,7 +276,7 @@ async function handleCreativeDissonanceAnalysis_NS() {
                 futureVision: futureVision
         };
 
-        renderCreativeDissonancePage_NS(analysisResultContainer, parsedData);
+        renderNS.renderCreativeDissonancePage_NS(analysisResultContainer, parsedData);
 
     } catch (error) {
         console.error("Error during Creative Dissonance Analysis (File-Priority):", error);
@@ -285,7 +290,7 @@ async function handleCreativeDissonanceAnalysis_NS() {
     
 
 async function handleLivingSystemAnalysis_NS() {
-    const analysisResultContainer = $("analysisResult");
+    const analysisResultContainer = dom.$("analysisResult");
     analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white mb-4">Diagnosing System Health...</h3><p class="text-white/80 mb-2">Analyzing metabolism, nervous system, and immune response using enhanced, context-aware prompting...</p></div>`;
     setLoading("generate", true); // Set loading state
 
@@ -293,20 +298,20 @@ async function handleLivingSystemAnalysis_NS() {
     const MODEL_NAME = "llama3.1:latest"; // Using Llama 3.1 as requested
 
     try {
-        const useDoc = $("docUpload").checked;
+        const useDoc = dom.$("docUpload").checked;
         let systemDescription = "";
 
         if (useDoc) {
-            const file = $("lsFile").files[0];
+            const file = dom.$("lsFile").files[0];
             if (!file) throw new Error("❌ Please select a document to upload.");
             systemDescription = await extractTextFromFile(file);
             console.log("Extracted text from Living System context file.");
         } else {
             // Combine text area inputs into a single description
-            const coreIdentity = $("lsCoreIdentity")?.value.trim() || "Not specified.";
-            const environment = $("lsEnvironment")?.value.trim() || "Not specified.";
-            const metabolism = $("lsMetabolism")?.value.trim() || "Not specified.";
-            const nervousSystem = $("lsNervousSystem")?.value.trim() || "Not specified.";
+            const coreIdentity = dom.$("lsCoreIdentity")?.value.trim() || "Not specified.";
+            const environment = dom.$("lsEnvironment")?.value.trim() || "Not specified.";
+            const metabolism = dom.$("lsMetabolism")?.value.trim() || "Not specified.";
+            const nervousSystem = dom.$("lsNervousSystem")?.value.trim() || "Not specified.";
 
             if (!coreIdentity || !environment || !metabolism || !nervousSystem) {
                 throw new Error("❌ Please fill out all four detailed input sections (Core Identity, Environment, Metabolism, Nervous System).");
@@ -424,17 +429,17 @@ async function handleLivingSystemAnalysis_NS() {
                 throw new Error("AI response structure is incorrect (Living System).");
         }
             // Store original inputs if text areas were used, for potential display
-            if (!$("docUpload").checked) {
+            if (!dom.$("docUpload").checked) {
                 parsedData.original_inputs = {
-                    coreIdentity: $("lsCoreIdentity")?.value.trim() || "",
-                    environment: $("lsEnvironment")?.value.trim() || "",
-                    metabolism: $("lsMetabolism")?.value.trim() || "",
-                    nervousSystem: $("lsNervousSystem")?.value.trim() || ""
+                    coreIdentity: dom.$("lsCoreIdentity")?.value.trim() || "",
+                    environment: dom.$("lsEnvironment")?.value.trim() || "",
+                    metabolism: dom.$("lsMetabolism")?.value.trim() || "",
+                    nervousSystem: dom.$("lsNervousSystem")?.value.trim() || ""
                 };
             }
 
 
-        renderLivingSystemPage_NS(analysisResultContainer, parsedData);
+        renderNS.renderLivingSystemPage_NS(analysisResultContainer, parsedData);
 
     } catch (error) {
         console.error("Error during Living System Analysis:", error);
@@ -447,7 +452,7 @@ async function handleLivingSystemAnalysis_NS() {
     
 
 async function handleThinkingSystemAnalysis_NS() {
-    const analysisResultContainer = $("analysisResult");
+    const analysisResultContainer = dom.$("analysisResult");
     analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white mb-4">Deconstructing Mental Models...</h3><p class="text-white/80 mb-2">Analyzing your thought process with enhanced prompting to uncover new paths...</p></div>`;
     setLoading("generate", true); // Set loading state
 
@@ -455,16 +460,16 @@ async function handleThinkingSystemAnalysis_NS() {
     const MODEL_NAME = "llama3.1:latest"; // Using Llama 3.1 as requested
 
     try {
-        const useDoc = $("docUpload").checked;
+        const useDoc = dom.$("docUpload").checked;
         let beliefOrProblemContext = "";
 
         if (useDoc) {
-            const file = $("tsFile").files[0];
+            const file = dom.$("tsFile").files[0];
             if (!file) throw new Error("❌ Please select a document to upload.");
             beliefOrProblemContext = await extractTextFromFile(file);
             console.log("Extracted text from Thinking System context file.");
         } else {
-            beliefOrProblemContext = $("tsContent").value.trim();
+            beliefOrProblemContext = dom.$("tsContent").value.trim();
             if (!beliefOrProblemContext) {
                 throw new Error("❌ Please describe a belief, conclusion, or problem context to analyze.");
             }
@@ -580,7 +585,7 @@ async function handleThinkingSystemAnalysis_NS() {
                 throw new Error("AI response structure is incorrect (Ladder of Inference).");
         }
 
-        renderThinkingSystemPage_NS(analysisResultContainer, parsedData);
+        renderNS.renderThinkingSystemPage_NS(analysisResultContainer, parsedData);
 
     } catch (error) {
         console.error("Error during Thinking System Analysis:", error);

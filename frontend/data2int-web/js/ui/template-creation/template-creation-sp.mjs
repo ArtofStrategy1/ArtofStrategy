@@ -1,9 +1,15 @@
 // =====================================================================================================
 // ===================     Strategic Planning Page Template Creation Functions      ====================
 // =====================================================================================================
+import { appState } from "../../state/app-state.mjs";
+import { dom } from "../../utils/dom-utils.mjs";
+import { handleGenerate } from "../../analysis/handle-generate.mjs"
+import { reattachActionListeners, reattachTabListeners } from "./template-creation.mjs";
+import { extractTextFromFile } from "../../utils/file-utils.mjs";
+import { setupInputToggle } from "../../utils/ui-utils.mjs";
 
 function createFactorAnalysisLayout(template) {
-    const contentContainer = $("templateDetailContent");
+    const contentContainer = dom.$("templateDetailContent");
     contentContainer.className = "grid lg:grid-cols-1 gap-12";
     contentContainer.innerHTML = `
                 <div class="lg:col-span-1">
@@ -51,36 +57,36 @@ function createFactorAnalysisLayout(template) {
                 </div>`;
 
     // Attach event listeners
-    $("generateBtn").addEventListener("click", handleGenerate);
+    dom.$("generateBtn").addEventListener("click", handleGenerate);
     reattachActionListeners();
 
     // Restore from cache or set default
-    if (analysisCache[currentTemplateId]) {
-        $("analysisResult").innerHTML = analysisCache[currentTemplateId];
-        $("analysisActions").classList.remove("hidden");
-        reattachTabListeners($("analysisResult"));
+    if (appState.analysisCache[appState.currentTemplateId]) {
+        dom.$("analysisResult").innerHTML = appState.analysisCache[appState.currentTemplateId];
+        dom.$("analysisActions").classList.remove("hidden");
+        reattachTabListeners(dom.$("analysisResult"));
     } else {
-        $("analysisResult").innerHTML =
+        dom.$("analysisResult").innerHTML =
             '<div class="text-white/60 p-8 text-center">Your generated analysis will appear here.</div>';
-        $("analysisActions").classList.add("hidden");
+        dom.$("analysisActions").classList.add("hidden");
     }
 
     // Add listeners for radio buttons and file input
-    $("textInput").addEventListener("change", () => {
-        $("textInputArea").classList.remove("hidden");
-        $("docUploadArea").classList.add("hidden");
+    dom.$("textInput").addEventListener("change", () => {
+        dom.$("textInputArea").classList.remove("hidden");
+        dom.$("docUploadArea").classList.add("hidden");
     });
-    $("docUpload").addEventListener("change", () => {
-        $("textInputArea").classList.add("hidden");
-        $("docUploadArea").classList.remove("hidden");
+    dom.$("docUpload").addEventListener("change", () => {
+        dom.$("textInputArea").classList.add("hidden");
+        dom.$("docUploadArea").classList.remove("hidden");
     });
 
-    const fileInput = $("factorFile");
+    const fileInput = dom.$("factorFile");
     if (fileInput) {
         fileInput.addEventListener("change", async (e) => {
-            const label = $("factorFileLabel");
+            const label = dom.$("factorFileLabel");
             const fileNameSpan = label.querySelector(".file-name");
-            const fileStats = $("fileStats");
+            const fileStats = dom.$("fileStats");
             if (e.target.files.length > 0) {
                 const file = e.target.files[0];
                 fileNameSpan.textContent = file.name;
@@ -103,7 +109,7 @@ function createFactorAnalysisLayout(template) {
 
 
 function createSwotTowsLayout(template) {
-    const contentContainer = $("templateDetailContent");
+    const contentContainer = dom.$("templateDetailContent");
     contentContainer.className = "grid lg:grid-cols-1 gap-12"; // Change class for this layout
     contentContainer.innerHTML = `
                 <div class="lg:col-span-1">
@@ -151,34 +157,34 @@ function createSwotTowsLayout(template) {
                 </div>`;
 
     // Re-attach event listeners for the newly created elements
-    $("generateBtn").addEventListener("click", handleGenerate);
+    dom.$("generateBtn").addEventListener("click", handleGenerate);
     reattachActionListeners();
 
     // Restore from cache or set default
-    if (analysisCache[currentTemplateId]) {
-        $("analysisResult").innerHTML = analysisCache[currentTemplateId];
-        $("analysisActions").classList.remove("hidden");
-        reattachTabListeners($("analysisResult"));
+    if (appState.analysisCache[appState.currentTemplateId]) {
+        dom.$("analysisResult").innerHTML = appState.analysisCache[appState.currentTemplateId];
+        dom.$("analysisActions").classList.remove("hidden");
+        reattachTabListeners(dom.$("analysisResult"));
     } else {
-        $("analysisResult").innerHTML =
+        dom.$("analysisResult").innerHTML =
             '<div class="text-white/60 p-8 text-center">Your generated analysis will appear here.</div>';
-        $("analysisActions").classList.add("hidden");
+        dom.$("analysisActions").classList.add("hidden");
     }
 
     // Listeners for radio buttons
-    $("textInput").addEventListener("change", () => {
-        $("textInputArea").classList.remove("hidden");
-        $("docUploadArea").classList.add("hidden");
+    dom.$("textInput").addEventListener("change", () => {
+        dom.$("textInputArea").classList.remove("hidden");
+        dom.$("docUploadArea").classList.add("hidden");
     });
-    $("docUpload").addEventListener("change", () => {
-        $("textInputArea").classList.add("hidden");
-        $("docUploadArea").classList.remove("hidden");
+    dom.$("docUpload").addEventListener("change", () => {
+        dom.$("textInputArea").classList.add("hidden");
+        dom.$("docUploadArea").classList.remove("hidden");
     });
     // Listener for file input
-    const fileInput = $("swotFile");
+    const fileInput = dom.$("swotFile");
     if (fileInput) {
         fileInput.addEventListener("change", (e) => {
-            const label = $("swotFileLabel");
+            const label = dom.$("swotFileLabel");
             const fileNameSpan = label.querySelector(".file-name");
             if (e.target.files.length > 0) {
                 fileNameSpan.textContent = e.target.files[0].name;
@@ -194,7 +200,7 @@ function createSwotTowsLayout(template) {
 
 
 function createGoalsAndInitiativesLayout_SP(template) {
-    const contentContainer = $("templateDetailContent");
+    const contentContainer = dom.$("templateDetailContent");
     contentContainer.className = "grid lg:grid-cols-1 gap-12";
     contentContainer.innerHTML = `
                 <div class="lg:col-span-1">
@@ -241,7 +247,7 @@ function createGoalsAndInitiativesLayout_SP(template) {
 
 
 function createActionPlansLayout_AP(template) {
-    const contentContainer = $("templateDetailContent");
+    const contentContainer = dom.$("templateDetailContent");
     contentContainer.className = "grid lg:grid-cols-1 gap-12";
     contentContainer.innerHTML = `
                 <div class="lg:col-span-1">
@@ -288,7 +294,7 @@ function createActionPlansLayout_AP(template) {
 
 
 function createKpiLayout_KE(template) {
-    const contentContainer = $("templateDetailContent");
+    const contentContainer = dom.$("templateDetailContent");
     contentContainer.className = "grid lg:grid-cols-1 gap-12";
     contentContainer.innerHTML = `
                 <div class="lg:col-span-1">
@@ -335,7 +341,7 @@ function createKpiLayout_KE(template) {
 
 
 function createMiscLayout_MSC(template) {
-    const contentContainer = $("templateDetailContent");
+    const contentContainer = dom.$("templateDetailContent");
     contentContainer.className = "grid lg:grid-cols-1 gap-12";
     contentContainer.innerHTML = `
                 <div class="lg:col-span-1">
@@ -377,4 +383,14 @@ function createMiscLayout_MSC(template) {
                 </div>
             `;
     setupInputToggle("miscFile", "miscFileLabel", "textInputArea", "docUploadArea");
+}
+
+
+export {
+    createFactorAnalysisLayout,
+    createSwotTowsLayout,
+    createGoalsAndInitiativesLayout_SP,
+    createActionPlansLayout_AP,
+    createKpiLayout_KE,
+    createMiscLayout_MSC
 }
