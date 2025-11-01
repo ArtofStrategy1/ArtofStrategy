@@ -7,7 +7,7 @@ import { updateNavBar, navigateTo } from './ui/navigation.mjs';
 import { setupHomeTabs, attachHomeCardListeners } from './ui/home.mjs';
 import { handleLogin, handleRegister } from './services/auth-service.mjs';
 import { fetchAndDisplayStatistics } from './services/stats-service.mjs';
-import * as THREE from "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";
+import * as THREE from 'three';
 
 
 document.addEventListener("DOMContentLoaded", () => {
