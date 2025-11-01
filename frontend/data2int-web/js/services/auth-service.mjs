@@ -1,7 +1,7 @@
 import { appConfig } from '../config.mjs';
 import { dom } from '../utils/dom-utils.mjs';
 import { navigateTo } from '../ui/navigation.mjs';
-import { showMessage } from '../utils/ui-utils.mjs';
+import { showMessage, setLoading } from '../utils/ui-utils.mjs';
 
 // --- Auth Logic using Supabase ---
 async function handleLogin() {
@@ -14,7 +14,7 @@ async function handleLogin() {
         return;
     }
 
-    dom.setLoading("login", true);
+    setLoading("login", true);
     loginMessageEl.classList.add("hidden");
 
     const { data, error } = await appConfig.supabase.auth.signInWithPassword({
@@ -28,7 +28,7 @@ async function handleLogin() {
         showMessage("loginMessage", "Login successful! Redirecting...", "success");
         setTimeout(() => navigateTo("home"), 1500);
     }
-    dom.setLoading("login", false);
+    setLoading("login", false);
 }
 
 async function handleRegister() {
@@ -51,7 +51,7 @@ async function handleRegister() {
         return;
     }
 
-    dom.setLoading("register", true);
+    setLoading("register", true);
     try {
         const { data, error } = await appConfig.supabase.functions.invoke("create-user-v3", {
             body: {
@@ -75,7 +75,7 @@ async function handleRegister() {
         console.error("Register error:", err);
         showMessage("registerMessage", "An error occurred during registration. Please try again.", "error");
     } finally {
-        dom.setLoading("register", false);
+        setLoading("register", false);
     }
 }
 

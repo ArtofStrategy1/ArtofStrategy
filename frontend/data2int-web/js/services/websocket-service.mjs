@@ -3,6 +3,7 @@ import { appConfig } from '../config.mjs'
 import { dom } from '../utils/dom-utils.mjs';
 import { appState } from '../state/app-state.mjs';
 import { createParetoChartJS } from '../ui/analysis-rendering/analysis-rendering-st.mjs'
+import { setLoading } from '../utils/ui-utils.mjs';
 
 
 let websocket = null;
@@ -72,13 +73,13 @@ function initializeWebSocket() {
 
 
 function handleWebSocketMessage(data) {
-    const container = appConfig.pendingAnalysisRequests.get(parseInt(data.messageId));
+    const container = appState.pendingAnalysisRequests.get(parseInt(data.messageId));
     if (!container) return;
 
     if (data.error) {
         container.innerHTML = `<div class="p-4 text-center text-red-400">Workflow error: ${data.error}</div>`;
-        appConfig.pendingAnalysisRequests.delete(parseInt(data.messageId));
-        dom.setLoading("generate", false);
+        appState.pendingAnalysisRequests.delete(parseInt(data.messageId));
+        setLoading("generate", false);
         return;
     }
 
@@ -202,8 +203,8 @@ function handleWebSocketMessage(data) {
     const analysisActionsEl = dom.$("analysisActions");
     if (analysisActionsEl) analysisActionsEl.classList.remove("hidden");
 
-    appConfig.pendingAnalysisRequests.delete(parseInt(data.messageId));
-    dom.setLoading("generate", false);
+    appState.pendingAnalysisRequests.delete(parseInt(data.messageId));
+    setLoading("generate", false);
 }
 
 
