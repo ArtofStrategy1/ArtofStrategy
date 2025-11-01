@@ -1,8 +1,7 @@
 import { dom } from './dom-utils.mjs';
 import { appState } from '../state/app-state.mjs';
-import { reattachActionListeners } from '../ui/template-creation/template-creation.mjs';
-import { reattachTabListeners } from '../ui/template-creation/template-creation.mjs';
-import { showTemplateDetail } from '../ui/template-creation/template-creation.mjs'
+import { handleGenerate } from '../analysis/handle-generate.mjs';
+import { reattachActionListeners, reattachTabListeners, showTemplateDetail } from '../ui/template-creation/template-creation.mjs';
 // --- UI Helpers ---
 /**
  * 

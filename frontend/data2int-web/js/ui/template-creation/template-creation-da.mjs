@@ -315,6 +315,138 @@ function createVisualizationLayout_DA(template) {
 
 
 
+function createRegressionLayout_DA(template) {
+    const contentContainer = dom.$("templateDetailContent");
+    contentContainer.className = "grid lg:grid-cols-1 gap-12";
+    contentContainer.innerHTML = `
+                <div class="lg:col-span-1">
+                        <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
+                        <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">${template.description}</p>
+                    <div class="glass-container max-w-2xl mx-auto w-full p-6 space-y-4">
+                            <h3 class="text-xl font-bold mb-4 text-white">Analysis Setup</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="dependentVar" class="block text-sm font-medium text-gray-200 mb-2">Dependent Variable (Y)</label>
+                                <input type="text" id="dependentVar" class="input-field" placeholder="The outcome you want to predict (e.g., 'Sales')">
+                            </div>
+                            <div>
+                                <label for="independentVars" class="block text-sm font-medium text-gray-200 mb-2">Independent Variables (X)</label>
+                                <input type="text" id="independentVars" class="input-field" placeholder="Comma-separated predictors (e.g., 'Marketing Spend, Website Traffic')">
+                            </div>
+                            <div>
+                                <label for="regressionContextFile" class="block text-sm font-medium text-gray-200 mb-2">Company Document (.txt, .docx)</label>
+                                <div class="input-file-wrapper">
+                                    <label for="regressionContextFile" id="regressionContextFileLabel" class="input-file-btn">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                                        <span class="file-name">Select context document...</span>
+                                    </label>
+                                    <input type="file" id="regressionContextFile" class="input-file" accept=".txt,.docx">
+                                </div>
+                            </div>
+                            <div>
+                                <label for="regressionFile" class="block text-sm font-medium text-gray-200 mb-2">Upload Data File (.csv)</label>
+                                <div class="input-file-wrapper">
+                                    <label for="regressionFile" id="regressionFileLabel" class="input-file-btn">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                                        <span class="file-name">Select .csv data file...</span>
+                                    </label>
+                                    <input type="file" id="regressionFile" class="input-file" accept=".csv">
+                                </div>
+                            </div>
+                        </div>
+                        <button id="generateBtn" class="btn btn-primary w-full text-lg py-3 mt-4">
+                            <span id="generateBtnText">📈 Run Regression Analysis</span>
+                            <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
+                        </button>
+                    </div>
+                    <div class="mt-12">
+                            <h2 class="text-3xl font-bold mb-4 text-center">Regression Results</h2>
+                            <div id="analysisResult" class="glass-container min-h-[500px] overflow-x-auto"></div>
+                            <div id="analysisActions" class="text-center mt-4 space-x-2 hidden">
+                            <button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>
+                            <button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+    // Helper to attach listeners to file inputs
+    const attachListener = (inputId, labelId) => {
+        const fileInput = dom.$(inputId);
+        if (fileInput) {
+            fileInput.addEventListener("change", (e) => {
+                const label = dom.$(labelId);
+                const fileNameSpan = label.querySelector(".file-name");
+                if (e.target.files.length > 0) {
+                    fileNameSpan.textContent = e.target.files[0].name;
+                    label.classList.add("has-file");
+                } else {
+                    fileNameSpan.textContent = "Select a file...";
+                    label.classList.remove("has-file");
+                }
+            });
+        }
+    };
+
+    attachListener("regressionFile", "regressionFileLabel");
+    attachListener("regressionContextFile", "regressionContextFileLabel");
+
+    dom.$("generateBtn").addEventListener("click", handleGenerate);
+    reattachActionListeners();
+}
+
+
+
+function createPlsLayout_DA(template) {
+    const contentContainer = dom.$("templateDetailContent");
+    contentContainer.className = "grid lg:grid-cols-1 gap-12";
+    contentContainer.innerHTML = `
+                <div class="lg:col-span-1">
+                        <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
+                        <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">${template.description}</p>
+                    <div class="glass-container max-w-2xl mx-auto w-full p-6 space-y-4">
+                            <h3 class="text-xl font-bold mb-4 text-white">PLS-SEM Model Setup</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="plsMeasurementModel" class="block text-sm font-medium text-gray-200 mb-2">Measurement Model</label>
+                                <textarea id="plsMeasurementModel" class="input-field h-32" placeholder="Define latent variables and their indicators. Example:\nBrandImage = BI1, BI2, BI3\nLoyalty = LOY1, LOY2, LOY3"></textarea>
+                            </div>
+                            <div>
+                                <label for="plsStructuralModel" class="block text-sm font-medium text-gray-200 mb-2">Structural Model (Paths)</label>
+                                <textarea id="plsStructuralModel" class="input-field h-24" placeholder="Define hypothesized paths between latent variables. Example:\nBrandImage -> Loyalty"></textarea>
+                            </div>
+                            <div>
+                                <label for="plsFile" class="block text-sm font-medium text-gray-200 mb-2">Upload Data File (.csv)</label>
+                                <div class="input-file-wrapper">
+                                    <label for="plsFile" id="plsFileLabel" class="input-file-btn">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                                        <span class="file-name">Select .csv file...</span>
+                                    </label>
+                                    <input type="file" id="plsFile" class="input-file" accept=".csv">
+                                </div>
+                            </div>
+                        </div>
+                        <button id="generateBtn" class="btn btn-primary w-full text-lg py-3 mt-4">
+                            <span id="generateBtnText">📊 Run PLS-SEM Analysis</span>
+                            <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
+                        </button>
+                    </div>
+                    <div class="mt-12">
+                            <h2 class="text-3xl font-bold mb-4 text-center">PLS-SEM Results</h2>
+                            <div id="analysisResult" class="glass-container min-h-[500px] overflow-x-auto"></div>
+                            <div id="analysisActions" class="text-center mt-4 space-x-2 hidden">
+                            <button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>
+                            <button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+    setupInputToggle("plsFile", "plsFileLabel", null, null);
+}
+
+
+
 /**
  * Creates the HTML structure and attaches listeners for the SEM Analysis tool.
  * Includes data preview, model template selection, and split syntax inputs.
@@ -766,6 +898,8 @@ export {
     createPredictiveAnalysisLayout,
     createPrescriptiveLayout_DA,
     createVisualizationLayout_DA,
+    createRegressionLayout_DA,
+    createPlsLayout_DA,
     createSemAnalysisLayout,
-    createDematelLayout
+    createDematelLayout,
 }
