@@ -11,14 +11,14 @@ async function handleFactorAnalysis() {
     analysisResultContainer.innerHTML = `
         <div class="text-center text-white/70 p-8">
             <div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div>
-            <h3 class="text-xl font-semibold text-white">Performing Context-Aware Factor Analysis...</h3>
-            <p class="text-white/80 mb-2">Identifying Internal (S/W) and External (O/T) factors using AI based *only* on your text...</p>
+            <h3 class="text-xl font-semibold text-white">Performing EXHAUSTIVE Factor Analysis...</h3>
+            <p class="text-white/80 mb-2">Finding every factor and analyzing each one deeply. This may take a moment...</p>
         </div>`;
     setLoading("generate", true);
 
     // Define URL and Model
     const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
-    const MODEL_NAME = "llama3.1:latest"; // Or qwen3:30b-a3b
+    const MODEL_NAME = "llama3.1:latest";
 
     try {
         // 1. Gather Inputs
@@ -43,9 +43,9 @@ async function handleFactorAnalysis() {
             console.warn(`Factor Analysis context truncated.`);
         }
 
-        // 2. Construct ENHANCED Prompt for LLM
+        // 2. Construct NEW COMPREHENSIVE Prompt
         const prompt = `
-            You are a meticulous strategic analyst. Analyze the provided business description based **ONLY** on the text itself. Identify key Internal Factors (Strengths, Weaknesses) and External Factors (Opportunities, Threats). ${truncatedNote}
+            You are a meticulous senior strategic analyst. Your task is to perform an exhaustive and deeply detailed factor analysis based **ONLY** on the provided business text. You must find **EVERY SINGLE** relevant factor. ${truncatedNote}
 
             **USER'S BUSINESS DESCRIPTION:**
             \`\`\`
@@ -53,45 +53,51 @@ async function handleFactorAnalysis() {
             \`\`\`
 
             **DETAILED TASKS:**
-            1.  **Identify Internal Factors:** Extract specific Strengths (internal positives) and Weaknesses (internal negatives) **mentioned or clearly implied in the text**. Categorize them (e.g., "Brand & Marketing", "Operations", "Financial", "Human Resources", "Technology"). Provide 4-6 factors for each (S & W).
-            2.  **Identify External Factors:** Extract specific Opportunities (external positives) and Threats (external negatives) **mentioned or clearly implied in the text**. Categorize them using PESTEL+ framework (Political, Economic, Social, Technological, Environmental, Legal, Market/Competitive). Provide 4-6 factors for each (O & T).
-            3.  **Assign Impact:** For EACH factor identified (Internal & External), assign a plausible \`impact_score\` (integer 1-10, where 10 is highest impact) based **only** on its significance as suggested **by the text**.
-            4.  **Provide Description:** For EACH factor, provide a brief \`description\` summarizing the factor **using wording found in or directly inferred from the text**.
-            5.  **Self-Correction:** Rigorously check: Is every factor, category, description, and impact score derived **SOLELY** from the provided text? Are factors correctly classified as Internal/External and S/W/O/T based on the text? Is the JSON structure perfect? Fix errors.
+            1.  **Identify Internal Factors:** Exhaustively scan the text for **ALL** internal positive factors (Strengths) and internal negative factors (Weaknesses).
+            2.  **Identify External Factors:** Exhaustively scan the text for **ALL** external positive factors (Opportunities) and external negative factors (Threats).
+            3.  **Provide Deep Analysis for EACH Factor:** For **EVERY** factor identified, you MUST provide the following detailed structure:
+                * \`factor\`: The concise name of the factor (e.g., "Strong Brand Reputation").
+                * \`category\`: The business function it relates to (e.g., "Marketing", "Operations", "Financial", "PESTEL - Technology").
+                * \`description\`: A 1-2 sentence description summarizing the factor **using wording found in or directly inferred from the text**.
+                * \`impact_score\`: A plausible impact score (integer 1-10, where 10 is highest impact) based **only** on its significance as suggested **by the text**.
+                * \`deep_analysis\`: A detailed paragraph (3-5 sentences) explaining the full **strategic implication** of this factor. Why does it *really* matter? What does it enable or block? What is the root cause or long-term effect **based on the text**?
+                * \`actionable_recommendation\`: One specific, concrete action. For S/O: "How to leverage/capitalize." For W/T: "How to mitigate/address." **This must be based on the text**.
+                * \`relevant_kpis\`: 1-2 specific KPIs **from the text** (or logically derived) to track this factor's impact.
 
             **ABSOLUTE CONSTRAINTS:**
-            - **CONTEXT IS KING:** Base **ALL** output **EXCLUSIVELY** on the provided "USER'S BUSINESS DESCRIPTION". **DO NOT** invent factors, categories, or scores.
-            - **SPECIFICITY:** Descriptions must be concise and grounded in the text.
-            - **JSON FORMAT:** Adhere EXACTLY.
+            - **BE EXHAUSTIVE:** Do not stop at 4-6 factors. Find all of them.
+            - **CONTEXT IS KING:** Base **ALL** output **EXCLUSIVELY** on the provided text. **DO NOT** invent factors, analysis, or recommendations not supported by the text.
+            - **DEEP ANALYSIS IS MANDATORY:** The \`deep_analysis\` and \`actionable_recommendation\` fields are the most critical part of this task for **EVERY** factor.
+            - **JSON FORMAT:** Adhere EXACTLY to the nested structure.
 
             **RETURN FORMAT:**
             Provide ONLY a valid JSON object.
             {
-              "internal_factors": {
-                "strengths": [ // 4-6 factors based ONLY on text
-                  {"category": "[Category ONLY from text]", "factor": "[Strength ONLY from text]", "description": "[Desc. ONLY from text]", "impact_score": "[Score 1-10 based ONLY on text]"},
-                  // ...
+                "internal_factors": {
+                "strengths": [
+                    {"factor": "...", "category": "...", "description": "...", "impact_score": 9, "deep_analysis": "...", "actionable_recommendation": "...", "relevant_kpis": ["..."]},
+                    // ... *all* other strengths ...
                 ],
-                "weaknesses": [ // 4-6 factors based ONLY on text
-                  {"category": "[Category ONLY from text]", "factor": "[Weakness ONLY from text]", "description": "[Desc. ONLY from text]", "impact_score": "[Score 1-10 based ONLY on text]"},
-                  // ...
+                "weaknesses": [
+                    {"factor": "...", "category": "...", "description": "...", "impact_score": 7, "deep_analysis": "...", "actionable_recommendation": "...", "relevant_kpis": ["..."]},
+                    // ... *all* other weaknesses ...
                 ]
-              },
-              "external_factors": {
-                "opportunities": [ // 4-6 factors based ONLY on text
-                  {"category": "[PESTEL+ Category ONLY from text]", "factor": "[Opportunity ONLY from text]", "description": "[Desc. ONLY from text]", "impact_score": "[Score 1-10 based ONLY on text]"},
-                  // ...
+                },
+                "external_factors": {
+                "opportunities": [
+                    {"factor": "...", "category": "...", "description": "...", "impact_score": 8, "deep_analysis": "...", "actionable_recommendation": "...", "relevant_kpis": ["..."]},
+                    // ... *all* other opportunities ...
                 ],
-                "threats": [ // 4-6 factors based ONLY on text
-                   {"category": "[PESTEL+ Category ONLY from text]", "factor": "[Threat ONLY from text]", "description": "[Desc. ONLY from text]", "impact_score": "[Score 1-10 based ONLY on text]"},
-                  // ...
+                "threats": [
+                    {"factor": "...", "category": "...", "description": "...", "impact_score": 6, "deep_analysis": "...", "actionable_recommendation": "...", "relevant_kpis": ["..."]},
+                    // ... *all* other threats ...
                 ]
-              }
+                }
             }
         `;
 
         // 3. Call Ollama API
-        console.log(`Sending Factor Analysis prompt to ${MODEL_NAME}...`);
+        console.log(`Sending DEEP Factor Analysis prompt to ${MODEL_NAME}...`);
         const response = await fetch(OLLAMA_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -109,68 +115,42 @@ async function handleFactorAnalysis() {
         console.log('Raw AI Response (Factor Analysis):', data.response);
         try {
             parsedData = JSON.parse(data.response);
-             // *** Robust Validation ***
-             console.log('--- RAW AI JSON RESPONSE (Parsed - Factor Analysis) ---');
-             console.log(JSON.stringify(parsedData, null, 2));
-             console.log('------------------------------------');
-
-             if (!parsedData || typeof parsedData !== 'object' ||
-                 !parsedData.internal_factors || typeof parsedData.internal_factors !== 'object' ||
-                 !Array.isArray(parsedData.internal_factors.strengths) || !Array.isArray(parsedData.internal_factors.weaknesses) ||
-                 !parsedData.external_factors || typeof parsedData.external_factors !== 'object' ||
-                 !Array.isArray(parsedData.external_factors.opportunities) || !Array.isArray(parsedData.external_factors.threats) ||
-                 // Check structure of first factor if lists are not empty
-                 (parsedData.internal_factors.strengths.length > 0 && (typeof parsedData.internal_factors.strengths[0] !== 'object' || !parsedData.internal_factors.strengths[0].hasOwnProperty('factor') || !parsedData.internal_factors.strengths[0].hasOwnProperty('impact_score'))) ||
-                 (parsedData.internal_factors.weaknesses.length > 0 && (typeof parsedData.internal_factors.weaknesses[0] !== 'object' || !parsedData.internal_factors.weaknesses[0].hasOwnProperty('factor') || !parsedData.internal_factors.weaknesses[0].hasOwnProperty('impact_score'))) ||
-                  (parsedData.external_factors.opportunities.length > 0 && (typeof parsedData.external_factors.opportunities[0] !== 'object' || !parsedData.external_factors.opportunities[0].hasOwnProperty('factor') || !parsedData.external_factors.opportunities[0].hasOwnProperty('impact_score'))) ||
-                  (parsedData.external_factors.threats.length > 0 && (typeof parsedData.external_factors.threats[0] !== 'object' || !parsedData.external_factors.threats[0].hasOwnProperty('factor') || !parsedData.external_factors.threats[0].hasOwnProperty('impact_score')))
+            
+            // *** Robust Validation for NEW structure ***
+            if (!parsedData || typeof parsedData !== 'object' ||
+                !parsedData.internal_factors || typeof parsedData.internal_factors !== 'object' ||
+                !Array.isArray(parsedData.internal_factors.strengths) || !Array.isArray(parsedData.internal_factors.weaknesses) ||
+                !parsedData.external_factors || typeof parsedData.external_factors !== 'object' ||
+                !Array.isArray(parsedData.external_factors.opportunities) || !Array.isArray(parsedData.external_factors.threats) ||
+                // Check for the NEW DEEP ANALYSIS fields in the first factor (if it exists)
+                (parsedData.internal_factors.strengths.length > 0 && (
+                    typeof parsedData.internal_factors.strengths[0] !== 'object' || 
+                    !parsedData.internal_factors.strengths[0].hasOwnProperty('deep_analysis') ||
+                    !parsedData.internal_factors.strengths[0].hasOwnProperty('actionable_recommendation')
+                ))
                 )
-             {
-                  console.error("Validation Failed (Factor Analysis): Required fields missing or invalid structure.", parsedData);
-                  throw new Error(`AI response structure is incorrect or inconsistent (Factor Analysis). Check internal/external factors arrays and object structures. See console logs.`);
-             }
-             console.log(`Successfully parsed Factor Analysis JSON using ${MODEL_NAME}.`);
+            {
+                console.error("Validation Failed (DEEP Factor Analysis): Required fields or new deep_analysis structure missing.", parsedData);
+                throw new Error(`AI response structure is incorrect. Missing internal/external factors or the required 'deep_analysis' fields. See console logs.`);
+            }
+            console.log(`Successfully parsed DEEP Factor Analysis JSON using ${MODEL_NAME}.`);
 
         } catch (e) {
-            console.error(`Failed to parse/validate Factor Analysis JSON using ${MODEL_NAME}:`, data?.response, e);
-            throw new Error(`Invalid JSON received or validation failed (Factor Analysis): ${e.message}. See raw response in console.`);
+            console.error(`Failed to parse/validate DEEP Factor Analysis JSON using ${MODEL_NAME}:`, data?.response, e);
+            throw new Error(`Invalid JSON received or validation failed (DEEP Factor Analysis): ${e.message}. See raw response in console.`);
         }
 
-        // 4. Process AI Output & Apply Pareto
-        const allInternalFactors = [
-            ...(parsedData.internal_factors.strengths || []).map(f => ({ ...f, type: 'Internal', swot: 'Strength' })),
-            ...(parsedData.internal_factors.weaknesses || []).map(f => ({ ...f, type: 'Internal', swot: 'Weakness' }))
-        ];
-        const allExternalFactors = [
-             ...(parsedData.external_factors.opportunities || []).map(f => ({ ...f, type: 'External', swot: 'Opportunity' })),
-             ...(parsedData.external_factors.threats || []).map(f => ({ ...f, type: 'External', swot: 'Threat' }))
-        ];
-
-        // Ensure impact_score is a number for Pareto function
-        const sanitizeScore = (factor) => ({
-            ...factor,
-            impact_score: Number(factor.impact_score) || 0 // Default to 0 if not a number
-        });
-
-        const prioritizedInternal = applyParetoAnalysisJS(allInternalFactors.map(sanitizeScore));
-        const prioritizedExternal = applyParetoAnalysisJS(allExternalFactors.map(sanitizeScore));
-
-
-        // 5. Render Results
-        renderSP.renderFactorAnalysisPage(analysisResultContainer, {
-            external: prioritizedExternal,
-            internal: prioritizedInternal
-        });
+        // 4. Render Results (NO Pareto processing)
+        renderSP.renderFactorAnalysisPage(analysisResultContainer, parsedData); // Pass the full, rich data
 
     } catch (error) {
-        console.error(`Error in handleFactorAnalysis (LLM) using ${MODEL_NAME}:`, error);
+        console.error(`Error in handleFactorAnalysis (DEEP) using ${MODEL_NAME}:`, error);
         analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
         setLoading("generate", false);
     } finally {
-        // Ensure loading stops reliably
-         if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
+        if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
             setLoading("generate", false);
-         }
+        }
     }
 }
 
@@ -954,15 +934,21 @@ async function handleKpiAnalysis_KE() {
 
 async function handleMiscAnalysis_MSC() {
     const analysisResultContainer = dom.$("analysisResult");
-    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white mb-4">Compiling Final Report Sections...</h3><p class="text-white/80 mb-2">Generating summary, risks, governance, and conclusion based *only* on your provided document...</p></div>`; // Updated text
+    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8">
+                                            <div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div>
+                                            <h3 class="text-xl font-semibold text-white mb-4">Generating Comprehensive Business Analysis...</h3>
+                                            <p class="text-white/80 mb-2">This is a full front-to-back analysis and may take several minutes.</p>
+                                            <p id="analysisStatus" class="text-white/60 text-sm">Initializing...</p>
+                                            </div>`;
     setLoading("generate", true);
 
-    // Define URL and Model
+    const statusEl = dom.$("analysisStatus");
     const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
-    const MODEL_NAME = "llama3.1:latest"; // Consistent model
+    const MODEL_NAME = "llama3.1:latest";
 
     try {
         // 1. Gather Inputs
+        statusEl.textContent = "Reading and processing your document...";
         const useDoc = dom.$("docUpload").checked;
         let text = "";
         if (useDoc) {
@@ -975,140 +961,141 @@ async function handleMiscAnalysis_MSC() {
         }
 
         // Truncate if necessary
-        const MAX_CONTEXT_LENGTH = 15000; // Allow larger context for final summary
+        const MAX_CONTEXT_LENGTH = 15000;
         let truncatedNote = "";
         if (text.length > MAX_CONTEXT_LENGTH) {
             text = text.substring(0, MAX_CONTEXT_LENGTH);
-            truncatedNote = `(Note: Analysis based on the first ${MAX_CONTEXT_LENGTH} characters.)`;
-            console.warn(`Misc analysis context truncated.`);
+            truncatedNote = `(Note: Analysis based on the first ${MAX_CONTEXT_LENGTH} characters of the provided text.)`;
+            console.warn(`Comprehensive analysis context truncated.`);
         }
 
-        // 2. Construct ENHANCED Prompt
-        const prompt = `
-            You are a senior business strategist finalizing a strategic plan document. Analyze the provided document **based ONLY on the text itself** and compile the final key sections. ${truncatedNote}
-
-            **USER'S STRATEGIC DOCUMENT:**
-            \`\`\`
-            ${text}
-            \`\`\`
-
-            **DETAILED TASKS:**
-            Compile the final sections **strictly derived from the user's text**:
-            1.  **Executive Summary (\`executive_summary\`):** Write a comprehensive, multi-sentence summary covering the core problem/opportunity, strategic goal, key initiatives/strategies proposed, and expected outcomes **as described in the text**. Ensure it accurately reflects the document's main points.
-            2.  **Risk Assessment (\`risk_assessment\`):** Identify 3-4 major risks **mentioned or clearly implied in the text**. For each risk:
-                * \`risk\`: Description **from the text**.
-                * \`impact\`: Potential impact ("High", "Medium", "Low") **inferred ONLY from the text's description**.
-                * \`likelihood\`: Likelihood ("High", "Medium", "Low") **inferred ONLY from the text's description**.
-                * \`justification\`: Briefly explain (1 sentence) the reasoning for the impact/likelihood ratings **based ONLY on text evidence**.
-                * \`mitigation\`: Specific mitigation strategy **mentioned or logically derived ONLY from the text**.
-            3.  **Governance (\`governance\`):** Identify 3-4 key stakeholders or teams **mentioned in the text**. For each:
-                * \`stakeholder\`: Name of team/role **from the text**.
-                * \`responsibilities\`: List 2-3 specific responsibilities related to plan execution **explicitly stated or clearly implied in the text**.
-            4.  **Conclusion (\`conclusion\`):** Write a comprehensive concluding section summarizing the strategic importance, reinforcing key success factors **mentioned in the text**, and providing a forward-looking statement **based ONLY on the text's narrative**.
-            5.  **Self-Correction:** Rigorously check: Is EVERY detail (summary points, risks, justifications, mitigations, stakeholders, responsibilities, conclusion themes) **strictly derived ONLY from the user's text**? Are impact/likelihood justifications text-based? Is the JSON perfect? Fix all errors.
-
-            **ABSOLUTE CONSTRAINTS:**
-            - **CONTEXT IS KING:** Base **ALL** output **EXCLUSIVELY** on the provided "USER'S STRATEGIC DOCUMENT". **DO NOT** invent information.
-            - **NO GENERIC EXAMPLES:** Replace **ALL** placeholder text in the RETURN FORMAT with content generated **strictly from the user's input text**.
-            - **JSON FORMAT:** Adhere EXACTLY.
-
-            **RETURN FORMAT:**
-            Provide ONLY a valid JSON object. Replace ALL bracketed placeholders strictly based on the user's input text.
-            {
-              "executive_summary": "[Comprehensive summary derived ONLY from user text, covering problem/goal/strategy/outcome...]",
-              "risk_assessment": [ // 3-4 risks derived ONLY from text
-                {
-                  "risk": "[Risk description ONLY from text]",
-                  "impact": "[High/Medium/Low based ONLY on text]",
-                  "likelihood": "[High/Medium/Low based ONLY on text]",
-                  "justification": "[Reason for ratings based ONLY on text evidence]",
-                  "mitigation": "[Mitigation strategy ONLY from text]"
-                },
-                //...
-              ],
-              "governance": [ // 3-4 stakeholders derived ONLY from text
-                {
-                  "stakeholder": "[Stakeholder/Team Name ONLY from text]",
-                  "responsibilities": [
-                    "[Responsibility 1 ONLY from text]",
-                    "[Responsibility 2 ONLY from text]"
-                  ]
-                },
-                //...
-              ],
-              "conclusion": "[Comprehensive conclusion summarizing importance, success factors, and outlook, based ONLY on user text...]"
+        // 2. Define Helper for Parallel AI Calls
+        async function generateOllamaResponse(prompt, statusUpdate) {
+            statusEl.textContent = statusUpdate;
+            console.log(`Sending prompt for: ${statusUpdate}`);
+            const response = await fetch(OLLAMA_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    model: MODEL_NAME,
+                    prompt: prompt,
+                    stream: false,
+                    format: "json",
+                    options: { num_ctx: 32768 }
+                })
+            });
+            if (!response.ok) {
+                throw new Error(`Ollama API error for ${statusUpdate}: ${response.status} ${response.statusText}`);
             }
-        `;
-
-        // 3. Send Request to Ollama
-        console.log(`Sending ENHANCED Misc Sections prompt to ${MODEL_NAME}...`);
-        const response = await fetch(OLLAMA_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ model: MODEL_NAME, prompt: prompt, stream: false, format: "json", options: { num_ctx: 32768 } })
-        });
-
-        if (!response.ok) {
-            let errorBody = `API error ${response.status}`;
-            try { errorBody += `: ${await response.text()}`; } catch (e) {}
-            throw new Error(errorBody);
+            const data = await response.json();
+            try {
+                return JSON.parse(data.response);
+            } catch (e) {
+                console.error(`Failed to parse JSON for ${statusUpdate}:`, data.response, e);
+                throw new Error(`Invalid JSON received from AI for ${statusUpdate}.`);
+            }
         }
 
-        const data = await response.json();
-        let parsedData;
-        console.log('Raw AI Response (Misc - SP):', data.response); // Log raw response
-        try {
-            parsedData = JSON.parse(data.response);
-             // *** Refined Robust Validation ***
-             console.log('--- RAW AI JSON RESPONSE (Parsed - Enhanced Misc SP) ---');
-             console.log(JSON.stringify(parsedData, null, 2));
-             console.log('------------------------------------');
+        // 3. Define ALL 8 Prompts for Parallel Execution
+        // Each prompt is simpler and asks for *only one* piece of the puzzle.
 
-             if (!parsedData || typeof parsedData !== 'object' ||
-                 !parsedData.executive_summary || typeof parsedData.executive_summary !== 'string' || parsedData.executive_summary.includes("[") ||
-                 !Array.isArray(parsedData.risk_assessment) || parsedData.risk_assessment.length < 1 ||
-                 !Array.isArray(parsedData.governance) || parsedData.governance.length < 1 ||
-                 !parsedData.conclusion || typeof parsedData.conclusion !== 'string' || parsedData.conclusion.includes("[") ||
-                 // Check structure of first risk
-                 (parsedData.risk_assessment.length > 0 && (
-                     typeof parsedData.risk_assessment[0] !== 'object' ||
-                     !parsedData.risk_assessment[0].hasOwnProperty('risk') || parsedData.risk_assessment[0].risk.includes("[") ||
-                     !parsedData.risk_assessment[0].hasOwnProperty('impact') || !['High', 'Medium', 'Low'].includes(parsedData.risk_assessment[0].impact) ||
-                     !parsedData.risk_assessment[0].hasOwnProperty('likelihood') || !['High', 'Medium', 'Low'].includes(parsedData.risk_assessment[0].likelihood) ||
-                     !parsedData.risk_assessment[0].hasOwnProperty('justification') || parsedData.risk_assessment[0].justification.includes("[") || // Added justification check
-                     !parsedData.risk_assessment[0].hasOwnProperty('mitigation') || parsedData.risk_assessment[0].mitigation.includes("[")
-                 )) ||
-                  // Check structure of first governance item
-                  (parsedData.governance.length > 0 && (
-                      typeof parsedData.governance[0] !== 'object' ||
-                      !parsedData.governance[0].hasOwnProperty('stakeholder') || parsedData.governance[0].stakeholder.includes("[") ||
-                      !Array.isArray(parsedData.governance[0].responsibilities) || parsedData.governance[0].responsibilities.length < 1 ||
-                      (parsedData.governance[0].responsibilities.length > 0 && parsedData.governance[0].responsibilities[0].includes("["))
-                  ))
-                )
-             {
-                  console.error("Validation Failed (Enhanced Misc SP): Required fields missing, invalid structure, or placeholders detected.", parsedData);
-                  throw new Error(`AI response structure is incorrect, inconsistent, or contains placeholders (Enhanced Misc SP). Check all sections carefully. See console logs.`);
-             }
-             console.log(`Successfully parsed ENHANCED Misc Sections (SP) JSON using ${MODEL_NAME}.`);
+        const textContext = `**USER'S BUSINESS DOCUMENT:**\n\`\`\`\n${text}\n\`\`\`\n**ABSOLUTE CONSTRAINTS:** Base **ALL** output **EXCLUSIVELY** on the provided "USER'S BUSINESS DOCUMENT". **DO NOT** invent information. ${truncatedNote}`;
 
-        } catch (e) {
-            console.error(`Failed to parse/validate ENHANCED Misc Sections (SP) JSON using ${MODEL_NAME}:`, data?.response, e);
-            throw new Error(`Invalid JSON received or validation failed (Enhanced Misc SP): ${e.message}. See raw response in console.`);
+        const prompt_summary = `
+            ${textContext}
+            **TASK:** Write a comprehensive \`executive_summary\` covering the core problem/opportunity, strategic goal, key initiatives, and expected outcomes **as described in the text**.
+            **RETURN FORMAT:** Provide ONLY a valid JSON object: {"executive_summary": "..."}`;
+
+        const prompt_mission = `
+            ${textContext}
+            **TASK:** Extract the \`mission\`, \`vision\`, and 3-5 \`values\` **stated or implied in the text**.
+            **RETURN FORMAT:** Provide ONLY a valid JSON object: {"mission": "...", "vision": "...", "values": ["...", "..."]}`;
+
+        const prompt_internal = `
+            ${textContext}
+            **TASK:** Identify 4-6 internal \`strengths\` and 4-6 internal \`weaknesses\` **from the text**. For each, provide "factor", "description", and "impact_score" (1-10).
+            **RETURN FORMAT:** Provide ONLY a valid JSON object: {"strengths": [{"factor": "...", "description": "...", "impact_score": 8}, ...], "weaknesses": [{"factor": "...", "description": "...", "impact_score": 6}, ...]}`;
+
+        const prompt_external = `
+            ${textContext}
+            **TASK:** Identify 4-6 external \`opportunities\` and 4-6 external \`threats\` **from the text**. For each, provide "factor", "description", and "impact_score" (1-10).
+            **RETURN FORMAT:** Provide ONLY a valid JSON object: {"opportunities": [{"factor": "...", "description": "...", "impact_score": 9}, ...], "threats": [{"factor": "...", "description": "...", "impact_score": 7}, ...]}`;
+
+        const prompt_goals = `
+            ${textContext}
+            **TASK:** Identify 3-5 high-level \`strategic_goals\` **from the text**. For each goal, list 2-3 \`key_initiatives\` **from the text** to achieve it, including "initiative_name", "rationale", and "kpis".
+            **RETURN FORMAT:** Provide ONLY a valid JSON object: {"strategic_goals": [{"goal_name": "...", "key_initiatives": [{"initiative_name": "...", "rationale": "...", "kpis": ["..."]}, ...]}, ...]}`;
+        
+        const prompt_risks = `
+            ${textContext}
+            **TASK:** Identify 3-4 major \`risk_assessment\` items **from the text**. For each, provide "risk", "impact", "likelihood", "justification", and "mitigation".
+            **RETURN FORMAT:** Provide ONLY a valid JSON object: {"risk_assessment": [{"risk": "...", "impact": "High", "likelihood": "Medium", "justification": "...", "mitigation": "..."}, ...]}`;
+
+        const prompt_gov = `
+            ${textContext}
+            **TASK:** Identify 3-4 key \`governance\` stakeholders/teams **from the text**. For each, list their "stakeholder" name and "responsibilities".
+            **RETURN FORMAT:** Provide ONLY a valid JSON object: {"governance": [{"stakeholder": "...", "responsibilities": ["...", "..."]}, ...]}`;
+        
+        const prompt_conclusion = `
+            ${textContext}
+            **TASK:** Write a \`conclusion\` summarizing the strategic importance and forward-looking outlook **based ONLY on the text**.
+            **RETURN FORMAT:** Provide ONLY a valid JSON object: {"conclusion": "..."}`;
+
+        // 4. Run All Requests in Parallel
+        statusEl.textContent = "Generating all 8 analysis sections in parallel...";
+        const [
+            summaryData,
+            missionData,
+            internalData,
+            externalData,
+            goalsData,
+            risksData,
+            govData,
+            conclusionData
+        ] = await Promise.all([
+            generateOllamaResponse(prompt_summary, "Generating Executive Summary..."),
+            generateOllamaResponse(prompt_mission, "Defining Mission & Vision..."),
+            generateOllamaResponse(prompt_internal, "Analyzing Internal Factors..."),
+            generateOllamaResponse(prompt_external, "Analyzing External Factors..."),
+            generateOllamaResponse(prompt_goals, "Developing Strategic Goals..."),
+            generateOllamaResponse(prompt_risks, "Assessing Risks..."),
+            generateOllamaResponse(prompt_gov, "Defining Governance..."),
+            generateOllamaResponse(prompt_conclusion, "Writing Conclusion...")
+        ]);
+
+        // 5. Assemble the Final JSON Object
+        statusEl.textContent = "Assembling final report...";
+        const parsedData = {
+            executive_summary: summaryData.executive_summary,
+            mission_vision: missionData,
+            internal_factors: internalData, // This will be { strengths: [...], weaknesses: [...] }
+            external_factors: externalData, // This will be { opportunities: [...], threats: [...] }
+            strategic_goals: goalsData.strategic_goals,
+            risk_assessment: risksData.risk_assessment,
+            governance: govData.governance,
+            conclusion: conclusionData.conclusion
+        };
+        
+        // *** This validation is now much simpler, as we built the object ***
+        if (!parsedData.executive_summary || !parsedData.mission_vision.mission || !parsedData.internal_factors.strengths || !parsedData.external_factors.opportunities || !parsedData.strategic_goals) {
+                console.error("Validation Failed: One of the parallel AI calls returned an invalid structure.", parsedData);
+                throw new Error("Failed to generate one or more sections of the analysis. Check console for details.");
         }
 
-        // 4. Render Results
-        renderSP.renderMiscPage_MSC(analysisResultContainer, parsedData); // Use the updated renderer
+        console.log("Successfully assembled comprehensive analysis from 8 parallel calls.");
+
+        // 6. Render Results
+        statusEl.textContent = "Rendering comprehensive analysis...";
+        renderSP.renderMiscPage_MSC(analysisResultContainer, parsedData); // Call the renderer
 
     } catch (error) {
-        console.error(`Error in handleMiscAnalysis_MSC (Enhanced) using ${MODEL_NAME}:`, error);
+        console.error(`Error in handleMiscAnalysis_MSC (Comprehensive):`, error);
         analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
         setLoading("generate", false);
     } finally {
-        // Ensure loading stops reliably
-         if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
+        if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
             setLoading("generate", false);
-         }
+        }
     }
 }
 

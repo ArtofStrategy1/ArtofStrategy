@@ -230,8 +230,58 @@ async function extractTextFromFile(file) {
 }
 
 
+
+function parseCSV(csvText) {
+        const lines = csvText.trim().split("\n");
+        const header = lines[0].split(",").map((h) => h.trim());
+        const rows = [];
+        for (let i = 1; i < lines.length; i++) {
+            const values = lines[i].split(",").map((v) => v.trim());
+            if (values.length === header.length) {
+                const row = {};
+                for (let j = 0; j < header.length; j++) {
+                    const value = values[j];
+                    // Attempt to convert to number if possible
+                    const numValue = parseFloat(value);
+                    row[header[j]] = isNaN(numValue) ? value : numValue;
+                }
+                rows.push(row);
+            }
+        }
+        return { header, rows };
+}
+
+
+
+// Copy to clipboard function for examples
+function copyToClipboard(button, text) {
+    navigator.clipboard.writeText(text).then(() => {
+        const originalText = button.textContent;
+        button.textContent = 'Copied!';
+        button.classList.add('bg-green-500/20');
+        setTimeout(() => {
+            button.textContent = originalText;
+            button.classList.remove('bg-green-500/20');
+        }, 2000);
+    }).catch(() => {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        button.textContent = 'Copied!';
+        setTimeout(() => button.textContent = 'Copy', 2000);
+    });
+}
+
+
 export {
     handleSaveAsPdf,
     handleSaveAsDocx,
     extractTextFromFile,
+    parseCSV,
+    copyToClipboard
 }

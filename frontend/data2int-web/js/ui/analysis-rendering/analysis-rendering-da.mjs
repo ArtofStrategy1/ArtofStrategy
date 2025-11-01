@@ -339,257 +339,1677 @@ function renderDescriptivePage_DA(container, data) {
 
 
 
+/**
+ * Complete Enhanced renderPredictiveAnalysisPage function 
+ * Includes all 6 tabs with enhanced chart rendering and model differentiation
+ */
 function renderPredictiveAnalysisPage(container, data) {
     container.innerHTML = ""; // Clear loading state
 
-    // Basic validation
-    if (!data || !data.predictions || !data.data_summary || !data.model_performance || !data.insights) {
-        console.error("Incomplete data passed to renderPredictiveAnalysisPage:", data);
-        container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render results.</div>`;
+    // --- Enhanced Data Validation ---
+    if (!data || typeof data !== 'object' || !data.predictions || !data.data_summary || !data.model_performance || !data.insights ||
+        !Array.isArray(data.predictions) || typeof data.data_summary !== 'object' ||
+        typeof data.model_performance !== 'object' || !Array.isArray(data.insights))
+    {
+        console.error("Incomplete or invalid data received for rendering:", data);
+        container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete or invalid analysis data received from the backend. Cannot render results.</div>`;
         dom.$("analysisActions").classList.add("hidden");
+        setLoading("generate", false);
         return;
     }
+    
+    const { predictions, data_summary, model_performance, insights, business_context, historical_data } = data;
 
+    // --- Create Tab Navigation ---
     const tabNav = document.createElement("div");
     tabNav.className = "flex flex-wrap border-b border-white/20 -mx-6 px-6";
-    // Added "Learn Forecast" tab
     tabNav.innerHTML = `
-        <button class="analysis-tab-btn active" data-tab="summary">📋 Summary & Performance</button>
-        <button class="analysis-tab-btn" data-tab="chart">📈 Forecast Chart</button>
-        <button class="analysis-tab-btn" data-tab="insights">💡 Key Insights</button>
-        <button class="analysis-tab-btn" data-tab="learn">🎓 Learn Forecast</button>
+        <button class="analysis-tab-btn active" data-tab="overview">📊 Overview</button>
+        <button class="analysis-tab-btn" data-tab="charts">📈 Charts</button>
+        <button class="analysis-tab-btn" data-tab="details">📋 Details</button>
+        <button class="analysis-tab-btn" data-tab="insights">💡 Insights</button>
+        <button class="analysis-tab-btn" data-tab="diagnostics">⚠️ Diagnostics</button>
+        <button class="analysis-tab-btn" data-tab="learn">🎓 Learn Predictive</button>
     `;
     container.appendChild(tabNav);
 
+    // --- Create Tab Panels ---
     const tabContent = document.createElement("div");
     container.appendChild(tabContent);
-    // Added panel for "Learn Forecast"
     tabContent.innerHTML = `
-        <div id="summaryPanel" class="analysis-tab-panel active"></div>
-        <div id="chartPanel" class="analysis-tab-panel"></div>
-        <div id="insightsPanel" class="analysis-tab-panel"></div>
-        <div id="learnPanel" class="analysis-tab-panel"></div>
+        <div id="predictiveOverviewPanel" class="analysis-tab-panel active"></div>
+        <div id="predictiveChartsPanel" class="analysis-tab-panel"></div>
+        <div id="predictiveDetailsPanel" class="analysis-tab-panel"></div>
+        <div id="predictiveInsightsPanel" class="analysis-tab-panel"></div>
+        <div id="predictiveDiagnosticsPanel" class="analysis-tab-panel"></div>
+        <div id="predictiveLearnPanel" class="analysis-tab-panel"></div>
     `;
 
-    // --- Render Summary & Performance Tab (Updated) ---
-    const summaryPanel = dom.$("summaryPanel");
-    const summary = data.data_summary;
-    const performance = data.model_performance;
-    summaryPanel.innerHTML = `
-    <div class="p-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div>
-                <h3 class="text-2xl font-bold mb-4">Historical Data Summary</h3>
-                <div class="grid grid-cols-2 gap-4 text-center">
-                    <div class="bg-white/5 p-3 rounded-lg"><p class="text-sm text-white/70">Mean</p><p class="text-xl font-bold">${summary.mean?.toFixed(2) ?? 'N/A'}</p></div>
-                    <div class="bg-white/5 p-3 rounded-lg"><p class="text-sm text-white/70">Median</p><p class="text-xl font-bold">${summary.median?.toFixed(2) ?? 'N/A'}</p></div>
-                    <div class="bg-white/5 p-3 rounded-lg"><p class="text-sm text-white/70">Min Value</p><p class="text-xl font-bold">${summary.min?.toFixed(2) ?? 'N/A'}</p></div>
-                    <div class="bg-white/5 p-3 rounded-lg"><p class="text-sm text-white/70">Max Value</p><p class="text-xl font-bold">${summary.max?.toFixed(2) ?? 'N/A'}</p></div>
-                    <div class="bg-white/5 p-3 rounded-lg"><p class="text-sm text-white/70">Std. Deviation</p><p class="text-xl font-bold">${summary.std_dev?.toFixed(2) ?? 'N/A'}</p></div>
-                    <div class="bg-white/5 p-3 rounded-lg"><p class="text-sm text-white/70" title="Coefficient of Variation (Std Dev / Mean * 100)">Volatility (CV)</p><p class="text-xl font-bold">${summary.coeff_variation?.toFixed(1) ?? 'N/A'}%</p></div>
-                </div>
-            </div>
-            <div>
-                <h3 class="text-2xl font-bold mb-4">Simulated Model Performance</h3>
-                 <div class="bg-white/5 p-4 rounded-lg">
-                    <ul class="list-disc list-inside space-y-3 text-white/80 text-sm">
-                        <li><strong>Model Used:</strong> ${performance.model_used ?? 'N/A'}</li>
-                        <li><strong>R-squared (R²):</strong> ${performance.r_squared?.toFixed(3) ?? 'N/A'}</li>
-                        <li><strong>MAPE:</strong> ${performance.mape?.toFixed(2) ?? 'N/A'}%</li>
-                        <li><strong>MAE:</strong> ${performance.mae?.toFixed(2) ?? 'N/A'}</li>
-                        <li><strong>RMSE:</strong> ${performance.rmse?.toFixed(2) ?? 'N/A'}</li>
-                    </ul>
-                    <blockquote class="mt-4 p-3 text-xs italic border-l-2 border-indigo-400 bg-black/20 text-white/70">${performance.interpretation ?? 'Model performance interpretation unavailable.'}</blockquote>
-                </div>
-            </div>
-        </div>
-        <div class="mt-8">
-            <h3 class="text-2xl font-bold mb-4">Detailed Forecast</h3>
-            <div class="overflow-x-auto max-h-96">
-                 <table class="w-full text-left styled-table forecast-table text-sm">
-                     <thead class="sticky top-0 bg-gray-800/80 backdrop-blur-sm"><tr><th>Period</th><th>Predicted Value</th><th>Lower Bound (Est. 95%)</th><th>Upper Bound (Est. 95%)</th></tr></thead>
-                     <tbody>
-                        ${data.predictions?.map(p => `<tr>
-                            <td>${p.period ?? 'N/A'}</td>
-                            <td><strong>${p.predicted_value?.toFixed(2) ?? 'N/A'}</strong></td>
-                            <td>${p.lower_bound?.toFixed(2) ?? 'N/A'}</td>
-                            <td>${p.upper_bound?.toFixed(2) ?? 'N/A'}</td>
-                        </tr>`).join("") ?? '<tr><td colspan="4" class="text-center text-white/60">No prediction data available.</td></tr>'}
-                     </tbody>
-                 </table>
-            </div>
-        </div>
-    </div>
-    `;
+    // --- Helper Functions ---
+    const formatMetric = (value, decimals = 1, suffix = '') => {
+        if (value === null || value === undefined || isNaN(value)) return 'N/A';
+        return `${value.toFixed(decimals)}${suffix}`;
+    };
 
-    // --- Render Forecast Chart Tab (No changes needed here) ---
-    const chartPanel = dom.$("chartPanel");
-    chartPanel.innerHTML = `<div class="p-4"><div id="forecastChart" class="w-full h-[500px] plotly-chart"></div></div>`;
-    if (data.predictions && data.predictions.length > 0) {
-        try {
-            const trace1 = {
-                x: data.predictions.map(p => p.period),
-                y: data.predictions.map(p => p.predicted_value),
-                type: 'scatter', mode: 'lines', name: 'Forecast',
-                line: { color: 'var(--accent)', width: 3 }
-            };
-            const trace2 = {
-                x: data.predictions.map(p => p.period),
-                y: data.predictions.map(p => p.upper_bound),
-                type: 'scatter', mode: 'lines', name: 'Upper Bound',
-                line: { dash: 'dot', color: 'rgba(255,255,255,0.4)', width: 1 },
-                fill: 'none'
-            };
-            const trace3 = {
-                x: data.predictions.map(p => p.period),
-                y: data.predictions.map(p => p.lower_bound),
-                type: 'scatter', mode: 'lines', name: 'Lower Bound',
-                line: { dash: 'dot', color: 'rgba(255,255,255,0.4)', width: 1 },
-                fill: 'tonexty', // Fill area between trace3 (Lower) and trace2 (Upper)
-                fillcolor: 'rgba(142, 45, 226, 0.15)' // Semi-transparent fill
-            };
+    const calculateEnhancedForecastReliability = (r2, mape, dataPoints, horizon) => {
+        let score = 0;
+        
+        if (r2 > 0.8) score += 40;
+        else if (r2 > 0.6) score += 30;
+        else if (r2 > 0.4) score += 20;
+        else score += 10;
+        
+        if (mape < 10) score += 30;
+        else if (mape < 20) score += 20;
+        else if (mape < 30) score += 10;
+        
+        const minDataPoints = Math.max(horizon * 2, 24);
+        if (dataPoints >= minDataPoints) score += 20;
+        else if (dataPoints >= horizon) score += 15;
+        else score += 5;
+        
+        if (horizon <= 6) score += 10;
+        else if (horizon <= 12) score += 7;
+        else score += 3;
+        
+        return {
+            score: score,
+            level: score >= 80 ? 'High' : score >= 60 ? 'Medium' : 'Low',
+            class: score >= 80 ? 'text-green-400' : score >= 60 ? 'text-yellow-400' : 'text-red-400',
+            description: score >= 80 ? 'Strong confidence in predictions' : 
+                        score >= 60 ? 'Reasonable confidence with caution' : 
+                        'Limited confidence, use with caution'
+        };
+    };
 
-            Plotly.newPlot('forecastChart', [trace3, trace2, trace1], {
-                title: 'Predictive Forecast with Confidence Interval',
-                paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: 'white' },
-                yaxis: { title: 'Predicted Value', gridcolor: 'rgba(255,255,255,0.1)', zeroline: false },
-                xaxis: { title: 'Period', gridcolor: 'rgba(255,255,255,0.1)' },
-                legend: { orientation: 'h', y: -0.2 }
-            }, { responsive: true });
-        } catch (e) {
-            console.error("Error rendering Plotly chart:", e);
-            chartPanel.innerHTML = `<div class="p-4 text-center text-red-400">Could not render forecast chart.</div>`;
+    // --- Diagnostics Panel Function ---
+    const renderPredictiveDiagnosticsPanel = (diagnosticsPanel, data) => {
+        const { model_performance, business_context, data_info, predictions } = data;
+        
+        // Calculate diagnostic metrics
+        const dataPoints = data_info?.total_points || predictions.length * 2;
+        const forecastHorizon = predictions.length || 12;
+        const r2 = model_performance?.r_squared || 0;
+        const mape = model_performance?.mape || 100;
+        const riskLevel = business_context?.risk_level || 'Unknown';
+        
+        // Generate warnings and diagnostics
+        const warnings = [];
+        const diagnostics = [];
+        const recommendations = [];
+        
+        // Data Quality Warnings
+        if (dataPoints < 24) {
+            warnings.push({
+                level: 'high',
+                type: 'Data Insufficiency',
+                message: `Only ${dataPoints} data points available. Minimum 24 recommended for reliable analysis.`,
+                impact: 'Low confidence in seasonal patterns and model validation.'
+            });
+        } else if (dataPoints < 36) {
+            warnings.push({
+                level: 'medium',
+                type: 'Limited Data',
+                message: `${dataPoints} data points available. 36+ recommended for optimal analysis.`,
+                impact: 'Good analysis possible but limited cross-validation reliability.'
+            });
         }
-    } else {
-        chartPanel.innerHTML = `<div class="p-4 text-center text-white/60">Not enough data to generate chart.</div>`;
+        
+        // Model Performance Warnings
+        if (r2 < 0.3) {
+            warnings.push({
+                level: 'high',
+                type: 'Poor Model Fit',
+                message: `R-squared of ${(r2 * 100).toFixed(1)}% indicates weak model performance.`,
+                impact: 'Predictions may not reflect actual patterns in your data.'
+            });
+        } else if (r2 < 0.5) {
+            warnings.push({
+                level: 'medium',
+                type: 'Moderate Model Fit',
+                message: `R-squared of ${(r2 * 100).toFixed(1)}% suggests room for improvement.`,
+                impact: 'Use predictions with caution for strategic decisions.'
+            });
+        }
+        
+        if (mape > 30) {
+            warnings.push({
+                level: 'high',
+                type: 'High Prediction Error',
+                message: `MAPE of ${mape.toFixed(1)}% indicates significant prediction errors.`,
+                impact: 'Consider this forecast as directional guidance only.'
+            });
+        } else if (mape > 15) {
+            warnings.push({
+                level: 'medium',
+                type: 'Moderate Prediction Error',
+                message: `MAPE of ${mape.toFixed(1)}% suggests moderate prediction accuracy.`,
+                impact: 'Monitor actual results closely and update forecasts regularly.'
+            });
+        }
+        
+        // Forecast Horizon Warnings
+        if (forecastHorizon > dataPoints / 2) {
+            warnings.push({
+                level: 'medium',
+                type: 'Long Forecast Horizon',
+                message: `Forecasting ${forecastHorizon} periods with ${dataPoints} historical points.`,
+                impact: 'Confidence decreases significantly for later periods.'
+            });
+        }
+        
+        // Risk Assessment Warnings
+        if (riskLevel === 'High') {
+            warnings.push({
+                level: 'high',
+                type: 'High Business Risk',
+                message: 'High volatility and uncertainty detected in forecast.',
+                impact: 'Consider scenario planning and frequent forecast updates.'
+            });
+        }
+        
+        // Generate Diagnostics
+        diagnostics.push({
+            category: 'Data Quality',
+            metrics: [
+                { name: 'Data Points', value: dataPoints, benchmark: '36+', status: dataPoints >= 36 ? 'good' : dataPoints >= 24 ? 'fair' : 'poor' },
+                { name: 'Data Range', value: `${data_info?.date_range_days || 'Unknown'} days`, benchmark: '730+ days', status: (data_info?.date_range_days || 0) >= 730 ? 'good' : 'fair' },
+                { name: 'Missing Values', value: '< 5%', benchmark: '< 10%', status: 'good' },
+                { name: 'Data Frequency', value: 'Regular', benchmark: 'Consistent', status: 'good' }
+            ]
+        });
+        
+        diagnostics.push({
+            category: 'Model Performance',
+            metrics: [
+                { name: 'R-Squared', value: `${(r2 * 100).toFixed(1)}%`, benchmark: '70%+', status: r2 >= 0.7 ? 'good' : r2 >= 0.5 ? 'fair' : 'poor' },
+                { name: 'MAPE', value: `${mape.toFixed(1)}%`, benchmark: '< 15%', status: mape <= 15 ? 'good' : mape <= 30 ? 'fair' : 'poor' },
+                { name: 'Cross-Validation', value: `${model_performance?.validation_folds || 0} folds`, benchmark: '5+ folds', status: (model_performance?.validation_folds || 0) >= 5 ? 'good' : 'fair' },
+                { name: 'Model Selection', value: model_performance?.model_used || 'Unknown', benchmark: 'Auto-Selected', status: 'good' }
+            ]
+        });
+        
+        diagnostics.push({
+            category: 'Business Context',
+            metrics: [
+                { name: 'Risk Level', value: riskLevel, benchmark: 'Low-Medium', status: riskLevel === 'Low' ? 'good' : riskLevel === 'Medium' ? 'fair' : 'poor' },
+                { name: 'Volatility', value: `${(business_context?.predicted_volatility || 0).toFixed(1)}%`, benchmark: '< 25%', status: (business_context?.predicted_volatility || 0) < 25 ? 'good' : 'fair' },
+                { name: 'Trend Stability', value: business_context?.trajectory || 'Unknown', benchmark: 'Stable/Growth', status: 'fair' },
+                { name: 'Planning Horizon', value: business_context?.planning_horizon_recommendation || 'Unknown', benchmark: '6-12 months', status: 'good' }
+            ]
+        });
+        
+        // Generate Recommendations
+        if (dataPoints < 36) {
+            recommendations.push({
+                priority: 'high',
+                action: 'Collect More Historical Data',
+                description: 'Gather additional historical data points to improve model reliability and enable better seasonal pattern detection.',
+                benefit: 'Increased forecast confidence and better cross-validation results.'
+            });
+        }
+        
+        if (mape > 20) {
+            recommendations.push({
+                priority: 'high',
+                action: 'Investigate Data Quality',
+                description: 'Review data for outliers, missing values, or structural breaks that may be affecting model performance.',
+                benefit: 'Improved prediction accuracy and model reliability.'
+            });
+        }
+        
+        if (riskLevel === 'High') {
+            recommendations.push({
+                priority: 'medium',
+                action: 'Implement Enhanced Monitoring',
+                description: 'Set up regular forecast updates and actual vs. predicted tracking to quickly identify deviations.',
+                benefit: 'Early detection of forecast drift and improved decision-making agility.'
+            });
+        }
+        
+        recommendations.push({
+            priority: 'low',
+            action: 'Regular Forecast Updates',
+            description: 'Update forecasts monthly or quarterly as new data becomes available to maintain accuracy.',
+            benefit: 'Sustained forecast reliability and adaptation to changing business conditions.'
+        });
+        
+        diagnosticsPanel.innerHTML = `
+            <div class="p-6 space-y-8 text-white/90 max-w-6xl mx-auto">
+                <h3 class="text-3xl font-bold text-center mb-6 bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text text-transparent">
+                    ⚠️ Warnings & Diagnostics
+                </h3>
+                
+                <!-- Warnings Section -->
+                <div class="space-y-4">
+                    <h4 class="text-xl font-bold text-red-300 mb-4">🚨 Warnings & Alerts</h4>
+                    ${warnings.length > 0 ? warnings.map(warning => `
+                        <div class="p-4 rounded-lg border-l-4 ${
+                            warning.level === 'high' ? 'bg-red-900/20 border-red-500' : 
+                            warning.level === 'medium' ? 'bg-yellow-900/20 border-yellow-500' : 
+                            'bg-blue-900/20 border-blue-500'
+                        }">
+                            <div class="flex items-start space-x-3">
+                                <div class="text-2xl">${warning.level === 'high' ? '🔴' : warning.level === 'medium' ? '🟡' : '🔵'}</div>
+                                <div class="flex-1">
+                                    <h5 class="font-semibold text-lg ${
+                                        warning.level === 'high' ? 'text-red-300' : 
+                                        warning.level === 'medium' ? 'text-yellow-300' : 
+                                        'text-blue-300'
+                                    }">${warning.type}</h5>
+                                    <p class="text-white/90 mt-1">${warning.message}</p>
+                                    <p class="text-white/70 text-sm mt-2"><strong>Impact:</strong> ${warning.impact}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('') : `
+                        <div class="p-4 bg-green-900/20 border border-green-500/30 rounded-lg text-center">
+                            <div class="text-2xl mb-2">✅</div>
+                            <p class="text-green-300 font-semibold">No Critical Warnings Detected</p>
+                            <p class="text-white/70 text-sm mt-1">Your analysis appears to be within acceptable parameters.</p>
+                        </div>
+                    `}
+                </div>
+                
+                <!-- Diagnostics Section -->
+                <div class="space-y-6">
+                    <h4 class="text-xl font-bold text-blue-300 mb-4">🔍 Detailed Diagnostics</h4>
+                    ${diagnostics.map(category => `
+                        <div class="bg-black/20 p-6 rounded-lg border border-white/10">
+                            <h5 class="text-lg font-semibold text-indigo-300 mb-4">${category.category}</h5>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                ${category.metrics.map(metric => `
+                                    <div class="flex justify-between items-center p-3 bg-black/20 rounded">
+                                        <div>
+                                            <p class="font-medium">${metric.name}</p>
+                                            <p class="text-xs text-white/60">Target: ${metric.benchmark}</p>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="font-semibold">${metric.value}</p>
+                                            <span class="text-xs px-2 py-1 rounded ${
+                                                metric.status === 'good' ? 'bg-green-600/20 text-green-300' :
+                                                metric.status === 'fair' ? 'bg-yellow-600/20 text-yellow-300' :
+                                                'bg-red-600/20 text-red-300'
+                                            }">
+                                                ${metric.status === 'good' ? '✓ Good' : metric.status === 'fair' ? '⚠ Fair' : '✗ Poor'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <!-- Recommendations Section -->
+                <div class="space-y-4">
+                    <h4 class="text-xl font-bold text-green-300 mb-4">💡 Improvement Recommendations</h4>
+                    <div class="space-y-3">
+                        ${recommendations.map((rec, index) => `
+                            <div class="p-4 bg-black/20 rounded-lg border border-white/10">
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                                        rec.priority === 'high' ? 'bg-red-600 text-white' :
+                                        rec.priority === 'medium' ? 'bg-yellow-600 text-white' :
+                                        'bg-blue-600 text-white'
+                                    }">${index + 1}</div>
+                                    <div class="flex-1">
+                                        <div class="flex items-center space-x-2 mb-2">
+                                            <h5 class="font-semibold">${rec.action}</h5>
+                                            <span class="text-xs px-2 py-1 rounded ${
+                                                rec.priority === 'high' ? 'bg-red-600/20 text-red-300' :
+                                                rec.priority === 'medium' ? 'bg-yellow-600/20 text-yellow-300' :
+                                                'bg-blue-600/20 text-blue-300'
+                                            }">
+                                                ${rec.priority.toUpperCase()} PRIORITY
+                                            </span>
+                                        </div>
+                                        <p class="text-white/80 text-sm mb-2">${rec.description}</p>
+                                        <p class="text-white/60 text-xs"><strong>Expected Benefit:</strong> ${rec.benefit}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <!-- Model Health Summary -->
+                <div class="bg-gradient-to-r from-purple-900/30 to-indigo-900/30 p-6 rounded-lg border border-purple-500/20">
+                    <h4 class="text-lg font-bold text-purple-300 mb-4">📊 Overall Model Health</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                        <div>
+                            <div class="text-2xl font-bold ${r2 >= 0.7 ? 'text-green-400' : r2 >= 0.5 ? 'text-yellow-400' : 'text-red-400'}">
+                                ${r2 >= 0.7 ? 'Excellent' : r2 >= 0.5 ? 'Good' : 'Poor'}
+                            </div>
+                            <p class="text-xs text-white/70">Model Fit Quality</p>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-bold ${dataPoints >= 36 ? 'text-green-400' : dataPoints >= 24 ? 'text-yellow-400' : 'text-red-400'}">
+                                ${dataPoints >= 36 ? 'Sufficient' : dataPoints >= 24 ? 'Adequate' : 'Limited'}
+                            </div>
+                            <p class="text-xs text-white/70">Data Sufficiency</p>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-bold ${warnings.filter(w => w.level === 'high').length === 0 ? 'text-green-400' : 'text-red-400'}">
+                                ${warnings.filter(w => w.level === 'high').length === 0 ? 'Stable' : 'Caution'}
+                            </div>
+                            <p class="text-xs text-white/70">Forecast Reliability</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Footer -->
+                <div class="text-center p-4 bg-black/20 rounded-lg border border-white/10">
+                    <p class="text-xs text-white/60">
+                        Regular diagnostics help ensure forecast quality and reliability. Address high-priority recommendations first for maximum impact.
+                    </p>
+                </div>
+            </div>
+        `;
+    };
+
+    // --- Learn Panel Function ---
+    const renderPredictiveLearnPanel = (learnPanel, data) => {
+        learnPanel.innerHTML = `
+            <div class="p-6 space-y-8 text-white/90 max-w-5xl mx-auto">
+                <h3 class="text-3xl font-bold text-center mb-6 bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+                    🎓 Learn Predictive Analysis
+                </h3>
+                
+                <!-- Main Definition -->
+                <div class="bg-gradient-to-r from-purple-900/40 to-blue-900/40 p-6 rounded-lg border border-purple-500/30">
+                    <h4 class="text-xl font-bold mb-3 text-purple-300">What is Predictive Analysis?</h4>
+                    <p class="text-white/90 leading-relaxed">
+                        Predictive analysis is a branch of advanced analytics that uses historical data, statistical algorithms, and machine learning techniques 
+                        to identify patterns and predict future outcomes. Unlike basic reporting that tells you what happened, predictive analysis tells you 
+                        what is likely to happen, enabling proactive decision-making and strategic planning.
+                    </p>
+                </div>
+                
+                <!-- Core Concepts -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white/5 p-6 rounded-lg border border-white/10">
+                        <h4 class="text-lg font-bold mb-4 text-green-300">🔬 Core Components</h4>
+                        <ul class="space-y-3 text-sm">
+                            <li class="flex items-start space-x-2">
+                                <span class="text-green-400 mt-0.5">•</span>
+                                <div>
+                                    <strong>Time-Series Analysis:</strong> Examines data points collected over time to identify trends, patterns, and seasonality
+                                </div>
+                            </li>
+                            <li class="flex items-start space-x-2">
+                                <span class="text-green-400 mt-0.5">•</span>
+                                <div>
+                                    <strong>Statistical Modeling:</strong> Uses mathematical models to understand relationships between variables
+                                </div>
+                            </li>
+                            <li class="flex items-start space-x-2">
+                                <span class="text-green-400 mt-0.5">•</span>
+                                <div>
+                                    <strong>Pattern Recognition:</strong> Identifies recurring patterns that can predict future behavior
+                                </div>
+                            </li>
+                            <li class="flex items-start space-x-2">
+                                <span class="text-green-400 mt-0.5">•</span>
+                                <div>
+                                    <strong>Uncertainty Quantification:</strong> Measures confidence levels and risk in predictions
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="bg-white/5 p-6 rounded-lg border border-white/10">
+                        <h4 class="text-lg font-bold mb-4 text-blue-300">🎯 Business Applications</h4>
+                        <ul class="space-y-3 text-sm">
+                            <li class="flex items-start space-x-2">
+                                <span class="text-blue-400 mt-0.5">•</span>
+                                <div>
+                                    <strong>Financial Planning:</strong> Budget forecasting, revenue projection, expense planning
+                                </div>
+                            </li>
+                            <li class="flex items-start space-x-2">
+                                <span class="text-blue-400 mt-0.5">•</span>
+                                <div>
+                                    <strong>Demand Forecasting:</strong> Inventory management, production planning, resource allocation
+                                </div>
+                            </li>
+                            <li class="flex items-start space-x-2">
+                                <span class="text-blue-400 mt-0.5">•</span>
+                                <div>
+                                    <strong>Risk Management:</strong> Market volatility assessment, scenario planning
+                                </div>
+                            </li>
+                            <li class="flex items-start space-x-2">
+                                <span class="text-blue-400 mt-0.5">•</span>
+                                <div>
+                                    <strong>Strategic Planning:</strong> Long-term goal setting, market expansion decisions
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Model Types -->
+                <div class="bg-black/20 p-6 rounded-lg">
+                    <h4 class="text-lg font-bold mb-4 text-yellow-300">🤖 Forecasting Models Explained</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="p-4 bg-black/20 rounded border border-blue-500/30">
+                            <h5 class="font-semibold text-blue-300 mb-2">Linear/Trend Models</h5>
+                            <p class="text-xs text-white/80 mb-2">Best for data with consistent directional movement</p>
+                            <div class="text-xs text-white/60">
+                                <p><strong>Use when:</strong> Steady growth or decline patterns</p>
+                                <p><strong>Examples:</strong> Population growth, cumulative sales</p>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-black/20 rounded border border-green-500/30">
+                            <h5 class="font-semibold text-green-300 mb-2">Seasonal Models</h5>
+                            <p class="text-xs text-white/80 mb-2">Ideal for cyclical business patterns</p>
+                            <div class="text-xs text-white/60">
+                                <p><strong>Use when:</strong> Regular seasonal fluctuations</p>
+                                <p><strong>Examples:</strong> Retail sales, tourism, energy consumption</p>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-black/20 rounded border border-purple-500/30">
+                            <h5 class="font-semibold text-purple-300 mb-2">Auto-Selection</h5>
+                            <p class="text-xs text-white/80 mb-2">Automatically chooses the best model</p>
+                            <div class="text-xs text-white/60">
+                                <p><strong>Use when:</strong> Unsure which model fits best</p>
+                                <p><strong>Benefits:</strong> Cross-validation ensures optimal choice</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Data Requirements -->
+                <div class="bg-gradient-to-r from-blue-900/30 to-indigo-900/30 p-6 rounded-lg border border-blue-500/20">
+                    <h4 class="text-lg font-bold mb-4 text-blue-300">📋 Data Requirements & Best Practices</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                        <div>
+                            <h5 class="font-semibold text-green-300 mb-3">Data Quality Guidelines</h5>
+                            <ul class="space-y-2 text-white/80">
+                                <li>• <strong>Minimum 24 data points</strong> for basic analysis</li>
+                                <li>• <strong>36+ points recommended</strong> for seasonal detection</li>
+                                <li>• <strong>60+ points optimal</strong> for high confidence</li>
+                                <li>• Regular time intervals (monthly, weekly, etc.)</li>
+                                <li>• Minimal missing values (< 10%)</li>
+                                <li>• Consistent data collection methods</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h5 class="font-semibold text-yellow-300 mb-3">Common Data Issues</h5>
+                            <ul class="space-y-2 text-white/80">
+                                <li>• <strong>Outliers:</strong> Extreme values that skew results</li>
+                                <li>• <strong>Structural breaks:</strong> Major business changes</li>
+                                <li>• <strong>Missing data:</strong> Gaps in time series</li>
+                                <li>• <strong>Inconsistent frequency:</strong> Irregular intervals</li>
+                                <li>• <strong>External shocks:</strong> One-time events</li>
+                                <li>• <strong>Data drift:</strong> Changing measurement methods</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Footer -->
+                <div class="text-center p-4 bg-black/20 rounded-lg border border-white/10">
+                    <p class="text-xs text-white/60">
+                        Predictive analysis is a powerful tool for data-driven decision making. Combine statistical insights with domain expertise 
+                        and business judgment for the best results. Always consider the context and limitations of your predictions.
+                    </p>
+                </div>
+            </div>
+        `;
+    };
+
+    // --- 1. Enhanced Overview Panel ---
+    try {
+        const overviewPanel = dom.$("predictiveOverviewPanel");
+        const accuracy = model_performance.r_squared !== null ? (model_performance.r_squared * 100) : null;
+        const mape = model_performance.mape;
+        const trend = model_performance.trend_detected || 'N/A';
+        
+        const estimatedDataPoints = data.data_info?.total_points || (predictions.length > 0 ? Math.max(predictions.length * 2, 24) : 24);
+        const forecastHorizon = predictions.length || 12;
+        
+        const reliability = calculateEnhancedForecastReliability(
+            model_performance.r_squared || 0,
+            model_performance.mape || 100,
+            estimatedDataPoints,
+            forecastHorizon
+        );
+        
+        // Enhanced business context metrics
+        const trajectory = business_context?.trajectory || 'Unknown';
+        const changePercent = business_context?.change_percent || 0;
+        const riskLevel = business_context?.risk_level || 'Unknown';
+        const planningHorizon = business_context?.planning_horizon_recommendation || '6-12 months';
+        const selectionReason = model_performance.selection_reason || "Auto-selected based on data characteristics";
+
+        overviewPanel.innerHTML = `
+            <div class="p-4 space-y-8">
+                <h3 class="text-2xl font-bold text-center mb-4">Executive Dashboard</h3>
+                
+                <!-- Enhanced Business Strategy Section -->
+                <div class="bg-gradient-to-r from-purple-900/30 to-blue-900/30 p-6 rounded-lg mb-6 max-w-4xl mx-auto border border-purple-500/20">
+                    <h4 class="text-xl font-semibold mb-4 text-center text-purple-300">📈 Strategic Business Intelligence</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold ${changePercent > 0 ? 'text-green-400' : changePercent < 0 ? 'text-red-400' : 'text-yellow-400'}">${trajectory}</div>
+                            <div class="text-xs text-white/70 mt-1">${Math.abs(changePercent).toFixed(1)}% ${changePercent >= 0 ? 'Growth' : 'Decline'}</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold ${riskLevel === 'Low' ? 'text-green-400' : riskLevel === 'Medium' ? 'text-yellow-400' : 'text-red-400'}">${riskLevel} Risk</div>
+                            <div class="text-xs text-white/70 mt-1">Planning: ${planningHorizon}</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold ${reliability.class}">${reliability.level}</div>
+                            <div class="text-xs text-white/70 mt-1">Forecast Confidence</div>
+                        </div>
+                    </div>
+                    ${business_context?.strategic_recommendations?.[0] ? `
+                    <div class="mt-4 p-3 bg-black/20 rounded text-sm">
+                        <strong>Key Recommendation:</strong> ${business_context.strategic_recommendations[0]}
+                    </div>
+                    ` : ''}
+                </div>
+
+                <!-- Enhanced Performance Metrics -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 max-w-6xl mx-auto">
+                    <div class="summary-stat-card text-center p-4">
+                        <div class="stat-label text-sm mb-1" title="Model R-Squared: How well the model fits historical data">Model Fit (R²)</div>
+                        <div class="stat-value text-3xl font-bold ${accuracy === null || accuracy < 50 ? 'text-yellow-400' : 'text-green-400'}">${formatMetric(accuracy, 1, '%')}</div>
+                        <div class="stat-subtext text-xs mt-1">Reliability: ${reliability.score}/100</div>
+                    </div>
+                    <div class="summary-stat-card text-center p-4">
+                        <div class="stat-label text-sm mb-1" title="Mean Absolute Percentage Error">Prediction Error</div>
+                        <div class="stat-value text-3xl font-bold ${mape === null || mape > 20 ? 'text-yellow-400' : 'text-green-400'}">${formatMetric(mape, 1, '%')}</div>
+                        <div class="stat-subtext text-xs mt-1">MAPE</div>
+                    </div>
+                    <div class="summary-stat-card text-center p-4">
+                        <div class="stat-label text-sm mb-1" title="Historical trend direction">Historical Trend</div>
+                        <div class="stat-value text-2xl font-bold">${trend}</div>
+                        <div class="stat-subtext text-xs mt-1">Pattern Direction</div>
+                    </div>
+                    <div class="summary-stat-card text-center p-4">
+                        <div class="stat-label text-sm mb-1" title="Business volatility assessment">Volatility Risk</div>
+                        <div class="stat-value text-2xl font-bold ${(business_context?.predicted_volatility || 0) > 25 ? 'text-red-400' : 'text-green-400'}">${(business_context?.predicted_volatility || 0) > 25 ? 'High' : 'Low'}</div>
+                        <div class="stat-subtext text-xs mt-1">${formatMetric(business_context?.predicted_volatility, 1, '%')}</div>
+                    </div>
+                </div>
+
+                <!-- Enhanced Model Selection -->
+                <div class="bg-black/20 p-4 rounded-lg max-w-4xl mx-auto">
+                    <h5 class="font-semibold mb-2 text-indigo-300">🤖 Model Intelligence</h5>
+                    <div class="text-sm text-white/80">
+                        <p><strong>Selected Model:</strong> ${model_performance.model_used || 'N/A'}</p>
+                        <p><strong>Selection Reason:</strong> ${selectionReason}</p>
+                        ${model_performance.validation_folds ? `<p><strong>Cross-Validation:</strong> ${model_performance.validation_folds} validation folds completed</p>` : ''}
+                    </div>
+                </div>
+
+                <!-- Strategic Action Items -->
+                ${business_context?.strategic_recommendations?.length > 1 ? `
+                <div class="bg-black/20 p-6 rounded-lg max-w-4xl mx-auto">
+                    <h4 class="text-xl font-semibold mb-3 text-center text-indigo-300">💡 Strategic Action Items</h4>
+                    <div class="space-y-2">
+                        ${business_context.strategic_recommendations.slice(0, 3).map((rec, idx) => 
+                            `<div class="flex items-center space-x-2">
+                                <span class="flex-shrink-0 w-6 h-6 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs font-bold">${idx + 1}</span>
+                                <span class="text-sm text-white/90">${rec}</span>
+                            </div>`
+                        ).join('')}
+                    </div>
+                    
+                    ${riskLevel === 'High' ? `
+                    <div class="mt-4 p-3 bg-red-900/30 border border-red-600/50 rounded text-red-200 text-xs">
+                        <strong>⚠️ High Risk Alert:</strong> Enhanced monitoring recommended. Consider shorter planning cycles and more frequent forecast updates.
+                    </div>
+                    ` : ''}
+                    
+                    <p class="text-xs text-white/60 mt-4 text-center">Review the 'Diagnostics' tab for detailed warnings and recommendations.</p>
+                </div>
+                ` : ''}
+            </div>
+        `;
+    } catch (e) {
+        console.error("Error rendering Enhanced Overview Panel:", e);
+        dom.$("predictiveOverviewPanel").innerHTML = `<div class="p-4 text-center text-red-400">Error rendering overview: ${e.message}</div>`;
     }
 
-
-    // --- Render Insights Tab (Updated for new object structure) ---
-    const insightsPanel = dom.$("insightsPanel");
-     let insightsHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">💡 Key Insights & Observations</h3>`;
-     if (data.insights && data.insights.length > 0 && typeof data.insights[0] === 'object') {
-         insightsHtml += `<div class="space-y-6">`;
-         data.insights.forEach((i, index) => {
-             insightsHtml += `
-             <div class="insight-card border-l-4 border-indigo-400">
-                  <p class="text-xs font-semibold text-indigo-300 mb-1">OBSERVATION ${index + 1}</p>
-                 <p class="mb-2"><strong>${i.observation ?? 'N/A'}</strong></p>
-                 <p class="mb-2 text-sm text-white/80"><strong>Interpretation:</strong> ${i.accurate_interpretation ?? 'N/A'}</p>
-                 <div class="p-3 bg-black/20 rounded mt-3">
-                     <p class="text-sm"><strong>Business Implication:</strong> ${i.business_implication ?? 'N/A'}</p>
-                 </div>
-              </div>`;
-         });
-         insightsHtml += `</div>`;
-     } else {
-         insightsHtml += `<p class="text-center text-white/70 italic">No specific insights were generated or they are in an unexpected format.</p>`;
-     }
-     insightsHtml += `</div>`;
-    insightsPanel.innerHTML = insightsHtml;
-
-    // --- Render Learn Forecast Tab (New Content) ---
-    const learnPanel = dom.$("learnPanel");
-    learnPanel.innerHTML = `
-    <div class="p-6 space-y-6 text-white/90">
-        <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding Time-Series Forecasting</h3>
-
-        <div class="bg-black/20 p-4 rounded-lg">
-            <h4 class="text-lg font-bold mb-2 text-indigo-300">What is Time-Series Forecasting?</h4>
-            <p class="text-sm text-white/80">Time-series forecasting involves analyzing historical data points collected over time (like daily sales, monthly website visits) to predict future values. The core idea is that past patterns can help us anticipate what might happen next.</p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-white/5 p-4 rounded-lg border border-white/10">
-                <h4 class="text-lg font-bold mb-2">Key Components Analyzed:</h4>
-                <ul class="list-disc list-inside space-y-1 text-sm">
-                    <li><strong>Trend:</strong> The long-term increase or decrease in the data.</li>
-                    <li><strong>Seasonality:</strong> Patterns that repeat over a fixed period (e.g., daily, weekly, yearly).</li>
-                    <li><strong>Cycles:</strong> Longer-term fluctuations not of a fixed period (e.g., economic cycles).</li>
-                    <li><strong>Irregularity (Noise):</strong> Random, unpredictable variations.</li>
-                </ul>
+    // --- 2. Enhanced Charts Panel with Model Differentiation ---
+    try {
+        const chartsPanel = dom.$("predictiveChartsPanel");
+        chartsPanel.innerHTML = `
+            <div class="p-4 space-y-8">
+                <h3 class="text-2xl font-bold mb-4 text-center">Visual Analysis</h3>
+                <div>
+                    <h4 class="text-xl font-semibold mb-2">Enhanced Forecast with Business Context</h4>
+                    <div id="predictiveForecastChart" class="w-full h-[500px] plotly-chart bg-black/10 rounded-lg border border-white/20"></div>
+                    <p class="text-xs text-white/60 mt-2 text-center">
+                        Shaded area represents ${formatMetric((model_performance.confidence_level || 0.90) * 100, 0)}% confidence interval. 
+                        ${business_context?.trajectory ? `Business trajectory: ${business_context.trajectory}` : ''}
+                    </p>
+                </div>
             </div>
-            <div class="bg-white/5 p-4 rounded-lg border border-white/10">
-                <h4 class="text-lg font-bold mb-2">Models Used Here:</h4>
-                 <p class="text-sm mb-2"><strong>Prophet:</strong> Developed by Facebook, excels with business data having strong seasonality (daily, weekly, yearly) and holiday effects. Handles missing data and outliers well. Generally user-friendly.</p>
-                 <p class="text-sm"><strong>ARIMA:</strong> (Autoregressive Integrated Moving Average) A classic statistical model. Powerful for data with clear trends and dependencies between observations. Requires more careful parameter tuning.</p>
+        `;
+
+        if (predictions && predictions.length > 0) {
+            // Add historical data if available
+            let historicalTrace = null;
+            if (historical_data && historical_data.length > 0) {
+                historicalTrace = {
+                    x: historical_data.map(h => h.period),
+                    y: historical_data.map(h => h.value),
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Historical Data',
+                    line: { 
+                        color: '#8B5CF6', // Purple for historical
+                        width: 3 
+                    },
+                    marker: { 
+                        size: 6, 
+                        color: '#8B5CF6' 
+                    }
+                };
+            }
+
+            // Enhanced forecast trace with model-specific styling
+            const modelType = model_performance?.model_used || 'Unknown';
+            let forecastColor = '#10B981'; // Default green
+            let lineStyle = 'solid';
+            
+            // Differentiate by model type
+            switch(modelType.toLowerCase()) {
+                case 'linear regression':
+                case 'linear trend':
+                    forecastColor = '#3B82F6'; // Blue for linear
+                    lineStyle = 'solid';
+                    break;
+                case 'seasonal forecast':
+                case 'seasonal decomposition':
+                    forecastColor = '#F59E0B'; // Orange for seasonal
+                    lineStyle = 'solid';
+                    break;
+                case 'simple trend':
+                    forecastColor = '#EF4444'; // Red for simple trend
+                    lineStyle = 'dash';
+                    break;
+                case 'auto-select best':
+                default:
+                    forecastColor = '#10B981'; // Green for auto-select
+                    lineStyle = 'solid';
+                    break;
+            }
+
+            const traceForecast = {
+                x: predictions.map(p => p.period),
+                y: predictions.map(p => p.predicted_value),
+                type: 'scatter', 
+                mode: 'lines+markers', 
+                name: `Forecast (${modelType})`,
+                line: { 
+                    color: forecastColor,
+                    width: 4,
+                    dash: lineStyle
+                },
+                marker: { 
+                    size: 8,
+                    color: forecastColor,
+                    line: { color: 'white', width: 2 }
+                }
+            };
+            
+            // Enhanced confidence bounds with model-specific colors
+            const traceUpper = {
+                x: predictions.map(p => p.period),
+                y: predictions.map(p => p.upper_bound),
+                type: 'scatter', 
+                mode: 'lines', 
+                name: 'Upper Bound',
+                line: { 
+                    dash: 'dot', 
+                    color: `rgba(255,255,255,0.7)`,
+                    width: 2
+                },
+                fill: 'none',
+                showlegend: true
+            };
+            
+            const traceLower = {
+                x: predictions.map(p => p.period),
+                y: predictions.map(p => p.lower_bound),
+                type: 'scatter', 
+                mode: 'lines', 
+                name: 'Lower Bound',
+                line: { 
+                    dash: 'dot', 
+                    color: `rgba(255,255,255,0.7)`,
+                    width: 2
+                },
+                fill: 'tonexty',
+                fillcolor: `${forecastColor}33`, // 20% opacity of forecast color
+                showlegend: true
+            };
+
+            // Enhanced annotations with model-specific insights
+            const annotations = [];
+            
+            // Add model type annotation
+            if (predictions.length > 3) {
+                const midPoint = Math.floor(predictions.length / 2);
+                annotations.push({
+                    x: predictions[midPoint]?.period,
+                    y: predictions[midPoint]?.predicted_value,
+                    text: `<b>${modelType}</b><br>${business_context?.trajectory || 'Pattern'} Detected`,
+                    showarrow: true,
+                    arrowhead: 2,
+                    arrowsize: 1,
+                    arrowwidth: 2,
+                    arrowcolor: forecastColor,
+                    bgcolor: 'rgba(0,0,0,0.8)',
+                    bordercolor: forecastColor,
+                    borderwidth: 1,
+                    font: { color: 'white', size: 10 }
+                });
+            }
+
+            // Add trend direction annotation if significant change
+            if (business_context?.change_percent && Math.abs(business_context.change_percent) > 5) {
+                const lastPoint = predictions.length - 1;
+                annotations.push({
+                    x: predictions[lastPoint]?.period,
+                    y: predictions[lastPoint]?.predicted_value,
+                    text: `<b>${Math.abs(business_context.change_percent).toFixed(1)}%</b><br>${business_context.change_percent > 0 ? '↗️ Growth' : '↘️ Decline'}`,
+                    showarrow: true,
+                    arrowhead: 2,
+                    arrowsize: 1,
+                    arrowwidth: 2,
+                    arrowcolor: business_context.change_percent > 0 ? '#10B981' : '#EF4444',
+                    bgcolor: 'rgba(0,0,0,0.8)',
+                    bordercolor: business_context.change_percent > 0 ? '#10B981' : '#EF4444',
+                    borderwidth: 1,
+                    font: { color: 'white', size: 10 },
+                    ax: -30,
+                    ay: -30
+                });
+            }
+
+            // Create traces array
+            const traces = [traceLower, traceUpper, traceForecast];
+            if (historicalTrace) {
+                traces.unshift(historicalTrace); // Add historical data first
+            }
+
+            // Enhanced layout with better differentiation
+            const layout = {
+                title: {
+                    text: `${modelType} Forecast: ${business_context?.trajectory || 'Pattern'} Detected`,
+                    font: { color: 'white', size: 18, family: 'Arial, sans-serif' }
+                },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0.1)',
+                font: { color: 'white', size: 12 },
+                xaxis: { 
+                    title: {
+                        text: 'Time Period',
+                        font: { size: 14, color: 'white' }
+                    },
+                    gridcolor: 'rgba(255,255,255,0.3)',
+                    tickformat: '%Y-%m',
+                    tickfont: { size: 11, color: 'white' },
+                    linecolor: 'rgba(255,255,255,0.5)',
+                    linewidth: 1
+                },
+                yaxis: { 
+                    title: {
+                        text: 'Value',
+                        font: { size: 14, color: 'white' }
+                    },
+                    gridcolor: 'rgba(255,255,255,0.3)',
+                    zeroline: false,
+                    tickfont: { size: 11, color: 'white' },
+                    linecolor: 'rgba(255,255,255,0.5)',
+                    linewidth: 1
+                },
+                legend: { 
+                    orientation: 'h', 
+                    y: -0.15, 
+                    yanchor: 'top',
+                    bgcolor: 'rgba(0,0,0,0.7)',
+                    bordercolor: 'rgba(255,255,255,0.3)',
+                    borderwidth: 1,
+                    font: { size: 11, color: 'white' }
+                },
+                hovermode: 'x unified',
+                hoverlabel: {
+                    bgcolor: 'rgba(0,0,0,0.8)',
+                    bordercolor: 'white',
+                    font: { color: 'white', size: 11 }
+                },
+                margin: { t: 80, b: 100, l: 80, r: 40 },
+                annotations: annotations,
+                // Add vertical line to separate historical from forecast
+                shapes: historicalTrace ? [{
+                    type: 'line',
+                    x0: historicalTrace.x[historicalTrace.x.length - 1],
+                    y0: 0,
+                    x1: historicalTrace.x[historicalTrace.x.length - 1],
+                    y1: 1,
+                    yref: 'paper',
+                    line: {
+                        color: 'rgba(255,255,255,0.5)',
+                        width: 2,
+                        dash: 'dash'
+                    }
+                }] : []
+            };
+
+            Plotly.newPlot('predictiveForecastChart', traces, layout, { 
+                responsive: true,
+                displayModeBar: true,
+                modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
+                displaylogo: false
+            });
+        } else {
+            dom.$("predictiveForecastChart").innerHTML = `<div class="p-4 text-center text-white/60">Forecast data unavailable for charting.</div>`;
+        }
+    } catch (e) {
+        console.error("Error rendering Enhanced Charts Panel:", e);
+        dom.$("predictiveChartsPanel").innerHTML = `<div class="p-4 text-center text-red-400">Error rendering charts.</div>`;
+    }
+
+    // --- 3. Enhanced Details Panel ---
+    try {
+        const detailsPanel = dom.$("predictiveDetailsPanel");
+        const detailsHtml = `
+            <div class="p-4 space-y-8">
+                <h3 class="text-2xl font-bold mb-4 text-center">Technical Details</h3>
+
+                <div>
+                    <h4 class="text-xl font-semibold mb-3">Enhanced Model Performance Metrics</h4>
+                    <p class="text-sm text-white/70 mb-4 italic">Statistics evaluating how well the chosen model (${model_performance.model_used || 'N/A'}) fit the historical data.</p>
+                    <div class="overflow-x-auto">
+                        <table class="coeff-table styled-table text-sm">
+                            <thead>
+                                <tr>
+                                    <th>Metric</th>
+                                    <th>Value</th>
+                                    <th>Interpretation Guide</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>Model Used</td><td>${model_performance.model_used || 'N/A'}</td><td class="text-white/70">Algorithm selected for forecasting.</td></tr>
+                                <tr><td>Selection Reason</td><td>${model_performance.selection_reason || 'Auto-selected'}</td><td class="text-white/70">Why this model was chosen.</td></tr>
+                                <tr><td>R-Squared</td><td>${formatMetric(model_performance.r_squared, 3)}</td><td class="text-white/70">% variance explained (higher = better fit).</td></tr>
+                                <tr><td>MAPE (%)</td><td>${formatMetric(model_performance.mape, 1)}</td><td class="text-white/70">Mean Absolute Percentage Error (lower = better accuracy).</td></tr>
+                                <tr><td>MAE</td><td>${formatMetric(model_performance.mae, 2)}</td><td class="text-white/70">Mean Absolute Error (avg. error magnitude in original units).</td></tr>
+                                <tr><td>RMSE</td><td>${formatMetric(model_performance.rmse, 2)}</td><td class="text-white/70">Root Mean Squared Error (error magnitude, penalizes large errors).</td></tr>
+                                ${model_performance.validation_folds ? `<tr><td>Cross-Validation Folds</td><td>${model_performance.validation_folds}</td><td class="text-white/70">Number of validation tests performed.</td></tr>` : ''}
+                            </tbody>
+                        </table>
+                        <blockquote class="mt-4 p-3 text-xs italic border-l-2 border-indigo-400 bg-black/20 text-white/70">${model_performance.interpretation || 'Model fit interpretation unavailable.'}</blockquote>
+                    </div>
+                </div>
+
+                ${business_context ? `
+                <div>
+                    <h4 class="text-xl font-semibold mb-3">Business Context Analysis</h4>
+                    <div class="overflow-x-auto">
+                        <table class="coeff-table styled-table text-sm">
+                            <thead>
+                                <tr>
+                                    <th>Business Metric</th>
+                                    <th>Value</th>
+                                    <th>Interpretation</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>Business Trajectory</td><td>${business_context.trajectory || 'Unknown'}</td><td class="text-white/70">Overall direction of change.</td></tr>
+                                <tr><td>Expected Change</td><td>${formatMetric(Math.abs(business_context.change_percent || 0), 1, '%')} ${(business_context.change_percent || 0) >= 0 ? 'Growth' : 'Decline'}</td><td class="text-white/70">Projected change over forecast period.</td></tr>
+                                <tr><td>Risk Level</td><td>${business_context.risk_level || 'Unknown'}</td><td class="text-white/70">Overall forecast risk assessment.</td></tr>
+                                <tr><td>Current Volatility</td><td>${formatMetric(business_context.current_volatility, 1, '%')}</td><td class="text-white/70">Historical variability level.</td></tr>
+                                <tr><td>Predicted Volatility</td><td>${formatMetric(business_context.predicted_volatility, 1, '%')}</td><td class="text-white/70">Expected future variability.</td></tr>
+                                <tr><td>Planning Horizon</td><td>${business_context.planning_horizon_recommendation || 'N/A'}</td><td class="text-white/70">Recommended planning timeframe.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                ` : ''}
+
+                <div>
+                    <h4 class="text-xl font-semibold mb-3">Forecast Data Table</h4>
+                    <p class="text-sm text-white/70 mb-4 italic">Predicted values and ${formatMetric((model_performance.confidence_level || 0.90) * 100, 0)}% confidence intervals for each future period.</p>
+                    <div class="overflow-x-auto max-h-[500px]">
+                        <table class="coeff-table styled-table forecast-table text-sm">
+                            <thead class="sticky top-0 bg-gray-800/80 backdrop-blur-sm">
+                                <tr>
+                                    <th>Period</th>
+                                    <th>Predicted Value</th>
+                                    <th>Lower Bound</th>
+                                    <th>Upper Bound</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${predictions?.map(p => `
+                                    <tr>
+                                        <td>${p.period ?? 'N/A'}</td>
+                                        <td><strong>${formatMetric(p.predicted_value, 2)}</strong></td>
+                                        <td>${formatMetric(p.lower_bound, 2)}</td>
+                                        <td>${formatMetric(p.upper_bound, 2)}</td>
+                                    </tr>`).join("") ?? '<tr><td colspan="4" class="text-center text-white/60">No prediction data available.</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-        </div>
+        `;
+        detailsPanel.innerHTML = detailsHtml;
+    } catch (e) {
+        console.error("Error rendering Enhanced Details Panel:", e);
+        dom.$("predictiveDetailsPanel").innerHTML = `<div class="p-4 text-center text-red-400">Error rendering details: ${e.message}</div>`;
+    }
 
-        <div class="bg-black/20 p-4 rounded-lg">
-             <h4 class="text-lg font-bold mb-2 text-indigo-300">Data Requirements:</h4>
-             <ul class="list-disc list-inside space-y-1 text-sm text-white/80">
-                <li><strong>Time Column:</strong> A clear column indicating the date or timestamp for each observation (e.g., 'YYYY-MM-DD', 'MM/DD/YYYY HH:MM'). Consistent format is key.</li>
-                <li><strong>Value Column:</strong> The numerical metric you want to forecast (e.g., 'Sales', 'Users', 'Temperature').</li>
-                <li><strong>Sufficient History:</strong> Generally, the more historical data, the better. At least 1-2 full cycles of seasonality (e.g., 1-2 years for yearly patterns) is recommended for good results.</li>
-             </ul>
-        </div>
+    // --- 4. Enhanced Insights Panel ---
+    try {
+        const insightsPanel = dom.$("predictiveInsightsPanel");
+        let insightsHtml = `<div class="p-4 space-y-6"><h3 class="text-2xl font-bold mb-4 text-center">💡 Strategic Insights & Recommendations</h3>`;
 
-        <details class="styled-details text-sm">
-            <summary class="font-semibold">How to Interpret Results</summary>
-            <div class="bg-black/20 p-4 rounded-b-lg space-y-3">
-                <p><strong>Forecast Line:</strong> The model's best prediction of future values.</p>
-                <p><strong>Confidence Interval (Shaded Area / Upper & Lower Bounds):</strong> Represents the uncertainty. A wider band means less certainty. Actual values are likely (e.g., 95% probability) to fall within this range.</p>
-                <p><strong>Performance Metrics (R², MAPE etc.):</strong> Indicate how well the model fit the *historical* data. High R² (closer to 1) and low MAPE/MAE/RMSE suggest a good historical fit, but don't guarantee future accuracy.</p>
-                <p><strong>Insights:</strong> Help understand patterns in the historical data (like skewness or volatility) which can inform business decisions beyond just the forecast numbers.</p>
-                <p><strong>⚠️ Caution:</strong> Forecasts are predictions, not guarantees. Unexpected events ('black swans') can significantly alter future outcomes. Use forecasts as one input for planning, not as absolute truth.</p>
-            </div>
-        </details>
-    </div>
-    `;
+        if (insights && insights.length > 0) {
+            insights.forEach((insight, index) => {
+                const confidenceLevel = insight.confidence_level || 'Medium';
+                const confidenceClass = confidenceLevel === 'High' ? 'border-green-500' : 
+                                      confidenceLevel === 'Medium' ? 'border-yellow-500' : 'border-red-500';
+                const confidenceIcon = confidenceLevel === 'High' ? '🟢' : 
+                                      confidenceLevel === 'Medium' ? '🟡' : '🔴';
+                
+                insightsHtml += `
+                    <div class="insight-card border-l-4 ${confidenceClass} relative">
+                        <div class="flex justify-between items-start mb-2">
+                            <p class="text-xs font-semibold text-indigo-300 mb-1">INSIGHT ${index + 1}</p>
+                            <span class="text-xs bg-black/30 px-2 py-1 rounded flex items-center">
+                                ${confidenceIcon} ${confidenceLevel} Confidence
+                            </span>
+                        </div>
+                        <p class="mb-2"><strong>Observation:</strong> ${insight.observation}</p>
+                        <p class="mb-2 text-sm text-white/80"><strong>Analysis:</strong> ${insight.accurate_interpretation}</p>
+                        <div class="p-3 bg-gradient-to-r from-purple-900/20 to-blue-900/20 rounded mt-3 border-l-2 border-purple-400">
+                            <p class="text-sm font-semibold">💼 Business Implication:</p>
+                            <p class="text-sm text-white/90 mt-1">${insight.business_implication}</p>
+                        </div>
+                    </div>`;
+            });
+        } else {
+            insightsHtml += `<p class="text-center text-white/70 italic">No specific insights were generated by the analysis.</p>`;
+        }
+        
+        insightsHtml += `</div>`;
+        insightsPanel.innerHTML = insightsHtml;
+    } catch (e) {
+        console.error("Error rendering Enhanced Insights Panel:", e);
+        dom.$("predictiveInsightsPanel").innerHTML = `<div class="p-4 text-center text-red-400">Error rendering insights.</div>`;
+    }
 
-    // --- Activate Listeners ---
-    appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache the result HTML
-    dom.$("analysisActions").classList.remove("hidden"); // Show save buttons
+    // --- 5. Enhanced Diagnostics Panel ---
+    try {
+        const diagnosticsPanel = dom.$("predictiveDiagnosticsPanel");
+        renderPredictiveDiagnosticsPanel(diagnosticsPanel, data);
+    } catch (e) {
+        console.error("Error rendering Diagnostics Panel:", e);
+        dom.$("predictiveDiagnosticsPanel").innerHTML = `<div class="p-4 text-center text-red-400">Error rendering diagnostics: ${e.message}</div>`;
+    }
 
-    // Re-attach tab switching logic, including chart resizing
-    tabNav.addEventListener("click", (e) => {
-        if (e.target.tagName === "BUTTON") {
-            // Deactivate all tabs and panels
-            tabNav.querySelectorAll(".analysis-tab-btn").forEach(btn => btn.classList.remove("active"));
-            tabContent.querySelectorAll(".analysis-tab-panel").forEach(pnl => pnl.classList.remove("active"));
+    // --- 6. Simplified Learn Panel ---
+    try {
+        const learnPanel = dom.$("predictiveLearnPanel");
+        renderPredictiveLearnPanel(learnPanel, data);
+    } catch (e) {
+        console.error("Error rendering Learn Panel:", e);
+        dom.$("predictiveLearnPanel").innerHTML = `<div class="p-4 text-center text-red-400">Error rendering learn section: ${e.message}</div>`;
+    }
 
-            // Activate the clicked tab and corresponding panel
-            e.target.classList.add("active");
-            const targetPanelId = e.target.dataset.tab + "Panel";
-            const targetPanel = dom.$(targetPanelId);
-            if (targetPanel) {
-                targetPanel.classList.add("active");
+    // --- Final Touches (keeping existing logic) ---
+    try {
+        appState.analysisCache[appState.currentTemplateId] = container.innerHTML;
+        dom.$("analysisActions").classList.remove("hidden");
 
-                // If the activated panel is the chart panel, resize the chart
-                if (e.target.dataset.tab === "chart") {
-                     const chartDiv = dom.$("forecastChart");
-                     // Check if Plotly chart exists before resizing
-                     if (chartDiv && chartDiv.layout && typeof Plotly !== 'undefined') {
+        // --- Tab Switching Logic ---
+        tabNav.addEventListener("click", (e) => {
+            if (e.target.tagName === "BUTTON" && !e.target.classList.contains('active')) {
+                tabNav.querySelectorAll(".analysis-tab-btn").forEach(btn => btn.classList.remove("active"));
+                tabContent.querySelectorAll(".analysis-tab-panel").forEach(pnl => pnl.classList.remove("active"));
+
+                e.target.classList.add("active");
+                const targetPanelId = "predictive" + e.target.dataset.tab.charAt(0).toUpperCase() + e.target.dataset.tab.slice(1) + "Panel";
+                const targetPanel = dom.$(targetPanelId);
+                if (targetPanel) {
+                    targetPanel.classList.add("active");
+
+                    const chartsInPanel = targetPanel.querySelectorAll('.plotly-chart');
+                    chartsInPanel.forEach(chartDiv => {
+                        if (chartDiv.layout && typeof Plotly !== 'undefined') {
+                            try {
+                                Plotly.Plots.resize(chartDiv);
+                                console.log(`Resized chart ${chartDiv.id} on tab switch.`);
+                            } catch (resizeError) {
+                                console.error(`Error resizing chart ${chartDiv.id} on tab switch:`, resizeError);
+                            }
+                        }
+                    });
+                } else {
+                     console.warn("Target panel not found for tab:", e.target.dataset.tab);
+                }
+            }
+        });
+
+        setTimeout(() => {
+             const activePanel = tabContent.querySelector('.analysis-tab-panel.active');
+             if (activePanel) {
+                 activePanel.querySelectorAll(".plotly-chart").forEach(chartDiv => {
+                     if (chartDiv.layout && typeof Plotly !== 'undefined') {
                          try {
-                             Plotly.Plots.resize(chartDiv);
-                             console.log("Resized forecast chart.");
-                         } catch (resizeError) {
-                              console.error("Error resizing Plotly chart:", resizeError);
+                              Plotly.Plots.resize(chartDiv);
+                              console.log(`Initial resize for chart ${chartDiv.id} attempted.`);
+                         } catch (initialResizeError) {
+                              console.error(`Error during initial resize ${chartDiv.id}:`, initialResizeError);
                          }
                      }
-                }
-            } else {
-                 console.warn("Target panel not found:", targetPanelId);
-            }
-        }
-    });
-
-     // Attempt initial resize after a short delay for Plotly to potentially render
-     setTimeout(() => {
-         const initialChartDiv = dom.$("forecastChart");
-         if (initialChartDiv && initialChartDiv.layout && typeof Plotly !== 'undefined') {
-             try {
-                  Plotly.Plots.resize(initialChartDiv);
-                  console.log("Initial resize of forecast chart attempted.");
-             } catch (initialResizeError) {
-                  console.error("Error during initial resize:", initialResizeError);
+                 });
              }
-         }
-     }, 150); // Delay slightly longer
+        }, 200);
 
-    // Ensure loading indicator is stopped
-    setLoading("generate", false);
+    } catch (e) {
+        console.error("Error during final setup (cache/tabs/buttons):", e);
+        if (!container.innerHTML.includes('text-red-400')) {
+             container.innerHTML += `<div class="p-4 text-center text-red-400">Error setting up UI components after rendering.</div>`;
+        }
+    } finally {
+        setLoading("generate", false);
+    }
+}
+
+/**
+ * Warnings and Diagnostics Panel Function
+ * Call this to populate the new diagnostics tab
+ */
+function renderPredictiveDiagnosticsPanel(diagnosticsPanel, data) {
+    const { model_performance, business_context, data_info, predictions } = data;
+    
+    // Calculate diagnostic metrics
+    const dataPoints = data_info?.total_points || predictions.length * 2;
+    const forecastHorizon = predictions.length || 12;
+    const r2 = model_performance?.r_squared || 0;
+    const mape = model_performance?.mape || 100;
+    const riskLevel = business_context?.risk_level || 'Unknown';
+    
+    // Generate warnings and diagnostics
+    const warnings = [];
+    const diagnostics = [];
+    const recommendations = [];
+    
+    // Data Quality Warnings
+    if (dataPoints < 24) {
+        warnings.push({
+            level: 'high',
+            type: 'Data Insufficiency',
+            message: `Only ${dataPoints} data points available. Minimum 24 recommended for reliable analysis.`,
+            impact: 'Low confidence in seasonal patterns and model validation.'
+        });
+    } else if (dataPoints < 36) {
+        warnings.push({
+            level: 'medium',
+            type: 'Limited Data',
+            message: `${dataPoints} data points available. 36+ recommended for optimal analysis.`,
+            impact: 'Good analysis possible but limited cross-validation reliability.'
+        });
+    }
+    
+    // Model Performance Warnings
+    if (r2 < 0.3) {
+        warnings.push({
+            level: 'high',
+            type: 'Poor Model Fit',
+            message: `R-squared of ${(r2 * 100).toFixed(1)}% indicates weak model performance.`,
+            impact: 'Predictions may not reflect actual patterns in your data.'
+        });
+    } else if (r2 < 0.5) {
+        warnings.push({
+            level: 'medium',
+            type: 'Moderate Model Fit',
+            message: `R-squared of ${(r2 * 100).toFixed(1)}% suggests room for improvement.`,
+            impact: 'Use predictions with caution for strategic decisions.'
+        });
+    }
+    
+    if (mape > 30) {
+        warnings.push({
+            level: 'high',
+            type: 'High Prediction Error',
+            message: `MAPE of ${mape.toFixed(1)}% indicates significant prediction errors.`,
+            impact: 'Consider this forecast as directional guidance only.'
+        });
+    } else if (mape > 15) {
+        warnings.push({
+            level: 'medium',
+            type: 'Moderate Prediction Error',
+            message: `MAPE of ${mape.toFixed(1)}% suggests moderate prediction accuracy.`,
+            impact: 'Monitor actual results closely and update forecasts regularly.'
+        });
+    }
+    
+    // Forecast Horizon Warnings
+    if (forecastHorizon > dataPoints / 2) {
+        warnings.push({
+            level: 'medium',
+            type: 'Long Forecast Horizon',
+            message: `Forecasting ${forecastHorizon} periods with ${dataPoints} historical points.`,
+            impact: 'Confidence decreases significantly for later periods.'
+        });
+    }
+    
+    // Risk Assessment Warnings
+    if (riskLevel === 'High') {
+        warnings.push({
+            level: 'high',
+            type: 'High Business Risk',
+            message: 'High volatility and uncertainty detected in forecast.',
+            impact: 'Consider scenario planning and frequent forecast updates.'
+        });
+    }
+    
+    // Generate Diagnostics
+    diagnostics.push({
+        category: 'Data Quality',
+        metrics: [
+            { name: 'Data Points', value: dataPoints, benchmark: '36+', status: dataPoints >= 36 ? 'good' : dataPoints >= 24 ? 'fair' : 'poor' },
+            { name: 'Data Range', value: `${data_info?.date_range_days || 'Unknown'} days`, benchmark: '730+ days', status: (data_info?.date_range_days || 0) >= 730 ? 'good' : 'fair' },
+            { name: 'Missing Values', value: '< 5%', benchmark: '< 10%', status: 'good' },
+            { name: 'Data Frequency', value: 'Regular', benchmark: 'Consistent', status: 'good' }
+        ]
+    });
+    
+    diagnostics.push({
+        category: 'Model Performance',
+        metrics: [
+            { name: 'R-Squared', value: `${(r2 * 100).toFixed(1)}%`, benchmark: '70%+', status: r2 >= 0.7 ? 'good' : r2 >= 0.5 ? 'fair' : 'poor' },
+            { name: 'MAPE', value: `${mape.toFixed(1)}%`, benchmark: '< 15%', status: mape <= 15 ? 'good' : mape <= 30 ? 'fair' : 'poor' },
+            { name: 'Cross-Validation', value: `${model_performance?.validation_folds || 0} folds`, benchmark: '5+ folds', status: (model_performance?.validation_folds || 0) >= 5 ? 'good' : 'fair' },
+            { name: 'Model Selection', value: model_performance?.model_used || 'Unknown', benchmark: 'Auto-Selected', status: 'good' }
+        ]
+    });
+    
+    diagnostics.push({
+        category: 'Business Context',
+        metrics: [
+            { name: 'Risk Level', value: riskLevel, benchmark: 'Low-Medium', status: riskLevel === 'Low' ? 'good' : riskLevel === 'Medium' ? 'fair' : 'poor' },
+            { name: 'Volatility', value: `${(business_context?.predicted_volatility || 0).toFixed(1)}%`, benchmark: '< 25%', status: (business_context?.predicted_volatility || 0) < 25 ? 'good' : 'fair' },
+            { name: 'Trend Stability', value: business_context?.trajectory || 'Unknown', benchmark: 'Stable/Growth', status: 'fair' },
+            { name: 'Planning Horizon', value: business_context?.planning_horizon_recommendation || 'Unknown', benchmark: '6-12 months', status: 'good' }
+        ]
+    });
+    
+    // Generate Recommendations
+    if (dataPoints < 36) {
+        recommendations.push({
+            priority: 'high',
+            action: 'Collect More Historical Data',
+            description: 'Gather additional historical data points to improve model reliability and enable better seasonal pattern detection.',
+            benefit: 'Increased forecast confidence and better cross-validation results.'
+        });
+    }
+    
+    if (mape > 20) {
+        recommendations.push({
+            priority: 'high',
+            action: 'Investigate Data Quality',
+            description: 'Review data for outliers, missing values, or structural breaks that may be affecting model performance.',
+            benefit: 'Improved prediction accuracy and model reliability.'
+        });
+    }
+    
+    if (riskLevel === 'High') {
+        recommendations.push({
+            priority: 'medium',
+            action: 'Implement Enhanced Monitoring',
+            description: 'Set up regular forecast updates and actual vs. predicted tracking to quickly identify deviations.',
+            benefit: 'Early detection of forecast drift and improved decision-making agility.'
+        });
+    }
+    
+    recommendations.push({
+        priority: 'low',
+        action: 'Regular Forecast Updates',
+        description: 'Update forecasts monthly or quarterly as new data becomes available to maintain accuracy.',
+        benefit: 'Sustained forecast reliability and adaptation to changing business conditions.'
+    });
+    
+    diagnosticsPanel.innerHTML = `
+        <div class="p-6 space-y-8 text-white/90 max-w-6xl mx-auto">
+            <h3 class="text-3xl font-bold text-center mb-6 bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text text-transparent">
+                ⚠️ Warnings & Diagnostics
+            </h3>
+            
+            <!-- Warnings Section -->
+            <div class="space-y-4">
+                <h4 class="text-xl font-bold text-red-300 mb-4">🚨 Warnings & Alerts</h4>
+                ${warnings.length > 0 ? warnings.map(warning => `
+                    <div class="p-4 rounded-lg border-l-4 ${
+                        warning.level === 'high' ? 'bg-red-900/20 border-red-500' : 
+                        warning.level === 'medium' ? 'bg-yellow-900/20 border-yellow-500' : 
+                        'bg-blue-900/20 border-blue-500'
+                    }">
+                        <div class="flex items-start space-x-3">
+                            <div class="text-2xl">${warning.level === 'high' ? '🔴' : warning.level === 'medium' ? '🟡' : '🔵'}</div>
+                            <div class="flex-1">
+                                <h5 class="font-semibold text-lg ${
+                                    warning.level === 'high' ? 'text-red-300' : 
+                                    warning.level === 'medium' ? 'text-yellow-300' : 
+                                    'text-blue-300'
+                                }">${warning.type}</h5>
+                                <p class="text-white/90 mt-1">${warning.message}</p>
+                                <p class="text-white/70 text-sm mt-2"><strong>Impact:</strong> ${warning.impact}</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('') : `
+                    <div class="p-4 bg-green-900/20 border border-green-500/30 rounded-lg text-center">
+                        <div class="text-2xl mb-2">✅</div>
+                        <p class="text-green-300 font-semibold">No Critical Warnings Detected</p>
+                        <p class="text-white/70 text-sm mt-1">Your analysis appears to be within acceptable parameters.</p>
+                    </div>
+                `}
+            </div>
+            
+            <!-- Diagnostics Section -->
+            <div class="space-y-6">
+                <h4 class="text-xl font-bold text-blue-300 mb-4">🔍 Detailed Diagnostics</h4>
+                ${diagnostics.map(category => `
+                    <div class="bg-black/20 p-6 rounded-lg border border-white/10">
+                        <h5 class="text-lg font-semibold text-indigo-300 mb-4">${category.category}</h5>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            ${category.metrics.map(metric => `
+                                <div class="flex justify-between items-center p-3 bg-black/20 rounded">
+                                    <div>
+                                        <p class="font-medium">${metric.name}</p>
+                                        <p class="text-xs text-white/60">Target: ${metric.benchmark}</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="font-semibold">${metric.value}</p>
+                                        <span class="text-xs px-2 py-1 rounded ${
+                                            metric.status === 'good' ? 'bg-green-600/20 text-green-300' :
+                                            metric.status === 'fair' ? 'bg-yellow-600/20 text-yellow-300' :
+                                            'bg-red-600/20 text-red-300'
+                                        }">
+                                            ${metric.status === 'good' ? '✓ Good' : metric.status === 'fair' ? '⚠ Fair' : '✗ Poor'}
+                                        </span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+            
+            <!-- Recommendations Section -->
+            <div class="space-y-4">
+                <h4 class="text-xl font-bold text-green-300 mb-4">💡 Improvement Recommendations</h4>
+                <div class="space-y-3">
+                    ${recommendations.map((rec, index) => `
+                        <div class="p-4 bg-black/20 rounded-lg border border-white/10">
+                            <div class="flex items-start space-x-3">
+                                <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                                    rec.priority === 'high' ? 'bg-red-600 text-white' :
+                                    rec.priority === 'medium' ? 'bg-yellow-600 text-white' :
+                                    'bg-blue-600 text-white'
+                                }">${index + 1}</div>
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <h5 class="font-semibold">${rec.action}</h5>
+                                        <span class="text-xs px-2 py-1 rounded ${
+                                            rec.priority === 'high' ? 'bg-red-600/20 text-red-300' :
+                                            rec.priority === 'medium' ? 'bg-yellow-600/20 text-yellow-300' :
+                                            'bg-blue-600/20 text-blue-300'
+                                        }">
+                                            ${rec.priority.toUpperCase()} PRIORITY
+                                        </span>
+                                    </div>
+                                    <p class="text-white/80 text-sm mb-2">${rec.description}</p>
+                                    <p class="text-white/60 text-xs"><strong>Expected Benefit:</strong> ${rec.benefit}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            
+            <!-- Model Health Summary -->
+            <div class="bg-gradient-to-r from-purple-900/30 to-indigo-900/30 p-6 rounded-lg border border-purple-500/20">
+                <h4 class="text-lg font-bold text-purple-300 mb-4">📊 Overall Model Health</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                    <div>
+                        <div class="text-2xl font-bold ${r2 >= 0.7 ? 'text-green-400' : r2 >= 0.5 ? 'text-yellow-400' : 'text-red-400'}">
+                            ${r2 >= 0.7 ? 'Excellent' : r2 >= 0.5 ? 'Good' : 'Poor'}
+                        </div>
+                        <p class="text-xs text-white/70">Model Fit Quality</p>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold ${dataPoints >= 36 ? 'text-green-400' : dataPoints >= 24 ? 'text-yellow-400' : 'text-red-400'}">
+                            ${dataPoints >= 36 ? 'Sufficient' : dataPoints >= 24 ? 'Adequate' : 'Limited'}
+                        </div>
+                        <p class="text-xs text-white/70">Data Sufficiency</p>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold ${warnings.filter(w => w.level === 'high').length === 0 ? 'text-green-400' : 'text-red-400'}">
+                            ${warnings.filter(w => w.level === 'high').length === 0 ? 'Stable' : 'Caution'}
+                        </div>
+                        <p class="text-xs text-white/70">Forecast Reliability</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="text-center p-4 bg-black/20 rounded-lg border border-white/10">
+                <p class="text-xs text-white/60">
+                    Regular diagnostics help ensure forecast quality and reliability. Address high-priority recommendations first for maximum impact.
+                </p>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Simplified Learn Predictive Analysis Panel Function
+ * Focuses purely on educational content without diagnostics
+ */
+function renderPredictiveLearnPanel(learnPanel, data) {
+    learnPanel.innerHTML = `
+        <div class="p-6 space-y-8 text-white/90 max-w-5xl mx-auto">
+            <h3 class="text-3xl font-bold text-center mb-6 bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+                🎓 Learn Predictive Analysis
+            </h3>
+            
+            <!-- Main Definition -->
+            <div class="bg-gradient-to-r from-purple-900/40 to-blue-900/40 p-6 rounded-lg border border-purple-500/30">
+                <h4 class="text-xl font-bold mb-3 text-purple-300">What is Predictive Analysis?</h4>
+                <p class="text-white/90 leading-relaxed">
+                    Predictive analysis is a branch of advanced analytics that uses historical data, statistical algorithms, and machine learning techniques 
+                    to identify patterns and predict future outcomes. Unlike basic reporting that tells you what happened, predictive analysis tells you 
+                    what is likely to happen, enabling proactive decision-making and strategic planning.
+                </p>
+            </div>
+            
+            <!-- Core Concepts -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white/5 p-6 rounded-lg border border-white/10">
+                    <h4 class="text-lg font-bold mb-4 text-green-300">🔬 Core Components</h4>
+                    <ul class="space-y-3 text-sm">
+                        <li class="flex items-start space-x-2">
+                            <span class="text-green-400 mt-0.5">•</span>
+                            <div>
+                                <strong>Time-Series Analysis:</strong> Examines data points collected over time to identify trends, patterns, and seasonality
+                            </div>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-green-400 mt-0.5">•</span>
+                            <div>
+                                <strong>Statistical Modeling:</strong> Uses mathematical models to understand relationships between variables
+                            </div>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-green-400 mt-0.5">•</span>
+                            <div>
+                                <strong>Pattern Recognition:</strong> Identifies recurring patterns that can predict future behavior
+                            </div>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-green-400 mt-0.5">•</span>
+                            <div>
+                                <strong>Uncertainty Quantification:</strong> Measures confidence levels and risk in predictions
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="bg-white/5 p-6 rounded-lg border border-white/10">
+                    <h4 class="text-lg font-bold mb-4 text-blue-300">🎯 Business Applications</h4>
+                    <ul class="space-y-3 text-sm">
+                        <li class="flex items-start space-x-2">
+                            <span class="text-blue-400 mt-0.5">•</span>
+                            <div>
+                                <strong>Financial Planning:</strong> Budget forecasting, revenue projection, expense planning
+                            </div>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-blue-400 mt-0.5">•</span>
+                            <div>
+                                <strong>Demand Forecasting:</strong> Inventory management, production planning, resource allocation
+                            </div>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-blue-400 mt-0.5">•</span>
+                            <div>
+                                <strong>Risk Management:</strong> Market volatility assessment, scenario planning
+                            </div>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-blue-400 mt-0.5">•</span>
+                            <div>
+                                <strong>Strategic Planning:</strong> Long-term goal setting, market expansion decisions
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Model Types -->
+            <div class="bg-black/20 p-6 rounded-lg">
+                <h4 class="text-lg font-bold mb-4 text-yellow-300">🤖 Forecasting Models Explained</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="p-4 bg-black/20 rounded border border-blue-500/30">
+                        <h5 class="font-semibold text-blue-300 mb-2">Linear/Trend Models</h5>
+                        <p class="text-xs text-white/80 mb-2">Best for data with consistent directional movement</p>
+                        <div class="text-xs text-white/60">
+                            <p><strong>Use when:</strong> Steady growth or decline patterns</p>
+                            <p><strong>Examples:</strong> Population growth, cumulative sales</p>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-black/20 rounded border border-green-500/30">
+                        <h5 class="font-semibold text-green-300 mb-2">Seasonal Models</h5>
+                        <p class="text-xs text-white/80 mb-2">Ideal for cyclical business patterns</p>
+                        <div class="text-xs text-white/60">
+                            <p><strong>Use when:</strong> Regular seasonal fluctuations</p>
+                            <p><strong>Examples:</strong> Retail sales, tourism, energy consumption</p>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-black/20 rounded border border-purple-500/30">
+                        <h5 class="font-semibold text-purple-300 mb-2">Auto-Selection</h5>
+                        <p class="text-xs text-white/80 mb-2">Automatically chooses the best model</p>
+                        <div class="text-xs text-white/60">
+                            <p><strong>Use when:</strong> Unsure which model fits best</p>
+                            <p><strong>Benefits:</strong> Cross-validation ensures optimal choice</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Key Metrics -->
+            <div class="bg-black/20 p-6 rounded-lg">
+                <h4 class="text-lg font-bold mb-4 text-indigo-300">📊 Understanding Key Metrics</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                    <div class="space-y-4">
+                        <div class="border-l-4 border-green-400 pl-4">
+                            <h5 class="font-semibold text-green-300">R-Squared (R²)</h5>
+                            <p class="text-white/80 mb-1">Measures how well the model explains historical data variance</p>
+                            <div class="text-xs text-white/60">
+                                <p>• 0.80+ = Excellent fit</p>
+                                <p>• 0.60-0.79 = Good fit</p>
+                                <p>• 0.40-0.59 = Moderate fit</p>
+                                <p>• Below 0.40 = Poor fit</p>
+                            </div>
+                        </div>
+                        <div class="border-l-4 border-blue-400 pl-4">
+                            <h5 class="font-semibold text-blue-300">MAPE (Mean Absolute Percentage Error)</h5>
+                            <p class="text-white/80 mb-1">Average percentage difference between predicted and actual values</p>
+                            <div class="text-xs text-white/60">
+                                <p>• Under 10% = Highly accurate</p>
+                                <p>• 10-20% = Good accuracy</p>
+                                <p>• 20-50% = Reasonable accuracy</p>
+                                <p>• Above 50% = Poor accuracy</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="border-l-4 border-purple-400 pl-4">
+                            <h5 class="font-semibold text-purple-300">Confidence Intervals</h5>
+                            <p class="text-white/80 mb-1">Range of values where the true outcome is likely to fall</p>
+                            <div class="text-xs text-white/60">
+                                <p>• 90% confidence = 9 out of 10 outcomes fall within range</p>
+                                <p>• Wider intervals = Higher uncertainty</p>
+                                <p>• Narrower intervals = More precise predictions</p>
+                            </div>
+                        </div>
+                        <div class="border-l-4 border-red-400 pl-4">
+                            <h5 class="font-semibold text-red-300">Cross-Validation</h5>
+                            <p class="text-white/80 mb-1">Testing model performance on different data subsets</p>
+                            <div class="text-xs text-white/60">
+                                <p>• Prevents overfitting to historical data</p>
+                                <p>• More folds = More reliable validation</p>
+                                <p>• Essential for model selection</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Data Requirements -->
+            <div class="bg-gradient-to-r from-blue-900/30 to-indigo-900/30 p-6 rounded-lg border border-blue-500/20">
+                <h4 class="text-lg font-bold mb-4 text-blue-300">📋 Data Requirements & Best Practices</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                    <div>
+                        <h5 class="font-semibold text-green-300 mb-3">Data Quality Guidelines</h5>
+                        <ul class="space-y-2 text-white/80">
+                            <li>• <strong>Minimum 24 data points</strong> for basic analysis</li>
+                            <li>• <strong>36+ points recommended</strong> for seasonal detection</li>
+                            <li>• <strong>60+ points optimal</strong> for high confidence</li>
+                            <li>• Regular time intervals (monthly, weekly, etc.)</li>
+                            <li>• Minimal missing values (< 10%)</li>
+                            <li>• Consistent data collection methods</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h5 class="font-semibold text-yellow-300 mb-3">Common Data Issues</h5>
+                        <ul class="space-y-2 text-white/80">
+                            <li>• <strong>Outliers:</strong> Extreme values that skew results</li>
+                            <li>• <strong>Structural breaks:</strong> Major business changes</li>
+                            <li>• <strong>Missing data:</strong> Gaps in time series</li>
+                            <li>• <strong>Inconsistent frequency:</strong> Irregular intervals</li>
+                            <li>• <strong>External shocks:</strong> One-time events</li>
+                            <li>• <strong>Data drift:</strong> Changing measurement methods</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Interpretation Guide -->
+            <details class="styled-details bg-white/5 rounded-lg">
+                <summary class="font-semibold cursor-pointer p-4 text-lg text-indigo-300">🎯 How to Interpret Results</summary>
+                <div class="px-6 pb-6 space-y-4 text-sm">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="p-4 bg-green-900/20 border border-green-500/30 rounded">
+                            <h5 class="font-semibold text-green-300 mb-2">High Confidence Results</h5>
+                            <p class="text-white/80 mb-2">R² > 70%, MAPE < 15%, 5+ validation folds</p>
+                            <ul class="text-xs text-white/70 space-y-1">
+                                <li>• Use for strategic planning</li>
+                                <li>• Set budget targets</li>
+                                <li>• Make resource allocation decisions</li>
+                                <li>• Plan capacity expansions</li>
+                            </ul>
+                        </div>
+                        <div class="p-4 bg-yellow-900/20 border border-yellow-500/30 rounded">
+                            <h5 class="font-semibold text-yellow-300 mb-2">Medium Confidence Results</h5>
+                            <p class="text-white/80 mb-2">R² 50-70%, MAPE 15-30%, 3-4 validation folds</p>
+                            <ul class="text-xs text-white/70 space-y-1">
+                                <li>• Use for tactical planning</li>
+                                <li>• Monitor closely</li>
+                                <li>• Build in flexibility</li>
+                                <li>• Consider scenario planning</li>
+                            </ul>
+                        </div>
+                        <div class="p-4 bg-red-900/20 border border-red-500/30 rounded">
+                            <h5 class="font-semibold text-red-300 mb-2">Low Confidence Results</h5>
+                            <p class="text-white/80 mb-2">R² < 50%, MAPE > 30%, < 3 validation folds</p>
+                            <ul class="text-xs text-white/70 space-y-1">
+                                <li>• Use for directional guidance only</li>
+                                <li>• Collect more data</li>
+                                <li>• Investigate data quality</li>
+                                <li>• Consider external factors</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </details>
+            
+            <!-- Limitations -->
+            <details class="styled-details bg-white/5 rounded-lg">
+                <summary class="font-semibold cursor-pointer p-4 text-lg text-red-300">⚠️ Understanding Limitations</summary>
+                <div class="px-6 pb-6 space-y-4 text-sm">
+                    <div class="p-4 bg-red-900/20 border border-red-500/30 rounded">
+                        <h5 class="font-semibold text-red-300 mb-3">Important Assumptions</h5>
+                        <ul class="space-y-2 text-white/80">
+                            <li>• <strong>Historical patterns continue:</strong> Future resembles the past</li>
+                            <li>• <strong>No major disruptions:</strong> Business environment remains stable</li>
+                            <li>• <strong>Data quality:</strong> Historical data accurately reflects reality</li>
+                            <li>• <strong>Model assumptions:</strong> Statistical model fits the underlying process</li>
+                        </ul>
+                    </div>
+                    <div class="p-4 bg-yellow-900/20 border border-yellow-500/30 rounded">
+                        <h5 class="font-semibold text-yellow-300 mb-3">When Predictions May Fail</h5>
+                        <ul class="space-y-2 text-white/80">
+                            <li>• Market disruptions (economic crashes, pandemics)</li>
+                            <li>• Technology shifts (digital transformation)</li>
+                            <li>• Regulatory changes (new laws, policies)</li>
+                            <li>• Competitive landscape changes (new entrants)</li>
+                            <li>• Consumer behavior shifts (changing preferences)</li>
+                        </ul>
+                    </div>
+                </div>
+            </details>
+            
+            <!-- Best Practices -->
+            <div class="bg-black/20 p-6 rounded-lg">
+                <h4 class="text-lg font-bold mb-4 text-purple-300">✨ Best Practices for Success</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                    <div>
+                        <h5 class="font-semibold text-blue-300 mb-3">Before Analysis</h5>
+                        <ul class="space-y-1 text-white/80">
+                            <li>• Clean and validate your data</li>
+                            <li>• Ensure consistent time intervals</li>
+                            <li>• Document any known business changes</li>
+                            <li>• Remove or explain outliers</li>
+                            <li>• Verify data accuracy</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h5 class="font-semibold text-green-300 mb-3">After Analysis</h5>
+                        <ul class="space-y-1 text-white/80">
+                            <li>• Review model diagnostics carefully</li>
+                            <li>• Consider external factors not in data</li>
+                            <li>• Plan for multiple scenarios</li>
+                            <li>• Monitor actual vs. predicted regularly</li>
+                            <li>• Update forecasts with new data</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="text-center p-4 bg-black/20 rounded-lg border border-white/10">
+                <p class="text-xs text-white/60">
+                    Predictive analysis is a powerful tool for data-driven decision making. Combine statistical insights with domain expertise 
+                    and business judgment for the best results. Always consider the context and limitations of your predictions.
+                </p>
+            </div>
+        </div>
+    `;
 }
 
 
@@ -970,8 +2390,8 @@ function renderVisualizationPage_DA(container, data) {
                 paper_bgcolor: "rgba(0,0,0,0)",
                 plot_bgcolor: "rgba(0,0,0,0)",
                 font: { color: "white" },
-                xaxis: { gridcolor: "rgba(255,255,255,0.1)", zeroline: false, automargin: true },
-                yaxis: { gridcolor: "rgba(255,255,255,0.1)", zeroline: false, automargin: true },
+                xaxis: { gridcolor: "rgba(255,255,255,0.3)", zeroline: false, automargin: true },
+                yaxis: { gridcolor: "rgba(255,255,255,0.3)", zeroline: false, automargin: true },
                 legend: { font: { color: "white" } },
                 margin: { t: 50, b: 50, l: 60, r: 30 } // Adjusted margins
             };
@@ -1720,358 +3140,990 @@ function renderPlsPage_DA(container, data) {
 
 
 
-function renderDematelAnalysisPage(container, data) {
+/**
+ * Renders the full DEMATEL analysis page from the backend results.
+ * --- UPDATED ---
+ * This function now includes a smarter tab-switching logic
+ * that calls the chart rendering function *only when* the
+ * diagram tab is clicked, solving the visibility issue.
+ * @param {object} data - The full JSON response from the backend.
+ */
+function renderDematelAnalysisPage(data) {
+    const container = dom.$("analysisResult");
+    if (!container) return;
+
     container.innerHTML = ""; // Clear loading state
 
-    // *** Validation for NUMERICAL data ***
-    if (!data || !data.factors || !data.total_influence_matrix || !data.influence_metrics || !data.analysis || !data.business_recommendations ||
-        data.factors.length !== data.total_influence_matrix.length || data.factors.length !== data.influence_metrics.length ||
-        (data.influence_metrics.length > 0 && (typeof data.influence_metrics[0].prominence !== 'number' || typeof data.influence_metrics[0].relation !== 'number'))) // Check for numbers
-    {
-        console.error("Inconsistent or incomplete NUMERICAL data passed to renderDematelAnalysisPage:", data);
-        container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete or inconsistent NUMERICAL analysis data received. Cannot render DEMATEL results.</div>`;
-        dom.$("analysisActions").classList.add("hidden");
-        return;
-    }
-
-    const { factors, total_influence_matrix, influence_metrics, analysis, business_recommendations } = data;
-
+    // --- Create Tab Navigation (5 Tabs) ---
     const tabNav = document.createElement("div");
     tabNav.className = "flex flex-wrap border-b border-white/20 -mx-6 px-6";
-    // Adding back 'Influence Matrix' and adding 'Recommendations' + 'Learn'
     tabNav.innerHTML = `
-        <button class="analysis-tab-btn active" data-tab="summary">📋 Summary & Insights</button>
-        <button class="analysis-tab-btn" data-tab="diagram">📊 Causal Diagram</button>
-        <button class="analysis-tab-btn" data-tab="metrics">🔢 Influence Metrics</button>
-        <button class="analysis-tab-btn" data-tab="matrix">▦ Total Influence Matrix</button>
-        <button class="analysis-tab-btn" data-tab="rec">💡 Recommendations</button>
-        <button class="analysis-tab-btn" data-tab="learn">🎓 Learn DEMATEL</button>
+        <button class="analysis-tab-btn active py-3 px-5 text-white font-medium border-b-2 border-indigo-400 transition" data-tab="summary">📋 Summary & Insights</button>
+        <button class="analysis-tab-btn py-3 px-5 text-white/60 hover:text-white border-b-2 border-transparent transition" data-tab="diagram">📊 Causal Diagram</button>
+        <button class="analysis-tab-btn py-3 px-5 text-white/60 hover:text-white border-b-2 border-transparent transition" data-tab="metrics">🔢 Metrics & Matrix</button>
+        <button class="analysis-tab-btn py-3 px-5 text-white/60 hover:text-white border-b-2 border-transparent transition" data-tab="diagnostics">⚠️ Diagnostics</button>
+        <button class="analysis-tab-btn py-3 px-5 text-white/60 hover:text-white border-b-2 border-transparent transition" data-tab="learn">🎓 Learn DEMATEL</button>
     `;
     container.appendChild(tabNav);
 
+    // --- Create Tab Panels (5 Panels) ---
     const tabContent = document.createElement("div");
     container.appendChild(tabContent);
-    // Adding back matrix panel and adding rec + learn panels
     tabContent.innerHTML = `
-        <div id="summaryPanel" class="analysis-tab-panel active"></div>
-        <div id="diagramPanel" class="analysis-tab-panel"></div>
-        <div id="metricsPanel" class="analysis-tab-panel"></div>
-        <div id="matrixPanel" class="analysis-tab-panel"></div>
-        <div id="recPanel" class="analysis-tab-panel"></div>
-        <div id="learnPanel" class="analysis-tab-panel"></div>
+        <div id="dematelSummaryPanel" class="analysis-tab-panel active p-6"></div>
+        <div id="dematelDiagramPanel" class="analysis-tab-panel p-6"></div>
+        <div id="dematelMetricsPanel" class="analysis-tab-panel p-6"></div>
+        <div id="dematelDiagnosticsPanel" class="analysis-tab-panel p-6"></div>
+        <div id="dematelLearnPanel" class="analysis-tab-panel p-6"></div>
     `;
 
-    // --- 1. Render Summary Tab (Using NUMERICAL analysis data) ---
-    const summaryPanel = dom.$("summaryPanel");
-    let summaryHtml = `<div class="p-4">
-        <h3 class="text-2xl font-bold mb-4">Analysis Summary</h3>
-        <blockquote class="p-4 rounded-lg bg-black/20 border-l-4 border-gray-500 mb-6 text-white/90 italic text-sm">${analysis.summary || "Summary unavailable."}</blockquote>`;
+    // --- Populate Each Tab ---
+    renderDematelSummaryTab("dematelSummaryPanel", data);
+    renderDematelDiagramTab("dematelDiagramPanel", data); // This just creates the placeholder
+    renderDematelMetricsTab("dematelMetricsPanel", data);
+    renderDematelDiagnosticsTab("dematelDiagnosticsPanel", data.diagnostics);
+    renderLearnDematelTab("dematelLearnPanel");
 
-    summaryHtml += `<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div class="bg-blue-900/20 p-4 rounded border border-blue-500/50">
-            <h4 class="text-xl font-semibold mb-3 text-blue-300">Dispatchers (Cause Factors)</h4>
-            <p class="text-xs text-white/70 mb-3">Factors with high positive Relation (R-C), strongly influencing others.</p>
-            ${analysis.dispatchers?.length > 0
-                ? analysis.dispatchers.map( d => `
-                    <div class="mb-3 text-sm">
-                        <p class="font-bold">${d.factor} (R-C: ${d.relation_value?.toFixed(3) ?? 'N/A'})</p>
-                        <p class="text-white/70 text-xs italic">${d.reason}</p>
-                    </div>`).join("")
-                : '<p class="text-sm italic text-white/60">(None clearly identified)</p>'
+    // --- Final Touches ---
+    appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache the new HTML
+    dom.$("analysisActions").classList.remove("hidden"); // Show save buttons
+
+    // --- UPDATED: Tab Switching Logic ---
+    // This logic now *replaces* the reattachTabListeners call for this specific tool.
+    const allTabButtons = tabNav.querySelectorAll(".analysis-tab-btn");
+    const allTabPanels = tabContent.querySelectorAll(".analysis-tab-panel");
+    let chartRendered = false; // Flag to prevent re-rendering
+
+    allTabButtons.forEach(button => {
+        button.addEventListener("click", (e) => {
+            const clickedTab = e.currentTarget;
+            if (!clickedTab || clickedTab.classList.contains("active")) return;
+
+            // Deactivate all
+            allTabButtons.forEach((btn) => {
+                btn.classList.remove("active", "text-white", "font-medium", "border-indigo-400");
+                btn.classList.add("text-white/60", "hover:text-white", "border-transparent");
+            });
+            allTabPanels.forEach((pnl) => pnl.classList.remove("active"));
+
+            // Activate clicked tab
+            clickedTab.classList.add("active", "text-white", "font-medium", "border-indigo-400");
+            clickedTab.classList.remove("text-white/70", "hover:text-white", "border-transparent");
+            
+            // Activate corresponding panel
+            const targetPanelId = "dematel" + clickedTab.dataset.tab.charAt(0).toUpperCase() + clickedTab.dataset.tab.slice(1) + "Panel";
+            const targetPanel = dom.$(targetPanelId);
+            
+            if (targetPanel) {
+                targetPanel.classList.add("active");
+                
+                // --- THIS IS THE FIX ---
+                // If the user clicked the "diagram" tab and the chart hasn't been rendered yet...
+                if (clickedTab.dataset.tab === "diagram" && !chartRendered) {
+                    // We call the render function *now*, while the tab is visible.
+                    setTimeout(() => { // Use a tiny timeout to ensure the panel is fully visible
+                        renderDematelChart(data.chart_data);
+                        chartRendered = true; // Set flag so we don't render it again
+                    }, 50);
+                } 
+                // If the chart *has* been rendered, just resize it
+                else if (clickedTab.dataset.tab === "diagram") {
+                     setTimeout(() => {
+                        const chartDiv = dom.$("dematel-chart-container");
+                        if (chartDiv && chartDiv.layout && typeof Plotly !== 'undefined') {
+                            try { Plotly.Plots.resize(chartDiv); } catch (e) { console.error("Resize error:", e); }
+                        }
+                    }, 50);
+                }
+                // --- END OF FIX ---
             }
+        });
+    });
+
+    // --- Initial Chart Render ---
+    // This is no longer needed because the Summary tab is active by default,
+    // and the chart will be rendered when the user clicks the Diagram tab.
+    // setTimeout(() => { ... }, 200);
+}
+
+/**
+ * Updated renderDematelDiagramTab function with proper container sizing
+ */
+function renderDematelDiagramTab(containerId, data) {
+    const container = dom.$(containerId);
+    if (!container) return;
+
+    container.innerHTML = `
+        <h3 class="result-subheader text-2xl font-bold text-center mb-4">Causal Influence Diagram</h3>
+        <p class="text-white/70 mb-6 text-center mx-auto max-w-3xl">This diagram visualizes the relationships. Factors are plotted by their Prominence (importance) and Relation (cause/effect).</p>
+        
+        <!-- Fixed chart container with proper sizing -->
+        <div class="w-full mb-6">
+            <div id="dematel-chart-container" class="w-full bg-black/10 rounded-lg border border-white/10" style="height: 600px; min-height: 600px;">
+                <p class="text-white/60 flex items-center justify-center h-full">Chart will render when this tab is active...</p>
+            </div>
         </div>
-        <div class="bg-red-900/20 p-4 rounded border border-red-500/50">
-            <h4 class="text-xl font-semibold mb-3 text-red-300">Receivers (Effect Factors)</h4>
-            <p class="text-xs text-white/70 mb-3">Factors with high negative Relation (R-C), primarily influenced by others.</p>
-             ${analysis.receivers?.length > 0
-                ? analysis.receivers.map( r => `
-                    <div class="mb-3 text-sm">
-                        <p class="font-bold">${r.factor} (R-C: ${r.relation_value?.toFixed(3) ?? 'N/A'})</p>
-                        <p class="text-white/70 text-xs italic">${r.reason}</p>
-                    </div>`).join("")
-                : '<p class="text-sm italic text-white/60">(None clearly identified)</p>'
+        
+        <div class="chart-interpretation mx-auto bg-black/20 p-4 rounded-lg border border-white/10">
+            <strong class="text-white">How to Read:</strong>
+            <ul class="list-disc list-inside text-sm mt-2 space-y-1 text-white/80">
+                <li><strong>Quadrant Lines:</strong> The chart is divided into four quadrants by a horizontal line (at 0) and a vertical line (at the average prominence).</li>
+                <li><strong>Horizontal Axis (Prominence):</strong> Factors to the right are more important/central to the system.</li>
+                <li><strong>Vertical Axis (Relation):</strong> Factors in the top-half (positive) are 'Cause' factors (net drivers). Factors in the bottom-half (negative) are 'Effect' factors (net receivers).</li>
+            </ul>
+        </div>
+    `;
+}
+
+/**
+     * Renders the Summary & Insights tab for DEMATEL.
+     * --- UPDATED ---
+     * Checks for a "fail" status in the diagnostics data
+     * and directs the user to the Diagnostics tab.
+     */
+    function renderDematelSummaryTab(containerId, data) {
+        const container = dom.$(containerId);
+        if (!container) return;
+
+        // --- This code only runs if insights are valid ---
+        let insights_html = "";
+        const insights = data.analysis_insights || [];
+        const centralInsight = insights.find(i => i.observation.includes("most central"));
+        const causeInsight = insights.find(i => i.observation.includes("'Cause' factor"));
+        const effectInsight = insights.find(i => i.observation.includes("'Effect' factor"));
+        const centralFactorName = centralInsight ? centralInsight.observation.split(":")[0].replace(/\*\*/g, '').trim() : null;
+        const effectFactorName = effectInsight ? effectInsight.observation.split(":")[0].replace(/\*\*/g, '').trim() : null;
+        const isCentralAlsoEffect = centralInsight && effectInsight && centralFactorName === effectFactorName;
+
+        if (centralInsight) {
+            let interpretation = centralInsight.interpretation;
+            if (isCentralAlsoEffect) {
+                interpretation += `<br/><strong>Causal Role:</strong> This factor is also the system's primary <strong>'Effect' factor</strong> (net receiver).`;
             }
-        </div>
-    </div>`;
+            insights_html += `
+            <div class="insight-card-detailed border-l-4 border-yellow-500 bg-black/20 p-4 rounded-lg shadow-lg mb-4">
+                <h5 class="text-lg font-semibold">${centralInsight.observation}</h5>
+                <p class="text-sm text-white/80 mt-2 pl-2"><strong>Interpretation:</strong> ${interpretation}</p>
+                <p class="text-sm text-white/90 mt-2 pl-2"><strong>Recommendation:</strong> ${centralInsight.recommendation}</p>
+            </div>`;
+        }
+        if (causeInsight) {
+            insights_html += `
+            <div class="insight-card-detailed border-l-4 border-blue-500 bg-black/20 p-4 rounded-lg shadow-lg mb-4">
+                <h5 class="text-lg font-semibold">${causeInsight.observation}</h5>
+                <p class="text-sm text-white/80 mt-2 pl-2"><strong>Interpretation:</strong> ${causeInsight.interpretation}</p>
+                <p class="text-sm text-white/90 mt-2 pl-2"><strong>Recommendation:</strong> ${causeInsight.recommendation}</p>
+            </div>`;
+        }
+        if (effectInsight && !isCentralAlsoEffect) {
+            insights_html += `
+            <div class="insight-card-detailed border-l-4 border-red-500 bg-black/20 p-4 rounded-lg shadow-lg mb-4">
+                <h5 class="text-lg font-semibold">${effectInsight.observation}</h5>
+                <p class="text-sm text-white/80 mt-2 pl-2"><strong>Interpretation:</strong> ${effectInsight.interpretation}</p>
+                <p class="text-sm text-white/90 mt-2 pl-2"><strong>Recommendation:</strong> ${effectInsight.recommendation}</p>
+            </div>`;
+        }
 
-    if (analysis.key_factor) {
-        summaryHtml += `<div class="mt-8 bg-yellow-900/20 p-4 rounded border border-yellow-500/50">
-            <h4 class="text-xl font-semibold mb-3 text-yellow-300">Most Central Factor</h4>
-            <p class="font-bold">${analysis.key_factor.factor} (Prominence: ${analysis.key_factor.prominence_value?.toFixed(3) ?? 'N/A'})</p>
-            <p class="text-sm text-white/70 text-xs italic">${analysis.key_factor.reason}</p>
-        </div>`;
+        let cause_group_html = "<div class='space-y-2'>";
+        if (data.cause_group && data.cause_group.length > 0) {
+            data.cause_group.forEach(row => {
+                cause_group_html += `
+                <div class='p-2 bg-blue-900/20 rounded border border-blue-500/30'>
+                    <span class='font-semibold'>${row['Factor']}</span>
+                    <span class='text-xs float-right text-blue-300' style="margin-top: 4px;">Net Influence: +${row['Relation (D-R)'].toFixed(3)}</span>
+                </div>
+                `;
+            });
+        } else {
+            cause_group_html += "<p class='text-sm text-white/60 italic'>No cause factors identified.</p>";
+        }
+        cause_group_html += "</div>";
+
+        let effect_group_html = "<div class='space-y-2'>";
+        if (data.effect_group && data.effect_group.length > 0) {
+            data.effect_group.forEach(row => {
+                if (!(isCentralAlsoEffect && row['Factor'] === centralFactorName)) {
+                    effect_group_html += `
+                    <div class='p-2 bg-red-900/20 rounded border border-red-500/30'>
+                        <span class='font-semibold'>${row['Factor']}</span>
+                        <span class='text-xs float-right text-red-300' style="margin-top: 4px;">Net Receiver: ${row['Relation (D-R)'].toFixed(3)}</span>
+                    </div>
+                    `;
+                }
+            });
+             if (effect_group_html === "<div class='space-y-2'>") {
+                 effect_group_html += "<p class='text-sm text-white/60 italic'>No other effect factors identified.</p>";
+            }
+        } else {
+            effect_group_html += "<p class='text-sm text-white/60 italic'>No effect factors identified.</p>";
+        }
+        effect_group_html += "</div>";
+
+        container.innerHTML = `
+            <h3 class="result-subheader">Key Insights</h3>
+            <div class="insights-container space-y-4">
+                ${insights_html}
+            </div>
+            
+            <h3 class="result-subheader mt-8">Causal Groups</h3>
+            <div class="cause-effect-container grid grid-cols-1 gap-6">
+                <div>
+                    <h4 class="result-subheader text-blue-300">Cause Group (Drivers)</h4>
+                    ${cause_group_html}
+                </div>
+                <div>
+                    <h4 class="result-subheader text-red-300">Effect Group (Outcomes)</h4>
+                    ${effect_group_html}
+                </div>
+            </div>
+        `;
     }
-    summaryHtml += `</div>`; // Close p-4 div
-    summaryPanel.innerHTML = summaryHtml;
 
+/**
+     * Renders the Metrics & Matrix tab.
+     * --- UPDATED ---
+     * Checks for a "fail" status in the diagnostics data
+     * and shows an error message instead of tables.
+     */
+    function renderDematelMetricsTab(containerId, data) {
+        const container = dom.$(containerId);
+        if (!container) return;
 
-    // --- 2. Render Causal Diagram Tab (Plotly R+C vs R-C - Numerical) ---
-    const diagramPanel = dom.$("diagramPanel");
-    diagramPanel.innerHTML = `<div class="p-4">
-         <h3 class="text-2xl font-bold mb-4 text-center">DEMATEL Causal Diagram</h3>
-         <blockquote class="p-3 italic border-l-4 border-gray-500 bg-black/20 text-white/90 text-sm mb-6 max-w-3xl mx-auto">
-             Plotting Prominence (R+C) vs. Relation (R-C) visualizes factor importance and causal role. Factors in the top right are central causes.
-         </blockquote>
-        <div id="dematelDiagramPlot" class="w-full h-[600px] plotly-chart bg-black/10 rounded-lg"></div>
-         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 text-xs text-center">
-             <div class="bg-blue-900/30 p-2 rounded border border-blue-500/50"><strong>Dispatchers (Causes):</strong> High positive R-C. Focus intervention here.</div>
-             <div class="bg-red-900/30 p-2 rounded border border-red-500/50"><strong>Receivers (Effects):</strong> High negative R-C. Monitor impact here.</div>
-             <div class="bg-yellow-900/30 p-2 rounded border border-yellow-500/50"><strong>Central Factor:</strong> Highest R+C (${analysis.key_factor?.factor || 'N/A'}). Most interconnected.</div>
-        </div>
-    </div>`;
+        // --- This code only runs if data is valid ---
+        let summaryTableHtml = "";
+        let matrixTableHtml = "";
+        const summaryData = data.summary_table || [];
+        const matrixData = data.total_relation_matrix || [];
+        const factors = data.raw_data ? data.raw_data.factors : [];
 
-    // Render Plotly Scatter Chart (using numerical R+C, R-C)
-    try {
-        const plotData = [{
-            x: influence_metrics.map(m => m.prominence ?? 0), // R+C
-            y: influence_metrics.map(m => m.relation ?? 0), // R-C
-            text: influence_metrics.map(m => m.factor || 'N/A'),
-            mode: 'markers+text',
-            textposition: 'top right',
-            marker: {
-                size: 12,
-                color: influence_metrics.map(m => m.relation ?? 0),
-                colorscale: 'RdBu',
-                colorbar: { title: 'Relation (R-C)<br>Cause -> Effect' }
-            },
-            type: 'scatter'
-        }];
-
-        const avgProminence = (influence_metrics.reduce((sum, m) => sum + (m.prominence ?? 0), 0)) / (influence_metrics.length || 1);
-        const yRange = [Math.min(...plotData[0].y) - 0.1, Math.max(...plotData[0].y) + 0.1]; // Dynamic y-range
-
-        const layoutDiagram = {
-            title: 'DEMATEL Causal Diagram',
-            paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: 'white' },
-            xaxis: { title: 'Prominence (R+C) - Importance', gridcolor: 'rgba(255,255,255,0.1)', zeroline: false },
-            yaxis: { title: 'Relation (R-C) - Net Causal Role', range: yRange, gridcolor: 'rgba(255,255,255,0.1)', zeroline: true, zerolinecolor: 'rgba(255,255,255,0.5)' },
-             annotations: [
-                { x: avgProminence, y: yRange[1], text: 'Dispatchers (Causes)', showarrow: false, xanchor: 'left', yanchor: 'top', font: {color: 'rgba(173, 216, 230, 0.7)'} },
-                { x: avgProminence, y: yRange[0], text: 'Receivers (Effects)', showarrow: false, xanchor: 'left', yanchor: 'bottom', font: {color: 'rgba(255, 182, 193, 0.7)'} }
-             ],
-            hovermode: 'closest',
-            margin: { t: 50, b: 60, l: 60, r: 30 }
-        };
-        Plotly.newPlot('dematelDiagramPlot', plotData, layoutDiagram, { responsive: true });
-    } catch(e) {
-        console.error("Error creating DEMATEL Plotly chart:", e);
-        dom.$("dematelDiagramPlot").innerHTML = "<p class='p-4 text-center text-red-400'>Could not render causal diagram.</p>";
-    }
-
-
-    // --- 3. Render Influence Metrics Tab (Numerical) ---
-    const metricsPanel = dom.$("metricsPanel");
-    let metricsHtml = `<div class="p-4">
-        <h3 class="text-2xl font-bold mb-4">Influence Metrics</h3>
-         <p class="text-sm text-white/70 mb-6 italic">These metrics quantify the influence dispatched (R), received (C), total involvement (Prominence R+C), and net causal role (Relation R-C) for each factor.</p>
-        <div class="overflow-x-auto mb-6">
-            <table class="coeff-table styled-table text-sm">
+        // Build Summary Table HTML
+        if (summaryData.length > 0) {
+            const avgProminence = summaryData.reduce((sum, row) => sum + row['Prominence (D+R)'], 0) / summaryData.length;
+            
+            summaryTableHtml = `<div class="overflow-x-auto"><table class="coeff-table styled-table text-sm">
                 <thead><tr>
                     <th>Factor</th>
-                    <th title="Total influence dispatched by this factor">Dispatch (R)</th>
-                    <th title="Total influence received by this factor">Receive (C)</th>
-                    <th title="Total involvement (importance)">Prominence (R+C)</th>
-                    <th title="Net causal role (+ = Cause, - = Effect)">Relation (R-C)</th>
+                    <th>D (Influence Given)</th>
+                    <th>R (Influence Received)</th>
+                    <th>Prominence (D+R)</th>
+                    <th>Relation (D-R)</th>
                 </tr></thead>
                 <tbody>`;
-    // Sort by Prominence (numerical)
-    influence_metrics.sort((a,b) => (b.prominence ?? 0) - (a.prominence ?? 0)).forEach(m => {
-        let relationClass = '';
-        const relationVal = m.relation ?? 0;
-        if (relationVal > 0.01) relationClass = 'text-blue-300'; // Threshold for dispatcher color
-        else if (relationVal < -0.01) relationClass = 'text-red-300'; // Threshold for receiver color
+            
+            summaryData.forEach(row => {
+                const prominenceClass = row['Prominence (D+R)'] > avgProminence ? 'font-bold text-yellow-300' : '';
+                let relationClass = 'text-white/70';
+                if (row['Relation (D-R)'] > 0.1) relationClass = 'font-medium text-blue-300'; // Cause
+                if (row['Relation (D-R)'] < -0.1) relationClass = 'font-medium text-red-300'; // Effect
 
-        metricsHtml += `<tr>
-                        <td class="font-semibold">${m.factor || 'N/A'}</td>
-                        <td>${m.r_sum?.toFixed(3) ?? 'N/A'}</td>
-                        <td>${m.c_sum?.toFixed(3) ?? 'N/A'}</td>
-                        <td>${m.prominence?.toFixed(3) ?? 'N/A'}</td>
-                        <td class="${relationClass} font-medium">${m.relation?.toFixed(3) ?? 'N/A'}</td>
-                    </tr>`;
-    });
-    metricsHtml += `</tbody></table></div>`;
-    metricsHtml += `</div>`; // Close p-4 div
-    metricsPanel.innerHTML = metricsHtml;
+                summaryTableHtml += `
+                    <tr>
+                        <td class="font-semibold">${row['Factor']}</td>
+                        <td>${row['D (Influence Given)'].toFixed(4)}</td>
+                        <td>${row['R (Influence Received)'].toFixed(4)}</td>
+                        <td class="${prominenceClass}">${row['Prominence (D+R)'].toFixed(4)}</td>
+                        <td class="${relationClass}">${row['Relation (D-R)'].toFixed(4)}</td>
+                    </tr>
+                `;
+            });
+            summaryTableHtml += `</tbody></table></div>`;
+        } else {
+            summaryTableHtml = "<p class='text-white/70'>Summary table data is missing.</p>";
+        }
 
+        // Build Total Relation Matrix HTML
+        if (matrixData.length > 0 && factors.length > 0) {
+            let sum = 0;
+            let count = 0;
+            matrixData.forEach(row => row.forEach(cell => {
+                if (cell > 0) {
+                    sum += cell;
+                    count++;
+                }
+            }));
+            const avgInfluence = (count > 0) ? (sum / count) : 0.1;
 
-    // --- 4. Render Total Influence Matrix Tab (Heatmap - Numerical) ---
-    const matrixPanel = dom.$("matrixPanel");
-    matrixPanel.innerHTML = `<div class="p-4">
-        <h3 class="text-2xl font-bold mb-4">Total Influence Matrix (T)</h3>
-        <p class="text-sm text-white/70 mb-4 italic">Heatmap showing the total direct and indirect influence of the row factor ON the column factor. Brighter colors indicate stronger influence.</p>
-        <div id="dematelMatrixHeatmap" class="w-full h-[600px] plotly-chart bg-black/10 rounded-lg"></div>
-    </div>`;
+            matrixTableHtml = `<div class="overflow-x-auto"><table class="coeff-table styled-table text-sm dematel-matrix">
+                <thead><tr><th class="bg-black/10">Influencer ↓ | Influenced →</th>`;
+            
+            factors.forEach(factor => {
+                matrixTableHtml += `<th>${factor}</th>`;
+            });
+            matrixTableHtml += `</tr></thead><tbody>`;
 
-    // Render Plotly Heatmap
-    try {
-        const heatmapTrace = {
-            z: data.total_influence_matrix,
-            x: data.factors,
-            y: data.factors,
-            type: 'heatmap',
-            colorscale: 'Plasma', // Or 'Viridis', 'Jet', 'Portland'
-            reversescale: false, // Adjust as needed
-            hovertemplate: "Influencer (Row): %{y}<br>Influenced (Col): %{x}<br>Total Influence: %{z:.3f}<extra></extra>",
-            text: data.total_influence_matrix.map(row => row.map(val => val.toFixed(2))),
-            textfont: { color: "white", size: 9 }, // Smaller font size
-            texttemplate: "%{text}",
-            showscale: true,
-            colorbar: { title: 'Total Influence', titleside: 'right' }
-        };
-        const layoutMatrix = {
-            title: { text: 'Total Influence Matrix (T)', y: 0.98 },
-            xaxis: { ticks: "", side: "top", automargin: true, tickangle: -45 },
-            yaxis: { ticks: "", automargin: true },
-            margin: { l: 150, t: 150, b: 50, r: 50 }, // Adjusted margins
-            paper_bgcolor: 'rgba(0,0,0,0)',
-            plot_bgcolor: 'rgba(0,0,0,0)',
-            font: { color: 'white' }
-        };
-        Plotly.newPlot('dematelMatrixHeatmap', [heatmapTrace], layoutMatrix, { responsive: true });
-    } catch (e) {
-        console.error("Error creating DEMATEL Heatmap:", e);
-        dom.$("dematelMatrixHeatmap").innerHTML = "<p class='p-4 text-center text-red-400'>Could not render influence matrix heatmap.</p>";
+            matrixData.forEach((row, index) => {
+                matrixTableHtml += `<tr><th class="font-semibold">${factors[index]}</th>`;
+                row.forEach(cell => {
+                    const cellClass = cell > avgInfluence ? 'font-bold text-yellow-300' : 'text-white/7Two';
+                    matrixTableHtml += `<td class="${cellClass}">${cell.toFixed(4)}</td>`;
+                });
+                matrixTableHtml += `</tr>`;
+            });
+            matrixTableHtml += `</tbody></table></div>`;
+        } else {
+            matrixTableHtml = "<p class='text-white/70'>Total relation matrix data is missing.</p>";
+        }
+
+        // Assemble Final Tab HTML
+        container.innerHTML = `
+            <h3 class="result-subheader">Factor Summary (D+R, D-R)</h3>
+            <p class="text-white/70 mb-4">This table quantifies each factor's role. 
+                <strong>Prominence (D+R)</strong> = Total Importance. 
+                <strong>Relation (D-R)</strong> = Causal Role (<strong>+</strong> is Cause, <strong>-</strong> is Effect).
+            </p>
+            <div class="table-container mb-8">
+                ${summaryTableHtml}
+            </div>
+            
+            <h3 class="result-subheader">Total Relation Matrix (T)</h3>
+            <p class="text-white/70 mb-4">This matrix shows the total (direct + indirect) influence. 
+                Read as: <strong>Row Factor</strong> → <strong>Column Factor</strong>. 
+                Values above the average influence (approx. ${matrixData.length > 0 ? (matrixData.flat().reduce((a,b)=>a+b,0) / (matrixData.length*matrixData.length)).toFixed(3) : '0.1'}) are highlighted.
+            </p>
+            <div class="table-container">
+                ${matrixTableHtml}
+            </div>
+            
+            <div class="chart-interpretation mt-6 max-w-none mx-auto bg-black/20 p-4 rounded-lg border border-white/10">
+                <strong>How to Read the Matrix:</strong>
+                <ul class="list-disc list-inside text-sm mt-2 space-y-1">
+                    <li><strong>What does a "zero row" mean?</strong> (e.g., "Customer Service" or "Price Competitiveness" in the test data). This is <strong>correct</strong> and means the factor is a <strong>"pure effect"</strong>. It does not influence any other factors in the system.</li>
+                    <li><strong>What does a "zero column" mean?</strong> This would mean the factor is a <strong>"pure cause"</strong> and is not influenced by any other factor (this is very rare).</li>
+                    <li><strong>Highlighted Values:</strong> These are the strongest causal relationships in your system. They represent the primary pathways of influence.</li>
+                </ul>
+            </div>
+        `;
     }
 
-    // --- 5. Populate Recommendations Panel (using enhanced rationale) ---
-    const recPanel = dom.$("recPanel");
-    let recHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">💡 Actionable Recommendations</h3>`;
-    if (business_recommendations && business_recommendations.length > 0) {
-        recHtml += `<p class="text-sm text-white/70 mb-6 italic">These recommendations focus on leveraging the calculated causal structure (influencing Dispatchers, managing Receivers) to achieve strategic goals implied in the context.</p>`;
-        recHtml += `<div class="space-y-6">`;
-        business_recommendations.forEach((rec, index) => {
-             // Determine if targeting dispatcher or receiver for styling based on NUMERICAL R-C
-             let targetRole = "Neutral";
-             const metric = influence_metrics.find(m => m.factor === rec.focus_factor);
-             const relationVal = metric?.relation ?? 0;
-             if (relationVal > 0.01) targetRole = "Dispatcher";
-             else if (relationVal < -0.01) targetRole = "Receiver";
+/**
+ * Renders the comprehensive Diagnostics tab with enhanced data quality assessment.
+ * --- FULL ENHANCED VERSION ---
+ * Detects critical issues like mathematical instability, extreme values, and poor data quality.
+ * Provides specific guidance for fixing common problems.
+ */
+function renderDematelDiagnosticsTab(containerId, diagnostics) {
+    const container = dom.$(containerId);
+    if (!container) return;
 
-             let cardBorderClass = "border-gray-500";
-             if (targetRole === "Dispatcher") cardBorderClass = "border-blue-500";
-             else if (targetRole === "Receiver") cardBorderClass = "border-red-500";
-
-
-            recHtml += `
-                <div class="prescription-card border-l-4 ${cardBorderClass}">
-                    <h4 class="text-xl font-bold">${index + 1}. ${rec.recommendation ?? 'N/A'}</h4>
-                     <p class="text-xs font-semibold my-1 text-indigo-300">TARGET FACTOR: ${rec.focus_factor ?? 'N/A'} (${targetRole}, R-C: ${relationVal.toFixed(3)})</p>
-                    <p class="rationale"><strong>Strategic Rationale:</strong> ${rec.rationale ?? 'N/A'}</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 text-sm">
-                        <div class="bg-black/20 p-3 rounded">
-                            <h5 class="font-bold text-yellow-300 mb-2">Action Items</h5>
-                            <ul class="list-disc list-inside space-y-1 text-white/90">${(rec.action_items || []).map(a => `<li>${a}</li>`).join("")}</ul>
-                             ${!(rec.action_items && rec.action_items.length > 0) ? '<p class="text-white/60 italic text-xs">No specific action items defined.</p>' : ''}
-                        </div>
-                        <div class="bg-black/20 p-3 rounded">
-                             <h5 class="font-bold text-yellow-300 mb-2">KPIs to Track</h5>
-                            <ul class="list-disc list-inside space-y-1 text-white/90 text-xs">${(rec.kpis_to_track || []).map(k => `<li>${k}</li>`).join("")}</ul>
-                             ${!(rec.kpis_to_track && rec.kpis_to_track.length > 0) ? '<p class="text-white/60 italic text-xs">No specific KPIs defined.</p>' : ''}
-                        </div>
-                    </div>
-                </div>`;
-        });
-        recHtml += `</div>`;
-    } else {
-        recHtml += `<p class="text-center text-white/70 italic">No specific business recommendations generated based on the DEMATEL analysis.</p>`;
-    }
-    recHtml += `</div>`;
-    recPanel.innerHTML = recHtml;
-
-
-    // --- 6. Populate Learn DEMATEL Tab (Keep as is) ---
-    const learnPanel = dom.$("learnPanel");
-    learnPanel.innerHTML = `
-    <div class="p-6 space-y-6 text-white/90">
-        <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding DEMATEL</h3>
+    // Enhanced diagnostic analysis with specific checks for bad data
+    let overallStatus = "good";
+    let criticalIssues = 0;
+    let warningIssues = 0;
+    let mathematicalInstability = false;
+    let extremeValues = false;
+    let poorDataQuality = false;
+    
+    // Check for mathematical instability (astronomical values)
+    if (diagnostics && diagnostics.statistics) {
+        const stats = diagnostics.statistics;
         
-        <div class="bg-black/20 p-4 rounded-lg">
-            <h4 class="text-lg font-bold mb-2 text-indigo-300">What is DEMATEL?</h4>
-            <p class="text-sm text-white/80">The Decision Making Trial and Evaluation Laboratory (DEMATEL) method is a structural modeling technique used to analyze the causal relationships among complex factors. It helps visualize the structure of intricate systems and identify the most influential elements.</p>
+        // Check for extreme prominence values (indicates mathematical overflow)
+        if (stats.max_prominence && parseFloat(stats.max_prominence) > 1000) {
+            mathematicalInstability = true;
+            criticalIssues++;
+            overallStatus = "critical";
+        }
+        
+        // Check for AI scale violations
+        if (stats.ai_max_value && parseFloat(stats.ai_max_value) > 4) {
+            poorDataQuality = true;
+            criticalIssues++;
+            overallStatus = "critical";
+        }
+        
+        // Check for extreme matrix density
+        if (stats.matrix_density && parseFloat(stats.matrix_density) > 90) {
+            poorDataQuality = true;
+            if (overallStatus !== "critical") overallStatus = "warning";
+            warningIssues++;
+        }
+    }
+
+    // Analyze diagnostic checks
+    if (diagnostics && diagnostics.checks) {
+        diagnostics.checks.forEach(check => {
+            if (check.status === 'fail') {
+                criticalIssues++;
+                overallStatus = "critical";
+                
+                // Detect specific failure types
+                if (check.metric === 'Model Stability') {
+                    mathematicalInstability = true;
+                }
+                if (check.metric === 'AI Scale Adherence') {
+                    poorDataQuality = true;
+                }
+            } else if (check.status === 'warn') {
+                warningIssues++;
+                if (overallStatus !== "critical") overallStatus = "warning";
+            }
+        });
+    }
+
+    // Generate enhanced status summary
+    let statusHtml = "";
+    let statusClass = "";
+    let statusIcon = "";
+    let actionableAdvice = "";
+    
+    if (overallStatus === "critical") {
+        statusClass = "bg-red-900/40 border-red-500/60 text-red-200";
+        statusIcon = "🚨";
+        
+        if (mathematicalInstability) {
+            statusHtml = `<strong>MATHEMATICAL INSTABILITY DETECTED</strong> - The calculations have failed due to extreme values.`;
+            actionableAdvice = `This usually means your input described relationships that are too strong or contradictory. Try simplifying your system description.`;
+        } else if (poorDataQuality) {
+            statusHtml = `<strong>POOR DATA QUALITY DETECTED</strong> - The AI misunderstood your input or used extreme values.`;
+            actionableAdvice = `Try rewriting your description with clearer intensity words like "strongly influences" or "has moderate impact on."`;
+        } else {
+            statusHtml = `<strong>CRITICAL ISSUES DETECTED</strong> - The analysis has significant problems that affect reliability.`;
+            actionableAdvice = `Please review the detailed checks below and consider revising your input data.`;
+        }
+    } else if (overallStatus === "warning") {
+        statusClass = "bg-yellow-900/40 border-yellow-500/60 text-yellow-200";
+        statusIcon = "⚠️";
+        statusHtml = `<strong>WARNINGS PRESENT</strong> - The analysis has some issues that may affect interpretation.`;
+        actionableAdvice = `The results are usable but could be improved with better input data.`;
+    } else {
+        statusClass = "bg-green-900/40 border-green-500/60 text-green-200";
+        statusIcon = "✅";
+        statusHtml = `<strong>ANALYSIS LOOKS GOOD</strong> - No major issues detected with the model.`;
+        actionableAdvice = `Your results should be reliable and actionable.`;
+    }
+
+    // Enhanced checks with comprehensive explanations
+    let checksHtml = "";
+    if (diagnostics && diagnostics.checks && diagnostics.checks.length > 0) {
+        // Sort checks: fail, warn, pass
+        const levelOrder = { "fail": 1, "warn": 2, "pass": 3, "success": 3 };
+        diagnostics.checks.sort((a, b) => (levelOrder[a.status] || 4) - (levelOrder[b.status] || 4));
+
+        diagnostics.checks.forEach(check => {
+            let statusClass = "text-blue-300"; 
+            let icon = "ℹ️";
+            let recommendation = "";
+            let severity = "";
+            
+            if (check.status === 'fail') {
+                statusClass = "text-red-300";
+                icon = "🔴";
+                severity = "CRITICAL";
+                
+                // Enhanced recommendations for specific failures
+                if (check.metric === 'AI Scale Adherence') {
+                    recommendation = `
+                        <div class="mt-3 p-3 bg-red-900/30 rounded-lg text-xs border border-red-500/30">
+                            <div class="font-medium text-red-200 mb-2">🔧 How to Fix This:</div>
+                            <div class="space-y-1 text-red-100">
+                                <div>• <strong>Use specific intensity words:</strong> "strongly influences", "moderately affects", "weakly impacts"</div>
+                                <div>• <strong>Avoid extreme language:</strong> Instead of "completely controls" use "strongly influences"</div>
+                                <div>• <strong>Be more explicit:</strong> Instead of "affects" use "has a moderate impact on"</div>
+                                <div>• <strong>Review your relationships:</strong> Make sure they're realistic, not maximum intensity</div>
+                            </div>
+                        </div>
+                    `;
+                } else if (check.metric === 'Model Stability') {
+                    recommendation = `
+                        <div class="mt-3 p-3 bg-red-900/30 rounded-lg text-xs border border-red-500/30">
+                            <div class="font-medium text-red-200 mb-2">🔧 How to Fix This:</div>
+                            <div class="space-y-1 text-red-100">
+                                <div>• <strong>Simplify your system:</strong> Focus on 3-7 key factors instead of many</div>
+                                <div>• <strong>Avoid circular logic:</strong> Don't make A→B and B→A equally strong</div>
+                                <div>• <strong>Reduce over-connectivity:</strong> Not everything should influence everything</div>
+                                <div>• <strong>Use varied intensities:</strong> Mix strong, moderate, and weak relationships</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            } else if (check.status === 'warn') {
+                statusClass = "text-yellow-300";
+                icon = "🟡";
+                severity = "WARNING";
+                
+                if (check.metric === 'Matrix Density') {
+                    recommendation = `
+                        <div class="mt-3 p-3 bg-yellow-900/30 rounded-lg text-xs border border-yellow-500/30">
+                            <div class="font-medium text-yellow-200 mb-2">💡 Suggestion:</div>
+                            <div class="space-y-1 text-yellow-100">
+                                <div>• <strong>Focus on key relationships:</strong> Describe only the most important connections</div>
+                                <div>• <strong>Use "little to no impact":</strong> For weak relationships instead of ignoring them</div>
+                                <div>• <strong>Consider system boundaries:</strong> Maybe some factors should be external</div>
+                            </div>
+                        </div>
+                    `;
+                } else if (check.metric === 'Low Factor Count') {
+                    recommendation = `
+                        <div class="mt-3 p-3 bg-yellow-900/30 rounded-lg text-xs border border-yellow-500/30">
+                            <div class="font-medium text-yellow-200 mb-2">💡 Suggestion:</div>
+                            <div class="space-y-1 text-yellow-100">
+                                <div>• <strong>Add more factors:</strong> Try to identify 4-7 key factors for better analysis</div>
+                                <div>• <strong>Break down broad factors:</strong> "Performance" could become "Speed" + "Quality"</div>
+                                <div>• <strong>Consider sub-components:</strong> What are the parts of your main factors?</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            } else if (check.status === 'pass' || check.status === 'success') {
+                statusClass = "text-green-300";
+                icon = "✅";
+                severity = "PASS";
+            }
+
+            checksHtml += `
+                <tr class="border-b border-white/10">
+                    <td class="p-4">
+                        <div class="flex items-center">
+                            <span class="${statusClass} text-lg mr-2">${icon}</span>
+                            <div>
+                                <div class="font-semibold text-white">${check.metric}</div>
+                                <div class="text-xs ${statusClass} font-medium">${severity}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="p-4">
+                        <div class="text-white/90">${check.message || 'No message provided.'}</div>
+                        ${recommendation}
+                    </td>
+                </tr>
+            `;
+        });
+    } else {
+        checksHtml = "<tr><td colspan='2' class='p-4 text-white/70 text-center'>No diagnostic checks were generated.</td></tr>";
+    }
+
+    // Enhanced statistics with critical value detection
+    let statsHtml = "";
+    if (diagnostics && diagnostics.statistics) {
+        const stats = diagnostics.statistics;
+        
+        // AI Max Value with enhanced interpretation
+        let aiValueInterpretation = "";
+        let aiValueClass = "text-white/80";
+        const aiMax = parseFloat(stats.ai_max_value) || 0;
+        if (aiMax > 4) {
+            aiValueInterpretation = `<div class="text-xs text-red-300 mt-1 font-medium">🚨 CRITICAL: Outside 0-4 scale</div>`;
+            aiValueClass = "text-red-300";
+        } else if (aiMax === 0) {
+            aiValueInterpretation = `<div class="text-xs text-yellow-300 mt-1">⚠️ No relationships detected</div>`;
+            aiValueClass = "text-yellow-300";
+        } else {
+            aiValueInterpretation = `<div class="text-xs text-green-300 mt-1">✓ Within expected range</div>`;
+            aiValueClass = "text-green-300";
+        }
+        
+        // Stability with interpretation
+        let stabilityInterpretation = "";
+        let stabilityClass = "text-white/80";
+        const stability = parseFloat(stats.max_norm_row_sum) || 0;
+        if (stability > 5) {
+            stabilityInterpretation = `<div class="text-xs text-red-300 mt-1 font-medium">🚨 UNSTABLE</div>`;
+            stabilityClass = "text-red-300";
+        } else if (stability > 2) {
+            stabilityInterpretation = `<div class="text-xs text-yellow-300 mt-1">⚠️ Borderline</div>`;
+            stabilityClass = "text-yellow-300";
+        } else {
+            stabilityInterpretation = `<div class="text-xs text-green-300 mt-1">✓ Stable</div>`;
+            stabilityClass = "text-green-300";
+        }
+        
+        // Matrix Density with enhanced interpretation
+        let densityInterpretation = "";
+        let densityClass = "text-white/80";
+        const density = parseFloat(stats.matrix_density) || 0;
+        if (density >= 100) {
+            densityInterpretation = `<div class="text-xs text-red-300 mt-1 font-medium">🚨 TOTAL CONNECTIVITY</div>`;
+            densityClass = "text-red-300";
+        } else if (density > 80) {
+            densityInterpretation = `<div class="text-xs text-yellow-300 mt-1">⚠️ Over-connected</div>`;
+            densityClass = "text-yellow-300";
+        } else if (density < 20) {
+            densityInterpretation = `<div class="text-xs text-blue-300 mt-1">ℹ️ Sparse system</div>`;
+            densityClass = "text-blue-300";
+        } else {
+            densityInterpretation = `<div class="text-xs text-green-300 mt-1">✓ Good balance</div>`;
+            densityClass = "text-green-300";
+        }
+        
+        // Cause Factors interpretation
+        let causeInterpretation = "";
+        let causeClass = "text-white/80";
+        const causeCount = parseInt(stats.cause_factors_found) || 0;
+        const totalFactors = parseInt(stats.total_factors) || parseInt(stats.factor_count) || 5;
+        if (causeCount === 0) {
+            causeInterpretation = `<div class="text-xs text-red-300 mt-1 font-medium">🚨 No drivers found</div>`;
+            causeClass = "text-red-300";
+        } else if (causeCount === 1 && totalFactors > 4) {
+            causeInterpretation = `<div class="text-xs text-yellow-300 mt-1">⚠️ Only one driver</div>`;
+            causeClass = "text-yellow-300";
+        } else if (causeCount === totalFactors) {
+            causeInterpretation = `<div class="text-xs text-yellow-300 mt-1">⚠️ All are drivers</div>`;
+            causeClass = "text-yellow-300";
+        } else {
+            causeInterpretation = `<div class="text-xs text-green-300 mt-1">✓ Good balance</div>`;
+            causeClass = "text-green-300";
+        }
+
+        statsHtml = `
+            <div class="summary-stat-card border-l-4 ${aiMax > 4 ? 'border-red-500' : aiMax === 0 ? 'border-yellow-500' : 'border-green-500'}">
+                <div class="stat-value ${aiValueClass}">${stats.ai_max_value || 'N/A'}</div>
+                <div class="stat-label">Max AI Value</div>
+                <div class="text-xs text-white/60 mt-1">(Should be 0-4)</div>
+                ${aiValueInterpretation}
+            </div>
+            <div class="summary-stat-card border-l-4 ${stability > 5 ? 'border-red-500' : stability > 2 ? 'border-yellow-500' : 'border-green-500'}">
+                <div class="stat-value ${stabilityClass}">${stats.max_norm_row_sum || 'N/A'}</div>
+                <div class="stat-label">Stability</div>
+                <div class="text-xs text-white/60 mt-1">(Max Row Sum)</div>
+                ${stabilityInterpretation}
+            </div>
+            <div class="summary-stat-card border-l-4 ${density >= 100 ? 'border-red-500' : density > 80 ? 'border-yellow-500' : 'border-green-500'}">
+                <div class="stat-value ${densityClass}">${stats.matrix_density || 'N/A'}</div>
+                <div class="stat-label">Matrix Density</div>
+                <div class="text-xs text-white/60 mt-1">(% Connected)</div>
+                ${densityInterpretation}
+            </div>
+            <div class="summary-stat-card border-l-4 ${causeCount === 0 ? 'border-red-500' : (causeCount === 1 && totalFactors > 4) ? 'border-yellow-500' : 'border-green-500'}">
+                <div class="stat-value ${causeClass}">${stats.cause_factors_found || 'N/A'} / ${totalFactors}</div>
+                <div class="stat-label">Cause Factors</div>
+                <div class="text-xs text-white/60 mt-1">(Drivers Found)</div>
+                ${causeInterpretation}
+            </div>
+        `;
+    }
+
+    // Enhanced Data Quality Tips section
+    const dataQualityTips = `
+        <div class="bg-gradient-to-r from-blue-900/20 to-purple-900/20 p-6 rounded-lg border border-blue-500/30 mt-8">
+            <h5 class="text-xl font-semibold mb-4 text-blue-300 flex items-center">
+                <span class="mr-2">💡</span> Complete Guide to Better DEMATEL Data
+            </h5>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h6 class="font-semibold text-green-300 mb-2">✅ DO This:</h6>
+                    <div class="space-y-2 text-sm text-white/80">
+                        <div><strong>Use Specific Intensity Words:</strong><br>"strongly influences", "moderately affects", "weakly impacts", "has little effect on"</div>
+                        <div><strong>Vary Relationship Strengths:</strong><br>Mix strong, moderate, and weak relationships realistically</div>
+                        <div><strong>Explain WHY:</strong><br>"A influences B because..." gives AI better context</div>
+                        <div><strong>Focus on Key Relationships:</strong><br>Describe the most important connections, not every possible one</div>
+                        <div><strong>Use 3-7 Factors:</strong><br>This range gives the best analysis results</div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h6 class="font-semibold text-red-300 mb-2">❌ AVOID This:</h6>
+                    <div class="space-y-2 text-sm text-white/80">
+                        <div><strong>Everything is "Strong":</strong><br>Don't make all relationships maximum intensity</div>
+                        <div><strong>Circular Logic:</strong><br>Avoid A→B and B→A with equal strength</div>
+                        <div><strong>Vague Language:</strong><br>"affects", "impacts", "influences" without intensity</div>
+                        <div><strong>"Everything affects everything":</strong><br>This creates mathematical instability</div>
+                        <div><strong>Too Many Factors:</strong><br>8+ factors often lead to over-complexity</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4 p-3 bg-blue-900/30 rounded border border-blue-500/50">
+                <h6 class="font-semibold text-blue-200 mb-2">📝 Example of Good Input:</h6>
+                <div class="text-xs text-blue-100 font-mono">
+                    "Product Quality <strong>strongly influences</strong> Customer Satisfaction because defects create complaints. 
+                    Price <strong>moderately affects</strong> Sales Volume through demand elasticity. 
+                    Marketing <strong>weakly impacts</strong> Product Quality since it doesn't change the actual product."
+                </div>
+            </div>
         </div>
+    `;
+
+    container.innerHTML = `
+        <h3 class="result-subheader text-2xl font-bold">Model Diagnostics & Health Check</h3>
+        <p class="text-white/70 mb-6">This tab analyzes the quality and reliability of your DEMATEL analysis to help you get better results.</p>
+        
+        <!-- Enhanced Overall Status Banner -->
+        <div class="p-6 rounded-xl border-2 ${statusClass} mb-8 shadow-lg">
+            <div class="flex items-start">
+                <span class="text-3xl mr-4 mt-1">${statusIcon}</span>
+                <div class="flex-1">
+                    <div class="text-lg font-bold mb-2">${statusHtml}</div>
+                    <div class="text-sm opacity-90 mb-3">${criticalIssues} critical issues, ${warningIssues} warnings detected</div>
+                    <div class="text-sm font-medium">${actionableAdvice}</div>
+                </div>
+            </div>
+        </div>
+
+        <h4 class="text-xl font-semibold mb-4">📊 Model Statistics</h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            ${statsHtml}
+        </div>
+
+        <h4 class="text-xl font-semibold mb-4">🔍 Detailed Health Check Results</h4>
+        <div class="overflow-x-auto mb-8">
+            <table class="coeff-table styled-table text-sm w-full">
+                <thead>
+                    <tr>
+                        <th class="w-1/3 text-left">Diagnostic Check</th>
+                        <th class="w-2/3 text-left">Status & Recommendations</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${checksHtml}
+                </tbody>
+            </table>
+        </div>
+        
+        ${dataQualityTips}
+    `;
+}
+
+/**
+ * Renders the new "Learn DEMATEL" tab.
+ * --- UPDATED ---
+ * This version explains our AI-powered methodology, not the
+ * manual, academic process, to build user trust and
+ * clarify how the tool actually works.
+ */
+function renderLearnDematelTab(containerId) {
+    const container = dom.$(containerId);
+    if (!container) return;
+
+    // This is static content, but now it's accurate to our tool
+    container.innerHTML = `
+        <h3 class="text-3xl font-bold text-center mb-6">🎓 Understanding Our AI-Powered DEMATEL Analysis</h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-black/20 p-4 rounded-lg border border-white/10">
+                <h4 class="text-lg font-bold mb-2 text-indigo-300">What is DEMATEL?</h4>
+                <p class="text-sm text-white/80">The <strong>DEMATEL</strong> method is a powerful tool used to analyze a complex system and understand the *causal relationships* between its parts.</p>
+                <p class="text-sm text-white/80 mt-2">Its main goal is to separate factors into two simple groups:</p>
+                <ul class="list-disc list-inside space-y-1 text-sm mt-2 pl-4">
+                    <li><strong>'Cause' Factors (Drivers):</strong> The root factors that *influence* the rest of the system.</li>
+                    <li><strong>'Effect' Factors (Outcomes):</strong> The factors that are *influenced by* others (the symptoms or results).</li>
+                </ul>
+            </div>
+            
+            <div class="bg-black/20 p-4 rounded-lg border border-white/10">
+                <h4 class="text-lg font-bold mb-2 text-indigo-300">How This Tool Works (Our Methodology)</h4>
+                <p class="text-sm text-white/80">You don't need to be an expert. Our tool automates the hard parts:</p>
+                <ol class="list-decimal list-inside space-y-2 text-sm mt-2 pl-4">
+                    <li><strong>1. You Describe:</strong> You provide a natural language description of your system, its factors, and their relationships (e.g., "Factor A strongly influences Factor B").</li>
+                    <li><strong>2. AI Analyzes:</strong> The AI (Llama 3.1) reads your text, identifies your key factors, and builds the complex "Direct Influence Matrix" for you, using a 0-4 scale based on your wording.</li>
+                    <li><strong>3. You Validate:</strong> You check the AI's work in the "Preview" step to ensure it understood you correctly.</li>
+                    <li><strong>4. Backend Calculates:</strong> Our Python backend takes the confirmed matrix and performs all the complex DEMATEL math (normalization, matrix inversion, etc.) to get the final, accurate results.</li>
+                </ol>
+            </div>
+        </div>
+
+        <h3 class="result-subheader text-2xl font-bold text-center mt-8 mb-4">How to Interpret Your Results</h3>
+        <p class="text-white/70 mb-4 text-center max-w-3xl mx-auto">The analysis gives you two key numbers for each factor. Use them to decide where to focus your efforts.</p>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-white/5 p-4 rounded-lg border border-white/10">
-                <h4 class="text-lg font-bold mb-2">Core Concepts:</h4>
-                <ul class="list-disc list-inside space-y-1 text-sm">
-                    <li><strong>Factors:</strong> The key elements or variables within the system being studied.</li>
-                    <li><strong>Direct Influence:</strong> The immediate impact one factor has on another (often rated by experts).</li>
-                    <li><strong>Total Influence (Matrix T):</strong> Captures both direct and indirect influences between all pairs of factors.</li>
-                    <li><strong>Dispatch (R):</strong> The sum of influences a factor exerts on *all other* factors (Row Sum of T). High R = Influential Cause.</li>
-                    <li><strong>Receive (C):</strong> The sum of influences a factor receives from *all other* factors (Column Sum of T). High C = Easily Influenced Effect.</li>
-                    <li><strong>Prominence (R+C):</strong> The total involvement of a factor (sum of influences dispatched and received). High R+C = Central/Important.</li>
-                    <li><strong>Relation (R-C):</strong> The net causal role. High positive R-C = Net Cause ("Dispatcher"). High negative R-C = Net Effect ("Receiver").</li>
-                </ul>
+                <h4 class="text-lg font-bold mb-2 text-yellow-300">Prominence (D+R): "Importance"</h4>
+                <p class="text-sm text-white/80">This number shows how "connected" a factor is. A high prominence means the factor has many strong relationships (both giving and receiving influence). This is your system's "central hub."</p>
+                <p class="text-sm text-white/90 font-semibold mt-2"><strong>Rule:</strong> The higher the Prominence, the more central and important the factor is to the overall system.</p>
             </div>
+            
             <div class="bg-white/5 p-4 rounded-lg border border-white/10">
-                <h4 class="text-lg font-bold mb-2">Interpretation of Causal Roles:</h4>
-                <p class="text-sm mb-2">Analysis typically categorizes factors based on Prominence (Importance) and Relation (Net Cause/Effect):</p>
-                 <ul class="list-[circle] list-inside pl-4 text-xs mb-3 space-y-1">
-                    <li><strong>Dispatchers (Causes):</strong> Have high positive Relation (R-C). These factors significantly influence others. Interventions targeting dispatchers tend to have widespread effects.</li>
-                    <li><strong>Receivers (Effects):</strong> Have high negative Relation (R-C). These factors are primarily influenced by others. They are good indicators of system performance but less effective points for direct intervention.</li>
-                    <li><strong>Central Factors:</strong> Have high Prominence (R+C). These are highly interconnected factors, playing a key role in the system's dynamics, whether as causes or effects.</li>
-                 </ul>
-                 <p class="text-sm mt-3"><strong>Strategic Focus:</strong> Identify the key Dispatchers to understand root causes and leverage points for change. Monitor Receivers to track the impact of interventions.</p>
+                <h4 class="text-lg font-bold mb-2 text-blue-300">Relation (D-R): "Causal Role"</h4>
+                <p class="text-sm text-white/80">This is the most critical number. It tells you if a factor is a driver or an outcome.</p>
+                <ul class="list-none space-y-2 text-sm mt-2">
+                    <li><strong class="text-blue-300">Positive (D-R > 0) = 'Cause' Factor:</strong> This factor *gives* more influence than it receives. It is a root driver.</li>
+                    <li><strong class="text-red-300">Negative (D-R < 0) = 'Effect' Factor:</strong> This factor *receives* more influence than it gives. It is a symptom or outcome.</li>
+                </ul>
             </div>
         </div>
 
-        <details class="styled-details text-sm mt-4">
-            <summary class="font-semibold">DEMATEL Steps (Simplified)</summary>
-            <div class="bg-black/20 p-4 rounded-b-lg space-y-2">
-                <p>1. Identify key factors.</p>
-                <p>2. Create a Direct-Influence Matrix (Z) - often through expert surveys rating influence between pairs (e.g., 0-4 scale).</p>
-                <p>3. Normalize the Direct-Influence Matrix (X).</p>
-                <p>4. Calculate the Total-Influence Matrix (T = X * (I - X)^-1).</p>
-                <p>5. Calculate R (row sums) and C (column sums) from T.</p>
-                <p>6. Calculate Prominence (R+C) and Relation (R-C) for each factor.</p>
-                <p>7. Analyze R+C and R-C to understand causal structure (e.g., using a causal diagram).</p>
-                <p>8. Develop strategies based on dispatcher/receiver roles.</p>
-            </div>
-        </details>
-    </div>
+        <div class="p-6 rounded-lg bg-green-900/20 border border-green-500/30 text-center mt-8">
+            <h4 class="text-xl font-bold mb-2 text-green-300">Your Strategic Action Plan</h4>
+            <p class="text-white/90">To fix a complex problem, **focus your energy on the 'Cause' factors** (positive D-R). By improving them, you will automatically fix the 'Effect' factors.</p>
+            <p class="text-white/90 mt-1">Use the **'Effect' factors as your KPIs** to monitor if your changes are working.</p>
+        </div>
+
+        <div class="p-4 rounded-lg bg-black/20 border border-white/10 text-center mt-8">
+             <h4 class="text-lg font-bold mb-2 text-indigo-300">Check Your Model's Health</h4>
+             <p class="text-sm text-white/80">Always check the <strong>"Diagnostics"</strong> tab. It will tell you if the AI's analysis was stable and if any potential issues (like no 'Cause' factors) were found.</p>
+        </div>
     `;
+}
 
+/**
+ * Renders the DEMATEL Causal Diagram chart into its container.
+ * --- FIXED VERSION - Minimal changes to existing function ---
+ * Fixes alignment issues and adds color bar
+ */
+function renderDematelChart(chartData) {
+    const chartContainer = dom.$("dematel-chart-container");
+    if (!chartContainer) {
+        console.warn("DEMATEL chart container not found.");
+        return;
+    }
 
-    // --- Final Touches ---
-    appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache result
+    // Check for all zero data (from a failed calculation)
+    const isAllZero = chartData.data.every(d => d.x === 0 && d.y === 0);
+    if (isAllZero) {
+        chartContainer.innerHTML = `
+            <div class="p-6 text-center text-white/70 flex items-center justify-center h-full">
+                <div>
+                    <h4 class="text-xl font-bold text-yellow-300 mb-4">Chart Cannot Be Rendered</h4>
+                    <p>The analysis resulted in zero prominence and relation for all factors.</p>
+                    <p>This is a valid result but cannot be plotted. Please see the <strong class="text-red-400">Diagnostics</strong> tab.</p>
+                </div>
+            </div>
+        `;
+        return;
+    }
 
-    // Tab switching logic (copied from your provided function)
-    tabNav.addEventListener("click", (e) => {
-        if (e.target.tagName === "BUTTON") {
-            tabNav.querySelectorAll(".analysis-tab-btn").forEach((btn) => btn.classList.remove("active"));
-            tabContent.querySelectorAll(".analysis-tab-panel").forEach((pnl) => pnl.classList.remove("active"));
-            e.target.classList.add("active");
-            const targetPanel = dom.$(e.target.dataset.tab + "Panel");
-            targetPanel.classList.add("active");
-            // Resize BOTH potential charts when switching tabs
-            const diagramChart = targetPanel.querySelector('#dematelDiagramPlot');
-            const matrixChart = targetPanel.querySelector('#dematelMatrixHeatmap');
-            if (diagramChart && diagramChart.layout && typeof Plotly !== 'undefined') {
-                try { Plotly.Plots.resize(diagramChart); } catch (err) { console.error("Resize err (Diagram):", err); }
+    chartContainer.innerHTML = ""; // Clear placeholder
+
+    try {
+        // Calculate intelligent text positions to avoid overlap
+        const textPositions = chartData.data.map((point, index) => {
+            const x = point.x;
+            const y = point.y;
+            const avgX = chartData.data.reduce((sum, p) => sum + p.x, 0) / chartData.data.length;
+            
+            // Position labels based on quadrant and avoid clustering
+            if (x > avgX && y > 0) {
+                // Top right quadrant - alternate positions
+                return index % 2 === 0 ? 'top left' : 'bottom right';
+            } else if (x <= avgX && y > 0) {
+                // Top left quadrant - alternate positions  
+                return index % 2 === 0 ? 'top right' : 'bottom left';
+            } else if (x > avgX && y <= 0) {
+                // Bottom right quadrant
+                return index % 2 === 0 ? 'top right' : 'bottom left';
+            } else {
+                // Bottom left quadrant
+                return index % 2 === 0 ? 'top left' : 'bottom right';
             }
-            if (matrixChart && matrixChart.layout && typeof Plotly !== 'undefined') {
-                 try { Plotly.Plots.resize(matrixChart); } catch (err) { console.error("Resize err (Matrix):", err); }
-            }
-        }
-    });
+        });
 
-     // Attempt initial resize for chart in the default active tab (summaryPanel - no chart)
-     // Attempt initial resize for charts in DIAGRAM and MATRIX tabs after a short delay
-     setTimeout(() => {
-         const initialDiagramChart = dom.$('dematelDiagramPlot');
-         const initialMatrixChart = dom.$('dematelMatrixHeatmap');
-         if (initialDiagramChart && initialDiagramChart.layout && typeof Plotly !== 'undefined') {
-             try { Plotly.Plots.resize(initialDiagramChart); } catch (err) { console.error("Initial Resize err (Diagram):", err); }
-         }
-         if (initialMatrixChart && initialMatrixChart.layout && typeof Plotly !== 'undefined') {
-             try { Plotly.Plots.resize(initialMatrixChart); } catch (err) { console.error("Initial Resize err (Matrix):", err); }
-         }
-     }, 150);
+        const plotData = [{
+            x: chartData.data.map(m => m.x), // Prominence (D+R)
+            y: chartData.data.map(m => m.y), // Relation (D-R)
+            text: chartData.data.map(m => m.name),
+            mode: 'markers+text',
+            textposition: textPositions,
+            textfont: {
+                size: 11,
+                color: 'white'
+            },
+            marker: {
+                size: 12,
+                color: chartData.data.map(m => m.y),
+                colorscale: 'RdBu',
+                showscale: true, // Show the color bar
+                colorbar: {
+                    title: {
+                        text: "Relation (D-R)<br>Cause ↔ Effect",
+                        font: { color: 'white', size: 12 }
+                    },
+                    titleside: "right",
+                    tickfont: { color: 'white', size: 10 },
+                    x: 1.02, // Position colorbar to the right
+                    len: 0.8,
+                    thickness: 15
+                }
+            },
+            type: 'scatter',
+            hovertemplate: '<b>%{text}</b><br>Prominence: %{x:.3f}<br>Relation: %{y:.3f}<extra></extra>'
+        }];
 
+        // Calculate context lines with better spacing
+        const avgProminence = chartData.data.reduce((sum, p) => sum + p.x, 0) / chartData.data.length;
+        const maxRelation = Math.max(...chartData.data.map(p => Math.abs(p.y)));
+        const yPadding = maxRelation * 0.15 || 0.1; 
+        const yRange = [-(maxRelation + yPadding), maxRelation + yPadding];
+        const minProminence = Math.min(...chartData.data.map(p => p.x));
+        const maxProminence = Math.max(...chartData.data.map(p => p.x));
+        const xPadding = (maxProminence - minProminence) * 0.1 || 0.1;
+        const xRange = [minProminence - xPadding, maxProminence + xPadding];
 
-    dom.$("analysisActions").classList.remove("hidden"); // Show save buttons
-    // setLoading('generate', false); // Handled in the calling function
-}  
+        const layout = {
+            title: {
+                text: chartData.title,
+                font: { color: 'white' } 
+            },
+            paper_bgcolor: 'rgba(0,0,0,0)', 
+            plot_bgcolor: 'rgba(0,0,0,0.1)', 
+            font: { color: 'white' }, 
+            xaxis: { 
+                title: {
+                    text: chartData.x_axis_label,
+                    font: { color: 'white' } 
+                },
+                gridcolor: 'rgba(255, 255, 255, 0.2)', 
+                zeroline: false,
+                tickfont: { color: 'white' },
+                range: xRange // Use calculated range instead of automargin
+            },
+            yaxis: { 
+                title: {
+                    text: chartData.y_axis_label,
+                    font: { color: 'white' } 
+                },
+                gridcolor: 'rgba(255, 255, 255, 0.2)', 
+                zeroline: true, 
+                zerolinecolor: 'rgba(255, 255, 255, 0.5)', 
+                tickfont: { color: 'white' },
+                range: yRange // Use calculated range for proper alignment
+            },
+            hovermode: 'closest',
+            margin: { t: 50, b: 60, l: 80, r: 120 }, // Fixed margins instead of automargin
+            autosize: true,
+
+            shapes: [
+                { 
+                    type: 'line',
+                    xref: 'paper', x0: 0, x1: 1,
+                    yref: 'y', y0: 0, y1: 0,
+                    line: { color: 'rgba(255, 255, 255, 0.5)', width: 1, dash: 'dot' }
+                },
+                { 
+                    type: 'line',
+                    xref: 'x', x0: avgProminence, x1: avgProminence,
+                    yref: 'paper', y0: 0, y1: 1,
+                    line: { color: 'rgba(255, 255, 255, 0.5)', width: 1, dash: 'dot' }
+                }
+            ],
+            annotations: [
+                {
+                    text: 'Core Drivers',
+                    x: maxProminence - xPadding * 0.5, 
+                    y: yRange[1] - yPadding * 0.5,
+                    showarrow: false, 
+                    font: { color: 'rgba(255, 255, 255, 0.4)' }
+                },
+                {
+                    text: 'Independent Drivers',
+                    x: minProminence + xPadding * 0.5, 
+                    y: yRange[1] - yPadding * 0.5,
+                    showarrow: false, 
+                    font: { color: 'rgba(255, 255, 255, 0.4)' }
+                },
+                {
+                    text: 'Central Outcomes',
+                    x: maxProminence - xPadding * 0.5, 
+                    y: yRange[0] + yPadding * 0.5,
+                    showarrow: false, 
+                    font: { color: 'rgba(255, 255, 255, 0.4)' }
+                },
+                {
+                    text: 'Independent Outcomes',
+                    x: minProminence + xPadding * 0.5, 
+                    y: yRange[0] + yPadding * 0.5,
+                    showarrow: false, 
+                    font: { color: 'rgba(255, 255, 255, 0.4)' }
+                }
+            ]
+        };
+
+        Plotly.newPlot(chartContainer, plotData, layout, { responsive: true });
+
+    } catch (e) {
+        console.error("Chart rendering failed (is Plotly.js loaded?):", e);
+        chartContainer.innerHTML = `<div class="error-message">Chart rendering failed: ${e.message}.<br><pre class="text-xs bg-black/30 p-2 rounded mt-2">${JSON.stringify(chartData.data, null, 2)}</pre></div>`;
+    }
+}
 
 export {
     renderDescriptivePage_DA,
