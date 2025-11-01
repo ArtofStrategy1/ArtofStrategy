@@ -8,15 +8,11 @@ import * as renderDA from '../ui/analysis-rendering/analysis-rendering-da.mjs';
 
 async function handleDescriptiveAnalysis_DA() {
     const analysisResultContainer = dom.$("analysisResult");
-    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white mb-4">Performing Calculations...</h3><p class="text-white/80 mb-2">Calculating descriptive statistics...</p></div>`;
+    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white mb-4">Performing Full Descriptive Analysis...</h3><p class="text-white/80 mb-2">Calculating statistics, generating visualizations, and deriving insights...</p></div>`;
     setLoading("generate", true); // Set loading state
 
-    const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
-    // *** MODEL NAME UPDATED HERE ***
-    const MODEL_NAME = "qwen3:30b-a3b"; // Switched to Qwen model
-    // *******************************
-
     try {
+        // 1. Gather Inputs
         const dataFile = dom.$("descriptiveFile").files[0];
         const contextFile = dom.$("descriptiveContextFile").files[0];
 
@@ -24,326 +20,169 @@ async function handleDescriptiveAnalysis_DA() {
             throw new Error("❌ Please upload a CSV data file.");
         }
 
-        const csvText = await extractTextFromFile(dataFile);
-        // Use existing robust parseCSV function
-        const { header, rows } = parseCSV(csvText);
+        // 2. Prepare FormData for your Python backend
+        const formData = new FormData();
+        formData.append("analysis_type", "descriptive");
+        formData.append("data_file", dataFile, dataFile.name);
 
-        if (rows.length === 0) {
-                throw new Error("❌ The CSV file appears empty or could not be parsed correctly.");
-        }
-
-        // --- Client-Side Statistical Calculations (Improved) ---
-        console.log(`Calculating stats for ${rows.length} rows and ${header.length} columns.`);
-        const numerical_summary = [];
-        const categorical_summary = [];
-        const visualizations = [];
-
-        // (Keep the existing calculation logic from the previous correct version here)
-        header.forEach((col) => {
-            const values = rows.map(r => r[col]).filter(v => v !== undefined && v !== null && v !== '');
-            if (values.length === 0) { console.warn(`Skipping empty column: ${col}`); return; }
-            const numericValues = values.map(v => typeof v === 'string' ? parseFloat(v.replace(/[^0-9.-]+/g,"")) : Number(v)).filter(n => !isNaN(n));
-            const isNumeric = (numericValues.length / values.length) > 0.8;
-
-            if (isNumeric && numericValues.length > 1) {
-                const count = numericValues.length;
-                const sum = numericValues.reduce((a, b) => a + b, 0);
-                const mean = sum / count;
-                const sorted = [...numericValues].sort((a, b) => a - b);
-                const median = count % 2 === 0 ? (sorted[count / 2 - 1] + sorted[count / 2]) / 2 : sorted[Math.floor(count / 2)];
-                const min = sorted[0];
-                const max = sorted[sorted.length - 1];
-                const variance = numericValues.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b, 0) / (count > 1 ? count - 1 : 1);
-                const std_dev = count > 1 ? Math.sqrt(variance) : 0;
-                const q1Index = Math.max(0, Math.floor((count + 1) * 0.25) - 1);
-                const q3Index = Math.min(count - 1, Math.floor((count + 1) * 0.75) - 1);
-                const q1 = sorted[q1Index];
-                const q3 = sorted[q3Index];
-                const iqr = (q3 !== undefined && q1 !== undefined) ? q3 - q1 : undefined;
-                numerical_summary.push({ variable: col, count, mean, median, std_dev, min, max, q1, q3, iqr });
-                visualizations.push({ chart_type: "histogram", variable: col, data: numericValues, title: `Distribution of ${col}` });
-            } else {
-                const frequencies = {};
-                values.forEach((v) => { const key = String(v); frequencies[key] = (frequencies[key] || 0) + 1; });
-                const unique_categories = Object.keys(frequencies).length;
-                    const modeEntry = Object.entries(frequencies).sort(([,a],[,b]) => b-a)[0];
-                    const mode = modeEntry ? modeEntry[0] : "N/A";
-                const freqArray = Object.entries(frequencies).map(([category, count]) => ({ category, count, percentage: (count / values.length) * 100 })).sort((a,b) => b.count - a.count);
-                categorical_summary.push({ variable: col, count: values.length, unique_categories, mode, frequencies: freqArray });
-                const MAX_BAR_CATEGORIES = 15;
-                const topFreq = freqArray.slice(0, MAX_BAR_CATEGORIES);
-                visualizations.push({ chart_type: "bar", variable: col, data: topFreq.reduce((obj, item) => { obj[item.category] = item.count; return obj; }, {}), title: `Frequency of Top ${topFreq.length} Categories in ${col}` + (freqArray.length > MAX_BAR_CATEGORIES ? ' (Truncated)' : '') });
-            }
-        });
-
-        const summary = {
-            rows: rows.length, columns: header.length, numerical_vars: numerical_summary.length, categorical_vars: categorical_summary.length,
-            interpretation: `The dataset contains ${rows.length} records across ${header.length} variables (${numerical_summary.length} numerical, ${categorical_summary.length} categorical). Analysis summarizes central tendency, dispersion, and frequencies.`
-        };
-
-        // --- LLM Insights Generation ---
-        analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6">...</div><h3 class="text-xl font-semibold text-white mb-4">Generating Accurate Business Insights...</h3><p class="text-white/80 mb-2">Applying strict checks to statistical interpretation...</p></div>`;
-
-        let businessContext = "No additional business context provided.";
+        // Add the context file if it exists
         if (contextFile) {
-                try { businessContext = await extractTextFromFile(contextFile); } catch(e) { console.warn("Could not read context file:", e.message); }
+            formData.append("context_file", contextFile, contextFile.name); 
+            // NOTE: You will need to add `context_file: Optional[UploadFile] = File(None)` 
+            // to your main.py router to accept this.
         }
-        if (businessContext.length > 7000) { businessContext = businessContext.substring(0, 7000) + "... (truncated)"; }
+        
+        // We are NOT sending analysis_types, so the backend will run all of them.
 
-        // Prepare summary for prompt
-        const statsSummaryForPrompt = {
-            overview: summary,
-            numerical_highlights: numerical_summary.map(n => ({
-                    variable: n.variable,
-                    mean: n.mean?.toFixed(2),
-                    median: n.median?.toFixed(2),
-                    std_dev: n.std_dev?.toFixed(2),
-                    min: n.min?.toFixed(2),
-                    max: n.max?.toFixed(2)
-                })),
-            categorical_highlights: categorical_summary.map(c => ({
-                    variable: c.variable,
-                    unique_categories: c.unique_categories,
-                    mode: c.mode,
-                    top_category_pct: (c.frequencies[0]?.percentage || 0).toFixed(1) + '%'
-                }))
-        };
-
-        // --- Prompt with Explicit Accuracy Constraints (kept from previous version) ---
-        const prompt = `
-            You are a meticulous senior data analyst presenting findings from a descriptive analysis. Accuracy is paramount. Use the provided statistics and business context to generate insightful recommendations.
-
-            **BUSINESS CONTEXT:**
-            """
-            ${businessContext}
-            """
-
-            **CALCULATED STATISTICAL SUMMARY:**
-            """
-            ${JSON.stringify(statsSummaryForPrompt, null, 2)}
-            """
-
-            **TASK:**
-            Generate **6 to 8** specific, actionable business insights. Each insight MUST be accurate and directly interpret the provided STATISTICAL SUMMARY within the BUSINESS CONTEXT.
-
-            **For each insight:**
-            1.  **Observation:** State the specific statistical finding *exactly* as calculated (e.g., "Mean for 'Age' (XX.X) is [correctly state: higher/lower] than Median (YY.Y)"). Verify all numerical comparisons. Do NOT use terms like 'dominance' or 'concentration' for numerical variable means/medians; use range, mean, median, std dev for interpretation.
-            2.  **Accurate Interpretation:** Explain the practical meaning.
-                * **SKEWNESS RULE (Apply Strictly):**
-                    * If Mean > Median: Interpret as potential **right-skewness** (tail to higher values, possible high outliers).
-                    * If Mean < Median: Interpret as potential **left-skewness** (tail to lower values, possible low outliers).
-                    * If Mean ≈ Median: Interpret as roughly symmetric.
-                * **Variability:** High Std Dev relative to Mean implies high variability/inconsistency. Low Std Dev implies consistency.
-                * **Categorical Mode:** A high percentage for the mode indicates concentration in that category.
-            3.  **Business Implication/Recommendation:** Connect the *accurate* interpretation to the BUSINESS CONTEXT. Suggest potential actions, investigations, or strategic points. **If a finding (e.g., 'Retail_Sales' stats) seems unrelated to the primary Business Context (e.g., an e-commerce description), explicitly note this potential mismatch** but still provide a recommendation based on the statistic itself.
-
-            **CRITICAL REQUIREMENTS:**
-            - **NUMERICAL ACCURACY:** All statements about numbers (e.g., comparisons) MUST be correct.
-            - **CORRECT INTERPRETATION:** Skewness direction MUST follow the Mean vs. Median rule. Variability interpretation must be logical.
-            - **Context Link:** Link insights to BUSINESS CONTEXT where possible, noting mismatches if necessary.
-            - **Actionable:** Insights should lead to potential next steps.
-            - **Synthesize:** Go beyond reporting numbers; explain *why* they matter.
-
-            **RETURN FORMAT:**
-            Provide ONLY a valid JSON object with a list of **6 to 8** insight objects:
-            {
-                "business_insights": [
-                {
-                    "observation": "Accurate observation statement...",
-                    "interpretation": "Correct interpretation based on rules...",
-                    "business_implication": "Recommendation linked to context (or noting mismatch)..."
-                },
-                // ... 6 to 8 insights total ...
-                ]
-            }
-        `;
-
-        console.log(`Sending ACCURACY-FOCUSED Descriptive Insights prompt to ${MODEL_NAME}...`);
-        const response = await fetch(OLLAMA_URL, {
+        // 3. Call your FastAPI Backend (NOT Ollama)
+        const API_URL = "https://analysis.data2int.com/api/data-analysis"; // Your main API endpoint
+        
+        const response = await fetch(API_URL, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ model: MODEL_NAME, prompt: prompt, stream: false, format: "json", options: { num_ctx: 32768 }}) // Ensure num_ctx is appropriate
+            body: formData,
+            // Add Authorization headers if your API requires them
         });
 
-        if (!response.ok) throw new Error(`API error: ${response.status}`);
-        const llmData = await response.json();
-
-        let insightsData;
+        if (!response.ok) {
+            let errorDetail = `API Error: ${response.status}`;
             try {
-                insightsData = JSON.parse(llmData.response);
-                if (!insightsData.business_insights || !Array.isArray(insightsData.business_insights) || (insightsData.business_insights.length > 0 && typeof insightsData.business_insights[0] !== 'object')) {
-                    console.warn("Insights received but not in the expected object format. Attempting fallback.", insightsData.business_insights);
-                    if (insightsData.business_insights && insightsData.business_insights.length > 0 && typeof insightsData.business_insights[0] === 'string') {
-                        insightsData.business_insights = insightsData.business_insights.map(str => ({ observation: "General Insight", interpretation: str, business_implication: "Review manually." }));
-                    } else { throw new Error("Insights format incorrect."); }
-                }
-                console.log(`Successfully parsed ${insightsData.business_insights.length} Insights (Accuracy Check) using ${MODEL_NAME}.`);
-            } catch(e) {
-                console.error(`Failed to parse Insights JSON (Accuracy Check) using ${MODEL_NAME}:`, llmData.response, e);
-                insightsData = { business_insights: [{ observation: "Error", interpretation: "Could not generate insights.", business_implication: "Review stats manually." }] };
+                const errorJson = await response.json();
+                errorDetail = errorJson.detail || `API Error: ${response.status}`;
+            } catch (e) {
+                // Fallback if error response isn't JSON
+                errorDetail = `API Error: ${response.status} - ${response.statusText}`;
             }
+            throw new Error(errorDetail);
+        }
 
-        // --- Assemble Final Data Object ---
-        const finalData = { summary, numerical_summary, categorical_summary, visualizations, business_insights: insightsData.business_insights || [] };
+        const parsedData = await response.json();
+        
+        // 4. Check if the backend returned its *own* error
+        if (parsedData.error) {
+            throw new Error(`Backend Analysis Error: ${parsedData.error}`);
+        }
 
-        renderDA.renderDescriptivePage_DA(analysisResultContainer, finalData); // Use the existing (corrected) renderer
+        // 5. Pass the *entire response* to your teammate's render function
+        // This is the critical step. We are now trusting the Python backend
+        // to send the *exact* JSON structure that renderDescriptivePage_DA expects.
+        renderDA.renderDescriptivePage_DA(analysisResultContainer, parsedData);
 
     } catch (error) {
-        console.error(`Error during Descriptive Analysis (Accuracy Check) using ${MODEL_NAME}:`, error);
+        console.error(`Error in handleDescriptiveAnalysis_DA:`, error);
         analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
         setLoading("generate", false);
     }
+    // 'finally' block is not needed here because setLoading(false) is handled 
+    // by renderDescriptivePage_DA on success and by the catch block on error.
 }
 
 
 
+/**
+ * Handles the Predictive Analysis request.
+ * Gathers data and parameters (using the assumed first column as the date column),
+ * sends them to the backend API, and calls the rendering function upon receiving results.
+ */
 async function handlePredictiveAnalysis() {
     const analysisResultContainer = dom.$("analysisResult");
-    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div></div><div></div><div></div></div><h3 class="text-xl font-semibold text-white">Generating Enhanced Forecast...</h3><p class="text-white/80 mb-2">Applying detailed prompt engineering & accuracy checks...</p></div>`;
+    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div></div><div></div><div></div></div><h3 class="text-xl font-semibold text-white">Running Predictive Analysis...</h3><p class="text-white/80 mb-2">Please wait while the forecast is generated.</p></div>`;
     setLoading("generate", true);
-
-    // Define URL and Model (ensure these are correct for your setup)
-    const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
-    // *** CHOOSE MODEL: qwen or llama ***
-    const MODEL_NAME = "llama3.1:latest"; // Use Qwen for potentially better numerical accuracy
-    // const MODEL_NAME = "llama3.1:latest"; // Alternative option
+    dom.$("analysisActions").classList.add("hidden");
 
     try {
-        // 1. Gather all inputs from the UI
-        const file = dom.$("predictiveFile").files[0];
-        const dateColumn = dom.$("dateColumnSelect").value;
-        const metricColumn = dom.$("metricSelect").value;
-        const horizon = dom.$("horizonSelect").value;
-        const modelType = document.querySelector('input[name="model"]:checked').value;
+        // --- 1. Get Inputs from UI ---
+        const dataFile = dom.$("predictiveFile").files[0];
+        const dataText = dom.$("predictiveDataText").value.trim();
+        const isUsingFile = dom.$("predictiveInputFileToggle").checked;
 
-        if (!file || !dateColumn || !metricColumn) {
-            throw new Error("❌ Please upload a file and select the date and metric columns.");
+        // --- *** MODIFICATION START *** ---
+        // Get the assumed date column name from the span where it's displayed
+        const assumedDateColNameSpan = dom.$("assumedDateColName");
+        const dateColumn = assumedDateColNameSpan ? assumedDateColNameSpan.textContent : null;
+        // --- *** MODIFICATION END *** ---
+
+        // Get other selected parameters
+        const targetColumn = dom.$("predictiveTargetColumn").value;
+        const forecastPeriods = dom.$("predictiveForecastPeriods").value; // Send as string
+        const confidenceLevel = dom.$("predictiveConfidenceLevel").value; // Send as string
+        const modelType = dom.$("predictiveModelType").value; // Send as string
+
+        // --- 2. Validate Inputs ---
+        // --- *** MODIFICATION START *** ---
+        // Validate the *retrieved* date column name
+        if (!dateColumn || dateColumn === "..." || dateColumn === "N/A" || dateColumn === "Error") {
+            throw new Error("Could not determine the Date Column. Please ensure data is loaded correctly.");
+        }
+        // --- *** MODIFICATION END *** ---
+        if (!targetColumn) {
+            throw new Error("Please select the Target Variable column.");
+        }
+        if (dateColumn === targetColumn) {
+             throw new Error("Date Column and Target Variable must be different.");
         }
 
-        const fileContent = await extractTextFromFile(file);
-        const periods = { quarter: 3, "6months": 6, year: 12, "2years": 24 }[horizon];
-        const horizonText = { quarter: "Next Quarter", "6months": "Next 6 Months", year: "Next Year", "2years": "Next 2 Years" }[horizon];
+        let fileToSend = null;
+        let dataContentToSend = null;
 
-        // Truncate if necessary
-        const MAX_CONTEXT_LENGTH = 15000; // Adjust as needed
-         let truncatedNote = "";
-         let dataSnippet = fileContent;
-         if (fileContent.length > MAX_CONTEXT_LENGTH) {
-             dataSnippet = fileContent.substring(0, MAX_CONTEXT_LENGTH);
-             truncatedNote = `(Note: Analysis based on the first ${MAX_CONTEXT_LENGTH} characters of data.)`;
-             console.warn(`Predictive analysis data truncated.`);
-         }
+        // Determine data source (same as before)
+        if (isUsingFile) {
+            if (!dataFile) { throw new Error("Please upload a data file (.csv or .xlsx)."); }
+            const allowedExtensions = ['.csv', '.xlsx', '.xls'];
+            const fileExt = dataFile.name.substring(dataFile.name.lastIndexOf('.')).toLowerCase();
+            if (!allowedExtensions.includes(fileExt)) { throw new Error("Invalid file type. Please upload a CSV or Excel file."); }
+            fileToSend = dataFile;
+        } else {
+            if (!dataText) { throw new Error("Please paste your CSV data into the text area."); }
+            dataContentToSend = dataText;
+        }
 
-        // 2. Construct the Enhanced Prompt for Ollama
-         const prompt = `
-            You are a meticulous and highly accurate senior data scientist performing a time-series forecast and analysis for a business user. Your primary goal is precision and providing actionable, data-grounded insights.
+        // --- 3. Prepare FormData for Backend ---
+        const formData = new FormData();
+        formData.append("analysis_type", "predictive");
 
-            **ANALYSIS INPUTS:**
-            * **Data Snippet:** ${truncatedNote}\n\`\`\`csv\n${dataSnippet}\n\`\`\`
-            * **Date/Time Column:** "${dateColumn}"
-            * **Value Column to Predict:** "${metricColumn}"
-            * **Forecast Horizon:** ${periods} months (${horizonText})
-            * **Preferred Model:** ${modelType} (Use Prophet principles if possible, otherwise use ARIMA. State which model was ultimately used.)
+        // Append data source (same as before)
+        if (fileToSend) { formData.append("data_file", fileToSend, fileToSend.name); }
+        else if (dataContentToSend) { formData.append("data_text", dataContentToSend); }
+        else { throw new Error("No data source (file or text) is available."); }
 
-            **DETAILED TASKS:**
-            1.  **Forecast Generation:** Generate a plausible month-by-month forecast for "${metricColumn}" for the next ${periods} months. Include: \`predicted_value\` (float), \`lower_bound\` (float, e.g., 95% CI lower), \`upper_bound\` (float, e.g., 95% CI upper). Ensure bounds realistically reflect forecast uncertainty (wider further out). Format \`period\` as "YYYY-MM".
-            2.  **Input Data Summary:** Calculate plausible descriptive statistics for the historical "${metricColumn}" data *consistent with patterns in the snippet*: Mean, Median, Standard Deviation (Std Dev), Minimum (Min), Maximum (Max), and Coefficient of Variation (CV = Std Dev / Mean * 100). Calculate CV percentage.
-            3.  **Model Performance Simulation:** Estimate plausible performance metrics by simulating a train/test split (e.g., using last 20% data as test): Model Used (Confirm Prophet or ARIMA), MAPE (%), R-squared (0-1), MAE, and RMSE. Provide an accurate interpretation: "R-squared of [value] indicates that approximately [value*100]% of the variance in the historical data is explained by the model." Note limitations if data seems short/erratic.
-            4.  **Detailed & Accurate Insights (Generate 6-8 Objects):** Analyze patterns ONLY within the provided data snippet.
+        // Append parameters (sending the *retrieved* dateColumn)
+        formData.append("dateColumn", dateColumn); // Sends the assumed date column name
+        formData.append("targetColumn", targetColumn);
+        formData.append("forecastPeriods", forecastPeriods);
+        formData.append("confidenceLevel", confidenceLevel);
+        formData.append("modelType", modelType);
 
-                **For EACH Insight Object (MUST contain these 3 keys):**
-                * **\`observation\`:** State the specific statistical finding *exactly* (e.g., "Mean ([value]) is [correctly state: higher/lower] than Median ([value]) for '${metricColumn}'."). Verify all numerical comparisons. Calculate and state CV percentage when discussing variability. State typical confidence interval width (Upper - Lower).
-                * **\`accurate_interpretation\`:** Explain the practical meaning based *strictly* on statistical rules:
-                    * **SKEWNESS (MANDATORY CHECK):** If Mean > Median, state: "potential **right-skewness** (tail high)". If Mean < Median, state: "potential **left-skewness** (tail low)". If Mean ≈ Median, state: "**roughly symmetric**". DO NOT GUESS.
-                    * **VARIABILITY (CV %):** Interpret calculated CV *relatively* (e.g., <15% low, 15-30% moderate, >30% high inconsistency).
-                    * **CONFIDENCE INTERVAL:** Wider interval = **less certainty/reliability**. Narrower = **more certainty/reliability**. State this clearly.
-                * **\`business_implication\`:** Connect the *accurate interpretation* to potential business actions/investigations. If a finding seems anomalous, note it. Aim for actionable relevance.
+        // --- 4. Send Request to Backend API ---
+        const API_URL = "https://analysis.data2int.com/api/data-analysis";
+        console.log("Sending Predictive Analysis request to:", API_URL);
 
-            5.  **Self-Correction:** Before outputting JSON, rigorously check: Are all numbers/comparisons correct? Do interpretations strictly follow rules? Are implications logical? Is everything based ONLY on the data snippet? Fix errors.
-
-            **ABSOLUTE CONSTRAINTS:**
-            - **NUMERICAL PRECISION & ACCURACY:** Mandatory.
-            - **RULE ADHERENCE:** Mandatory for Skewness, CV, CI interpretation.
-            - **DATA GROUNDING:** Mandatory. No external knowledge or fabrication.
-            - **JSON FORMAT:** Adhere EXACTLY. Ensure ALL FOUR top-level keys are present and insights are objects.
-
-            **RETURN FORMAT:**
-            Provide ONLY a valid JSON object. **CRITICAL: Include ALL keys: "predictions", "data_summary", "model_performance", AND "insights".** The "insights" array MUST contain **6-8 objects**, each with "observation", "accurate_interpretation", and "business_implication" keys.
-            {
-              "predictions": [ {"period": "YYYY-MM", "predicted_value": 0.0, "lower_bound": 0.0, "upper_bound": 0.0} /* ... */ ],
-              "data_summary": { "mean": 0.0, "median": 0.0, "std_dev": 0.0, "min": 0.0, "max": 0.0, "coeff_variation": 0.0 },
-              "model_performance": { "model_used": "...", "mape": 0.0, "r_squared": 0.0, "mae": 0.0, "rmse": 0.0, "interpretation": "..." },
-              "insights": [
-                { // MUST BE THIS OBJECT STRUCTURE
-                  "observation": "Accurate observation...",
-                  "accurate_interpretation": "Correct interpretation based on rules...", // Key name changed from 'interpretation'
-                  "business_implication": "Recommendation..."
-                } // ... 6 to 8 INSIGHT OBJECTS ...
-              ]
-            }
-        `;
-
-        // 3. Send the request to Ollama
-        console.log(`Sending ENHANCED Predictive Analysis prompt to ${MODEL_NAME}...`);
-        const response = await fetch(OLLAMA_URL, {
+        const response = await fetch(API_URL, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ model: MODEL_NAME, prompt: prompt, stream: false, format: "json", options: { num_ctx: 32768 } }) // Increased context window
+            body: formData,
+            // headers: { 'Authorization': `Bearer ${your_auth_token}` } // Add if needed
         });
 
+        // --- 5. Handle Backend Response ---
         if (!response.ok) {
-            let errorBody = `API error ${response.status}`;
-            try { errorBody += `: ${await response.text()}`; } catch (e) {}
-            throw new Error(errorBody);
+            let errorDetail = `API request failed (${response.status} ${response.statusText})`;
+            try {
+                const errorJson = await response.json();
+                errorDetail += `: ${errorJson.detail || JSON.stringify(errorJson)}`;
+            } catch (e) { try { errorDetail += `: ${await response.text()}`; } catch(readErr) {} }
+            throw new Error(errorDetail);
         }
 
-        const data = await response.json();
-        let parsedData;
-        try {
-            parsedData = JSON.parse(data.response);
-            // *** Robust Validation ***
-             console.log('--- RAW AI JSON RESPONSE (Parsed - Enhanced Prompt) ---');
-             console.log(JSON.stringify(parsedData, null, 2));
-             console.log('------------------------------------');
+        const parsedData = await response.json();
+        console.log("Received predictive analysis results:", parsedData);
 
-             if (!parsedData ||
-                 !parsedData.predictions || !Array.isArray(parsedData.predictions) ||
-                 !parsedData.data_summary || typeof parsedData.data_summary !== 'object' || !parsedData.data_summary.hasOwnProperty('mean') || // Check specific field
-                 !parsedData.model_performance || typeof parsedData.model_performance !== 'object' || !parsedData.model_performance.hasOwnProperty('model_used') || // Check specific field
-                 !parsedData.insights || !Array.isArray(parsedData.insights) ||
-                 // Check insights structure more carefully
-                 (parsedData.insights.length > 0 && (
-                     typeof parsedData.insights[0] !== 'object' ||
-                     !parsedData.insights[0].hasOwnProperty('observation') ||
-                     !parsedData.insights[0].hasOwnProperty('accurate_interpretation') || // Check for new key name
-                     !parsedData.insights[0].hasOwnProperty('business_implication')
-                 )) ||
-                 // Check if insight count is reasonable (optional, adjust range if needed)
-                  parsedData.insights.length < 4 // Expecting at least a few insights
-                )
-             {
-                  console.error("Validation Failed: Required fields missing or invalid structure/count.", parsedData);
-                  throw new Error(`AI response structure is incorrect. Missing or invalid fields (e.g., predictions, data_summary, model_performance, or insights). Check console logs.`);
-             }
-             console.log(`Successfully parsed ENHANCED Predictive Analysis JSON using ${MODEL_NAME}. Found ${parsedData.insights.length} insights.`);
-
-        } catch (e) {
-            console.error(`Failed to parse/validate ENHANCED Predictive Analysis JSON using ${MODEL_NAME}:`, data?.response, e);
-            throw new Error(`Invalid JSON received or required fields missing in AI response: ${e.message}. Check console logs.`);
-        }
-
-        // 4. Render the results
-        renderDA.renderPredictiveAnalysisPage(analysisResultContainer, parsedData);
+        // Call the rendering function
+        renderDA.renderPredictiveAnalysisPage(dom.$("analysisResult"), parsedData); // Assumes this function exists and works
 
     } catch (error) {
-        console.error(`Error in handlePredictiveAnalysis (Enhanced) using ${MODEL_NAME}:`, error);
-        analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
-        setLoading("generate", false);
+        console.error("Error during Predictive Analysis:", error);
+        analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400"><strong>Error:</strong> ${error.message}</div>`;
     } finally {
-        // Ensure loading stops even if rendering fails
-         if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
-            setLoading("generate", false);
-         }
+        setLoading("generate", false); // Turn off loading state
     }
 }
 
@@ -1102,7 +941,7 @@ async function handleSemAnalysis() {
 
         // --- 4. Send Request to Backend API ---
         // *** Replace with your actual backend API endpoint ***
-        const API_URL = "https://analysis.data2int.com/api/analysis"; // Example URL
+        const API_URL = "https://analysis.data2int.com/api/data-analysis"; // Example URL
 
         const response = await fetch(API_URL, {
             method: "POST",
@@ -1144,212 +983,194 @@ async function handleSemAnalysis() {
 
 
     
+/**
+ * Handles the DEMATEL analysis request.
+ * --- THIS IS THE "REAL" VERSION - v2 ---
+ * Step 1: Gets user text and sends it to OLLAMA with a highly-structured,
+ * "chain-of-thought" prompt to force accurate factor/matrix generation.
+ * Step 2: Sends the OLLAMA result to our Python backend for math.
+ * Step 3: Renders the final result from the Python backend.
+ */
 async function handleDematelAnalysis() {
-    const analysisResultContainer = dom.$("analysisResult");
-    // Using the exact loading message structure you provided
-    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div></div><div></div><div></div></div><h3 class="text-xl font-semibold text-white">Running DEMATEL Analysis...</h3><p id="analysisStatus" class="text-white/60 text-sm">This may take a moment.</p></div>`;
-    // Added setLoading call
-    setLoading("generate", true);
-
-    // Define URL and Model (using llama3.1 as per your function)
+    // API URLs
     const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
-    const MODEL_NAME = "llama3.1:latest";
+    const PYTHON_BACKEND_URL = "https://analysis.data2int.com/api/data-analysis";
+    
+    // Model to use for AI analysis
+    const MODEL_NAME = "llama3.1:latest"; // Sticking with Llama 3.1
+
+    const analysisResultContainer = dom.$("analysisResult");
+    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div></div><div></div><div></div></div><h3 class="text-xl font-semibold text-white">Starting DEMATEL Analysis...</h3><p class="text-white/80 mb-2">Please wait...</p></div>`;
+    
+    // Get references to input elements
+    const textInput = dom.$("dematelContent");
+    const fileInput = dom.$("dematelFile");
+    const textError = dom.$("dematelTextError");
+    const fileError = dom.$("dematelFileError");
+
+    // Determine input type
+    const isFileInput = dom.$("dematelInputFileToggle").checked;
+    
+    // Clear previous errors
+    textError.textContent = "";
+    fileError.textContent = "";
 
     try {
-        // 1. Gather Inputs (using your logic)
-        const useDoc = document.querySelector('input[name="inputType"]:checked').id === "docUpload";
-        let content = "";
-        if (useDoc) {
-            const file = dom.$("dematelFile").files[0];
-            if (!file) throw new Error("Please select a document.");
-            content = await extractTextFromFile(file);
+        // 1. Set loading state
+        setLoading("generate", true); 
+        analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div></div><div></div><div></div></div><h3 class="text-xl font-semibold text-white">Step 1/3: Reading and Understanding Text...</h3><p class="text-white/80 mb-2">Extracting key factors from your document...</p></div>`;
+
+        // 2. Get User Text (from file or textarea)
+        let userText = "";
+        if (isFileInput) {
+            const file = fileInput.files[0];
+            if (!file) throw new Error("Please select a .txt or .docx file.");
+            userText = await extractTextFromFile(file); 
         } else {
-            content = dom.$("dematelContent").value.trim();
-            if (!content) throw new Error("Please describe the system's factors.");
+            userText = textInput.value.trim();
+            if (!userText) throw new Error("Please enter a system or problem description.");
+        }
+        
+        // Truncate if necessary (Llama 3.1 has a large context)
+        const MAX_CONTEXT_LENGTH = 16000;
+        if (userText.length > MAX_CONTEXT_LENGTH) {
+            console.warn(`Text truncated to ${MAX_CONTEXT_LENGTH} characters for analysis.`);
+            userText = userText.substring(0, MAX_CONTEXT_LENGTH);
         }
 
-        // Truncate if necessary (added for safety)
-        const MAX_CONTEXT_LENGTH = 15000;
-        let truncatedNote = "";
-        if (content.length > MAX_CONTEXT_LENGTH) {
-            content = content.substring(0, MAX_CONTEXT_LENGTH);
-            truncatedNote = `(Note: Analysis based on the first ${MAX_CONTEXT_LENGTH} characters.)`;
-            console.warn(`DEMATEL analysis context truncated.`);
-        }
+        // 3. --- STEP 1: CALL OLLAMA (with new, much better prompt) ---
+        analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div></div><div></div><div></div></div><h3 class="text-xl font-semibold text-white">Step 2/3: Generating Influence Matrix...</h3><p class="text-white/80 mb-2">AI is quantifying the causal relationships (this may take a moment)...</p></div>`;
 
-
-        // 2. Construct ENHANCED Prompt (based on your numerical approach)
+        // --- NEW ADVANCED PROMPT ---
         const prompt = `
-            You are an expert systems analyst applying the Decision Making Trial and Evaluation Laboratory (DEMATEL) method. Analyze the user's provided context to identify key factors, model their causal interrelationships numerically, and provide detailed, actionable insights. Accuracy and adherence to DEMATEL principles are paramount. ${truncatedNote}
+            You are a meticulous DEMATEL analyst. Your task is to perform a rigorous analysis of the provided text.
 
-            **ANALYSIS INPUTS:**
-            * **User Context/Factor Description:**\n\`\`\`\n${content}\n\`\`\`
+            **USER TEXT:**
+            """
+            ${userText}
+            """
 
-            **DETAILED TASKS:**
-            1.  **Factor Identification:** Identify 5 to 7 key, distinct factors relevant to the core issue described *only* in the context. Ensure factors are clearly named (2-4 words max).
-            2.  **Simulate Total Influence Matrix (T):** Based *only* on the relationships implied or stated in the context (or plausible defaults if vague), simulate a plausible square **total-influence matrix (T)** where T[i][j] represents the total (direct + indirect) influence of factor i on factor j. Diagonal elements should typically be smaller than off-diagonal. Ensure values are plausible positive numbers.
-            3.  **Calculate Influence Metrics:** Based *strictly* on the simulated **total-influence matrix (T)**:
-                * Calculate Row Sums (R - Total Dispatch Influence) for each factor.
-                * Calculate Column Sums (C - Total Received Influence) for each factor.
-                * Calculate Prominence (R+C - Total Importance/Involvement) for each factor.
-                * Calculate Relation (R-C - Net Dispatcher/Receiver Role) for each factor.
-            4.  **Causal Analysis & Interpretation:**
-                * Identify the factor with the **highest Prominence (R+C)** as the most central/critical factor, explaining its role based on the R+C value.
-                * Identify factors with **high positive Relation (R-C)** as key "Dispatchers" (causes), explaining their influence based on the R-C value.
-                * Identify factors with **high negative Relation (R-C)** as key "Receivers" (effects), explaining their role based on the R-C value.
-                * Provide a concise **\`summary\`** explaining the overall causal structure suggested by the R+C and R-C values (e.g., "Factors X (R-C=...) and Y (R-C=...) are primary drivers impacting Z (R-C=...), while Factor A (R+C=...) is most central.").
-            5.  **Business Recommendations (Generate 3 distinct recommendations):** Based *only* on the numerical causal analysis (dispatcher/receiver roles) and the context:
-                * **\`recommendation\`:** A clear, actionable title focusing on influencing a key "Dispatcher" (high +R-C) or managing/monitoring a key "Receiver" (high -R-C).
-                * **\`focus_factor\`:** The primary factor targeted.
-                * **\`rationale\`:** Explain *why* this action is strategic, explicitly linking it to the factor's calculated dispatcher/receiver role (R-C value) and the overall system dynamics described in the summary.
-                * **\`action_items\`:** List 2-3 concrete, specific first steps a business could take based on the context.
-                * **\`kpis_to_track\`:** List 2-3 specific, measurable KPIs relevant to monitoring the impact, ideally linked to receiver factors or the overall goal implied in the context.
-            6.  **Self-Correction:** Before outputting JSON, meticulously check: Are factors derived solely from context? Are matrix values plausible? Are R, C, R+C, R-C calculated *correctly* based on T? Does the interpretation accurately classify dispatchers/receivers based on R-C values? Are recommendations (exactly 3) directly and logically linked ONLY to the calculated causal analysis and context? Fix all errors. Ensure JSON structure is perfect.
+            **YOUR TASKS (Follow this order):**
 
-            **ABSOLUTE CONSTRAINTS:**
-            - **CONTEXT GROUNDING:** Factors MUST derive *solely* from the context. Matrix values should be plausible based on implied relationships. Recommendations must link to context.
-            - **METHOD ACCURACY:** Adhere to DEMATEL calculation logic (R, C, R+C, R-C derived strictly from T). Interpret roles based on calculated R-C.
-            - **ACTIONABILITY & LINKAGE:** Recommendations must target specific factors based on their calculated causal role.
-            - **JSON FORMAT:** Adhere EXACTLY. Include ALL specified keys. Generate exactly 3 recommendations. Factor list length MUST match matrix dimensions and metrics array length.
+            **TASK 1: Extract Factors**
+            First, carefully read the text and identify the key named factors. List them.
+            *Example:*
+            * Factors: ["Factor 1", "Factor 2", "Factor 3"]
 
-            **RETURN FORMAT:**
-            Provide ONLY a valid JSON object. **CRITICAL: Include ALL keys specified below. Generate exactly 3 recommendations.**
+            **TASK 2: Analyze Relationships (Chain of Thought)**
+            Second, think step-by-step. For each *pair* of factors, analyze the influence from the row factor to the column factor.
+            - Use this scale ONLY: 0=No, 1=Low, 2=Moderate, 3=Strong, 4=Very Strong.
+            - You MUST justify your rating with a quote or direct inference from the text.
+            - If the text does not describe an influence, the rating MUST be 0.
+            
+            *Example of thinking process:*
+            * (Factor 1 -> Factor 1): 0 (Self-influence is zero)
+            * (Factor 1 -> Factor 2): Rating 3 (Strong). Justification: The text states "Factor 1 strongly influences Factor 2."
+            * (Factor 1 -> Factor 3): Rating 0. Justification: The text does not mention any relationship.
+            * (Factor 2 -> Factor 1): Rating 1 (Low). Justification: The text implies "Factor 2 has some small impact on Factor 1."
+            * ... (continue for all pairs)
+
+            **TASK 3: Create Final JSON**
+            Finally, use your step-by-step analysis to build the final JSON object.
+            - The "factors" list must match the factors you identified.
+            - The "matrix" must be an N x N matrix corresponding to your justified ratings.
+            - The matrix row/column order MUST match the factor list order.
+
+            You must return ONLY the valid JSON object. Do not add any other text or explanations outside the JSON structure.
+
+            **JSON FORMAT:**
             {
-              "factors": ["Factor A", "Factor B", "Factor C", "Factor D", "Factor E"], // 5-7 factors from context
-              "total_influence_matrix": [ // Simulated square matrix T, plausible positive values
-                [0.10, 0.25, 0.30, 0.15, 0.20], // Row 1 influence ON others
-                [0.40, 0.05, 0.15, 0.35, 0.25], // Row 2 influence ON others
-                [0.35, 0.45, 0.08, 0.10, 0.32],
-                [0.10, 0.20, 0.40, 0.06, 0.14],
-                [0.20, 0.15, 0.25, 0.40, 0.09]
+              "factors": [
+                "Factor Name 1",
+                "Factor Name 2",
+                "..."
               ],
-              "influence_metrics": [ // Calculated strictly from T; array length MUST match factors length
-                {"factor": "Factor A", "r_sum": 1.00, "c_sum": 1.15, "prominence": 2.15, "relation": -0.15},
-                {"factor": "Factor B", "r_sum": 1.20, "c_sum": 1.05, "prominence": 2.25, "relation": 0.15},
-                {"factor": "Factor C", "r_sum": 1.30, "c_sum": 1.10, "prominence": 2.40, "relation": 0.20},
-                {"factor": "Factor D", "r_sum": 0.90, "c_sum": 1.00, "prominence": 1.90, "relation": -0.10},
-                {"factor": "Factor E", "r_sum": 1.09, "c_sum": 1.11, "prominence": 2.20, "relation": -0.02}
-                 // ... for all factors, ensure calculations are correct based on T ...
-              ],
-              "analysis": {
-                "summary": "Overall causal structure interpretation based on R+C / R-C values...", // Generated
-                "dispatchers": [ // Factors with highest positive R-C
-                    {"factor": "Factor C", "relation_value": 0.20, "reason": "Highest positive R-C indicates strongest net causal influence..."}
-                    // Add others if R-C > 0 and relatively high
-                ],
-                "receivers": [ // Factors with lowest negative R-C
-                    {"factor": "Factor A", "relation_value": -0.15, "reason": "Lowest negative R-C indicates primarily receiving influence..."}
-                    // Add others if R-C < 0 and relatively low
-                ],
-                "key_factor": {"factor": "Factor C", "prominence_value": 2.40, "reason": "Highest R+C signifies most central role..."} // Factor with highest R+C
-              },
-              "business_recommendations": [ // Exactly 3 recommendations linked to analysis
-                {
-                  "recommendation": "Recommendation Title 1",
-                  "focus_factor": "Targeted Factor Name (e.g., a Dispatcher)",
-                  "rationale": "Why this action matters based on calculated R-C and summary...",
-                  "action_items": ["Specific Step 1 based on context...", "Specific Step 2..."],
-                  "kpis_to_track": ["Specific KPI 1 relevant to context...", "Specific KPI 2..."]
-                },
-                { // Rec 2
-                  "recommendation": "Recommendation Title 2",
-                  "focus_factor": "Targeted Factor Name",
-                  "rationale": "Why this action matters based on calculated R-C and summary...",
-                  "action_items": ["Specific Step 1 based on context...", "Specific Step 2..."],
-                  "kpis_to_track": ["Specific KPI 1 relevant to context...", "Specific KPI 2..."]
-                },
-                { // Rec 3
-                  "recommendation": "Recommendation Title 3",
-                  "focus_factor": "Targeted Factor Name",
-                  "rationale": "Why this action matters based on calculated R-C and summary...",
-                  "action_items": ["Specific Step 1 based on context...", "Specific Step 2..."],
-                  "kpis_to_track": ["Specific KPI 1 relevant to context...", "Specific KPI 2..."]
-                }
+              "matrix": [
+                [0, 3, 0, ...], 
+                [1, 0, 0, ...],
+                [...],
+                ...
               ]
             }
         `;
+        // --- END OF NEW PROMPT ---
 
-        // 3. Send Request to Ollama (using llama3.1 as per your function)
-        console.log(`Sending ENHANCED NUMERICAL DEMATEL prompt to ${MODEL_NAME}...`);
-        const response = await fetch(OLLAMA_URL, {
+        const ollamaResponse = await fetch(OLLAMA_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ model: MODEL_NAME, prompt: prompt, stream: false, format: "json", options: { num_ctx: 32768 } }) // Added options for context window
+            body: JSON.stringify({ model: MODEL_NAME, prompt: prompt, stream: false, format: "json" })
         });
 
-        if (!response.ok) {
-            let errorBody = `API error ${response.status}`;
-            try { errorBody += `: ${await response.text()}`; } catch (e) {}
-            throw new Error(errorBody);
+        if (!ollamaResponse.ok) {
+            throw new Error(`Ollama AI server error: ${ollamaResponse.statusText}`);
         }
 
-        const data = await response.json();
-        let parsedData;
-        console.log('Raw AI Response:', data.response); // Log raw response
+        const ollamaResult = await ollamaResponse.json();
+        let aiData;
         try {
-            parsedData = JSON.parse(data.response);
-             // *** Refined Robust Validation (for numerical approach) ***
-             console.log('--- RAW AI JSON RESPONSE (Parsed - Enhanced Numerical DEMATEL) ---');
-             console.log(JSON.stringify(parsedData, null, 2));
-             console.log('------------------------------------');
-
-             const nFactors = parsedData?.factors?.length || 0;
-             const nRecs = parsedData?.business_recommendations?.length || 0;
-
-             // Check basic structure and types
-            if (!parsedData || typeof parsedData !== 'object') throw new Error("Response is not a valid object.");
-            if (!Array.isArray(parsedData.factors) || nFactors < 3 || nFactors > 10) throw new Error(`Invalid or missing 'factors' array (length ${nFactors}).`);
-            if (!Array.isArray(parsedData.total_influence_matrix) || parsedData.total_influence_matrix.length !== nFactors) throw new Error("Invalid or missing 'total_influence_matrix' or length mismatch.");
-            if (!parsedData.total_influence_matrix.every(row => Array.isArray(row) && row.length === nFactors && row.every(val => typeof val === 'number'))) throw new Error("'total_influence_matrix' has incorrect structure or non-numeric values.");
-            if (!Array.isArray(parsedData.influence_metrics) || parsedData.influence_metrics.length !== nFactors) throw new Error("Invalid or missing 'influence_metrics' or length mismatch.");
-            if (nFactors > 0 && (typeof parsedData.influence_metrics[0] !== 'object' || typeof parsedData.influence_metrics[0].prominence !== 'number' || typeof parsedData.influence_metrics[0].relation !== 'number')) throw new Error("'influence_metrics' items lack required numeric fields.");
-            if (typeof parsedData.analysis !== 'object' || !parsedData.analysis.summary || !Array.isArray(parsedData.analysis.dispatchers) || !Array.isArray(parsedData.analysis.receivers) || typeof parsedData.analysis.key_factor !== 'object') throw new Error("Invalid or missing 'analysis' structure.");
-            if (!Array.isArray(parsedData.business_recommendations) || nRecs !== 3) throw new Error(`Invalid or missing 'business_recommendations' array or incorrect count (expected 3, got ${nRecs}).`);
-            if (nRecs > 0 && (typeof parsedData.business_recommendations[0] !== 'object' || !parsedData.business_recommendations[0].focus_factor || !parsedData.business_recommendations[0].rationale)) throw new Error("'business_recommendations' items lack required fields.");
-
-             console.log(`Successfully parsed ENHANCED NUMERICAL DEMATEL JSON using ${MODEL_NAME}. Found ${nFactors} factors, ${nRecs} recommendations.`);
-
+            aiData = JSON.parse(ollamaResult.response);
+            if (!aiData.factors || !aiData.matrix || !Array.isArray(aiData.factors) || !Array.isArray(aiData.matrix)) {
+                throw new Error("AI response missing 'factors' or 'matrix' key, or they are not arrays.");
+            }
+            if (aiData.factors.length !== aiData.matrix.length) {
+                throw new Error("AI returned a matrix size that does not match the factors list.");
+            }
         } catch (e) {
-            console.error(`Failed to parse/validate ENHANCED NUMERICAL DEMATEL JSON using ${MODEL_NAME}:`, data?.response, e);
-            throw new Error(`Invalid JSON received or validation failed (Enhanced Numerical): ${e.message}. See raw response in console.`);
+            console.error("Failed to parse AI response:", ollamaResult.response);
+            throw new Error(`AI returned invalid JSON. Error: ${e.message}`);
         }
 
-        // 4. Render Results (using the modified render function below)
-        renderDA.renderDematelAnalysisPage(analysisResultContainer, parsedData);
+        // 4. --- STEP 2: CALL PYTHON BACKEND ---
+        analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div></div><div></div><div></div></div><h3 class="text-xl font-semibold text-white">Step 3/3: Calculating DEMATEL Mathematics...</h3><p class="text-white/80 mb-2">Running matrix calculations and generating insights...</p></div>`;
+        
+        const backendFormData = new FormData();
+        backendFormData.append("analysis_type", "dematel");
+        backendFormData.append("dematel_factors", JSON.stringify(aiData.factors));
+        backendFormData.append("dematel_matrix", JSON.stringify(aiData.matrix));
+
+        const backendResponse = await fetch(PYTHON_BACKEND_URL, {
+            method: "POST",
+            body: backendFormData,
+        });
+
+        if (!backendResponse.ok) {
+            let errorDetail = `Python Backend Error: ${backendResponse.statusText}`;
+            try {
+                const errorData = await backendResponse.json();
+                errorDetail = errorData.detail || `Python Backend Error: ${backendResponse.statusText}`;
+            } catch (e) {}
+            throw new Error(errorDetail);
+        }
+
+        // 5. Process Final Response
+        const finalResults = await backendResponse.json();
+
+        // Check for the *data* object, not the HTML
+        if (finalResults.analysis_insights && finalResults.chart_data) {
+            renderDA.renderDematelAnalysisPage(finalResults);
+        } else {
+            throw new Error("Received an invalid response from the Python backend.");
+        }
 
     } catch (error) {
-        console.error(`Error in handleDematelAnalysis (Enhanced Numerical) using ${MODEL_NAME}:`, error);
-        analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
-        setLoading("generate", false);
+        console.error("DEMATEL Analysis Error:", error);
+        const errorMessage = error.message || "An unknown error occurred.";
+        
+        analysisResultContainer.innerHTML = `<div class="error-message">${errorMessage}</div>`;
+        
+        if (isFileInput) {
+            fileError.textContent = errorMessage;
+        } else {
+            textError.textContent = errorMessage;
+        }
+
     } finally {
-        // Ensure loading stops reliably
-         if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
-            setLoading("generate", false);
-         }
+        // 6. Reset loading state
+        setLoading("generate", false);
     }
 }
 
 
-
-function parseCSV(csvText) {
-        const lines = csvText.trim().split("\n");
-        const header = lines[0].split(",").map((h) => h.trim());
-        const rows = [];
-        for (let i = 1; i < lines.length; i++) {
-            const values = lines[i].split(",").map((v) => v.trim());
-            if (values.length === header.length) {
-                const row = {};
-                for (let j = 0; j < header.length; j++) {
-                    const value = values[j];
-                    // Attempt to convert to number if possible
-                    const numValue = parseFloat(value);
-                    row[header[j]] = isNaN(numValue) ? value : numValue;
-                }
-                rows.push(row);
-            }
-        }
-        return { header, rows };
-}
 
 export {
     handleDescriptiveAnalysis_DA,
@@ -1360,5 +1181,4 @@ export {
     handlePlsAnalysis_DA,
     handleSemAnalysis,
     handleDematelAnalysis,
-    parseCSV
 }

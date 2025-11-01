@@ -5,51 +5,137 @@
 import { dom } from '../../utils/dom-utils.mjs';
 import { appState } from '../../state/app-state.mjs';
 
+// Modified renderFactorAnalysisPage to add Learn Tab
+// NEW renderFactorAnalysisPage - Creates a detailed 6-tab view
 function renderFactorAnalysisPage(container, data) {
     container.innerHTML = ""; // Clear loading state
 
-     // Basic validation
-     if (!data || !data.external || !data.internal) {
-          console.error("Incomplete data passed to renderFactorAnalysisPage:", data);
-          container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render Factor Analysis results.</div>`;
-          dom.$("analysisActions").classList.add("hidden");
-          return;
-     }
+    // Basic validation
+    if (!data || !data.internal_factors || !data.external_factors) {
+         console.error("Incomplete data passed to renderFactorAnalysisPage:", data);
+         container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received.</div>`;
+         dom.$("analysisActions").classList.add("hidden");
+         return;
+    }
 
-    const { external, internal } = data;
+    const { internal_factors, external_factors } = data;
+    const allFactors = [
+        ...(internal_factors.strengths || []),
+        ...(internal_factors.weaknesses || []),
+        ...(external_factors.opportunities || []),
+        ...(external_factors.threats || [])
+    ];
 
-    // --- Create Tab Navigation (Added Learn Tab) ---
+    // --- Create Tab Navigation (6 Tabs) ---
     const tabNav = document.createElement("div");
     tabNav.className = "flex flex-wrap border-b border-white/20 -mx-6 px-6";
     tabNav.innerHTML = `
-        <button class="analysis-tab-btn active" data-tab="summary">📋 Summary</button> <!-- Summary First -->
-        <button class="analysis-tab-btn" data-tab="external">🌍 External Factors</button>
-        <button class="analysis-tab-btn" data-tab="internal">🏢 Internal Factors</button>
-        <button class="analysis-tab-btn" data-tab="pareto">📈 80/20 Analysis</button>
-        <button class="analysis-tab-btn" data-tab="learn">🎓 Learn Factor Analysis</button> <!-- New -->
+        <button class="analysis-tab-btn active" data-tab="dashboard">📊 Dashboard</button>
+        <button class="analysis-tab-btn" data-tab="strengths">💪 Strengths</button>
+        <button class="analysis-tab-btn" data-tab="weaknesses">⚠️ Weaknesses</button>
+        <button class="analysis-tab-btn" data-tab="opportunities">✨ Opportunities</button>
+        <button class="analysis-tab-btn" data-tab="threats">🛡️ Threats</button>
+        <button class="analysis-tab-btn" data-tab="learn">🎓 Learn Factor Analysis</button>
     `;
     container.appendChild(tabNav);
 
-    // --- Create Tab Panels (Added Learn Panel) ---
+    // --- Create Tab Panels (6 Panels) ---
     const tabContent = document.createElement("div");
     container.appendChild(tabContent);
     tabContent.innerHTML = `
-        <div id="summaryPanel" class="analysis-tab-panel active"></div> <!-- Summary Active -->
-        <div id="externalPanel" class="analysis-tab-panel"></div>
-        <div id="internalPanel" class="analysis-tab-panel"></div>
-        <div id="paretoPanel" class="analysis-tab-panel"></div>
-        <div id="learnPanel" class="analysis-tab-panel"></div> <!-- New -->
+        <div id="dashboardPanel" class="analysis-tab-panel active"></div>
+        <div id="strengthsPanel" class="analysis-tab-panel"></div>
+        <div id="weaknessesPanel" class="analysis-tab-panel"></div>
+        <div id="opportunitiesPanel" class="analysis-tab-panel"></div>
+        <div id="threatsPanel" class="analysis-tab-panel"></div>
+        <div id="learnPanel" class="analysis-tab-panel"></div>
     `;
 
-    // --- Populate Tabs (Order Changed) ---
-    renderSummaryTab("summaryPanel", external, internal); // Render Summary First
-    renderFactorTab("externalPanel", "External Factors (PESTEL+)", external); // Pass External factors
-    renderFactorTab("internalPanel", "Internal Factors (Resources & Capabilities)", internal); // Pass Internal factors
-    renderParetoTab("paretoPanel", [...external, ...internal]); // Pass combined factors
+    // --- Helper Function to Render a Detail Tab ---
+    const renderFactorDetailTab = (panelId, factors, title, borderColorClass) => {
+        const panel = dom.$(panelId);
+        if (!panel) return;
 
-    // --- 5. Populate Learn Factor Analysis Panel (New) ---
+        let html = `<div class="p-4 space-y-6"><h3 class="text-3xl font-bold mb-4 text-center">${title} (${factors.length})</h3>`;
+        if (factors.length > 0) {
+            // Sort by impact score, highest first
+            factors.sort((a, b) => (b.impact_score || 0) - (a.impact_score || 0));
+            
+            factors.forEach((factor, index) => {
+                html += `
+                    <div class="prescription-card ${borderColorClass}">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="text-xl font-bold">${index + 1}. ${factor.factor}</h4>
+                            <span class="text-lg font-bold text-yellow-300" title="Impact Score">(${factor.impact_score}/10)</span>
+                        </div>
+                        <p class="text-xs font-semibold text-indigo-300 uppercase mb-2">Category: ${factor.category || 'N/A'}</p>
+                        <p class="text-sm text-white/80 italic mb-3"><strong>Description:</strong> ${factor.description || 'N/A'}</p>
+                        
+                        <div class="rationale">
+                            <strong>Deep Analysis:</strong> ${factor.deep_analysis || 'No deep analysis provided.'}
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 text-sm">
+                            <div class="bg-black/20 p-3 rounded">
+                                <h5 class="font-bold text-green-300 mb-2">Actionable Recommendation</h5>
+                                <p class="text-white/90">${factor.actionable_recommendation || 'N/A'}</p>
+                            </div>
+                            <div class="bg-black/20 p-3 rounded">
+                                <h5 class="font-bold text-green-300 mb-2">Relevant KPIs</h5>
+                                <ul class="list-disc list-inside text-white/90">
+                                    ${(factor.relevant_kpis && factor.relevant_kpis.length > 0) 
+                                        ? factor.relevant_kpis.map(kpi => `<li>${kpi}</li>`).join('') 
+                                        : '<li>N/A</li>'}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        } else {
+            html += `<p class="text-center text-white/70 italic">No factors identified for this category based on the provided text.</p>`;
+        }
+        html += `</div>`; // Close p-4
+        panel.innerHTML = html;
+    };
+    
+    // --- 1. Populate Dashboard Panel ---
+    const dashboardPanel = dom.$("dashboardPanel");
+    let dashboardHtml = `<div class="p-4">
+                            <h3 class="text-2xl font-bold mb-6 text-center">Factor Analysis Dashboard</h3>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto mb-8">
+                                <div class="summary-stat-card"><div class="stat-value text-green-400">${internal_factors.strengths.length}</div><div class="stat-label">Strengths</div></div>
+                                <div class="summary-stat-card"><div class="stat-value text-red-400">${internal_factors.weaknesses.length}</div><div class="stat-label">Weaknesses</div></div>
+                                <div class="summary-stat-card"><div class="stat-value text-blue-400">${external_factors.opportunities.length}</div><div class="stat-label">Opportunities</div></div>
+                                <div class="summary-stat-card"><div class="stat-value text-yellow-400">${external_factors.threats.length}</div><div class="stat-label">Threats</div></div>
+                            </div>`;
+    
+    // Find most critical factor
+    const allSorted = allFactors.sort((a, b) => (b.impact_score || 0) - (a.impact_score || 0));
+    const criticalFactor = allSorted[0];
+
+    if (criticalFactor) {
+        dashboardHtml += `<div class="bg-black/20 p-6 rounded-lg max-w-3xl mx-auto border-l-4 border-red-500">
+                            <h4 class="text-xl font-bold mb-3 text-center text-red-300">Most Critical Factor Identified (Highest Impact)</h4>
+                            <p class="text-lg font-bold text-center">${criticalFactor.factor} (Impact: ${criticalFactor.impact_score}/10)</p>
+                            <p class="text-sm text-center text-white/70 italic mb-3">${criticalFactor.description}</p>
+                            <div class="rationale text-sm">
+                                <strong>Deep Analysis:</strong> ${criticalFactor.deep_analysis || 'N/A'}
+                            </div>
+                         </div>`;
+    }
+    dashboardHtml += `</div>`; // Close p-4
+    dashboardPanel.innerHTML = dashboardHtml;
+
+    // --- 2. Populate Detail Tabs ---
+    renderFactorDetailTab("strengthsPanel", internal_factors.strengths || [], "💪 Strengths", "border-green-500");
+    renderFactorDetailTab("weaknessesPanel", internal_factors.weaknesses || [], "⚠️ Weaknesses", "border-red-500");
+    renderFactorDetailTab("opportunitiesPanel", external_factors.opportunities || [], "✨ Opportunities", "border-blue-500");
+    renderFactorDetailTab("threatsPanel", external_factors.threats || [], "🛡️ Threats", "border-yellow-500");
+    
+    // --- 3. Populate Learn Panel ---
     const learnPanel = dom.$("learnPanel");
-     learnPanel.innerHTML = `
+    learnPanel.innerHTML = `
     <div class="p-6 space-y-6 text-white/90">
         <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding Factor Analysis (Strategic Context)</h3>
         
@@ -87,18 +173,7 @@ function renderFactorAnalysisPage(container, data) {
                  <p class="text-xs text-white/70 mt-2"><strong>Goal:</strong> Identify Strengths & Weaknesses.</p>
             </div>
         </div>
-
-         <div class="bg-black/20 p-4 rounded-lg mt-6">
-            <h4 class="text-lg font-bold mb-2 text-yellow-300">📈 Applying the 80/20 Rule (Pareto Principle)</h4>
-            <p class="text-sm text-white/80">After identifying factors, it's crucial to prioritize. The Pareto Principle suggests that roughly 80% of effects come from 20% of causes. In strategy:</p>
-            <ul class="list-disc list-inside space-y-1 text-sm mt-2">
-                <li>Identify the few factors (approx. 20%) with the highest potential impact (positive or negative) on your goals.</li>
-                <li>Focus strategic efforts primarily on leveraging high-impact strengths/opportunities and mitigating high-impact weaknesses/threats.</li>
-                <li>This tool uses the AI-assigned 'impact_score' to perform this prioritization, highlighting the 'High' priority factors that make up the first 80% of cumulative impact.</li>
-            </ul>
-        </div>
-
-         <p class="text-xs text-center text-white/60 mt-4">This tool uses AI to identify factors from your text and then applies the 80/20 rule based on AI-estimated impact.</p>
+         <p class="text-xs text-center text-white/60 mt-4">This tool uses AI to identify factors from your text and then provide a deep analysis for each one.</p>
     </div>
     `;
 
@@ -106,104 +181,23 @@ function renderFactorAnalysisPage(container, data) {
     // --- Final Touches ---
     appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache result
 
-    // Tab switching logic (ensure resizing happens)
+    // Tab switching logic
     tabNav.addEventListener("click", (e) => {
         if (e.target.tagName === "BUTTON") {
-            // Deactivate all
-            tabNav.querySelectorAll(".analysis-tab-btn").forEach(btn => btn.classList.remove("active"));
-            tabContent.querySelectorAll(".analysis-tab-panel").forEach(pnl => pnl.classList.remove("active"));
-
-            // Activate clicked
+            tabNav.querySelectorAll(".analysis-tab-btn").forEach((btn) => btn.classList.remove("active"));
+            tabContent.querySelectorAll(".analysis-tab-panel").forEach((pnl) => pnl.classList.remove("active"));
             e.target.classList.add("active");
             const targetPanelId = e.target.dataset.tab + "Panel";
             const targetPanel = dom.$(targetPanelId);
             if (targetPanel) {
                 targetPanel.classList.add("active");
-                // Resize charts if they are in the activated panel
-                 const chartsInPanel = targetPanel.querySelectorAll('.plotly-chart');
-                 chartsInPanel.forEach(chartDiv => {
-                      if (chartDiv._fullLayout && typeof Plotly !== 'undefined') {
-                          try {
-                              Plotly.Plots.resize(chartDiv);
-                          } catch (resizeError) {
-                               console.error(`Error resizing chart ${chartDiv.id} on tab switch:`, resizeError);
-                          }
-                      }
-                 });
             } else {
                  console.warn("Target panel not found:", targetPanelId);
             }
         }
     });
 
-     // Initial resize for charts in the default active tab (Summary) + hidden tabs
-     setTimeout(() => {
-          tabContent.querySelectorAll(".analysis-tab-panel").forEach(panel => {
-               panel.querySelectorAll(".plotly-chart").forEach(chartDiv => {
-                   if (chartDiv._fullLayout && typeof Plotly !== 'undefined') {
-                       try {
-                            Plotly.Plots.resize(chartDiv);
-                       } catch (initialResizeError) {
-                            console.error(`Error during initial resize ${chartDiv.id} in panel ${panel.id}:`, initialResizeError);
-                       }
-                   }
-               });
-          });
-     }, 150); // Delay slightly
-
     dom.$("analysisActions").classList.remove("hidden"); // Show save buttons
-    // setLoading('generate', false); // Handled in the calling function
-}
-
-
-
-// Modified renderSummaryTab to use AI factors
-function renderSummaryTab(containerId, external, internal) {
-    const container = dom.$(containerId);
-
-     // Ensure factors are arrays
-     external = Array.isArray(external) ? external : [];
-     internal = Array.isArray(internal) ? internal : [];
-
-    const highPriorityExternal = external.filter(f => f.priority === 'High').length;
-    const highPriorityInternal = internal.filter(f => f.priority === 'High').length;
-
-    // Find top categories based on *count* of high-priority items
-    const getTopHighPriorityCategory = (factors) => {
-         if (!factors || factors.length === 0) return "N/A";
-         const highPriority = factors.filter(f => f.priority === 'High');
-         if (highPriority.length === 0) return "N/A (None High Priority)";
-         const counts = highPriority.reduce((acc, f) => {
-              const cat = f.category || "Uncategorized";
-              acc[cat] = (acc[cat] || 0) + 1;
-              return acc;
-         }, {});
-         return Object.entries(counts).sort((a,b) => b[1] - a[1])[0][0];
-    };
-
-    const topExtCatHighPrio = getTopHighPriorityCategory(external);
-    const topIntCatHighPrio = getTopHighPriorityCategory(internal);
-
-    container.innerHTML = `
-        <div class="p-4"> <!-- Added p-4 -->
-            <h3 class="text-2xl font-bold mb-4">📋 Executive Summary</h3>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <div class="summary-stat-card"><div class="stat-value">${external.length}</div><div class="stat-label">Total External Factors</div></div>
-                <div class="summary-stat-card"><div class="stat-value">${internal.length}</div><div class="stat-label">Total Internal Factors</div></div>
-                <div class="summary-stat-card ${highPriorityExternal > 0 ? 'border-l-4 border-red-500' : ''}"><div class="stat-value">${highPriorityExternal}</div><div class="stat-label">High-Priority External</div></div>
-                <div class="summary-stat-card ${highPriorityInternal > 0 ? 'border-l-4 border-red-500' : ''}"><div class="stat-value">${highPriorityInternal}</div><div class="stat-label">High-Priority Internal</div></div>
-            </div>
-            <div class="bg-black/20 p-4 rounded-lg">
-                <h4 class="text-xl font-semibold mb-3">Key Insights & Strategic Focus</h4>
-                <ul class="list-disc list-inside space-y-2 text-sm">
-                    <li>A total of <strong>${external.length + internal.length}</strong> strategic factors were identified from the text.</li>
-                    <li>Pareto analysis highlighted <strong>${highPriorityExternal + highPriorityInternal}</strong> factors (${highPriorityExternal} external, ${highPriorityInternal} internal) as 'High Priority', representing the critical few likely driving ~80% of strategic impact.</li>
-                    <li>The most frequent category among high-priority <strong>external</strong> factors appears to be <strong>${topExtCatHighPrio}</strong>. Strategies should consider leveraging opportunities or mitigating threats in this area.</li>
-                    <li>The most frequent category among high-priority <strong>internal</strong> factors appears to be <strong>${topIntCatHighPrio}</strong>. Strategies should focus on exploiting related strengths or addressing related weaknesses.</li>
-                    <li><strong>Recommendation:</strong> Focus primary strategic efforts on the ${highPriorityExternal + highPriorityInternal} 'High Priority' factors identified in the '80/20 Analysis' tab.</li>
-                </ul>
-            </div>
-         </div>`; // Close p-4
 }
 
 
@@ -408,6 +402,57 @@ function renderParetoTab(containerId, allFactors) {
             Plotly.newPlot('pareto-chart-container', [trace1, trace2], layout, { responsive: true });
         } catch(e) { console.error("Pareto chart render error:", e); dom.$("pareto-chart-container").innerHTML = "<p class='text-red-400 text-center pt-10'>Chart render error.</p>"; }
     }
+}
+
+
+
+// Modified renderSummaryTab to use AI factors
+function renderSummaryTab(containerId, external, internal) {
+    const container = dom.$(containerId);
+
+     // Ensure factors are arrays
+     external = Array.isArray(external) ? external : [];
+     internal = Array.isArray(internal) ? internal : [];
+
+    const highPriorityExternal = external.filter(f => f.priority === 'High').length;
+    const highPriorityInternal = internal.filter(f => f.priority === 'High').length;
+
+    // Find top categories based on *count* of high-priority items
+    const getTopHighPriorityCategory = (factors) => {
+         if (!factors || factors.length === 0) return "N/A";
+         const highPriority = factors.filter(f => f.priority === 'High');
+         if (highPriority.length === 0) return "N/A (None High Priority)";
+         const counts = highPriority.reduce((acc, f) => {
+              const cat = f.category || "Uncategorized";
+              acc[cat] = (acc[cat] || 0) + 1;
+              return acc;
+         }, {});
+         return Object.entries(counts).sort((a,b) => b[1] - a[1])[0][0];
+    };
+
+    const topExtCatHighPrio = getTopHighPriorityCategory(external);
+    const topIntCatHighPrio = getTopHighPriorityCategory(internal);
+
+    container.innerHTML = `
+        <div class="p-4"> <!-- Added p-4 -->
+            <h3 class="text-2xl font-bold mb-4">📋 Executive Summary</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div class="summary-stat-card"><div class="stat-value">${external.length}</div><div class="stat-label">Total External Factors</div></div>
+                <div class="summary-stat-card"><div class="stat-value">${internal.length}</div><div class="stat-label">Total Internal Factors</div></div>
+                <div class="summary-stat-card ${highPriorityExternal > 0 ? 'border-l-4 border-red-500' : ''}"><div class="stat-value">${highPriorityExternal}</div><div class="stat-label">High-Priority External</div></div>
+                <div class="summary-stat-card ${highPriorityInternal > 0 ? 'border-l-4 border-red-500' : ''}"><div class="stat-value">${highPriorityInternal}</div><div class="stat-label">High-Priority Internal</div></div>
+            </div>
+            <div class="bg-black/20 p-4 rounded-lg">
+                <h4 class="text-xl font-semibold mb-3">Key Insights & Strategic Focus</h4>
+                <ul class="list-disc list-inside space-y-2 text-sm">
+                    <li>A total of <strong>${external.length + internal.length}</strong> strategic factors were identified from the text.</li>
+                    <li>Pareto analysis highlighted <strong>${highPriorityExternal + highPriorityInternal}</strong> factors (${highPriorityExternal} external, ${highPriorityInternal} internal) as 'High Priority', representing the critical few likely driving ~80% of strategic impact.</li>
+                    <li>The most frequent category among high-priority <strong>external</strong> factors appears to be <strong>${topExtCatHighPrio}</strong>. Strategies should consider leveraging opportunities or mitigating threats in this area.</li>
+                    <li>The most frequent category among high-priority <strong>internal</strong> factors appears to be <strong>${topIntCatHighPrio}</strong>. Strategies should focus on exploiting related strengths or addressing related weaknesses.</li>
+                    <li><strong>Recommendation:</strong> Focus primary strategic efforts on the ${highPriorityExternal + highPriorityInternal} 'High Priority' factors identified in the '80/20 Analysis' tab.</li>
+                </ul>
+            </div>
+         </div>`; // Close p-4
 }
 
 
@@ -1516,56 +1561,123 @@ function renderKpiPage_KE(container, data) {
 function renderMiscPage_MSC(container, data) {
     container.innerHTML = ""; // Clear loading
 
-    // Add validation for new fields
-    if (!data || !data.executive_summary || !data.risk_assessment || !data.governance || !data.conclusion) {
-        console.error("Incomplete data passed to renderMiscPage_MSC:", data);
-        container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render Final Sections.</div>`;
+    // --- Validation for the comprehensive structure ---
+    if (!data || !data.executive_summary || !data.mission_vision || !data.internal_factors || !data.external_factors || 
+        !data.strategic_goals || !data.risk_assessment || !data.governance || !data.conclusion) 
+    {
+        console.error("Incomplete comprehensive data passed to renderMiscPage_MSC:", data);
+        container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render full report.</div>`;
         dom.$("analysisActions").classList.add("hidden");
         return;
     }
-    const { executive_summary, risk_assessment, governance, conclusion } = data;
+    const { 
+        executive_summary, mission_vision, internal_factors, external_factors, 
+        strategic_goals, risk_assessment, governance, conclusion 
+    } = data;
 
-    // --- Create Tab Navigation (Updated) ---
+    // --- Create Tab Navigation (NOW 6 Tabs) ---
     const tabNav = document.createElement("div");
     tabNav.className = "flex flex-wrap border-b border-white/20 -mx-6 px-6";
     tabNav.innerHTML = `
-        <button class="analysis-tab-btn active" data-tab="summary">📝 Executive Summary</button>
-        <button class="analysis-tab-btn" data-tab="risks">⚠️ Risk Assessment</button>
-        <button class="analysis-tab-btn" data-tab="gov">🏛️ Governance</button>
+        <button class="analysis-tab-btn active" data-tab="summary">📝 Exec. Summary</button>
+        <button class="analysis-tab-btn" data-tab="strategy">🎯 Core Strategy</button>
+        <button class="analysis-tab-btn" data-tab="initiatives">🚀 Initiatives</button>
+        <button class="analysis-tab-btn" data-tab="risks">⚠️ Risks & Governance</button>
         <button class="analysis-tab-btn" data-tab="conclusion">🏁 Conclusion</button>
-        <button class="analysis-tab-btn" data-tab="learn">🎓 Learn Finalizing Plans</button> <!-- New -->
+        <button class="analysis-tab-btn" data-tab="learn">🎓 Learn Planning</button>
     `;
     container.appendChild(tabNav);
 
-    // --- Create Tab Panels (Updated) ---
+    // --- Create Tab Panels (NOW 6 Panels) ---
     const tabContent = document.createElement("div");
     container.appendChild(tabContent);
     tabContent.innerHTML = `
         <div id="summaryPanel" class="analysis-tab-panel active"></div>
+        <div id="strategyPanel" class="analysis-tab-panel"></div>
+        <div id="initiativesPanel" class="analysis-tab-panel"></div>
         <div id="risksPanel" class="analysis-tab-panel"></div>
-        <div id="govPanel" class="analysis-tab-panel"></div>
         <div id="conclusionPanel" class="analysis-tab-panel"></div>
-        <div id="learnPanel" class="analysis-tab-panel"></div> <!-- New -->
+        <div id="learnPanel" class="analysis-tab-panel"></div>
     `;
 
     // --- 1. Populate Summary Panel ---
     const summaryPanel = dom.$("summaryPanel");
-    summaryPanel.innerHTML = `<div class="p-4"><blockquote class="p-4 italic border-l-4 border-gray-500 bg-black/20 text-white/90">${executive_summary}</blockquote></div>`;
+    summaryPanel.innerHTML = `<div class="p-4">
+                                <h3 class="text-2xl font-bold mb-4">Executive Summary</h3>
+                                <blockquote class="p-4 italic border-l-4 border-gray-500 bg-black/20 text-white/90 whitespace-pre-wrap">${executive_summary}</blockquote>
+                             </div>`;
 
-    // --- 2. Populate Risks Panel (Added Justification) ---
+    // --- 2. Populate Core Strategy Panel ---
+    const strategyPanel = dom.$("strategyPanel");
+    let strategyHtml = `<div class="p-4 space-y-8">
+                            <h3 class="text-2xl font-bold mb-4 text-center">Core Strategy</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div class="bg-black/20 p-4 rounded-lg border-l-4 border-indigo-400">
+                                    <h4 class="text-lg font-bold text-indigo-300 mb-2">Mission</h4>
+                                    <p class="text-sm text-white/80 italic">${mission_vision.mission || 'N/A'}</p>
+                                </div>
+                                <div class="bg-black/20 p-4 rounded-lg border-l-4 border-indigo-400">
+                                    <h4 class="text-lg font-bold text-indigo-300 mb-2">Vision</h4>
+                                    <p class="text-sm text-white/80 italic">${mission_vision.vision || 'N/A'}</p>
+                                </div>
+                                <div class="bg-black/20 p-4 rounded-lg border-l-4 border-indigo-400">
+                                    <h4 class="text-lg font-bold text-indigo-300 mb-2">Core Values</h4>
+                                    <ul class="list-disc list-inside text-sm text-white/80">${(mission_vision.values || []).map(v => `<li>${v}</li>`).join('')}</ul>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="text-xl font-bold mb-3 text-center">High-Level Strategic Goals</h4>
+                                <div class="space-y-4 max-w-2xl mx-auto">`;
+    (strategic_goals || []).forEach((goal, index) => {
+        strategyHtml += `<div class="cascade-goal-card p-4 text-center">
+                            <h4 class="text-md font-bold text-red-300">GOAL ${index + 1}</h4>
+                            <p class="text-lg font-semibold">${goal.goal_name || 'N/A'}</p>
+                         </div>`;
+    });
+    strategyHtml += `</div></div></div>`; // Close space-y-4, max-w-2xl, div, p-4
+    strategyPanel.innerHTML = strategyHtml;
+
+
+    // --- 3. Populate Strategic Initiatives Panel (Was 4) ---
+    const initiativesPanel = dom.$("initiativesPanel");
+    let initiativesHtml = `<div class="p-4 space-y-6"><h3 class="text-2xl font-bold mb-4 text-center">🚀 Strategic Initiatives</h3>`;
+    (strategic_goals || []).forEach((goal, index) => {
+        initiativesHtml += `<div class="mb-6 bg-black/10 p-4 rounded-lg">
+                               <h4 class="text-lg font-semibold mb-3 border-b border-white/10 pb-1 text-red-300">For Goal: ${goal.goal_name}</h4>
+                               <div class="space-y-4">`;
+        (goal.key_initiatives || []).forEach((init, s_index) => {
+            initiativesHtml += `<div class="prescription-card border-l-4 border-yellow-400">
+                <h5 class="text-lg font-bold">${init.initiative_name}</h5>
+                <p class="rationale"><strong>Rationale:</strong> ${init.rationale || 'N/A'}</p>
+                <div class="bg-black/20 p-3 rounded text-sm mt-3">
+                    <h5 class="font-bold text-green-300 mb-2">Measures / KPIs</h5>
+                    <ul class="list-disc list-inside space-y-1 text-white/90">${(init.kpis || []).map(m => `<li>${m}</li>`).join('')}</ul>
+                </div>
+            </div>`;
+        });
+        initiativesHtml += `</div></div>`; // Close space-y-4 and mb-6 bg-black/10
+    });
+    initiativesHtml += `</div>`; // Close p-4
+    initiativesPanel.innerHTML = initiativesHtml;
+
+
+    // --- 4. Populate Risks & Governance Panel (Was 5) ---
     const risksPanel = dom.$("risksPanel");
-    let risksHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4 text-center">⚠️ Risk Assessment</h3><div class="overflow-x-auto">
-        <table class="w-full text-left styled-table text-sm"> <!-- Use styled-table -->
-            <thead>
-                <tr>
-                    <th>Risk Description</th>
-                    <th class="text-center">Impact</th>
-                    <th class="text-center">Likelihood</th>
-                    <th>Justification</th>
-                    <th>Mitigation Strategy</th>
-                </tr>
-            </thead>
-            <tbody>`;
+    let risksHtml = `<div class="p-4 space-y-8">
+                        <div>
+                            <h3 class="text-2xl font-bold mb-4 text-center">⚠️ Risk Assessment</h3>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left styled-table text-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Risk Description</th>
+                                            <th class="text-center">Impact</th>
+                                            <th class="text-center">Likelihood</th>
+                                            <th>Justification</th>
+                                            <th>Mitigation Strategy</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>`;
     if (risk_assessment.length > 0) {
         risk_assessment.forEach((item) => {
             const impactClass = `risk-level-${(item.impact || "low").toLowerCase()}`;
@@ -1574,86 +1686,85 @@ function renderMiscPage_MSC(container, data) {
                 <td>${item.risk || 'N/A'}</td>
                 <td class="text-center"><span class="risk-pill ${impactClass}">${item.impact || '?'}</span></td>
                 <td class="text-center"><span class="risk-pill ${likelihoodClass}">${item.likelihood || '?'}</span></td>
-                <td class="text-xs text-white/70 italic">${item.justification || 'N/A'}</td> <!-- Added justification -->
+                <td class="text-xs text-white/70 italic">${item.justification || 'N/A'}</td>
                 <td class="text-xs text-white/80">${item.mitigation || 'N/A'}</td>
             </tr>`;
         });
     } else {
          risksHtml += `<tr><td colspan="5" class="text-center text-white/60 italic p-4">No risks identified from the text.</td></tr>`;
     }
-    risksHtml += `</tbody></table></div></div>`;
-    risksPanel.innerHTML = risksHtml;
+    risksHtml += `</tbody></table></div></div>`; // Close table div
 
-    // --- 3. Populate Governance Panel (Clearer Structure) ---
-    const govPanel = dom.$("govPanel");
-    let govHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4 text-center">🏛️ Governance & Responsibilities</h3><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">`; // Allow 3 columns
+    // Governance part
+    risksHtml += `<div>
+                    <h3 class="text-2xl font-bold mb-4 text-center">🏛️ Governance & Responsibilities</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">`;
      if (governance.length > 0) {
         governance.forEach((item) => {
-            govHtml += `<div class="bg-black/20 p-4 rounded-lg border border-white/10"> <!-- Use card style -->
+            risksHtml += `<div class="bg-black/20 p-4 rounded-lg border border-white/10">
                 <h4 class="text-lg font-bold mb-3 border-b border-white/10 pb-1">${item.stakeholder || 'Unnamed Stakeholder'}</h4>
                 <p class="text-xs font-semibold text-indigo-300 mb-2">Key Responsibilities:</p>
                 <ul class="list-disc list-inside space-y-1 text-sm text-white/80">${(item.responsibilities || []).map(r => `<li>${r}</li>`).join('')}</ul>
             </div>`;
         });
      } else {
-         govHtml += `<p class="col-span-full text-center text-white/60 italic">No governance details identified from the text.</p>`;
+         risksHtml += `<p class="col-span-full text-center text-white/60 italic">No governance details identified from the text.</p>`;
      }
-    govHtml += `</div></div>`; // Close grid and p-4
-    govPanel.innerHTML = govHtml;
+    risksHtml += `</div></div>`; // Close grid and div
+    risksHtml += `</div>`; // Close p-4
+    risksPanel.innerHTML = risksHtml;
 
-    // --- 4. Populate Conclusion Panel ---
+
+    // --- 5. Populate Conclusion Panel (Was 6) ---
     const conclusionPanel = dom.$("conclusionPanel");
-    conclusionPanel.innerHTML = `<div class="p-4"><blockquote class="p-4 italic border-l-4 border-gray-500 bg-black/20 text-white/90">${conclusion}</blockquote></div>`;
+    conclusionPanel.innerHTML = `<div class="p-4">
+                                    <h3 class="text-2xl font-bold mb-4">Conclusion</h3>
+                                    <blockquote class="p-4 italic border-l-4 border-gray-500 bg-black/20 text-white/90 whitespace-pre-wrap">${conclusion}</blockquote>
+                                 </div>`;
 
-    // --- 5. Populate Learn Finalizing Plans Panel (New) ---
+    // --- 6. Populate Learn Planning Panel (NEW) ---
     const learnPanel = dom.$("learnPanel");
-     learnPanel.innerHTML = `
+    learnPanel.innerHTML = `
     <div class="p-6 space-y-6 text-white/90">
-        <h3 class="text-2xl font-bold text-center mb-4">🎓 Finalizing Your Strategic Plan</h3>
-         
+        <h3 class="text-2xl font-bold text-center mb-4">🎓 Anatomy of a Strategic Plan</h3>
+        
         <div class="bg-black/20 p-4 rounded-lg">
-            <h4 class="text-lg font-bold mb-2 text-indigo-300">Why are these Final Sections Important?</h4>
-            <p class="text-sm text-white/80">While the core strategy is crucial, these final sections synthesize the plan, address potential roadblocks, assign accountability, and provide a concluding perspective, making the plan more robust and actionable.</p>
+            <h4 class="text-lg font-bold mb-2 text-indigo-300">What is a Strategic Plan?</h4>
+            <p class="text-sm text-white/80">A strategic plan is a document used to communicate an organization's goals, the actions needed to achieve those goals, and all of the other critical elements (like risks, resources, and governance) that will be involved.</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-white/5 p-4 rounded-lg border border-white/10">
-                <h4 class="text-lg font-bold mb-2 text-blue-300">📝 Executive Summary</h4>
+                <h4 class="text-lg font-bold mb-2">Core Identity & Direction</h4>
                 <ul class="list-disc list-inside space-y-1 text-sm">
-                    <li><strong>Purpose:</strong> Provides a concise overview for stakeholders (especially executives) who may not read the entire document.</li>
-                    <li><strong>Content:</strong> Should cover the problem/opportunity, main objective, key strategies/initiatives, and expected high-level outcomes/impact.</li>
-                    <li><strong>Goal:</strong> Quickly convey the essence and value of the plan.</li>
+                    <li><strong>Executive Summary:</strong> A high-level overview for quick reference.</li>
+                    <li><strong>Mission:</strong> *Why* the organization exists (its purpose).</li>
+                    <li><strong>Vision:</strong> *Where* the organization is going (its future state).</li>
+                    <li><strong>Values:</strong> The core beliefs that guide behavior.</li>
                 </ul>
             </div>
             <div class="bg-white/5 p-4 rounded-lg border border-white/10">
-                <h4 class="text-lg font-bold mb-2 text-red-300">⚠️ Risk Assessment</h4>
-                <ul class="list-disc list-inside space-y-1 text-sm">
-                    <li><strong>Purpose:</strong> Identifies potential internal and external factors that could hinder the plan's success.</li>
-                    <li><strong>Content:</strong> Description of risks, assessment of their potential Impact and Likelihood, and planned Mitigation strategies.</li>
-                    <li><strong>Goal:</strong> Proactively anticipate challenges and prepare contingency plans.</li>
-                </ul>
-            </div>
-             <div class="bg-white/5 p-4 rounded-lg border border-white/10">
-                <h4 class="text-lg font-bold mb-2 text-yellow-300">🏛️ Governance</h4>
-                <ul class="list-disc list-inside space-y-1 text-sm">
-                    <li><strong>Purpose:</strong> Defines who is responsible for overseeing and executing different parts of the plan.</li>
-                    <li><strong>Content:</strong> Identifies key stakeholders (teams, roles, committees) and clarifies their specific Responsibilities in implementation and monitoring.</li>
-                    <li><strong>Goal:</strong> Ensure clear accountability and effective coordination during execution.</li>
-                </ul>
-            </div>
-             <div class="bg-white/5 p-4 rounded-lg border border-white/10">
-                <h4 class="text-lg font-bold mb-2 text-green-300">🏁 Conclusion</h4>
-                <ul class="list-disc list-inside space-y-1 text-sm">
-                    <li><strong>Purpose:</strong> Summarizes the strategic importance and provides a final perspective.</li>
-                    <li><strong>Content:</strong> Reinforce the 'why' behind the plan, reiterate key success factors, and offer a confident, forward-looking statement.</li>
-                    <li><strong>Goal:</strong> End the plan on a strong, motivating note, emphasizing the potential benefits.</li>
-                </ul>
+                <h4 class="text-lg font-bold mb-2">Analysis & Strategy</h4>
+                 <ul class="list-disc list-inside space-y-1 text-sm">
+                    <li><strong>Factor Analysis (SWOT):</strong> Identifies internal Strengths/Weaknesses and external Opportunities/Threats.</li>
+                    <li><strong>Strategic Goals:</strong> High-level, long-term achievements to aim for (e.g., "Become market leader").</li>
+                    <li><strong>Key Initiatives:</strong> The specific, large-scale projects or programs that will be executed to achieve the goals.</li>
+                 </ul>
             </div>
         </div>
-         <p class="text-xs text-center text-white/60 mt-4">This tool uses AI to extract and synthesize these final sections based strictly on the content of your input document.</p>
+
+         <div class="bg-black/20 p-4 rounded-lg mt-6">
+            <h4 class="text-lg font-bold mb-2 text-yellow-300">Execution & Accountability</h4>
+            <p class="text-sm text-white/80">A plan is useless without a path to execution. This includes:</p>
+            <ul class="list-disc list-inside space-y-1 text-sm mt-2">
+                <li><strong>Risk Assessment:</strong> Identifying what could go wrong and planning how to mitigate it.</li>
+                <li><strong>Governance:</strong> Defining who is responsible for what. This ensures accountability and clear lines of communication.</li>
+                <li><strong>Measures (KPIs):</strong> Metrics used to track progress against initiatives and goals.</li>
+            </ul>
+        </div>
+         <p class="text-xs text-center text-white/60 mt-4">This tool uses AI to find all these components *within your provided document* and organize them into this tabbed view for clarity.</p>
     </div>
     `;
-
 
     // --- Final Touches ---
     appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache result
@@ -1661,17 +1772,13 @@ function renderMiscPage_MSC(container, data) {
     // Tab switching logic
     tabNav.addEventListener("click", (e) => {
         if (e.target.tagName === "BUTTON") {
-            // Deactivate all
-            tabNav.querySelectorAll(".analysis-tab-btn").forEach(btn => btn.classList.remove("active"));
-            tabContent.querySelectorAll(".analysis-tab-panel").forEach(pnl => pnl.classList.remove("active"));
-
-            // Activate clicked
+            tabNav.querySelectorAll(".analysis-tab-btn").forEach((btn) => btn.classList.remove("active"));
+            tabContent.querySelectorAll(".analysis-tab-panel").forEach((pnl) => pnl.classList.remove("active"));
             e.target.classList.add("active");
             const targetPanelId = e.target.dataset.tab + "Panel";
             const targetPanel = dom.$(targetPanelId);
             if (targetPanel) {
                 targetPanel.classList.add("active");
-                 // No Plotly charts expected
             } else {
                  console.warn("Target panel not found:", targetPanelId);
             }
@@ -1679,7 +1786,6 @@ function renderMiscPage_MSC(container, data) {
     });
 
     dom.$("analysisActions").classList.remove("hidden"); // Show save buttons
-    // setLoading('generate', false); // Handled in the calling function
 }
 
 
