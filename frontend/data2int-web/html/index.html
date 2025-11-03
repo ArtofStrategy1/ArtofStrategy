@@ -1360,14 +1360,18 @@ select.input-field option {
         <canvas id="threeJsCanvas"></canvas>
         <div id="wsStatus" class="ws-status disconnected">Disconnected</div>
 
+        <div id="adminModeIndicator" class="fixed top-40 right-5 p-2 px-3 bg-yellow-500 text-white text-xs font-bold rounded-full shadow-lg z-50" style="display: none;">ADMIN MODE</div>
+
         <nav class="bg-black/10 backdrop-blur-sm p-4 sticky top-0 z-50">
             <div class="container mx-auto flex justify-between items-center">
                 <a href="#" class="text-2xl font-bold text-white nav-link" data-page="home">S.A.G.E.</a>
                 <div>
                     <a href="#" class="text-white/80 hover:text-white px-3 py-2 rounded-md text-sm font-medium nav-link"
-                        data-page="feedback">Give Us Feedback</a>
-                    <a href="#" class="text-white/80 hover:text-white px-3 py-2 rounded-md text-sm font-medium nav-link"
                         data-page="home">Home</a>
+                    <a href="#" id="adminDashboardNav" class="text-white/80 hover:text-white px-3 py-2 rounded-md text-sm font-medium nav-link"
+                        data-page="adminDashboard" style="display: none;">Admin Dashboard</a>
+                    <a href="#" class="text-white/80 hover:text-white px-3 py-2 rounded-md text-sm font-medium nav-link"
+                        data-page="feedback">Give Us Feedback</a>
                     <a href="#" class="text-white/80 hover:text-white px-3 py-2 rounded-md text-sm font-medium nav-link"
                         data-page="login">Login</a>
                 </div>
@@ -2029,7 +2033,6 @@ select.input-field option {
         <div class="container mx-auto text-center text-white/70">
             <div class="flex justify-center space-x-6 mb-4">
                 <a href="#" class="hover:text-white nav-link" data-page="about">About</a>
-                <a href="#" class="hover:text-white nav-link" data-page="adminDashboard">Admin Dashboard</a>
             </div>
             <p>&copy; 2025 S.A.G.E. All rights reserved.</p>
         </div>
@@ -2063,6 +2066,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- User Session State ---
     let userLoggedIn = false;
     let currentUser = null;
+
+    // --- Admin Dashboard Stats Timer ---
+    let statsInterval = null;
 
     // --- Version Control State ---
     let currentSelectionLimit = 3; // Default to paid
@@ -2520,6 +2526,14 @@ document.addEventListener("DOMContentLoaded", () => {
             page.style.display = "none";
         });
 
+        // --- ADD THIS BLOCK to stop the timer when leaving the page ---
+        if (statsInterval) {
+            clearInterval(statsInterval);
+            statsInterval = null;
+            console.log("Stopped admin stats auto-refresh.");
+        }
+        // --- END OF ADDED BLOCK ---
+
         const targetPage = $(pageId);
         if (targetPage) {
             targetPage.classList.add("active");
@@ -2530,25 +2544,56 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             if (pageId === "adminDashboard") {
+                // 1. Fetch the stats immediately on load
                 fetchAndDisplayStatistics();
+                
+                // 2. Start a new timer to re-fetch every 10 seconds
+                statsInterval = setInterval(fetchAndDisplayStatistics, 10000); // 10000ms = 10 seconds
+                console.log("Started admin stats auto-refresh.");
             }
             window.scrollTo(0, 0);
         }
     }
 
-    // --- Update Navigation Bar Links ---
+    // --- Update Navigation Bar Links to include admin check ---
     function updateNavBar() {
         const loginLink = document.querySelector('a[data-page="login"], a[data-page="logout"]');
+        
+        // --- Find BOTH admin elements ---
+        const adminLink = document.getElementById("adminDashboardNav"); 
+        const adminIndicator = document.getElementById("adminModeIndicator"); // <-- ADD THIS
 
         if (userLoggedIn) {
             if (loginLink) {
                 loginLink.textContent = "Logout";
                 loginLink.setAttribute("data-page", "logout");
             }
-        } else {
+
+            // --- Check for BOTH elements ---
+            if (adminLink && adminIndicator) { 
+                if (currentUser && currentUser.app_metadata.role === 'admin') {
+                    // Show both the link and the indicator
+                    adminLink.style.display = "inline-block"; 
+                    adminIndicator.style.display = "block"; // <-- ADD THIS
+                } else {
+                    // Hide both for regular users
+                    adminLink.style.display = "none";
+                    adminIndicator.style.display = "none"; // <-- ADD THIS
+                }
+            }
+
+} else { // User is logged out
             if (loginLink) {
                 loginLink.textContent = "Login";
                 loginLink.setAttribute("data-page", "login");
+            }
+
+            // --- Hide BOTH elements if logged out ---
+            if (adminLink) {
+                adminLink.style.display = "none";
+            }
+            if (adminIndicator) { // <-- ADD THIS
+                adminIndicator.style.display = "none";
             }
         }
         attachNavLinkListeners();
