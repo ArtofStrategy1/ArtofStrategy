@@ -13,7 +13,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from analysis_modules import sem_analysis
 from analysis_modules import predictive_analysis
 from analysis_modules import dematel_analysis
-from analysis_modules import descriptive_analysis  # NEW: Import descriptive analysis
+from analysis_modules import descriptive_analysis
+from analysis_modules import visualization_analysis
 
 # --- Import save functions ---
 # Assuming these exist and work as intended
@@ -23,8 +24,9 @@ app = FastAPI(docs_url="/")
 
 # --- CORS ---
 origins = [
-    "https://data2int.com",      # Main domain
-    "https://elijah.data2int.com",  # Dev domain
+    "https://data2int.com",       # Main domain
+    "https://elijah.data2int.com",   # Dev domain
+    "https://matthew.data2int.com", # Add other subdomains as needed
     "http://localhost:8080",       # For local testing
     "http://127.0.0.1:8080",      # For local testing
     "http://localhost:8000",       # For python -m http.server
@@ -40,194 +42,265 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.post("/api/data-analysis")
-async def run_analysis_router(
-    analysis_type: str = Form(...),
-    # Common data inputs
+# --- Helper Functions ---
+
+def get_data_payload(
+    data_file: Optional[UploadFile], 
+    data_text: Optional[str]
+) -> Tuple[Union[UploadFile, str], str, bool]:
+    """
+    Determines the data source (file or text) and returns
+    (payload, filename, is_file_upload_flag).
+    Raises HTTPException if no data is provided.
+    """
+    if data_file:
+        filename = data_file.filename or "unknown"
+        print(f"Processing uploaded file: {filename}")
+        # Validate file type for analysis
+        filename_lower = filename.lower()
+        if not filename_lower.endswith(('.csv', '.xlsx', '.xls')):
+            raise HTTPException(status_code=400, detail="Invalid data file type. Please upload a CSV or Excel file.")
+        return data_file, filename, True
+    elif data_text:
+        print(f"Processing pasted text data.")
+        return data_text, "pasted_data", False
+    else:
+        # This error is raised if neither file nor text is provided
+        raise HTTPException(status_code=400, detail="No data provided. Please either upload a file or paste text data.")
+
+async def safe_close_file(file: Optional[UploadFile]):
+    """Safely closes an uploaded file if it exists."""
+    if file and isinstance(file, UploadFile):
+        try:
+            await file.close()
+            print(f"Closed uploaded file: {file.filename}")
+        except Exception as close_err:
+            # Log warning, but don't crash the request
+            print(f"Warning: Could not close file {file.filename}. Error: {close_err}")
+
+# --- Analysis Endpoints ---
+
+@app.post("/api/sem")
+async def run_sem_analysis(
     data_file: Optional[UploadFile] = File(None),
     data_text: Optional[str] = Form(None),
-    # SEM specific inputs
     measurement_syntax: Optional[str] = Form(None),
-    structural_syntax: Optional[str] = Form(None),
-    # --- Predictive Analysis specific inputs ---
-    dateColumn: Optional[str] = Form(None), 
-    targetColumn: Optional[str] = Form(None),
-    forecastPeriods: Optional[str] = Form(None),
-    confidenceLevel: Optional[str] = Form(None),
-    modelType: Optional[str] = Form(None),
-    # --- DEMATEL PARAMETERS ---
-    dematel_factors: Optional[str] = Form(None), # Will be a JSON string list
-    dematel_matrix: Optional[str] = Form(None),  # Will be a JSON string 2D list
-    # --- DESCRIPTIVE ANALYSIS PARAMETERS ---
-    descriptive_analysis_types: Optional[str] = Form(None),  # JSON string list of analysis types
-    context_file: Optional[UploadFile] = File(None)
+    structural_syntax: Optional[str] = Form(None)
 ):
-    """
-    Routes analysis requests based on analysis_type.
-    Handles data input (file or text) and specific parameters for each type.
-    """
-    data_payload: Union[UploadFile, str, None] = None
-    input_filename: str = "unknown"
-    is_file_upload: bool = False
-
+    """Runs Structural Equation Modeling (SEM) analysis."""
     try:
-        # --- Determine data source (for analysis types that need it) ---
-        if data_file:
-            data_payload = data_file
-            input_filename = data_file.filename
-            is_file_upload = True
-            print(f"Processing uploaded file: {input_filename}")
-        elif data_text:
-            data_payload = data_text
-            input_filename = "pasted_data" # Assign a default name
-            is_file_upload = False
-            print(f"Processing pasted text data.")
-        else:
-            # Raise error only if the specific analysis type *requires* data
-            if analysis_type in ["sem", "predictive", "descriptive"]:  # Added "descriptive"
-                 raise HTTPException(status_code=400, detail="No data provided. Please either upload a file or paste text data.")
-            # Allow analysis types that might not need data (if any)
+        # 1. Get data
+        data_payload, input_filename, is_file_upload = get_data_payload(data_file, data_text)
 
-        # --- Route based on analysis_type ---
-        if analysis_type == "sem":
-            # --- SEM-specific file validation ---
-            if is_file_upload:
-                filename_lower = data_file.filename.lower()
-                if not filename_lower.endswith(('.csv', '.xlsx', '.xls')):
-                    raise HTTPException(status_code=400, detail="Invalid file type for SEM. Please upload a CSV or Excel file.")
-            
-            if not measurement_syntax and not structural_syntax:
-                raise HTTPException(status_code=400, detail="SEM requires at least Measurement Syntax or Structural Syntax.")
-            if not data_payload: # SEM requires data
-                raise HTTPException(status_code=400, detail="SEM requires data (file or text).")
+        # 2. Validate SEM-specific parameters
+        if not measurement_syntax and not structural_syntax:
+            raise HTTPException(status_code=400, detail="SEM requires at least Measurement Syntax or Structural Syntax.")
 
-            print(f"Routing to SEM Analysis...")
-            results = await sem_analysis.perform_sem(
-                data_payload=data_payload,
-                is_file_upload=is_file_upload,
-                input_filename=input_filename,
-                measurement_syntax=measurement_syntax or "",
-                structural_syntax=structural_syntax or ""
-            )
-            return JSONResponse(content=results)
-
-        # --- PREDICTIVE ANALYSIS ROUTE ---
-        elif analysis_type == "predictive":
-            # --- Predictive-specific file validation ---
-            if is_file_upload:
-                filename_lower = data_file.filename.lower()
-                if not filename_lower.endswith(('.csv', '.xlsx', '.xls')):
-                    raise HTTPException(status_code=400, detail="Invalid file type for Predictive Analysis. Please upload a CSV or Excel file.")
-
-            if not data_payload: # Predictive requires data
-                raise HTTPException(status_code=400, detail="Predictive analysis requires data (file or text).")
-            if not dateColumn:
-                raise HTTPException(status_code=400, detail="Predictive analysis requires a date column selection.")
-            if not targetColumn:
-                raise HTTPException(status_code=400, detail="Predictive analysis requires a target column selection.")
-
-            # (Keep all your existing predictive param conversion logic...)
-            try:
-                periods = int(forecastPeriods) if forecastPeriods else 12 # Default 12
-            except (ValueError, TypeError):
-                raise HTTPException(status_code=400, detail="Invalid format for Forecast Periods (must be an integer).")
-            
-            try:
-                level = float(confidenceLevel) if confidenceLevel else 0.90 # Default 0.90
-                if not (0 < level < 1):
-                    raise ValueError("Confidence level must be between 0 and 1 (exclusive).")
-            except (ValueError, TypeError):
-                raise HTTPException(status_code=400, detail="Invalid format for Confidence Level (e.g., use 0.95 for 95%).")
-
-            model = modelType if modelType else "auto" # Default 'auto'
-
-            print(f"Routing to Predictive Analysis...")
-
-            results = await predictive_analysis.perform_prediction(
-                data_payload=data_payload,
-                is_file_upload=is_file_upload,
-                input_filename=input_filename,
-                date_column=dateColumn,
-                target_column=targetColumn,
-                forecast_periods=periods,
-                confidence_level=level,
-                model_type=model
-            )
-            return JSONResponse(content=results)
-
-        # --- DEMATEL ANALYSIS ROUTE ---
-        elif analysis_type == "dematel":
-            if not dematel_factors or not dematel_matrix:
-                raise HTTPException(status_code=400, detail="Missing AI-generated factors or matrix for DEMATEL analysis.")
-            
-            try:
-                # Convert the JSON strings from the form back into Python lists
-                factors_list = json.loads(dematel_factors)
-                matrix_list = json.loads(dematel_matrix)
-            except json.JSONDecodeError:
-                raise HTTPException(status_code=400, detail="Invalid JSON format for DEMATEL factors or matrix.")
-            
-            print(f"Routing to DEMATEL Analysis with {len(factors_list)} factors...")
-            
-            # Call the backend math function with the *real* AI data
-            results = await dematel_analysis.perform_dematel(
-                factors=factors_list,
-                direct_matrix=matrix_list
-            )
-            return JSONResponse(content=results)
-
-        # --- DESCRIPTIVE ANALYSIS ROUTE ---
-        elif analysis_type == "descriptive":
-            # --- Descriptive-specific file validation ---
-            if is_file_upload:
-                filename_lower = data_file.filename.lower()
-                if not filename_lower.endswith(('.csv', '.xlsx', '.xls')):
-                    raise HTTPException(status_code=400, detail="Invalid file type for Descriptive Analysis. Please upload a CSV or Excel file.")
-
-            if not data_payload: # Descriptive requires data
-                raise HTTPException(status_code=400, detail="Descriptive analysis requires data (file or text).")
-
-            # Parse analysis types (optional parameter)
-            analysis_types_list = None
-            if descriptive_analysis_types:
-                try:
-                    analysis_types_list = json.loads(descriptive_analysis_types)
-                except json.JSONDecodeError:
-                    raise HTTPException(status_code=400, detail="Invalid JSON format for analysis types.")
-            
-            print(f"Routing to Descriptive Analysis...")
-            print(f"   Analysis types requested: {analysis_types_list or 'all (default)'}")
-            
-            results = await descriptive_analysis.perform_descriptive_analysis(
-                data_payload=data_payload,
-                is_file_upload=is_file_upload,
-                input_filename=input_filename,
-                context_file=context_file, # <-- ADD THIS LINE
-                analysis_types=analysis_types_list
-            )
-            return JSONResponse(content=results)
-
-        else:
-            raise HTTPException(status_code=400, detail=f"Unsupported analysis_type: {analysis_type}")
+        # 3. Run analysis
+        print(f"Routing to SEM Analysis...")
+        results = await sem_analysis.perform_sem(
+            data_payload=data_payload,
+            is_file_upload=is_file_upload,
+            input_filename=input_filename,
+            measurement_syntax=measurement_syntax or "",
+            structural_syntax=structural_syntax or ""
+        )
+        return JSONResponse(content=results)
 
     except HTTPException as http_exc:
-        # Re-raise HTTP exceptions directly
-        print(f"HTTP Exception: {http_exc.status_code} - {http_exc.detail}")
+        print(f"HTTP Exception in SEM: {http_exc.status_code} - {http_exc.detail}")
         raise http_exc
     except Exception as e:
-        # Catch any other unexpected errors
-        print(f"Error during {analysis_type} analysis: {type(e).__name__} - {e}")
-        print(traceback.format_exc()) # Log the full traceback for debugging
+        print(f"Error during SEM analysis: {type(e).__name__} - {e}")
+        print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"An internal server error occurred: {str(e)}")
     finally:
         # Ensure uploaded file stream is closed
-        if is_file_upload and isinstance(data_payload, UploadFile):
+        await safe_close_file(data_file)
+
+
+@app.post("/api/predictive")
+async def run_predictive_analysis(
+    data_file: Optional[UploadFile] = File(None),
+    data_text: Optional[str] = Form(None),
+    dateColumn: str = Form(...),
+    targetColumn: str = Form(...),
+    forecastPeriods: Optional[str] = Form(None),
+    confidenceLevel: Optional[str] = Form(None),
+    modelType: Optional[str] = Form(None)
+):
+    """Runs Predictive (forecasting) analysis."""
+    try:
+        # 1. Get data
+        data_payload, input_filename, is_file_upload = get_data_payload(data_file, data_text)
+
+        # 2. Validate and convert predictive parameters
+        try:
+            periods = int(forecastPeriods) if forecastPeriods else 12 # Default 12
+        except (ValueError, TypeError):
+            raise HTTPException(status_code=400, detail="Invalid format for Forecast Periods (must be an integer).")
+        
+        try:
+            level = float(confidenceLevel) if confidenceLevel else 0.90 # Default 0.90
+            if not (0 < level < 1):
+                raise ValueError("Confidence level must be between 0 and 1 (exclusive).")
+        except (ValueError, TypeError):
+            raise HTTPException(status_code=400, detail="Invalid format for Confidence Level (e.g., use 0.95 for 95%).")
+
+        model = modelType if modelType else "auto" # Default 'auto'
+
+        # 3. Run analysis
+        print(f"Routing to Predictive Analysis...")
+        results = await predictive_analysis.perform_prediction(
+            data_payload=data_payload,
+            is_file_upload=is_file_upload,
+            input_filename=input_filename,
+            date_column=dateColumn,
+            target_column=targetColumn,
+            forecast_periods=periods,
+            confidence_level=level,
+            model_type=model
+        )
+        return JSONResponse(content=results)
+
+    except HTTPException as http_exc:
+        print(f"HTTP Exception in Predictive: {http_exc.status_code} - {http_exc.detail}")
+        raise http_exc
+    except Exception as e:
+        print(f"Error during Predictive analysis: {type(e).__name__} - {e}")
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"An internal server error occurred: {str(e)}")
+    finally:
+        # Ensure uploaded file stream is closed
+        await safe_close_file(data_file)
+
+
+@app.post("/api/dematel")
+async def run_dematel_analysis(
+    dematel_factors: str = Form(...), # JSON string list
+    dematel_matrix: str = Form(...)  # JSON string 2D list
+):
+    """Runs DEMATEL analysis (no data file required)."""
+    try:
+        # 1. Validate and convert DEMATEL parameters
+        try:
+            factors_list = json.loads(dematel_factors)
+            matrix_list = json.loads(dematel_matrix)
+        except json.JSONDecodeError:
+            raise HTTPException(status_code=400, detail="Invalid JSON format for DEMATEL factors or matrix.")
+        
+        # 2. Run analysis
+        print(f"Routing to DEMATEL Analysis with {len(factors_list)} factors...")
+        results = await dematel_analysis.perform_dematel(
+            factors=factors_list,
+            direct_matrix=matrix_list
+        )
+        return JSONResponse(content=results)
+
+    except HTTPException as http_exc:
+        print(f"HTTP Exception in DEMATEL: {http_exc.status_code} - {http_exc.detail}")
+        raise http_exc
+    except Exception as e:
+        print(f"Error during DEMATEL analysis: {type(e).__name__} - {e}")
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"An internal server error occurred: {str(e)}")
+    # No 'finally' block needed as no files are uploaded
+
+
+@app.post("/api/descriptive")
+async def run_descriptive_analysis(
+    data_file: Optional[UploadFile] = File(None),
+    data_text: Optional[str] = Form(None),
+    context_file: Optional[UploadFile] = File(None),
+    descriptive_analysis_types: Optional[str] = Form(None) # JSON string list
+):
+    """Runs Descriptive analysis."""
+    try:
+        # 1. Get data
+        data_payload, input_filename, is_file_upload = get_data_payload(data_file, data_text)
+
+        # 2. Parse analysis types (optional parameter)
+        analysis_types_list = None
+        if descriptive_analysis_types:
             try:
-                await data_payload.close()
-                print(f"Closed uploaded file: {input_filename}")
-            except Exception as close_err:
-                print(f"Warning: Could not close file {input_filename}. Error: {close_err}")
-                
+                analysis_types_list = json.loads(descriptive_analysis_types)
+            except json.JSONDecodeError:
+                raise HTTPException(status_code=400, detail="Invalid JSON format for analysis types.")
+        
+        # 3. Run analysis
+        print(f"Routing to Descriptive Analysis...")
+        print(f"   Analysis types requested: {analysis_types_list or 'all (default)'}")
+        
+        results = await descriptive_analysis.perform_descriptive_analysis(
+            data_payload=data_payload,
+            is_file_upload=is_file_upload,
+            input_filename=input_filename,
+            context_file=context_file,
+            analysis_types=analysis_types_list
+        )
+        return JSONResponse(content=results)
+
+    except HTTPException as http_exc:
+        print(f"HTTP Exception in Descriptive: {http_exc.status_code} - {http_exc.detail}")
+        raise http_exc
+    except Exception as e:
+        print(f"Error during Descriptive analysis: {type(e).__name__} - {e}")
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"An internal server error occurred: {str(e)}")
+    finally:
+        # Ensure *both* uploaded file streams are closed
+        await safe_close_file(data_file)
+        await safe_close_file(context_file)
+
+
+@app.post("/api/visualization")
+async def run_visualization_analysis(
+    data_file: Optional[UploadFile] = File(None),
+    data_text: Optional[str] = Form(None),
+    context_file: Optional[UploadFile] = File(None),
+    chart_configs: Optional[str] = Form(None) # JSON string with chart configurations
+):
+    """Runs Visualization analysis and suggestions."""
+    try:
+        # 1. Get data
+        data_payload, input_filename, is_file_upload = get_data_payload(data_file, data_text)
+
+        # 2. Parse chart configurations (optional parameter)
+        chart_configs_list = None
+        if chart_configs:
+            try:
+                chart_configs_list = json.loads(chart_configs)
+            except json.JSONDecodeError:
+                raise HTTPException(status_code=400, detail="Invalid JSON format for chart configurations.")
+        
+        # 3. Run analysis
+        print(f"Routing to Visualization Analysis...")
+        print(f"   Chart configs: {chart_configs_list or 'auto-generate suggestions'}")
+        
+        results = await visualization_analysis.perform_visualization_analysis(
+            data_payload=data_payload,
+            is_file_upload=is_file_upload,
+            input_filename=input_filename,
+            context_file=context_file,
+            chart_configs=chart_configs_list
+        )
+        return JSONResponse(content=results)
+
+    except HTTPException as http_exc:
+        print(f"HTTP Exception in Visualization: {http_exc.status_code} - {http_exc.detail}")
+        raise http_exc
+    except Exception as e:
+        print(f"Error during Visualization analysis: {type(e).__name__} - {e}")
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"An internal server error occurred: {str(e)}")
+    finally:
+        # Ensure *both* uploaded file streams are closed
+        await safe_close_file(data_file)
+        await safe_close_file(context_file)
+
+
+# --- Other Endpoints (Unchanged) ---
+
 # Currently being worked on.
 # --- Save Document Endpoint ---
 @app.post("/api/export")
