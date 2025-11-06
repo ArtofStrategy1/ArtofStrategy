@@ -1,5 +1,3 @@
-# analysis_modules/sem_analysis.py
-
 import io
 import pandas as pd
 import semopy
@@ -44,8 +42,8 @@ def safe_float(value, default=np.nan):
 # --- Main SEM Analysis Function ---
 async def perform_sem(
     data_payload: Union[UploadFile, str], # Can be UploadFile or raw string
-    is_file_upload: bool,             # Flag indicating the type of data_payload
-    input_filename: str,              # Original filename or default for text
+    is_file_upload: bool,          # Flag indicating the type of data_payload
+    input_filename: str,           # Original filename or default for text
     measurement_syntax: str,
     structural_syntax: str
 ) -> Dict[str, Any]:
@@ -170,7 +168,7 @@ async def perform_sem(
 
             model_obj = semopy.Model(model_syntax_cleaned)
             if not hasattr(model_obj, 'vars') or 'observed' not in model_obj.vars:
-                 raise ValueError("Could not parse model structure. Check syntax validity.")
+                  raise ValueError("Could not parse model structure. Check syntax validity.")
 
             # --- MODIFIED --- Get both observed and latent vars
             obs_vars = set(model_obj.vars.get('observed', []))
@@ -185,7 +183,9 @@ async def perform_sem(
             raise HTTPException(status_code=400, detail=f"Syntax Error or Model Setup Failed: {str(model_err)}")
 
 
-        # --- 4. Prepare Data for Model ---
+        # =================================================================
+        # === START: REPLACEMENT FOR STEP 4 (Data Preparation) ===
+        # =================================================================
         print("   Step 4: Preparing data for analysis...")
         missing_in_data = obs_vars - set(cleaned_column_names)
         if missing_in_data:
@@ -194,36 +194,50 @@ async def perform_sem(
 
         df_model_data = df[list(obs_vars)].copy()
 
-        # --- QUICK FIX: Improved data cleaning ---
-        print("   Converting data to numeric and handling missing data...")
+        # --- NEW: Robust Data Cleaning and Validation ---
+        print("   Validating data types and handling missing values...")
         initial_rows = len(df_model_data)
         
-        # Check data quality BEFORE cleaning
+        # Identify non-numeric columns BEFORE coercing
+        non_numeric_cols_initial = df_model_data.select_dtypes(include=['object', 'category']).columns.tolist()
+        
+        # Coerce all columns
         for col in df_model_data.columns:
             df_model_data[col] = pd.to_numeric(df_model_data[col], errors='coerce')
+            
+        # Find columns that are *still* non-numeric
+        problematic_cols = []
+        for col in obs_vars:
+            # Check if it *was* an object/string, was coerced, and is *now* completely empty (all NaN)
+            if col in non_numeric_cols_initial and df_model_data[col].isnull().all():
+                problematic_cols.append(col)
+            # Check if the column is *still* not a numeric type (should be float64 or int64 by now)
+            elif not pd.api.types.is_numeric_dtype(df_model_data[col]):
+                problematic_cols.append(col)
+
+        if problematic_cols:
+            # Try to find original names for better error message
+            problematic_original = [orig for orig, clean in zip(original_column_names, cleaned_column_names) if clean in problematic_cols]
+            raise HTTPException(
+                status_code=400,
+                detail=f"Non-numeric data found in model variables: {problematic_original or problematic_cols}. SEM requires all observed variables in the syntax to be numeric. Please remove these from your model syntax or clean the data."
+            )
         
-        # Count missing values per column
+        # --- (missing data checks) ---
         missing_counts = df_model_data.isnull().sum()
         total_missing = missing_counts.sum()
-        print(f"   Missing values per column: {dict(missing_counts)}")
+        print(f"   Missing values per column (post-coerce): {dict(missing_counts)}")
         
-        # QUICK FIX: If too much missing data, filter columns first
         if total_missing > (initial_rows * len(df_model_data.columns) * 0.3):  # >30% missing overall
             print("   High missing data detected. Filtering columns...")
-            
-            # Keep only columns with <50% missing data
             good_columns = missing_counts[missing_counts < (initial_rows * 0.5)].index.tolist()
-            
             if len(good_columns) < 4:
                 raise HTTPException(status_code=400, detail=f"Too many columns have missing data. Only {len(good_columns)} usable columns found. Please clean your data or provide more complete data.")
-            
             print(f"   Keeping {len(good_columns)} columns with good data: {good_columns}")
             df_model_data = df_model_data[good_columns]
-            
-            # Update observed variables to match filtered columns
             obs_vars = set(good_columns)
         
-        # Now drop rows with any missing values
+        # Now drop rows with any remaining missing values
         rows_before = len(df_model_data)
         df_model_data.dropna(inplace=True)
         rows_after = len(df_model_data)
@@ -237,9 +251,11 @@ async def perform_sem(
         if rows_after < min_required_rows:
             raise HTTPException(
                 status_code=400, 
-                detail=f"Insufficient data: {rows_after} rows remaining after cleaning, need at least {min_required_rows}. Your data has too many missing values. Please provide cleaner data with fewer missing values."
+                detail=f"Insufficient data: {rows_after} valid (non-missing, numeric) rows remaining, but need at least {min_required_rows}. Your data may have too many missing values or non-numeric entries. Please clean your data."
             )
-
+        # =================================================================
+        # === END: REPLACEMENT FOR STEP 4 ===
+        # =================================================================
 
         # --- 5. Standardize Data ---
         print("   Step 5: Standardizing data...")
@@ -458,10 +474,10 @@ async def perform_sem(
                 "latent": sorted(list(latent_vars))
             },
             "data_summary": {
-                 "rows_input": initial_rows + rows_dropped,
-                 "rows_used": rows_after,
-                 "rows_dropped_na": rows_dropped,
-                 "columns_used": df_standardized.columns.tolist()
+                "rows_input": initial_rows + rows_dropped,
+                "rows_used": rows_after,
+                "rows_dropped_na": rows_dropped,
+                "columns_used": df_standardized.columns.tolist()
             }
         }
         print("✅ SEM analysis finished successfully.")
