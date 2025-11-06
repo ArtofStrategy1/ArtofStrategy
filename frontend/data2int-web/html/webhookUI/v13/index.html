@@ -870,39 +870,36 @@ For each identified segment, provide:
 
     // --- Navigation Logic ---
     function navigateTo(pageId) {
-        // Logic for restricted pages
-        if (pageId === 'templates' && !userLoggedIn) {
-            showMessage('loginMessage', 'Please log in to access templates.', 'error');
-            navigateTo('login'); // Redirect to login
-            return;
-        }
-
-        if ((pageId === 'login' || pageId === 'signup') && userLoggedIn) {
-            // If already logged in, prevent navigation to login/signup
-            showMessage('loginMessage', 'You are already logged in.', 'success');
-            navigateTo('templates'); // Redirect to templates or home
-            return;
-        }
-
-        // Hide all pages first
-        pages.forEach(page => {
-            page.classList.remove('active');
-            page.style.display = 'none'; // Explicitly hide all pages
+        
+        pages.forEach((page) => {
+            page.classList.remove("active", "flex", "block");
+            page.style.display = "none";
         });
+
+        if (statsInterval) {
+            clearInterval(statsInterval);
+            statsInterval = null;
+            console.log("Stopped admin stats auto-refresh.");
+        }
 
         const targetPage = $(pageId);
         if (targetPage) {
-            targetPage.classList.add('active');
-            // Set display based on the type of page
-            if (pageId === 'home' || pageId === 'templates' || pageId === 'templateDetail' || pageId === 'examplesPage') {
-                targetPage.style.display = 'block';
-            } else if (pageId === 'login' || pageId === 'signup') {
-                targetPage.style.display = 'flex';
+            targetPage.classList.add("active");
+            if (["home", "templates", "templateDetail", "examplesPage", "adminDashboard", "about"].includes(pageId)) {
+                targetPage.style.display = "block";
+            } else {
+                targetPage.style.display = "flex";
+            }
+
+            if (pageId === "adminDashboard") {
+                fetchAndDisplayStatistics();
+                statsInterval = setInterval(fetchAndDisplayStatistics, 10000);
+                console.log("Started admin stats auto-refresh.");
             }
             window.scrollTo(0, 0);
         }
     }
-
+      
     // --- Update Navigation Bar Links (NEW) ---
     function updateNavBar() {
         const loginLink = document.querySelector('a[data-page="login"], a[data-page="logout"]'); // Select both

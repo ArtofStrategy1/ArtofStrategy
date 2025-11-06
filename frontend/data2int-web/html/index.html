@@ -2934,8 +2934,6 @@ document.addEventListener("DOMContentLoaded", () => {
             createSystemGoalsLayout(template);
         } else if (rule.useSystemThinkingLayout) {
             createSystemThinkingLayout(template);
-        } else if (rule.useSemAnalysisLayout) {
-            createSemAnalysisLayout(template);
         } else if (rule.usePredictiveAnalysisLayout) {
             createPredictiveAnalysisLayout(template);
         } else if (rule.useDematelLayout) {
@@ -2992,6 +2990,10 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <span id="generateBtnText">Generate Analysis</span>
                                 <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                             </button>
+
+                            <div class="text-center mt-4">
+                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                            </div>
                         </div>
                     </div>
                     <div>
@@ -3040,6 +3042,28 @@ document.addEventListener("DOMContentLoaded", () => {
         $("generateBtn").addEventListener("click", handleGenerate);
         reattachActionListeners();
         configureFrameworkSelector(currentSelectionLimit);
+
+        // Attach listener for the feedback link
+                const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+                if (feedbackLink) {
+                    feedbackLink.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        
+                        // This just calls the navigateTo function.
+                        // It relies on your main `MapsTo` function to be
+                        // the *simplified one* (without memory logic)
+                        // and your `submitFeedbackPageBtn` listener
+                        // to be the *simplified one* (that just goes home).
+                        if (typeof navigateTo === 'function') {
+                            navigateTo('feedback');
+                        } else {
+                            console.error("navigateTo function is not defined.");
+                        }
+                    });
+                } else {
+                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                }
+                // --- END FIX ---
     }
 
     function populateDefaultFormFields(templateId) {
@@ -3132,6 +3156,9 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <span id="generateBtnText">🎯 Formulate Initiatives</span>
                                 <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                             </button>
+                            <div class="text-center mt-4">
+	                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                            </div>
                         </div>
                         
                         <div class="mt-12">
@@ -3148,6 +3175,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Re-attach all necessary event listeners for the new elements
         setupInputToggle("systemGoalsFile", "systemGoalsFileLabel", "textInputArea", "docUploadArea");
+
+        // Attach listener for the feedback link
+                const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+                if (feedbackLink) {
+                    feedbackLink.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        
+                        // This just calls the navigateTo function.
+                        // It relies on your main `MapsTo` function to be
+                        // the *simplified one* (without memory logic)
+                        // and your `submitFeedbackPageBtn` listener
+                        // to be the *simplified one* (that just goes home).
+                        if (typeof navigateTo === 'function') {
+                            navigateTo('feedback');
+                        } else {
+                            console.error("navigateTo function is not defined.");
+                        }
+                    });
+                } else {
+                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                }
+                // --- END FIX ---
     }
 
     function createGoalsAndInitiativesLayout_SP(template) {
@@ -3181,6 +3230,9 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <span id="generateBtnText">📋 Build Strategic Plan</span>
                                 <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                             </button>
+                            <div class="text-center mt-4">
+	                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                            </div>
                         </div>
                         <div class="mt-12">
                              <h2 class="text-3xl font-bold mb-4 text-center">Analysis Results</h2>
@@ -3193,6 +3245,28 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                 `;
         setupInputToggle("goalsFile", "goalsFileLabel", "textInputArea", "docUploadArea");
+
+        // Attach listener for the feedback link
+                const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+                if (feedbackLink) {
+                    feedbackLink.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        
+                        // This just calls the navigateTo function.
+                        // It relies on your main `MapsTo` function to be
+                        // the *simplified one* (without memory logic)
+                        // and your `submitFeedbackPageBtn` listener
+                        // to be the *simplified one* (that just goes home).
+                        if (typeof navigateTo === 'function') {
+                            navigateTo('feedback');
+                        } else {
+                            console.error("navigateTo function is not defined.");
+                        }
+                    });
+                } else {
+                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                }
+                // --- END FIX ---
     }
 
     function createActionPlansLayout_AP(template) {
@@ -3226,6 +3300,9 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <span id="generateBtnText">🗓️ Create Action Plan</span>
                                 <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                             </button>
+                            <div class="text-center mt-4">
+	                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                            </div>
                         </div>
                         <div class="mt-12">
                              <h2 class="text-3xl font-bold mb-4 text-center">Generated Action Plan</h2>
@@ -3238,6 +3315,28 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                 `;
         setupInputToggle("actionPlanFile", "actionPlanFileLabel", "textInputArea", "docUploadArea");
+
+        // Attach listener for the feedback link
+                const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+                if (feedbackLink) {
+                    feedbackLink.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        
+                        // This just calls the navigateTo function.
+                        // It relies on your main `MapsTo` function to be
+                        // the *simplified one* (without memory logic)
+                        // and your `submitFeedbackPageBtn` listener
+                        // to be the *simplified one* (that just goes home).
+                        if (typeof navigateTo === 'function') {
+                            navigateTo('feedback');
+                        } else {
+                            console.error("navigateTo function is not defined.");
+                        }
+                    });
+                } else {
+                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                }
+                // --- END FIX ---
     }
 
     function createKpiLayout_KE(template) {
@@ -3271,6 +3370,9 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <span id="generateBtnText">📊 Define KPIs & Events</span>
                                 <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                             </button>
+                            <div class="text-center mt-4">
+	                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                            </div>
                         </div>
                         <div class="mt-12">
                              <h2 class="text-3xl font-bold mb-4 text-center">Performance Framework</h2>
@@ -3283,6 +3385,28 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                 `;
         setupInputToggle("kpiFile", "kpiFileLabel", "textInputArea", "docUploadArea");
+
+        // Attach listener for the feedback link
+                const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+                if (feedbackLink) {
+                    feedbackLink.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        
+                        // This just calls the navigateTo function.
+                        // It relies on your main `MapsTo` function to be
+                        // the *simplified one* (without memory logic)
+                        // and your `submitFeedbackPageBtn` listener
+                        // to be the *simplified one* (that just goes home).
+                        if (typeof navigateTo === 'function') {
+                            navigateTo('feedback');
+                        } else {
+                            console.error("navigateTo function is not defined.");
+                        }
+                    });
+                } else {
+                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                }
+                // --- END FIX ---
     }
 
     function createNovelGoalsLayout_NS(template) {
@@ -3316,6 +3440,9 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <span id="generateBtnText">🗺️ Map Strategic Horizons</span>
                                 <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                             </button>
+                            <div class="text-center mt-4">
+	                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                            </div>
                         </div>
                         <div class="mt-12">
                              <h2 class="text-3xl font-bold mb-4 text-center">Horizons of Growth Analysis</h2>
@@ -3328,6 +3455,28 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                 `;
         setupInputToggle("novelGoalsFile", "novelGoalsFileLabel", "textInputArea", "docUploadArea");
+
+        // Attach listener for the feedback link
+                const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+                if (feedbackLink) {
+                    feedbackLink.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        
+                        // This just calls the navigateTo function.
+                        // It relies on your main `MapsTo` function to be
+                        // the *simplified one* (without memory logic)
+                        // and your `submitFeedbackPageBtn` listener
+                        // to be the *simplified one* (that just goes home).
+                        if (typeof navigateTo === 'function') {
+                            navigateTo('feedback');
+                        } else {
+                            console.error("navigateTo function is not defined.");
+                        }
+                    });
+                } else {
+                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                }
+                // --- END FIX ---
     }
 
     function createRegressionLayout_DA(template) {
@@ -3373,6 +3522,9 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <span id="generateBtnText">📈 Run Regression Analysis</span>
                                 <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                             </button>
+                            <div class="text-center mt-4">
+	                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                            </div>
                         </div>
                         <div class="mt-12">
                              <h2 class="text-3xl font-bold mb-4 text-center">Regression Results</h2>
@@ -3408,6 +3560,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
         $("generateBtn").addEventListener("click", handleGenerate);
         reattachActionListeners();
+
+        // Attach listener for the feedback link
+                const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+                if (feedbackLink) {
+                    feedbackLink.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        
+                        // This just calls the navigateTo function.
+                        // It relies on your main `MapsTo` function to be
+                        // the *simplified one* (without memory logic)
+                        // and your `submitFeedbackPageBtn` listener
+                        // to be the *simplified one* (that just goes home).
+                        if (typeof navigateTo === 'function') {
+                            navigateTo('feedback');
+                        } else {
+                            console.error("navigateTo function is not defined.");
+                        }
+                    });
+                } else {
+                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                }
+                // --- END FIX ---
     }
 
     function createPlsLayout_DA(template) {
@@ -3443,6 +3617,9 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <span id="generateBtnText">📊 Run PLS-SEM Analysis</span>
                                 <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                             </button>
+                            <div class="text-center mt-4">
+	                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                            </div>
                         </div>
                         <div class="mt-12">
                              <h2 class="text-3xl font-bold mb-4 text-center">PLS-SEM Results</h2>
@@ -3456,6 +3633,28 @@ document.addEventListener("DOMContentLoaded", () => {
                 `;
         // --- THIS IS THE FIX ---
         setupInputToggle("plsFile", "plsFileLabel", null, null);
+
+        // Attach listener for the feedback link
+                const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+                if (feedbackLink) {
+                    feedbackLink.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        
+                        // This just calls the navigateTo function.
+                        // It relies on your main `MapsTo` function to be
+                        // the *simplified one* (without memory logic)
+                        // and your `submitFeedbackPageBtn` listener
+                        // to be the *simplified one* (that just goes home).
+                        if (typeof navigateTo === 'function') {
+                            navigateTo('feedback');
+                        } else {
+                            console.error("navigateTo function is not defined.");
+                        }
+                    });
+                } else {
+                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                }
+                // --- END FIX ---
     }
 
     function createDescriptiveLayout_DA(template) {
@@ -3504,6 +3703,9 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <span id="generateBtnText">🔍 Analyze Data</span>
                                 <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                             </button>
+                            <div class="text-center mt-4">
+	                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                            </div>
                         </div>
                         <div class="mt-12">
                              <h2 class="text-3xl font-bold mb-4 text-center">Descriptive Analysis Results</h2>
@@ -3637,6 +3839,29 @@ B,Bad,3,Items,$12000</div>
 
         $("generateBtn").addEventListener("click", handleGenerate);
         reattachActionListeners();
+
+        // Attach listener for the feedback link
+                const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+                if (feedbackLink) {
+                    feedbackLink.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        
+                        // This just calls the navigateTo function.
+                        // It relies on your main `MapsTo` function to be
+                        // the *simplified one* (without memory logic)
+                        // and your `submitFeedbackPageBtn` listener
+                        // to be the *simplified one* (that just goes home).
+                        if (typeof navigateTo === 'function') {
+                            navigateTo('feedback');
+                        } else {
+                            console.error("navigateTo function is not defined.");
+                        }
+                    });
+                } else {
+                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                }
+                // --- END FIX ---
+
     }
     
     function createPrescriptiveLayout_DA(template) {
@@ -3668,6 +3893,9 @@ B,Bad,3,Items,$12000</div>
                                 <span id="generateBtnText"> prescribe Actions</span>
                                 <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                             </button>
+                            <div class="text-center mt-4">
+	                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                            </div>
                         </div>
                         <div class="mt-12">
                              <h2 class="text-3xl font-bold mb-4 text-center">Prescriptive Analysis Results</h2>
@@ -3680,412 +3908,1054 @@ B,Bad,3,Items,$12000</div>
                     </div>
                 `;
         setupInputToggle("prescriptiveFile", "prescriptiveFileLabel", null, null);
+
+        // Attach listener for the feedback link
+                const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+                if (feedbackLink) {
+                    feedbackLink.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        
+                        // This just calls the navigateTo function.
+                        // It relies on your main `MapsTo` function to be
+                        // the *simplified one* (without memory logic)
+                        // and your `submitFeedbackPageBtn` listener
+                        // to be the *simplified one* (that just goes home).
+                        if (typeof navigateTo === 'function') {
+                            navigateTo('feedback');
+                        } else {
+                            console.error("navigateTo function is not defined.");
+                        }
+                    });
+                } else {
+                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                }
+                // --- END FIX ---
     }
 
+    /**
+     * --- UPDATED (V15 - Final Fix) ---
+     * Creates the layout for the Visualization tool.
+     * - REMOVES the broken line that referenced the
+     * deleted 'lastPageIdBeforeFeedback' variable.
+     * - The feedback link now correctly calls navigateTo('feedback').
+     */
     function createVisualizationLayout_DA(template) {
-        const contentContainer = $("templateDetailContent");
+        // Helper function to safely get element
+        function safeGetElement(id) {
+            try {
+                return document.getElementById(id);
+            } catch (e) {
+                console.error("Error getting element:", id, e);
+                return null;
+            }
+        }
+        
+        const contentContainer = safeGetElement("templateDetailContent");
+        if (!contentContainer) {
+            console.error("Content container not found");
+            return;
+        }
+        
         contentContainer.className = "grid lg:grid-cols-1 gap-12";
-        contentContainer.innerHTML = `
-                    <div class="lg:col-span-1">
-                         <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
-                         <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">${template.description}</p>
-                        <div class="glass-container max-w-2xl mx-auto w-full p-6 space-y-4">
-                             <h3 class="text-xl font-bold mb-4 text-white">Visualization Setup</h3>
-                            <div class="space-y-4">
-                                <div>
-                                    <label for="vizRequest" class="block text-sm font-medium text-gray-200 mb-2">What do you want to visualize?</label>
-                                    <textarea id="vizRequest" class="input-field h-24" placeholder="Be specific. For example: 'Show the relationship between Marketing Spend and Sales Revenue', or 'Visualize the distribution of customer ages by product category.'"></textarea>
-                                </div>
-                                <div>
-                                    <label for="vizFile" class="block text-sm font-medium text-gray-200 mb-2">Upload Data File (.csv)</label>
-                                    <div class="input-file-wrapper">
-                                        <label for="vizFile" id="vizFileLabel" class="input-file-btn">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
-                                            <span class="file-name">Select .csv file...</span>
-                                        </label>
-                                        <input type="file" id="vizFile" class="input-file" accept=".csv">
-                                    </div>
-                                </div>
-                            </div>
-                            <button id="generateBtn" class="btn btn-primary w-full text-lg py-3 mt-4">
-                                <span id="generateBtnText">📊 Generate Visualizations</span>
-                                <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
-                            </button>
-                        </div>
-                        <div class="mt-12">
-                             <h2 class="text-3xl font-bold mb-4 text-center">Data Visualizations</h2>
-                             <div id="analysisResult" class="glass-container min-h-[500px] overflow-x-auto"></div>
-                             <div id="analysisActions" class="text-center mt-4 space-x-2 hidden">
-                                <button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>
-                                <button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-        setupInputToggle("vizFile", "vizFileLabel", null, null);
+        
+        const htmlContent = [
+            '<div class="lg:col-span-1">',
+            '<h1 class="text-4xl font-bold text-center mb-2">' + (template.title || 'Visualization') + '</h1>',
+            '<p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">' + (template.description || '') + '</p>',
+            '<div class="glass-container max-w-2xl mx-auto w-full p-6 space-y-4">',
+            '<div class="flex items-center justify-between mb-2">',
+            '<h3 class="text-xl font-bold text-white">Visualization Setup</h3>',
+            '<button type="button" id="vizConfigExamplesBtn" class="text-xs px-2 py-1 border border-white/30 rounded text-white/80 hover:bg-white/10 hover:text-white transition-all">View Examples</button>',
+            '</div>',
+            
+            // --- Good vs. Bad Examples ---
+            '<div id="vizConfigExamples" class="hidden mb-4 p-3 bg-black/20 border border-white/15 rounded-lg">',
+            '<div class="text-xs font-medium text-white/90 mb-3">📋 How to Get the Best Results</div>',
+            // Good Example
+            '<div class="mb-4">', 
+            '<div class="flex items-center mb-2">',
+            '<span class="text-green-400 mr-2">✅</span>',
+            '<span class="text-sm font-medium text-green-400">GOOD EXAMPLE</span>',
+            '<span class="text-xs text-white/60 ml-2">(Results in relevant, accurate charts)</span>',
+            '</div>',
+            '<div class="bg-green-900/20 border border-green-500/30 rounded p-3">',
+            '<div class="text-xs text-white/90 mb-2"><strong>Context Text (Your Request):</strong></div>',
+            '<div class="text-xs text-white/80 mb-3">',
+            '"Show me the sales revenue trend over time. Also, how does marketing spend correlate with sales revenue? And which product category has the highest total sales?"',
+            '</div>',
+            '<div class="text-xs text-white/90 mb-2"><strong>CSV Data (Snippet):</strong></div>',
+            '<div class="bg-black/30 p-2 rounded font-mono text-xs text-white/90">',
+            'Date,Region,Marketing_Spend,Sales_Revenue,Product_Category<br>',
+            '2024-01-01,North,5000,78500,Electronics<br>',
+            '2024-02-01,North,5200,79200,Apparel<br>',
+            '2024-03-01,West,7100,107000,Home Goods',
+            '</div>',
+            '</div>',
+            '</div>',
+            // MODIFIED: Bad Example (with annotations)
+            '<div class="mb-4">',
+            '<div class="flex items-center mb-2">',
+            '<span class="text-red-400 mr-2">❌</span>',
+            '<span class="text-sm font-medium text-red-400">BAD EXAMPLE</span>',
+            '<span class="text-xs text-white/60 ml-2">(Results in generic, unhelpful charts)</span>',
+            '</div>',
+            '<div class="bg-red-900/20 border border-red-500/30 rounded p-3">',
+            '<div class="text-xs text-white/80 mb-3">',
+            '<strong>Context Text:</strong> "Here\'s my data. Show me charts. I want to see what\'s happening." <span class="text-red-300 italic text-xs">(Vague, not specific)</span>',
+            '</div>',
+            '<div class="text-xs text-white/90 mb-2"><strong>CSV Data (Snippet):</strong></div>',
+            '<div class="bg-black/30 p-2 rounded font-mono text-xs text-white/90">',
+            'Date,Sales,Marketing ($),Region<br>',
+            'Jan 1, "$5,000", "100", N/A <span class="text-red-300 italic text-xs">(Messy data: $, commas, inconsistent dates)</span><br>',
+            'Feb 1, "$6,200", "120", North<br>',
+            'Mar 1, "7000", "110", West',
+            '</div>',
+            '</div>',
+            '</div>',
+            '<div class="border-t border-white/20 pt-3">',
+            '<div class="text-xs font-medium text-white/90 mb-2">💡 How to Write Your Request:</div>',
+            '<div class="text-xs text-white/80 space-y-1">',
+            '<div>• <strong>Be specific:</strong> Ask clear questions (e.g., "correlate X and Y," "show trend of Z").</div>',
+            '<div>• <strong>Clean your data:</strong> Ensure numbers are just numbers (no $, %, or commas).</div>',
+            '<div>• <strong>Use clean headers:</strong> Use simple column names (e.g., Marketing_Spend not Marketing ($)).</div>',
+            '</div>',
+            '</div>',
+            '</div>',
+            // --- End Examples ---
+
+            '<div class="space-y-4">',
+            '<div>',
+            '<label for="vizRequest" class="block text-sm font-medium text-gray-200 mb-2">What do you want to visualize? (This is your context)</label>',
+            '<textarea id="vizRequest" class="input-field h-24" placeholder="Be specific. For example: \'Show the relationship between Marketing Spend and Sales Revenue\', or \'Visualize the distribution of customer ages by product category.\'"></textarea>',
+            '</div>',
+            '<div>',
+            '<label for="vizFile" class="block text-sm font-medium text-gray-200 mb-2">Upload Data File (.csv)</label>',
+            '<div class="input-file-wrapper">',
+            '<label for="vizFile" id="vizFileLabel" class="input-file-btn">',
+            '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16">',
+            '<path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>',
+            '<path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/>',
+            '</svg>',
+            '<span class="file-name">Select .csv file...</span>',
+            '</label>',
+            '<input type="file" id="vizFile" class="input-file" accept=".csv">',
+            '</div>',
+            '<div id="vizFileError" class="text-red-400 text-sm mt-2"></div>',
+            '</div>',
+            '</div>',
+
+            // --- Data Requirements Checklist (V11) ---
+            '<div class="mt-4 p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg">',
+            '<div class="flex justify-between items-center mb-2">',
+                '<h4 class="text-sm font-medium text-blue-300">📋 Data Requirements Checklist</h4>',
+                '<a href="data-files/visualization/visualization-sample.csv" download="Visualization_Sample_Data.csv" class="btn btn-secondary text-xs px-2 py-1" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample CSV</a>',
+            '</div>',
+            '<ul class="list-disc list-inside text-xs text-white/80 space-y-1">',
+            '<li><strong>File Format:</strong> CSV (UTF-8 encoded).</li>',
+            '<li><strong>Headers:</strong> Must be in the **first row**. Use simple names (e.g., `Sales_Revenue`, not `Sales ($)`).</li>',
+            '<li><strong>Numbers:</strong> Must be **numbers only** (no $, ,, or % symbols).</li>',
+            '<li><strong>Dates:</strong> Must be in a **consistent format** (e.g., YYYY-MM-DD or MM/DD/YYYY).</li>',
+            '<li><strong>Categorical:</strong> Must have **consistent spelling** (e.g., "North", not "North" and "N.").</li>',
+            '<li><strong>Data Quality:</strong> Check for missing values (nulls) or extreme outliers.</li>',
+            '<li><strong>Limits:</strong> Recommended 30-50+ rows for reliable insights. Max file size ~5MB.</li>',
+            '</ul>',
+            '</div>',
+
+            // --- Column Guidance (V10) ---
+            '<details class="styled-details text-sm mt-4">',
+                '<summary class="font-semibold">View Column Guidance (using sample data)</summary>',
+                '<div class="bg-black/20 p-4 rounded-b-lg space-y-3 text-xs text-white/80">',
+                    '<div>',
+                        '<h5 class="font-semibold text-white mb-1">Sales & Marketing Analysis:</h5>',
+                        '<p>• `Date`, `Sales_Revenue` (number), `Marketing_Spend` (number), `Region` (text), `Product_Category` (text)</p>',
+                    '</div>',
+                    '<div>',
+                        '<h5 class="font-semibold text-white mb-1">Customer & Product Analysis:</h5>',
+                        '<p>• `Date`, `Customer_Satisfaction` (number), `Region` (text), `Product_Category` (text), `Sales_Revenue` (number)</p>',
+                    '</div>',
+                '</div>',
+            '</details>',
+
+            '<div id="vizDataQualityWarning" class="hidden error-message p-3 text-sm mt-4"></div>',
+            '<div id="vizDataPreview" class="hidden space-y-2 mt-4">',
+            '<label class="block text-sm font-medium text-gray-200">Data Preview (First 5 Rows)</label>',
+            '<div class="overflow-x-auto rounded-lg border border-white/20">',
+            '<table class="min-w-full text-left text-sm text-white/90" id="vizPreviewTable">',
+            '</table>',
+            '</div>',
+            '</div>',
+            '<button id="generateBtn" class="btn btn-primary w-full text-lg py-3 mt-4">',
+            '<span id="generateBtnText">📊 Generate Visualizations</span>',
+            '<span id="generateSpinner" class="loading-spinner hidden ml-2"></span>',
+            '</button>',
+            
+            // --- Feedback Link (V12) ---
+            '<div class="text-center mt-4">',
+            '<a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>',
+            '</div>',
+
+            '</div>', // This closes <div class="glass-container ...
+            '<div class="mt-12">',
+            '<h2 class="text-3xl font-bold mb-4 text-center">Data Visualizations</h2>',
+            '<div id="analysisResult" class="glass-container min-h-[500px] overflow-x-auto"></div>',
+            '<div id="analysisActions" class="text-center mt-4 space-x-2 hidden">',
+            '<button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>',
+            '<button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>',
+            '</div>',
+            '</div>',
+            '</div>',
+        ].join('');
+        
+        contentContainer.innerHTML = htmlContent;
+
+        // --- Helper functions for preview (V9) ---
+        const getHeadersFromText = (text) => {
+            const firstLine = text.split(/[\r\n]+/)[0];
+            let headers = firstLine.split(',').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+            if (headers.length <= 1) headers = firstLine.split(';').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+            if (headers.length <= 1) headers = firstLine.split('\t').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+            if (headers.length === 0) throw new Error("Could not parse headers.");
+            return headers;
+        };
+
+        const showDataPreview = (csvText) => {
+            const previewContainer = safeGetElement("vizDataPreview");
+            const previewTable = safeGetElement("vizPreviewTable");
+            const qualityWarning = safeGetElement("vizDataQualityWarning");
+            if (!previewContainer || !previewTable || !qualityWarning) return;
+
+            let warnings = [];
+
+            try {
+                const lines = csvText.split(/[\r\n]+/).filter(line => line.trim() !== '');
+                const rows = lines.slice(0, 6); 
+                
+                // --- Your Data Quality Logic ---
+                const dataRowCount = lines.length - 1;
+                if (dataRowCount < 30) {
+                    warnings.push(`Insufficient data for reliable visualization (only ${dataRowCount} rows).`);
+                } else if (dataRowCount < 50) {
+                    warnings.push(`Limited dataset (${dataRowCount} rows). Basic charts only.`);
+                }
+                // --- END Your Logic ---
+
+                if (rows.length < 2) {
+                    previewContainer.classList.add("hidden");
+                    if(dataRowCount === 0) {
+                        warnings.push("File appears to be empty or missing data rows.");
+                    }
+                } else {
+                    const headers = getHeadersFromText(rows[0]);
+                    let tableHTML = '<thead class="bg-white/10 text-xs uppercase"><tr>';
+                    headers.forEach(h => { tableHTML += `<th scope="col" class="px-4 py-2">${h}</th>`; });
+                    tableHTML += '</tr></thead><tbody>';
+
+                    let nullCount = 0;
+                    let messyDataCount = 0;
+
+                    rows.slice(1).forEach((line, rowIndex) => {
+                        let cells = line.split(',');
+                        if (cells.length !== headers.length) cells = line.split(';');
+                        if (cells.length !== headers.length) cells = line.split('\t');
+
+                        tableHTML += `<tr class="border-t border-white/10 ${rowIndex % 2 === 0 ? 'bg-white/5' : ''}">`;
+                        headers.forEach((_, cellIndex) => {
+                            const cellValue = cells[cellIndex]?.trim() ?? '';
+                            let displayValue = cellValue;
+                            
+                            if (cellValue === '' || cellValue.toLowerCase() === 'null' || cellValue.toLowerCase() === 'na') {
+                                nullCount++;
+                                displayValue = `<span class="text-yellow-400 italic" title="Null/Missing Value">NULL</span>`;
+                            } else if (/[$,%"]/.test(cellValue) && !isNaN(parseFloat(cellValue.replace(/[$,%"]/g, '')))) {
+                                messyDataCount++;
+                                displayValue = `<span class="text-orange-400" title="Messy Data (contains symbols)">${cellValue}</span>`;
+                            }
+
+                            tableHTML += `<td class="px-4 py-2 whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]" title="${cellValue}">${displayValue}</td>`;
+                        });
+                        tableHTML += '</tr>';
+                    });
+                    tableHTML += '</tbody>';
+                    previewTable.innerHTML = tableHTML;
+                    previewContainer.classList.remove("hidden");
+
+                    if (nullCount > 0) {
+                        warnings.push(`Spotted ${nullCount} missing values (NULL) in the preview.`);
+                    }
+                    if (messyDataCount > 0) {
+                        warnings.push(`Spotted ${messyDataCount} numerical values with symbols ($, %, etc.). Please clean the data.`);
+                    }
+                }
+
+                // Display warnings
+                if (warnings.length > 0) {
+                    qualityWarning.innerHTML = "<strong>⚠️ Data Quality Warnings:</strong><ul class='list-disc list-inside mt-1'>" + warnings.map(w => `<li>${w}</li>`).join('') + "</ul>";
+                    qualityWarning.classList.remove("hidden");
+                } else {
+                    qualityWarning.classList.add("hidden");
+                }
+
+            } catch (e) {
+                console.error("Error showing data preview:", e);
+                previewContainer.classList.add("hidden");
+                qualityWarning.textContent = `Error during preview: ${e.message}`;
+                qualityWarning.classList.remove("hidden");
+            }
+        };
+        // --- END HELPERS ---
+        
+        // --- Attaching Event Listeners ---
+        setTimeout(function() {
+            try {
+                // 1. Examples toggle
+                const examplesBtn = safeGetElement("vizConfigExamplesBtn");
+                const examplesDiv = safeGetElement("vizConfigExamples");
+                if (examplesBtn && examplesDiv) {
+                    examplesBtn.addEventListener("click", function() {
+                        const isHidden = examplesDiv.classList.toggle("hidden");
+                        examplesBtn.textContent = isHidden ? "View Examples" : "Hide Examples";
+                    });
+                }
+
+                // 2. File input handler
+                const fileInput = safeGetElement("vizFile");
+                const fileLabel = safeGetElement("vizFileLabel");
+                const fileError = safeGetElement("vizFileError");
+
+                if (fileInput && fileLabel && fileError) {
+                    fileInput.addEventListener("change", async function(e) {
+                        const fileNameSpan = fileLabel.querySelector(".file-name");
+                        const qualityWarning = safeGetElement("vizDataQualityWarning");
+                        const previewContainer = safeGetElement("vizDataPreview");
+
+                        fileError.textContent = "";
+                        qualityWarning.classList.add("hidden");
+                        previewContainer.classList.add("hidden");
+
+                        if (fileNameSpan) {
+                            if (e.target.files.length > 0) {
+                                const file = e.target.files[0];
+                                fileNameSpan.textContent = file.name;
+                                fileLabel.classList.add("has-file");
+                                
+                                try {
+                                    if (typeof Papa === 'undefined') {
+                                        throw new Error("CSV parsing library (PapaParse) not loaded.");
+                                    }
+                                    const text = await extractTextFromFile(file);
+                                    showDataPreview(text); 
+                                } catch (err) {
+                                    fileError.textContent = `Error reading file: ${err.message}`;
+                                    previewContainer.classList.add("hidden");
+                                    qualityWarning.classList.add("hidden");
+                                }
+                            } else {
+                                fileNameSpan.textContent = "Select .csv file...";
+                                fileLabel.classList.remove("has-file");
+                            }
+                        }
+                    });
+                }
+
+                // 3. Generate button handler
+                const generateBtn = safeGetElement("generateBtn");
+                if (generateBtn && typeof handleGenerate === 'function') {
+                    generateBtn.addEventListener("click", handleGenerate);
+                }
+
+                // 4. Save button listeners
+                if (typeof reattachActionListeners === 'function') {
+                    reattachActionListeners();
+                }
+
+                // 5. Handle analysis cache
+                const analysisResult = safeGetElement("analysisResult");
+                const analysisActions = safeGetElement("analysisActions");
+                
+                if (analysisResult && analysisActions) {
+                    if (typeof analysisCache !== 'undefined' && 
+                        typeof currentTemplateId !== 'undefined' && 
+                        analysisCache[currentTemplateId]) {
+                        
+                        analysisResult.innerHTML = analysisCache[currentTemplateId];
+                        analysisActions.classList.remove("hidden");
+                        
+                        if (typeof reattachTabListeners === 'function') {
+                            reattachTabListeners(analysisResult);
+                        }
+                        
+                        setTimeout(() => {
+                            const chartsInPanel = analysisResult.querySelectorAll('.plotly-chart');
+                            chartsInPanel.forEach(chartDiv => {
+                                if (chartDiv.layout && typeof Plotly !== 'undefined') {
+                                    try { Plotly.Plots.resize(chartDiv); } catch (resizeError) { console.error(`Error resizing cached chart ${chartDiv.id}:`, resizeError); }
+                                }
+                            });
+                        }, 150);
+
+                    } else {
+                        analysisResult.innerHTML = 
+                            '<div class="text-white/60 p-8 text-center">Your generated analysis will appear here.</div>';
+                        analysisActions.classList.add("hidden");
+                    }
+                }
+                
+                // --- THIS IS THE FIX ---
+                // 6. Attach listener for the feedback link
+                const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+                if (feedbackLink) {
+                    feedbackLink.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        
+                        // This just calls the navigateTo function.
+                        // It relies on your main `MapsTo` function to be
+                        // the *simplified one* (without memory logic)
+                        // and your `submitFeedbackPageBtn` listener
+                        // to be the *simplified one* (that just goes home).
+                        if (typeof navigateTo === 'function') {
+                            navigateTo('feedback');
+                        } else {
+                            console.error("navigateTo function is not defined.");
+                        }
+                    });
+                } else {
+                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                }
+                // --- END FIX ---
+
+
+            } catch (error) {
+                console.error("Error setting up visualization layout:", error);
+            }
+        }, 100);
     }
 
     async function handleVisualizationAnalysis_DA() {
-    const analysisResultContainer = $("analysisResult");
-    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div></div><div></div><div></div> </div><h3 class="text-xl font-semibold text-white mb-4">Generating Advanced Visualizations...</h3><p class="text-white/80 mb-2">Analyzing data, selecting optimal charts, and crafting insights...</p></div>`;
-    setLoading("generate", true);
+        const analysisResultContainer = $("analysisResult");
+        analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div></div><div></div><div></div> </div><h3 class="text-xl font-semibold text-white mb-4">Performing Visualization Analysis...</h3><p class="text-white/80 mb-2">Loading data, performing calculations, and generating insights...</p></div>`;
+        setLoading("generate", true);
+        $("analysisActions").classList.add("hidden");
 
-    // Define URL and Model
-    const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
-    // *** CHOOSE MODEL: qwen or llama ***
-    const MODEL_NAME = "llama3.1:latest"; // Use Qwen for potentially better numerical accuracy / chart logic
-    // const MODEL_NAME = "llama3.1:latest"; // Alternative option
+        const API_URL = "https://analysis.data2int.com/api/visualization"; // Use your new endpoint
+        const MODEL_NAME = "llama3.1:latest"; // Fallback model name for logging, not for direct call
 
-    try {
-        // 1. Gather Inputs
-        const vizRequest = $("vizRequest").value.trim();
-        const file = $("vizFile").files[0];
+        try {
+            // 1. Gather Inputs
+            const vizRequestText = $("vizRequest").value.trim();
+            const dataFile = $("vizFile").files[0];
 
-        if (!vizRequest || !file) {
-            throw new Error("❌ Please describe your visualization request and upload a CSV data file.");
-        }
-
-        const fileContent = await extractTextFromFile(file);
-
-        // Truncate if necessary
-        const MAX_CONTEXT_LENGTH = 15000; // Adjust as needed
-        let truncatedNote = "";
-        let dataSnippet = fileContent;
-        if (fileContent.length > MAX_CONTEXT_LENGTH) {
-            dataSnippet = fileContent.substring(0, MAX_CONTEXT_LENGTH);
-            truncatedNote = `(Note: Analysis based on the first ${MAX_CONTEXT_LENGTH} characters of data.)`;
-            console.warn(`Visualization analysis data truncated.`);
-        }
-
-        // 2. Construct Enhanced Prompt
-        const prompt = `
-            You are a senior business intelligence analyst using Plotly.js. Your task is to analyze a user's request and dataset snippet to create the most insightful and relevant visualizations. Accuracy, clarity, and actionable insights are paramount.
-
-            **ANALYSIS INPUTS:**
-            * **User Request:** "${vizRequest}"
-            * **Data Snippet:** ${truncatedNote}\n\`\`\`csv\n${dataSnippet}\n\`\`\`
-
-            **DETAILED TASKS:**
-            1.  **Chart Selection Rationale:** Briefly explain (1-2 sentences) your thought process for choosing the types of charts generated based on the user request and apparent data structure.
-            2.  **Generate Visualizations (3-4 charts):** Create distinct, complementary visualizations using appropriate chart types (e.g., bar, line, scatter, pie, box, heatmap) that directly address the user's request using ONLY the provided data snippet. For each visualization:
-                * **\`title\`:** A short, descriptive title.
-                * **\`plotly_trace\`:** A *complete* Plotly.js trace object (or array of traces if needed, e.g., for grouped bars). Ensure data types are correct (numbers for y-values etc.).
-                * **\`plotly_layout\`:** A *complete* Plotly.js layout object, including axis labels and a title.
-                * **\`interpretation\`:** A detailed, multi-sentence interpretation explaining *what the chart shows* based on visual patterns (trends, distributions, comparisons, outliers) evident in the plotted data.
-                * **\`actionable_insight\`:** A specific business action or decision that should be considered based *only* on the interpretation of *this specific chart* and the original user request context.
-
-            3.  **Self-Correction:** Before outputting JSON, review: Does the chart selection rationale make sense? Are trace/layout objects complete and valid Plotly JSON? Do interpretations accurately reflect the chart's visual patterns in the data snippet? Are insights actionable and directly linked to the interpretation? Fix errors rigorously.
-
-            **ABSOLUTE CONSTRAINTS:**
-            - **DATA GROUNDING:** All chart data, interpretations, and insights MUST be derived *solely* from the provided data snippet and user request. No external data or assumptions.
-            - **PLOTLY VALIDITY:** Ensure \`plotly_trace\` and \`plotly_layout\` are valid JSON structures usable by Plotly.js. Use correct data types.
-            - **ACTIONABILITY:** Insights must suggest concrete next steps or decisions.
-            - **JSON FORMAT:** Adhere EXACTLY. Include all specified keys.
-
-            **RETURN FORMAT:**
-            Provide ONLY a valid JSON object. **CRITICAL: Include ALL keys: "chart_selection_rationale", AND "visualizations".** The "visualizations" array MUST contain **3-4 objects**, each with "title", "plotly_trace", "plotly_layout", "interpretation", and "actionable_insight" keys.
-            {
-              "chart_selection_rationale": "Brief explanation here...",
-              "visualizations": [
-                { // Chart 1
-                  "title": "Chart Title 1",
-                  "plotly_trace": { /* ... Complete Trace Object(s) ... */ },
-                  "plotly_layout": { /* ... Complete Layout Object ... */ },
-                  "interpretation": "Detailed interpretation of chart 1 based on data...",
-                  "actionable_insight": "Specific action based on interpretation of chart 1..."
-                },
-                { // Chart 2
-                  "title": "Chart Title 2",
-                  "plotly_trace": { /* ... */ },
-                  "plotly_layout": { /* ... */ },
-                  "interpretation": "Detailed interpretation of chart 2...",
-                  "actionable_insight": "Specific action based on interpretation of chart 2..."
-                } // ... 3-4 charts total ...
-              ]
+            if (!dataFile) {
+                throw new Error("❌ Please upload a CSV data file.");
             }
+
+            // 2. Prepare FormData
+            const formData = new FormData();
+            formData.append("data_file", dataFile, dataFile.name);
+
+            // 3. Cleverly handle the context text:
+            // Convert the text from the <textarea> into a Blob (an in-memory file)
+            // so the backend can receive it as the 'context_file'.
+            if (vizRequestText) {
+                const contextBlob = new Blob([vizRequestText], { type: 'text/plain' });
+                formData.append("context_file", contextBlob, "visualization_context.txt");
+                console.log("Attaching user request text as context_file.");
+            }
+            
+            // 4. We are NOT sending chart_configs, so the backend will auto-generate
+            // formData.append("chart_configs", JSON.stringify([...])); 
+
+            // 5. Send Request to Python Backend
+            console.log(`Sending Visualization request to Python backend at ${API_URL}...`);
+            const response = await fetch(API_URL, {
+                method: "POST",
+                body: formData,
+                // Add Authorization headers if your API requires them
+            });
+
+            if (!response.ok) {
+                let errorDetail = `API Error: ${response.status}`;
+                try {
+                    const errorJson = await response.json();
+                    errorDetail = errorJson.detail || `API Error: ${response.status} - ${response.statusText}`;
+                } catch (e) {
+                    errorDetail = `API Error: ${response.status} - ${response.statusText}`;
+                }
+                throw new Error(errorDetail);
+            }
+
+            const parsedData = await response.json();
+            
+            // Check if the backend returned its *own* error
+            if (parsedData.metadata && parsedData.metadata.error) {
+                throw new Error(`Backend Analysis Error: ${parsedData.metadata.error_message}`);
+            }
+
+            // 6. Render Results
+            // We now call the new renderer function that can handle the backend's JSON structure
+            renderVisualizationPage_DA(analysisResultContainer, parsedData);
+
+        } catch (error) {
+            console.error(`Error in handleVisualizationAnalysis_DA (Backend) using ${MODEL_NAME}:`, error);
+            analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
+            setLoading("generate", false);
+        }
+        // 'finally' block is not needed here; setLoading(false) is handled
+        // by the renderer on success and the catch block on error.
+    }
+
+    /**
+     * --- UPDATED (V15) ---
+     * Renders the full Visualization Analysis page.
+     * - ADDS a "Warnings & Diagnostics" tab.
+     * - MOVES the data quality and correlation warnings from the
+     * "Summary" tab to the new "Warnings" tab.
+     * - Calls a new helper, renderVizWarningsPanel, to populate it.
+     */
+    function renderVisualizationPage_DA(container, data) {
+        container.innerHTML = ""; // Clear loading state
+
+        const { dataset_info, visualizations, suggestions, insights, metadata } = data;
+
+        // Basic validation
+        if (!dataset_info || !visualizations || !suggestions || !insights) {
+            console.error("Incomplete data passed to renderVisualizationPage_DA:", data);
+            container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Incomplete or invalid analysis data received. Cannot render Visualization results.</div>`;
+            $("analysisActions").classList.add("hidden");
+            setLoading("generate", false);
+            return;
+        }
+
+        // --- 1. Define Chart Theme (Same as before) ---
+        const colorPrimary = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#8E2DE2';
+        const colorAccent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#C33764';
+        const colorGrad2 = getComputedStyle(document.documentElement).getPropertyValue('--grad-2').trim() || '#1D2671';
+        const colorPalette = [colorPrimary, colorAccent, '#3B82F6', '#10B981', '#F59E0B', '#4A00E0', '#EF4444', colorGrad2];
+        const baseLayout = {
+            paper_bgcolor: "rgba(0,0,0,0)",
+            plot_bgcolor: "rgba(0,0,0,0.1)",
+            font: { color: "white", size: 14, family: "'Inter', sans-serif" },
+            title: { 
+                font: { size: 20, color: 'white' },
+                pad: { t: 5, b: 20 },
+                x: 0.05, 
+                xanchor: 'left'
+            },
+            xaxis: {
+                title: { text: '', font: { size: 16, color: 'rgba(255,255,255,0.7)' } },
+                gridcolor: "rgba(255,255,255,0.1)",
+                automargin: true,
+                tickangle: -30,
+                zeroline: false,
+                tickfont: { size: 13, color: 'rgba(255,255,255,0.8)' }
+            },
+            yaxis: {
+                title: { text: '', font: { size: 16, color: 'rgba(255,255,255,0.7)' } },
+                gridcolor: "rgba(255,255,255,0.1)",
+                automargin: true,
+                zeroline: false,
+                tickfont: { size: 13, color: 'rgba(255,255,255,0.8)' }
+            },
+            margin: { t: 60, b: 100, l: 80, r: 40 }, 
+            showlegend: true,
+            legend: {
+                font: { size: 12, color: 'white' },
+                orientation: 'h',
+                y: -0.3, 
+                yanchor: 'top',
+                bgcolor: 'rgba(0,0,0,0.2)',
+                bordercolor: 'rgba(255,255,255,0.2)',
+                borderwidth: 1,
+                padding: 4
+            },
+            hoverlabel: {
+                bgcolor: '#111827',
+                bordercolor: 'rgba(255,255,255,0.3)',
+                font: { size: 14, color: 'white' }
+            }
+        };
+
+        // --- 2. Create Tab Navigation (ADDED "Warnings" tab) ---
+        const tabNav = document.createElement("div");
+        tabNav.className = "flex flex-wrap border-b border-white/20 -mx-6 px-6";
+        tabNav.innerHTML = `
+            <button class="analysis-tab-btn active" data-tab="summary">📋 Summary & Insights</button>
+            <button class="analysis-tab-btn" data-tab="visuals">📊 Visualizations</button>
+            <button class="analysis-tab-btn" data-tab="suggestions">🧠 Suggestions</button>
+            <button class="analysis-tab-btn" data-tab="warnings">⚠️ Warnings & Diagnostics</button>
+            <button class="analysis-tab-btn" data-tab="learn">🎓 Learn Viz</button>
+        `;
+        container.appendChild(tabNav);
+
+        // --- 3. Create Tab Panels (ADDED "warningsPanel") ---
+        const tabContent = document.createElement("div");
+        container.appendChild(tabContent);
+        tabContent.innerHTML = `
+            <div id="summaryPanel" class="analysis-tab-panel active"></div>
+            <div id="visualsPanel" class="analysis-tab-panel"></div>
+            <div id="suggestionsPanel" class="analysis-tab-panel"></div>
+            <div id="warningsPanel" class="analysis-tab-panel"></div>
+            <div id="learnPanel" class="analysis-tab-panel"></div>
         `;
 
-        // 3. Send Request to Ollama
-        console.log(`Sending ENHANCED Visualization prompt to ${MODEL_NAME}...`);
-        const response = await fetch(OLLAMA_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ model: MODEL_NAME, prompt: prompt, stream: false, format: "json", options: { num_ctx: 32768 } })
-        });
+        // --- 4. Populate Summary & Insights Panel (CLEANED) ---
+        const summaryPanel = $("summaryPanel");
+        let summaryHtml = `<div class="p-4 space-y-8">
+            <h3 class="text-2xl font-bold mb-6 text-center">Dataset Overview</h3>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto mb-8">
+                <div class="summary-stat-card"><div class="stat-value">${dataset_info.rows}</div><div class="stat-label">Rows</div></div>
+                <div class="summary-stat-card"><div class="stat-value">${dataset_info.columns}</div><div class="stat-label">Columns</div></div>
+                <div class="summary-stat-card"><div class="stat-value">${Object.values(dataset_info.column_info).filter(c => c.data_type === 'numerical').length}</div><div class="stat-label">Numerical Cols</div></div>
+                <div class="summary-stat-card"><div class="stat-value">${Object.values(dataset_info.column_info).filter(c => c.data_type === 'categorical').length}</div><div class="stat-label">Categorical Cols</div></div>
+            </div>
+            
+            <h3 class="text-2xl font-bold mb-4">💡 Actionable Insights (from AI)</h3>
 
-        if (!response.ok) {
-            let errorBody = `API error ${response.status}`;
-            try { errorBody += `: ${await response.text()}`; } catch (e) {}
-            throw new Error(errorBody);
-        }
-
-        const data = await response.json();
-        let parsedData;
-        try {
-            parsedData = JSON.parse(data.response);
-             // *** Robust Validation ***
-             console.log('--- RAW AI JSON RESPONSE (Parsed - Enhanced Visualization) ---');
-             console.log(JSON.stringify(parsedData, null, 2));
-             console.log('------------------------------------');
-
-             if (!parsedData ||
-                 !parsedData.chart_selection_rationale || typeof parsedData.chart_selection_rationale !== 'string' ||
-                 !parsedData.visualizations || !Array.isArray(parsedData.visualizations) || parsedData.visualizations.length < 2 || // Expect at least 2 charts
-                 (parsedData.visualizations.length > 0 && (
-                     typeof parsedData.visualizations[0] !== 'object' ||
-                     !parsedData.visualizations[0].hasOwnProperty('title') ||
-                     !parsedData.visualizations[0].hasOwnProperty('plotly_trace') || typeof parsedData.visualizations[0].plotly_trace !== 'object' || // Basic check
-                     !parsedData.visualizations[0].hasOwnProperty('plotly_layout') || typeof parsedData.visualizations[0].plotly_layout !== 'object' || // Basic check
-                     !parsedData.visualizations[0].hasOwnProperty('interpretation') ||
-                     !parsedData.visualizations[0].hasOwnProperty('actionable_insight')
-                 ))
-                )
-             {
-                  console.error("Validation Failed (Visualization): Required fields missing or invalid structure/count.", parsedData);
-                  throw new Error(`AI response structure is incorrect. Missing/invalid fields (chart_selection_rationale, visualizations array [>=2] with all sub-keys). Check console.`);
-             }
-             console.log(`Successfully parsed ENHANCED Visualization JSON using ${MODEL_NAME}. Rationale provided. Found ${parsedData.visualizations.length} visualizations.`);
-
-        } catch (e) {
-            console.error(`Failed to parse/validate ENHANCED Visualization JSON using ${MODEL_NAME}:`, data?.response, e);
-            throw new Error(`Invalid JSON received or required fields missing in AI response: ${e.message}. Check console logs.`);
-        }
-
-        // 4. Render Results
-        renderVisualizationPage_DA(analysisResultContainer, parsedData);
-
-    } catch (error) {
-        console.error(`Error in handleVisualizationAnalysis_DA (Enhanced) using ${MODEL_NAME}:`, error);
-        analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
-        setLoading("generate", false);
-    } finally {
-        // Ensure loading stops
-         if ($("generateSpinner") && !$("generateSpinner").classList.contains("hidden")) {
-            setLoading("generate", false);
-         }
-    }
-}
+            <p class="text-sm text-white/70 italic mb-6">For important caveats about this analysis, please see the <strong>"⚠️ Warnings & Diagnostics"</strong> tab.</p>
 
 
-function renderVisualizationPage_DA(container, data) {
-    container.innerHTML = ""; // Clear loading state
-
-     // Basic validation
-     if (!data || !data.chart_selection_rationale || !data.visualizations || !Array.isArray(data.visualizations) || data.visualizations.length === 0) {
-         console.error("Incomplete data passed to renderVisualizationPage_DA:", data);
-         container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render visualizations.</div>`;
-         $("analysisActions").classList.add("hidden");
-         return;
-     }
-
-    const { chart_selection_rationale, visualizations } = data;
-
-
-    // --- Create Tab Navigation ---
-    const tabNav = document.createElement("div");
-    tabNav.className = "flex flex-wrap border-b border-white/20 -mx-6 px-6";
-    // Add "Learn Visualization" tab
-    let tabButtonsHtml = `<button class="analysis-tab-btn active" data-tab="rationale">🧠 Rationale</button>`;
-    visualizations.forEach((viz, index) => {
-        // Use a generic name if title is missing, but log a warning
-        let buttonTitle = viz.title || `Chart ${index + 1}`;
-        if (!viz.title) console.warn(`Visualization ${index} is missing a title.`);
-        // Truncate long titles for buttons
-        if (buttonTitle.length > 25) buttonTitle = buttonTitle.substring(0, 22) + "...";
-        tabButtonsHtml += `<button class="analysis-tab-btn" data-tab="viz-${index}">📊 ${buttonTitle}</button>`;
-    });
-    tabButtonsHtml += `<button class="analysis-tab-btn" data-tab="learn">🎓 Learn Viz</button>`;
-    tabNav.innerHTML = tabButtonsHtml;
-    container.appendChild(tabNav);
-
-    // --- Create Tab Panels ---
-    const tabContent = document.createElement("div");
-    container.appendChild(tabContent);
-    let tabPanelsHtml = `<div id="rationalePanel" class="analysis-tab-panel active"></div>`;
-    visualizations.forEach((viz, index) => {
-        tabPanelsHtml += `<div id="viz-${index}Panel" class="analysis-tab-panel"></div>`;
-    });
-    // Add "Learn Visualization" panel
-    tabPanelsHtml += `<div id="learnPanel" class="analysis-tab-panel"></div>`;
-    tabContent.innerHTML = tabPanelsHtml;
-
-    // --- 1. Populate Rationale Panel ---
-    const rationalePanel = $("rationalePanel");
-    rationalePanel.innerHTML = `
-        <div class="p-6">
-            <h3 class="text-2xl font-bold mb-4 text-center">Chart Selection Rationale</h3>
-            <blockquote class="p-4 italic border-l-4 border-indigo-400 bg-black/20 text-white/90 max-w-3xl mx-auto">
-                ${chart_selection_rationale}
-            </blockquote>
-            <p class="text-sm text-center text-white/60 mt-4">The following tabs contain the visualizations generated based on this reasoning.</p>
-        </div>
-    `;
-
-    // --- 2. Populate Individual Visualization Panels ---
-    visualizations.forEach((viz, index) => {
-        const panel = $(`viz-${index}Panel`);
-        if (!panel) {
-            console.error(`Could not find panel for viz-${index}`);
-            return; // Skip if panel doesn't exist
-        }
-
-        let panelHtml = `<div class="p-4">
-                    <h3 class="text-2xl font-bold mb-4 text-center">${viz.title || `Visualization ${index + 1}`}</h3>
-                    <div id="viz-chart-${index}" class="w-full min-h-[500px] plotly-chart mb-6 bg-black/10 rounded-lg flex items-center justify-center"><span class="text-white/50 italic">Rendering chart...</span></div>
-                    <div class="viz-interpretation-box">
-                        <h4 class="text-xl font-bold mb-2">Interpretation</h4>
-                        <p class="text-white/80 mb-4 text-sm">${viz.interpretation ?? "No interpretation provided."}</p>
-                        <h4 class="text-xl font-bold mb-2 text-indigo-300">💡 Actionable Insight</h4>
-                        <p class="text-white/90 text-sm">${viz.actionable_insight ?? "No actionable insight provided."}</p>
+            <div class="space-y-6">`;
+        if (insights.length > 0 && insights[0].observation !== "Error") {
+            insights.forEach((insight, index) => {
+                summaryHtml += `<div class="insight-card border-l-4 border-indigo-400">
+                    <p class="text-xs font-semibold text-indigo-300 mb-1">INSIGHT ${index + 1}</p>
+                    <p class="mb-2"><strong>Observation:</strong> ${insight.observation}</p>
+                    <p class="mb-2 text-sm text-white/80"><strong>Interpretation:</strong> ${insight.interpretation}</p>
+                    <div class="p-3 bg-black/20 rounded mt-3">
+                        <p class="text-sm"><strong>Recommendation:</strong> ${insight.recommendation}</p>
                     </div>
                 </div>`;
-        panel.innerHTML = panelHtml;
-
-        const chartContainer = $(`viz-chart-${index}`);
-        if (!chartContainer) {
-             console.error(`Chart container viz-chart-${index} not found after setting innerHTML.`);
-             return; // Skip if container isn't found
+            });
+        } else {
+            summaryHtml += `<p class="text-center text-white/70 italic">No specific AI insights were generated based on the context.</p>`;
         }
+        summaryHtml += `</div></div>`;
+        summaryPanel.innerHTML = summaryHtml;
 
-        // --- Render Plotly Chart ---
-        try {
-            // Basic validation of trace and layout
-            if (!viz.plotly_trace || typeof viz.plotly_trace !== 'object' || !viz.plotly_layout || typeof viz.plotly_layout !== 'object') {
-                throw new Error("Missing or invalid Plotly trace/layout object.");
-            }
-
-            // Ensure trace is an array
-            const traces = Array.isArray(viz.plotly_trace) ? viz.plotly_trace : [viz.plotly_trace];
-
-            // Define standard layout properties for consistency
-            const layoutDefaults = {
-                paper_bgcolor: "rgba(0,0,0,0)",
-                plot_bgcolor: "rgba(0,0,0,0)",
-                font: { color: "white" },
-                xaxis: { gridcolor: "rgba(255,255,255,0.3)", zeroline: false, automargin: true },
-                yaxis: { gridcolor: "rgba(255,255,255,0.3)", zeroline: false, automargin: true },
-                legend: { font: { color: "white" } },
-                margin: { t: 50, b: 50, l: 60, r: 30 } // Adjusted margins
-            };
-
-            // Merge AI layout with defaults, AI takes precedence
-            const finalLayout = { ...layoutDefaults, ...viz.plotly_layout };
-            // Ensure titles are properly handled if provided by AI
-            finalLayout.title = viz.plotly_layout.title || viz.title || `Chart ${index + 1}`; // Use AI title if available
-
-            Plotly.newPlot(chartContainer, traces, finalLayout, { responsive: true });
-
-        } catch (chartError) {
-            console.error(`Error rendering chart ${index} (${viz.title}):`, chartError, "Trace:", viz.plotly_trace, "Layout:", viz.plotly_layout);
-            chartContainer.innerHTML = `<div class="p-4 text-center text-red-400">Could not render chart. Error: ${chartError.message}. Check console for details.</div>`;
+        // --- 5. Populate Visualizations Panel (HTML Structure) (Unchanged) ---
+        const visualsPanel = $("visualsPanel");
+        let visualsHtml = `<div class="p-4 space-y-8">
+                            <h3 class="text-2xl font-bold mb-4 text-center">Generated Visualizations</h3>`;
+        if (visualizations.length > 0) {
+            visualsHtml += `<div class="flex flex-wrap justify-center gap-8">`;
+            
+            visualizations.forEach((viz, index) => {
+                // ... (code for rendering chart/table placeholders is unchanged) ...
+                if (viz.error) {
+                    visualsHtml += `<div class="w-full lg:w-[48%] bg-black/10 rounded-lg p-2 shadow-lg"> 
+                        <div class="p-4 text-center text-red-400">
+                            <h4 class="font-bold mb-2">${viz.title || 'Chart Error'}</h4>
+                            Could not render chart: ${viz.error}
+                        </div>
+                    </div>`;
+                } else if (viz.chart_type === "frequency_table") {
+                    visualsHtml += `<div class="w-full lg:w-[48%] bg-black/10 rounded-lg p-4 shadow-lg">
+                                      <h4 class="text-lg font-bold mb-3 text-center">${viz.title}</h4>
+                                      <div class="overflow-y-auto max-h-[480px]">
+                                        <table class="coeff-table styled-table text-sm w-full">
+                                          <thead><tr><th>Value</th><th>Freq.</th><th>%</th><th>Cumul. %</th></tr></thead>
+                                          <tbody>`;
+                    (viz.data.table || []).forEach(row => {
+                        visualsHtml += `<tr>
+                                          <td>${row.value}</td>
+                                          <td>${row.frequency}</td>
+                                          <td>${row.percentage.toFixed(1)}%</td>
+                                          <td>${row.cumulative_percentage.toFixed(1)}%</td>
+                                        </tr>`;
+                    });
+                    visualsHtml += `</tbody></table></div>
+                                    <p class="text-xs text-center text-white/70 italic mt-2 p-1">${viz.suggestion_reason || ''}</p>
+                                  </div>`;
+                } else {
+                    visualsHtml += `<div class="w-full lg:w-[48%] bg-black/10 rounded-lg p-2 shadow-lg"> 
+                                    <div id="viz-chart-${index}" class="w-full h-[500px] plotly-chart"></div>
+                                    <p class="text-xs text-center text-white/70 italic mt-2 p-1">${viz.suggestion_reason || ''}</p>
+                                  </div>`;
+                }
+            });
+            visualsHtml += `</div>`;
+        } else {
+            visualsHtml += `<p class="text-center text-white/70">No visualizations were generated.</p>`;
         }
-    });
+        visualsHtml += `</div>`;
+        visualsPanel.innerHTML = visualsHtml;
 
+        // --- 6. Populate Suggestions Panel (Unchanged) ---
+        const suggestionsPanel = $("suggestionsPanel");
+        let suggestionsHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">🧠 Further Visualization Suggestions</h3>`;
+        suggestionsHtml += `
+            <blockquote class="p-3 italic border-l-4 border-blue-400 bg-blue-900/20 text-blue-200 text-sm mb-6">
+                <strong>Note:</strong> These are general suggestions based on your data's column types. 
+                Cross-reference these ideas with the specific findings in the <strong>"Summary & Insights"</strong> tab for more targeted analysis.
+            </blockquote>
+        `;
+        if (suggestions && suggestions.length > 0) {
+            suggestionsHtml += `<div class="overflow-x-auto">
+                                <table class="coeff-table styled-table text-sm">
+                                 <thead><tr><th>Suggested Chart</th><th>Columns Involved</th><th>Reason</th></tr></thead>
+                                <tbody>`;
+            suggestions.forEach((s) => {
+                suggestionsHtml += `<tr>
+                    <td class="font-semibold">${s.title}</td>
+                    <td class="text-white/80">${s.columns.join(', ')}</td>
+                    <td class="text-white/70 italic">${s.reason}</td>
+                </tr>`;
+            });
+            suggestionsHtml += `</tbody></table></div>`;
+        } else {
+            suggestionsHtml += `<p class="text-center text-white/70 italic">No further suggestions could be generated.</p>`;
+        }
+        suggestionsHtml += `</div>`;
+        suggestionsPanel.innerHTML = suggestionsHtml;
 
-    // --- 3. Populate Learn Visualization Tab ---
-    const learnPanel = $("learnPanel");
-    learnPanel.innerHTML = `
-    <div class="p-6 space-y-6 text-white/90">
-        <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding Data Visualization</h3>
-         [Image of various chart types]
-        <div class="bg-black/20 p-4 rounded-lg">
-            <h4 class="text-lg font-bold mb-2 text-indigo-300">Why Visualize Data?</h4>
-            <p class="text-sm text-white/80">Our brains process visual information much faster than text or tables. Good visualizations help us:</p>
-            <ul class="list-disc list-inside space-y-1 text-sm text-white/80 mt-2">
-                <li>Identify trends and patterns quickly.</li>
-                <li>Spot outliers and anomalies easily.</li>
-                <li>Understand complex relationships between variables.</li>
-                <li>Communicate insights effectively to others.</li>
-                <li>Make more informed, data-driven decisions.</li>
-            </ul>
-        </div>
+        // --- 7. NEW: Populate Warnings Panel ---
+        const warningsPanel = $("warningsPanel");
+        renderVizWarningsPanel(warningsPanel, dataset_info); // Call new helper function
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-white/5 p-4 rounded-lg border border-white/10">
-                <h4 class="text-lg font-bold mb-2">Common Chart Types & Uses:</h4>
-                <ul class="list-disc list-inside space-y-1 text-sm">
-                    <li><strong>Line Chart:</strong> Show trends over time.</li>
-                    <li><strong>Bar Chart:</strong> Compare quantities across categories.</li>
-                    <li><strong>Pie/Donut Chart:</strong> Show parts of a whole (use sparingly, < 6 categories).</li>
-                    <li><strong>Scatter Plot:</strong> Show relationship between two numerical variables.</li>
-                    <li><strong>Histogram:</strong> Show distribution of a single numerical variable.</li>
-                    <li><strong>Box Plot:</strong> Show distribution summary (median, quartiles, outliers).</li>
-                    <li><strong>Heatmap:</strong> Show intensity/correlation in a matrix.</li>
-                </ul>
-            </div>
-            <div class="bg-white/5 p-4 rounded-lg border border-white/10">
-                <h4 class="text-lg font-bold mb-2">Choosing the Right Chart:</h4>
-                 <p class="text-sm mb-2">Think about what you want to show:</p>
-                 <ul class="list-disc list-inside space-y-1 text-sm">
-                    <li><strong>Comparison:</strong> Bar chart, Grouped bar chart.</li>
-                    <li><strong>Trend/Time:</strong> Line chart, Area chart.</li>
-                    <li><strong>Relationship:</strong> Scatter plot, Bubble chart.</li>
-                    <li><strong>Distribution:</strong> Histogram, Box plot, Density plot.</li>
-                    <li><strong>Composition:</strong> Pie chart, Stacked bar chart, Treemap.</li>
-                 </ul>
-                 <p class="text-xs text-white/60 mt-2 italic">This tool attempts to select appropriate charts based on your request and data.</p>
-            </div>
-        </div>
+        // --- 8. Populate Learn Viz Panel (Unchanged) ---
+        const learnPanel = $("learnPanel");
+        renderLearnVizPanel(learnPanel, dataset_info); 
 
-        <details class="styled-details text-sm">
-            <summary class="font-semibold">Tips for Effective Visualization</summary>
-            <div class="bg-black/20 p-4 rounded-b-lg space-y-3">
-                <p><strong>Keep it Simple:</strong> Avoid clutter ("chart junk"). Focus on clarity.</p>
-                <p><strong>Use Color Purposefully:</strong> Highlight key data, ensure contrast, consider color blindness.</p>
-                <p><strong>Label Clearly:</strong> Use informative titles, axis labels, and legends. Add units where needed.</p>
-                <p><strong>Provide Context:</strong> Explain what the chart shows and why it's important (like the 'Interpretation' and 'Insight' sections here).</p>
-                <p><strong>Choose Appropriate Scale:</strong> Start axes at zero for bar charts showing magnitude. Use log scales if needed for wide ranges.</p>
-                <p><strong>Tell a Story:</strong> Arrange multiple charts logically to guide the viewer through your analysis.</p>
-            </div>
-        </details>
-    </div>
-    `;
+        // --- 9. Tab Switching & Chart Rendering Logic (Unchanged) ---
+        analysisCache[currentTemplateId] = container.innerHTML;
 
-    // --- Final Touches ---
-    analysisCache[currentTemplateId] = container.innerHTML; // Cache the result HTML
-    $("analysisActions").classList.remove("hidden"); // Show save buttons
-
-    // Re-attach tab switching logic, including chart resizing
-    tabNav.addEventListener("click", (e) => {
-        if (e.target.tagName === "BUTTON") {
-            // Deactivate all
-            tabNav.querySelectorAll(".analysis-tab-btn").forEach(btn => btn.classList.remove("active"));
-            tabContent.querySelectorAll(".analysis-tab-panel").forEach(pnl => pnl.classList.remove("active"));
-
-            // Activate clicked
-            e.target.classList.add("active");
-            const targetPanelId = e.target.dataset.tab + "Panel";
-            const targetPanel = $(targetPanelId);
-            if (targetPanel) {
-                targetPanel.classList.add("active");
-
-                // Resize charts within the newly active panel
-                const chartsInPanel = targetPanel.querySelectorAll('.plotly-chart');
-                chartsInPanel.forEach(chartDiv => {
-                    // Check if it's a Plotly chart that has been rendered
-                    if (chartDiv.layout && typeof Plotly !== 'undefined') {
-                        try {
-                            Plotly.Plots.resize(chartDiv);
-                             console.log(`Resized chart ${chartDiv.id} on tab switch.`);
-                        } catch (resizeError) {
-                            console.error(`Error resizing chart ${chartDiv.id} on tab switch:`, resizeError);
+        tabNav.addEventListener("click", (e) => {
+            if (e.target.tagName === "BUTTON") {
+                tabNav.querySelectorAll(".analysis-tab-btn").forEach((btn) => btn.classList.remove("active"));
+                tabContent.querySelectorAll(".analysis-tab-panel").forEach((pnl) => pnl.classList.remove("active"));
+                e.target.classList.add("active");
+                const targetPanelId = e.target.dataset.tab + "Panel";
+                const targetPanel = $(targetPanelId);
+                if (targetPanel) {
+                    targetPanel.classList.add("active");
+                    const chartsInPanel = targetPanel.querySelectorAll('.plotly-chart');
+                    chartsInPanel.forEach(chartDiv => {
+                        if (chartDiv.layout && typeof Plotly !== 'undefined') {
+                            try { Plotly.Plots.resize(chartDiv); } catch (resizeError) { console.error(`Error resizing chart ${chartDiv.id}:`, resizeError); }
                         }
-                    }
-                });
-            } else {
-                 console.warn("Target panel not found:", targetPanelId);
+                    });
+                }
             }
+        });
+        
+        // ... (Chart rendering setTimeout block remains exactly the same) ...
+        setTimeout(() => {
+             const visualsTabPanel = $("visualsPanel");
+             if (visualsTabPanel) {
+                 visualsTabPanel.querySelectorAll(".plotly-chart").forEach(chartDiv => {
+                     if (!chartDiv.layout && typeof Plotly !== 'undefined') {
+                         const index = parseInt(chartDiv.id.split('-')[2]);
+                         const viz = visualizations[index];
+                         if (viz && !viz.error && viz.chart_type !== 'frequency_table') {
+                             try {
+                                 let traces = [];
+                                 let layout = JSON.parse(JSON.stringify(baseLayout)); 
+                                 layout.title.text = viz.title;
+                                 layout.xaxis.title.text = viz.x_label;
+                                 layout.yaxis.title.text = viz.y_label;
+
+                                // (all the if/else if blocks for chart types...)
+                                if (viz.chart_type === "histogram" && viz.data.values) {
+                                    traces = [{ x: viz.data.values, type: "histogram", marker: { color: colorPrimary, line:{color:'rgba(255,255,255,0.3)', width:0.5} } }];
+                                    layout.bargap = 0.05;
+                                    layout.showlegend = false;
+                                } else if (viz.chart_type === "bar" && viz.data.categories) {
+                                    traces = [{ 
+                                        x: viz.data.categories, 
+                                        y: viz.data.values, 
+                                        type: "bar", 
+                                        marker: { 
+                                            color: viz.data.categories.map((_, i) => colorPalette[i % colorPalette.length])
+                                        } 
+                                    }];
+                                    layout.showlegend = false;
+                                } else if (viz.chart_type === "pie" && viz.data.labels) {
+                                    traces = [{ 
+                                        labels: viz.data.labels, 
+                                        values: viz.data.values, 
+                                        type: "pie", 
+                                        hole: 0.4, 
+                                        textinfo: "percent+label",
+                                        marker: { colors: colorPalette }
+                                    }];
+                                    layout.showlegend = true;
+                                    layout.margin = { t: 60, b: 80, l: 50, r: 50 };
+                                    layout.legend.y = -0.3;
+                                } else if (viz.chart_type === "scatter" && viz.data.x) {
+                                    const correlation = viz.data.correlation || 0;
+                                    const rSquared = (correlation ** 2).toFixed(3);
+                                    traces = [{ x: viz.data.x, y: viz.data.y, mode: 'markers', type: 'scatter', marker: { color: colorPrimary, opacity: 0.7, size: 8 } }];
+                                    
+                                    layout.title.text = `${viz.title} <br><span style="font-size: 16px; color: ${colorAccent};">Corr: ${correlation.toFixed(3)} | R²: ${rSquared}</span>`;
+                                    layout.showlegend = false;
+                                } else if (viz.chart_type === "line" && viz.data.x) {
+                                    traces = [{ 
+                                        x: viz.data.x, 
+                                        y: viz.data.y, 
+                                        mode: 'lines+markers',
+                                        type: 'scatter', 
+                                        line: { color: colorAccent, width: 3 },
+                                        marker: { size: 6, color: colorAccent }
+                                    }];
+                                    layout.showlegend = false;
+                                } else if (viz.chart_type === "box" && viz.data) {
+                                    traces = [{ 
+                                        y: viz.data.values, 
+                                        type: 'box', 
+                                        name: viz.x_label, 
+                                        boxpoints: 'Outliers',
+                                        marker: { color: colorPrimary },
+                                        boxmean: 'sd'
+                                    }];
+                                    layout.yaxis.zeroline = false;
+                                    layout.showlegend = false;
+                                } else if (viz.chart_type === "box_grouped" && viz.data) {
+                                    let i = 0;
+                                    for (const groupName in viz.data) {
+                                        traces.push({ 
+                                            y: viz.data[groupName].values, 
+                                            type: 'box', 
+                                            name: groupName, 
+                                            boxpoints: 'Outliers',
+                                            boxmean: 'sd',
+                                            marker: { color: colorPalette[i % colorPalette.length] }
+                                        });
+                                        i++;
+                                    }
+                                    layout.yaxis.zeroline = false;
+                                    layout.showlegend = true;
+                                    layout.boxmode = 'group';
+                                } else if (viz.chart_type === "area" && viz.data.x && viz.data.series) {
+                                    let i = 0;
+                                    for (const seriesName in viz.data.series) {
+                                        traces.push({ 
+                                            x: viz.data.x, 
+                                            y: viz.data.series[seriesName], 
+                                            type: 'scatter', 
+                                            mode: 'lines', 
+                                            name: seriesName, 
+                                            fill: 'tozeroy',
+                                            line: { color: colorPalette[i % colorPalette.length] }
+                                        });
+                                        i++;
+                                    }
+                                    layout.showlegend = true;
+                                } else if (viz.chart_type === "heatmap" && viz.data.correlation_matrix) {
+                                    const zValues = viz.data.rows.map(row => {
+                                        return viz.data.columns.map(col => {
+                                            return viz.data.correlation_matrix[row][col];
+                                        });
+                                    });
+                                    traces = [{ z: zValues, x: viz.data.columns, y: viz.data.rows, type: 'heatmap', colorscale: 'RdBu', zmin: -1, zmax: 1, showscale: true }];
+                                    layout.xaxis.tickangle = -45;
+                                    layout.margin = { t: 60, b: 120, l: 120, r: 50 };
+                                    layout.showlegend = false;
+                                } else if (viz.chart_type === "treemap" && viz.data.nodes) {
+                                    traces = [{
+                                        type: "treemap",
+                                        labels: viz.data.nodes.map(n => n.name),
+                                        values: viz.data.nodes.map(n => n.value),
+                                        parents: viz.data.nodes.map(n => ""),
+                                        textinfo: "label+value+percent root",
+                                        marker: { colors: colorPalette }
+                                    }];
+                                    layout.margin = { t: 50, b: 20, l: 20, r: 20 };
+                                    layout.showlegend = false;
+                                } else {
+                                     throw new Error(`Unsupported or invalid chart type: ${viz.chart_type}`);
+                                }
+                                 
+                                Plotly.newPlot(chartDiv, traces, layout, { 
+                                    responsive: true, 
+                                    displaylogo: false, 
+                                    modeBarButtonsToRemove: ['sendDataToCloud', 'select2d', 'lasso2d'],
+                                    displayModeBar: true 
+                                });
+                                 
+                             } catch (e) { 
+                                 console.error("Initial render error:", e);
+                                 chartDiv.innerHTML = `<div class="p-4 text-center text-red-400">Could not render chart for ${viz.title}.</div>`;
+                             }
+                         }
+                     }
+                 });
+             }
+        }, 150); 
+
+        $("analysisActions").classList.remove("hidden");
+        setLoading("generate", false);
+    }
+
+    /**
+     * --- NEW FUNCTION (V15) ---
+     * Renders the new "Warnings & Diagnostics" panel.
+     * Moves warnings from the Summary tab to here for prominence.
+     * Adds a new section on Statistical Significance.
+     * Uses the user's updated row count logic.
+     */
+    function renderVizWarningsPanel(warningsPanel, dataset_info) {
+        if (!warningsPanel || !dataset_info) {
+            if(warningsPanel) warningsPanel.innerHTML = "<p class='p-4 text-white/60'>Could not load warnings.</p>";
+            return;
         }
-    });
 
-     // Attempt initial resize for charts in the default active tab (rationale)
-     // Since the rationale tab has no charts, we don't need initial resize here.
-     // Resizing will happen automatically when a chart tab is clicked.
+        let warningsHtml = `<div class="p-6 space-y-8 text-white/90 max-w-5xl mx-auto">
+            <h3 class="text-3xl font-bold text-center mb-6 bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text text-transparent">
+                ⚠️ Warnings & Diagnostics
+            </h3>
+            
+            <div class="bg-red-900/20 p-6 rounded-lg border border-red-500/30">
+                <h4 class="text-xl font-bold mb-3 text-red-300">Data Quality & Sufficiency</h4>`;
+        
+        // --- YOUR NEW WARNING LOGIC ---
+        const dataRowCount = dataset_info.rows || 0;
+        if (dataRowCount < 30) {
+            warningsHtml += `<p class="text-red-200"><strong>CRITICAL WARNING:</strong> Your dataset has only <strong>${dataRowCount} rows</strong>. This is insufficient data for reliable visualization or statistical insights. Any patterns (like correlations) are highly likely to be due to random chance and should not be trusted for decision-making.</p>`;
+        } else if (dataRowCount < 50) {
+            warningsHtml += `<p class="text-yellow-200"><strong>WARNING:</strong> Your dataset has <strong>${dataRowCount} rows</strong>. This is a limited dataset. Basic charts may be useful, but findings (like correlations) have low statistical power and may not be reliable.</p>`;
+        } else {
+            warningsHtml += `<p class="text-green-300"><strong>CHECK:</strong> Your dataset has <strong>${dataRowCount} rows</strong>. This is a sufficient size for basic descriptive visualizations.</p>`;
+        }
+        // --- END YOUR LOGIC ---
+        
+        warningsHtml += `</div>
 
-    // Ensure loading indicator is stopped
-    setLoading("generate", false);
-}
+            <div class="bg-yellow-900/20 p-6 rounded-lg border border-yellow-500/30">
+                <h4 class="text-xl font-bold mb-3 text-yellow-300">Interpretation Warning: Correlation is Not Causation</h4>
+                <p class="text-white/90 leading-relaxed">
+                    Your charts (especially scatter plots) show **correlation** (a mutual relationship), not **causation** (proof that one thing *causes* another). 
+                </p>
+                <p class="text-white/80 text-sm mt-2">
+                    <strong>Example:</strong> A chart might show that \`Marketing_Spend\` and \`Sales_Revenue\` both go up together. This *does not prove* that spending more *caused* the sales. A third "lurking variable" (like a holiday season) could be causing both.
+                </p>
+                <p class="text-white/80 text-sm mt-2">
+                    <strong>Action:</strong> Always use your business expertise to determine if a causal link is plausible.
+                </p>
+            </div>
 
+            <div class="bg-blue-900/20 p-6 rounded-lg border border-blue-500/30">
+                <h4 class="text-xl font-bold mb-3 text-blue-300">A Note on Statistical Significance</h4>
+                <p class="text-white/90 leading-relaxed">
+                    This tool performs **descriptive and exploratory** analysis. It shows you what is in the data.
+                </p>
+                <p class="text-white/80 text-sm mt-2">
+                    It does **not** automatically run formal statistical tests (like t-tests or regression with p-values) to confirm if these findings are "statistically significant." A pattern you see in a small dataset could be due to random chance.
+                </p>
+                <p class="text-white/80 text-sm mt-2">
+                    <strong>Action:</strong> Use these visualizations to form a <strong>hypothesis</strong>, then use a dedicated statistical tool (like the Regression or SEM tools in S.A.G.E.) to test that hypothesis formally.
+                </p>
+            </div>
+        </div>`;
+
+        warningsPanel.innerHTML = warningsHtml;
+    }
+
+    /**
+     * --- NEW FUNCTION (V8) ---
+     * Renders the improved, PURELY EDUCATIONAL "Learn Viz" panel.
+     * - Removes all contextual data warnings and column name references.
+     * - Focuses on explaining the "what" and "why" of chart types.
+     * - Includes advanced concepts like statistical rigor and common pitfalls.
+     */
+    function renderLearnVizPanel(learnPanel, dataset_info) {
+        if (!learnPanel) return;
+        
+        // This content is now static and purely educational.
+        learnPanel.innerHTML = `
+            <div class="p-6 space-y-8 text-white/90 max-w-5xl mx-auto">
+                <h3 class="text-3xl font-bold text-center mb-6 bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+                    🎓 A Guide to Data Visualization
+                </h3>
+                
+                <div class="bg-black/20 p-6 rounded-lg border border-white/10">
+                    <h4 class="text-lg font-bold mb-4 text-indigo-300">What is Data Visualization?</h4>
+                    <p class="text-white/80 text-sm">
+                        Data visualization is the practice of translating information into a visual context, such as a map or graph, to make data easier for the human brain to understand and pull insights from. The main goal is to identify patterns, trends, and outliers in large data sets.
+                    </p>
+                </div>
+
+                <div class="bg-black/20 p-6 rounded-lg border border-white/10">
+                    <h4 class="text-lg font-bold mb-4 text-indigo-300">How to Read Different Chart Types</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                        <div>
+                            <h5 class="font-semibold text-blue-300 mb-2">Distributions (Histograms & Box Plots)</h5>
+                            <p class="text-white/80 mb-2">Use these to understand the shape of a numerical variable.</p>
+                            <ul class="list-disc list-inside space-y-1 text-white/80">
+                                <li><strong>Central Tendency:</strong> Where is the center (median) or peak (mode)?</li>
+                                <li><strong>Spread:</strong> Is the data tightly clustered or widely spread out?</li>
+                                <li><strong>Skewness:</strong> Is it symmetric, or does it have a long "tail" to one side?</li>
+                                <li><strong>Outliers:</strong> Are there extreme values far from the main group?</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h5 class="font-semibold text-green-300 mb-2">Relationships (Scatter Plots)</h5>
+                            <p class="text-white/80 mb-2">Use these to see how two numerical variables move together.</p>
+                            <ul class="list-disc list-inside space-y-1 text-white/80">
+                                <li><strong>Direction:</strong> Positive (both go up) or negative (one goes up, one goes down)?</li>
+                                <li><strong>Strength:</strong> How tightly clustered are the points? (R² value shows this).</li>
+                                <li><strong>Pattern:</strong> Is the relationship a straight line (linear) or curved?</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h5 class="font-semibold text-yellow-300 mb-2">Compositions (Bar & Pie Charts)</h5>
+                            <p class="text-white/80 mb-2">Use these to compare counts or values across categories.</p>
+                            <ul class="list-disc list-inside space-y-1 text-white/80">
+                                <li><strong>Magnitude:</strong> Which categories are the largest or smallest?</li>
+                                <li><strong>Proportion:</strong> How much does each category contribute to the whole?</li>
+                                <li><strong>Pareto Principle:</strong> Do a few categories account for most of the value?</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h5 class="font-semibold text-purple-300 mb-2">Trends (Line Charts)</h5>
+                            <p class="text-white/80 mb-2">Use these to see how a variable changes over a time column.</p>
+                            <ul class="list-disc list-inside space-y-1 text-white/80">
+                                <li><strong>Trend:</strong> Is the overall direction upward, downward, or flat?</li>
+                                <li><strong>Seasonality:</strong> Are there repeating cycles (e.g., peaks every summer)?</li>
+                                <li><strong>Volatility:</strong> Is the line smooth or erratic and spiky?</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-yellow-900/20 p-6 rounded-lg border border-yellow-500/30">
+                    <h4 class="text-xl font-bold mb-3 text-yellow-300">⚠️ A Critical Warning: Correlation vs. Causation</h4>
+                    <p class="text-white/90 leading-relaxed">
+                        Charts (especially scatter plots) show **correlation**, not **causation**. 
+                        Just because two variables move together does not *prove* that one *causes* the other.
+                    </p>
+                    <p class="text-white/80 text-sm mt-2">
+                        A hidden "lurking variable" (e.g., seasonality, a market event) could be causing both to change. 
+                        Always use your domain expertise to interpret these relationships.
+                    </p>
+                </div>
+
+                <details class="styled-details bg-white/5 rounded-lg">
+                    <summary class="font-semibold cursor-pointer p-4 text-lg text-red-300">Common Visualization Pitfalls to Avoid</summary>
+                    <div class="px-6 pb-6 space-y-4 text-sm">
+                        <div class="p-4 bg-red-900/20 border border-red-500/30 rounded">
+                            <h5 class="font-semibold text-red-300 mb-2">Misleading Axes</h5>
+                            <p class="text-white/80">Truncating the Y-axis (not starting at zero) on a bar chart can make small differences look massive. Be cautious when interpreting comparisons.</p>
+                        </div>
+                        <div class="p-4 bg-yellow-900/20 border border-yellow-500/30 rounded">
+                            <h5 class="font-semibold text-yellow-300 mb-2">Cherry-Picking Data</h5>
+                            <p class="text-white/80">Visualizing only a small date range or a specific subset of data can create a misleading impression that doesn't hold true for the entire dataset.</p>
+                        </div>
+                        <div class="p-4 bg-purple-900/20 border border-purple-500/30 rounded">
+                            <h5 class="font-semibold text-purple-300 mb-2">Using the Wrong Chart</h5>
+                            <p class="text-white/80">Using a line chart for non-time-based categorical data or a pie chart for data that doesn't sum to 100% can confuse and mislead the audience.</p>
+                        </div>
+                    </div>
+                </details>
+
+                <div class="text-center p-4 bg-black/20 rounded-lg border border-white/10">
+                    <p class="text-xs text-white/60">
+                        The best analysis combines these statistical findings with your deep knowledge of your business and industry.
+                    </S.A.G.E.>
+                </div>
+            </div>
+        `;
+    }
+        
     function createSystemActionsLayout_ST(template) {
         const contentContainer = $("templateDetailContent");
         contentContainer.className = "grid lg:grid-cols-1 gap-12";
@@ -4117,6 +4987,9 @@ function renderVisualizationPage_DA(container, data) {
                                 <span id="generateBtnText">⚙️ Formulate Actions</span>
                                 <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                             </button>
+                            <div class="text-center mt-4">
+	                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                            </div>
                         </div>
                         <div class="mt-12">
                              <h2 class="text-3xl font-bold mb-4 text-center">Systemic Action Plan</h2>
@@ -4129,6 +5002,28 @@ function renderVisualizationPage_DA(container, data) {
                     </div>
                 `;
         setupInputToggle("systemActionFile", "systemActionFileLabel", "textInputArea", "docUploadArea");
+
+        // Attach listener for the feedback link
+                const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+                if (feedbackLink) {
+                    feedbackLink.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        
+                        // This just calls the navigateTo function.
+                        // It relies on your main `MapsTo` function to be
+                        // the *simplified one* (without memory logic)
+                        // and your `submitFeedbackPageBtn` listener
+                        // to be the *simplified one* (that just goes home).
+                        if (typeof navigateTo === 'function') {
+                            navigateTo('feedback');
+                        } else {
+                            console.error("navigateTo function is not defined.");
+                        }
+                    });
+                } else {
+                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                }
+                // --- END FIX ---
     }
 
     async function handleSystemActionsAnalysis_ST() {
@@ -5117,6 +6012,9 @@ function renderSystemActionsPage_ST(container, data) {
                                 <span id="generateBtnText">🎯 Set System-Aware Objectives</span>
                                 <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                             </button>
+                            <div class="text-center mt-4">
+	                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                            </div>
                         </div>
                         <div class="mt-12">
                              <h2 class="text-3xl font-bold mb-4 text-center">Systemic Objective Analysis</h2>
@@ -5129,6 +6027,28 @@ function renderSystemActionsPage_ST(container, data) {
                     </div>
                 `;
         setupInputToggle("systemObjFile", "systemObjFileLabel", "textInputArea", "docUploadArea");
+
+        // Attach listener for the feedback link
+                const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+                if (feedbackLink) {
+                    feedbackLink.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        
+                        // This just calls the navigateTo function.
+                        // It relies on your main `MapsTo` function to be
+                        // the *simplified one* (without memory logic)
+                        // and your `submitFeedbackPageBtn` listener
+                        // to be the *simplified one* (that just goes home).
+                        if (typeof navigateTo === 'function') {
+                            navigateTo('feedback');
+                        } else {
+                            console.error("navigateTo function is not defined.");
+                        }
+                    });
+                } else {
+                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                }
+                // --- END FIX ---
     }
 
     async function handleSystemObjectivesAnalysis_ST() {
@@ -5347,6 +6267,9 @@ function renderSystemActionsPage_ST(container, data) {
                                 <span id="generateBtnText">⚡️ Generate Creative Strategies</span>
                                 <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                             </button>
+                            <div class="text-center mt-4">
+	                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                            </div>
                         </div>
                         <div class="mt-12">
                              <h2 class="text-3xl font-bold mb-4 text-center">Creative Dissonance Analysis</h2>
@@ -5376,6 +6299,29 @@ function renderSystemActionsPage_ST(container, data) {
         attachListener("dissonanceDataFile", "dissonanceDataFileLabel");
         $("generateBtn").addEventListener("click", handleGenerate);
         reattachActionListeners();
+
+        // Attach listener for the feedback link
+                const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+                if (feedbackLink) {
+                    feedbackLink.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        
+                        // This just calls the navigateTo function.
+                        // It relies on your main `MapsTo` function to be
+                        // the *simplified one* (without memory logic)
+                        // and your `submitFeedbackPageBtn` listener
+                        // to be the *simplified one* (that just goes home).
+                        if (typeof navigateTo === 'function') {
+                            navigateTo('feedback');
+                        } else {
+                            console.error("navigateTo function is not defined.");
+                        }
+                    });
+                } else {
+                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                }
+                // --- END FIX ---
+
     }
 
     async function handleCreativeDissonanceAnalysis_NS() {
@@ -5798,6 +6744,9 @@ function renderSystemActionsPage_ST(container, data) {
                                 <span id="generateBtnText">🔬 Diagnose Living System</span>
                                 <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                             </button>
+                            <div class="text-center mt-4">
+	                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                            </div>
                         </div>
                         <div class="mt-12">
                              <h2 class="text-3xl font-bold mb-4 text-center">System Health Analysis</h2>
@@ -5810,6 +6759,28 @@ function renderSystemActionsPage_ST(container, data) {
                     </div>
                 `;
         setupInputToggle("lsFile", "lsFileLabel", "textInputArea", "docUploadArea");
+
+        // Attach listener for the feedback link
+                const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+                if (feedbackLink) {
+                    feedbackLink.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        
+                        // This just calls the navigateTo function.
+                        // It relies on your main `MapsTo` function to be
+                        // the *simplified one* (without memory logic)
+                        // and your `submitFeedbackPageBtn` listener
+                        // to be the *simplified one* (that just goes home).
+                        if (typeof navigateTo === 'function') {
+                            navigateTo('feedback');
+                        } else {
+                            console.error("navigateTo function is not defined.");
+                        }
+                    });
+                } else {
+                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                }
+                // --- END FIX ---
     }
 
     async function handleLivingSystemAnalysis_NS() {
@@ -6227,6 +7198,9 @@ function renderSystemActionsPage_ST(container, data) {
                                 <span id="generateBtnText">🧠 Deconstruct Thinking</span>
                                 <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                             </button>
+                            <div class="text-center mt-4">
+	                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                            </div>
                         </div>
                         <div class="mt-12">
                              <h2 class="text-3xl font-bold mb-4 text-center">Analysis of Your Thinking System</h2>
@@ -6239,6 +7213,28 @@ function renderSystemActionsPage_ST(container, data) {
                     </div>
                 `;
         setupInputToggle("tsFile", "tsFileLabel", "textInputArea", "docUploadArea");
+
+        // Attach listener for the feedback link
+                const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+                if (feedbackLink) {
+                    feedbackLink.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        
+                        // This just calls the navigateTo function.
+                        // It relies on your main `MapsTo` function to be
+                        // the *simplified one* (without memory logic)
+                        // and your `submitFeedbackPageBtn` listener
+                        // to be the *simplified one* (that just goes home).
+                        if (typeof navigateTo === 'function') {
+                            navigateTo('feedback');
+                        } else {
+                            console.error("navigateTo function is not defined.");
+                        }
+                    });
+                } else {
+                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                }
+                // --- END FIX ---
     }
 
     async function handleThinkingSystemAnalysis_NS() {
@@ -6593,6 +7589,9 @@ function renderSystemActionsPage_ST(container, data) {
                                     <span id="generateBtnText">Run SWOT/TOWS Analysis</span>
                                     <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                                 </button>
+                                <div class="text-center mt-4">
+	                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                                </div>
                             </div>
                         </div>
 
@@ -6646,6 +7645,28 @@ function renderSystemActionsPage_ST(container, data) {
                 }
             });
         }
+
+        // Attach listener for the feedback link
+                const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+                if (feedbackLink) {
+                    feedbackLink.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        
+                        // This just calls the navigateTo function.
+                        // It relies on your main `MapsTo` function to be
+                        // the *simplified one* (without memory logic)
+                        // and your `submitFeedbackPageBtn` listener
+                        // to be the *simplified one* (that just goes home).
+                        if (typeof navigateTo === 'function') {
+                            navigateTo('feedback');
+                        } else {
+                            console.error("navigateTo function is not defined.");
+                        }
+                    });
+                } else {
+                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                }
+                // --- END FIX ---
     }
 
     function createMiscLayout_MSC(template) {
@@ -6679,6 +7700,9 @@ function renderSystemActionsPage_ST(container, data) {
                                 <span id="generateBtnText">📝 Compile Final Report</span>
                                 <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                             </button>
+                            <div class="text-center mt-4">
+	                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                            </div>
                         </div>
                         <div class="mt-12">
                              <h2 class="text-3xl font-bold mb-4 text-center">Final Sections</h2>
@@ -6691,6 +7715,28 @@ function renderSystemActionsPage_ST(container, data) {
                     </div>
                 `;
         setupInputToggle("miscFile", "miscFileLabel", "textInputArea", "docUploadArea");
+
+        // Attach listener for the feedback link
+                const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+                if (feedbackLink) {
+                    feedbackLink.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        
+                        // This just calls the navigateTo function.
+                        // It relies on your main `MapsTo` function to be
+                        // the *simplified one* (without memory logic)
+                        // and your `submitFeedbackPageBtn` listener
+                        // to be the *simplified one* (that just goes home).
+                        if (typeof navigateTo === 'function') {
+                            navigateTo('feedback');
+                        } else {
+                            console.error("navigateTo function is not defined.");
+                        }
+                    });
+                } else {
+                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                }
+                // --- END FIX ---
     }
 
     function createLeveragePointsLayout(template) {
@@ -6725,6 +7771,9 @@ function renderSystemActionsPage_ST(container, data) {
                                 <span id="generateBtnText">⚡ Find Leverage Points</span>
                                 <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                             </button>
+                            <div class="text-center mt-4">
+	                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                            </div>
                         </div>
                         
                         <div class="mt-12">
@@ -6741,6 +7790,28 @@ function renderSystemActionsPage_ST(container, data) {
 
         // Re-attach all necessary event listeners for the new elements
         setupInputToggle("leverageFile", "leverageFileLabel", "textInputArea", "docUploadArea");
+
+        // Attach listener for the feedback link
+                const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+                if (feedbackLink) {
+                    feedbackLink.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        
+                        // This just calls the navigateTo function.
+                        // It relies on your main `MapsTo` function to be
+                        // the *simplified one* (without memory logic)
+                        // and your `submitFeedbackPageBtn` listener
+                        // to be the *simplified one* (that just goes home).
+                        if (typeof navigateTo === 'function') {
+                            navigateTo('feedback');
+                        } else {
+                            console.error("navigateTo function is not defined.");
+                        }
+                    });
+                } else {
+                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                }
+                // --- END FIX ---
     }
 
     function createArchetypeAnalysisLayout(template) {
@@ -6775,6 +7846,9 @@ function renderSystemActionsPage_ST(container, data) {
                                 <span id="generateBtnText">🧠 Analyze System</span>
                                 <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                             </button>
+                            <div class="text-center mt-4">
+	                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                            </div>
                         </div>
                         
                         <div class="mt-12">
@@ -6828,6 +7902,28 @@ function renderSystemActionsPage_ST(container, data) {
                 }
             });
         }
+
+        // Attach listener for the feedback link
+                const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+                if (feedbackLink) {
+                    feedbackLink.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        
+                        // This just calls the navigateTo function.
+                        // It relies on your main `MapsTo` function to be
+                        // the *simplified one* (without memory logic)
+                        // and your `submitFeedbackPageBtn` listener
+                        // to be the *simplified one* (that just goes home).
+                        if (typeof navigateTo === 'function') {
+                            navigateTo('feedback');
+                        } else {
+                            console.error("navigateTo function is not defined.");
+                        }
+                    });
+                } else {
+                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                }
+                // --- END FIX ---
     }
 
     function createFactorAnalysisLayout(template) {
@@ -6864,6 +7960,9 @@ function renderSystemActionsPage_ST(container, data) {
                                     <span id="generateBtnText">🔍 Analyze Factors</span>
                                     <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                                 </button>
+                                <div class="text-center mt-4">
+	                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                                </div> 
                             </div>
                         </div>
                         
@@ -6926,6 +8025,28 @@ function renderSystemActionsPage_ST(container, data) {
                 }
             });
         }
+
+        // Attach listener for the feedback link
+                const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+                if (feedbackLink) {
+                    feedbackLink.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        
+                        // This just calls the navigateTo function.
+                        // It relies on your main `MapsTo` function to be
+                        // the *simplified one* (without memory logic)
+                        // and your `submitFeedbackPageBtn` listener
+                        // to be the *simplified one* (that just goes home).
+                        if (typeof navigateTo === 'function') {
+                            navigateTo('feedback');
+                        } else {
+                            console.error("navigateTo function is not defined.");
+                        }
+                    });
+                } else {
+                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                }
+                // --- END FIX ---
     }
 
 
@@ -6962,6 +8083,9 @@ function renderSystemActionsPage_ST(container, data) {
                                     <span id="generateBtnText">Analyze Root Causes</span>
                                     <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                                 </button>
+                                <div class="text-center mt-4">
+	                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                                </div>
                             </div>
                         </div>
                         <div class="mt-12">
@@ -7014,6 +8138,28 @@ function renderSystemActionsPage_ST(container, data) {
                 }
             });
         }
+
+        // Attach listener for the feedback link
+                const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+                if (feedbackLink) {
+                    feedbackLink.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        
+                        // This just calls the navigateTo function.
+                        // It relies on your main `MapsTo` function to be
+                        // the *simplified one* (without memory logic)
+                        // and your `submitFeedbackPageBtn` listener
+                        // to be the *simplified one* (that just goes home).
+                        if (typeof navigateTo === 'function') {
+                            navigateTo('feedback');
+                        } else {
+                            console.error("navigateTo function is not defined.");
+                        }
+                    });
+                } else {
+                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                }
+                // --- END FIX ---
     }
 
     function createProcessMappingLayout(template) {
@@ -7049,6 +8195,9 @@ function renderSystemActionsPage_ST(container, data) {
                                     <span id="generateBtnText">🗺️ Map Process</span>
                                     <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                                 </button>
+                                <div class="text-center mt-4">
+	                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                                </div>
                             </div>
                         </div>
                         
@@ -7062,6 +8211,28 @@ function renderSystemActionsPage_ST(container, data) {
                         </div>
                     </div>`;
         setupInputToggle("processFile", "processFileLabel", "textInputArea", "docUploadArea");
+
+        // Attach listener for the feedback link
+                const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+                if (feedbackLink) {
+                    feedbackLink.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        
+                        // This just calls the navigateTo function.
+                        // It relies on your main `MapsTo` function to be
+                        // the *simplified one* (without memory logic)
+                        // and your `submitFeedbackPageBtn` listener
+                        // to be the *simplified one* (that just goes home).
+                        if (typeof navigateTo === 'function') {
+                            navigateTo('feedback');
+                        } else {
+                            console.error("navigateTo function is not defined.");
+                        }
+                    });
+                } else {
+                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                }
+                // --- END FIX ---
     }
 
     function createSystemThinkingLayout(template) {
@@ -7096,6 +8267,9 @@ function renderSystemActionsPage_ST(container, data) {
                                     <span id="generateBtnText">🧠 Analyze System Dynamics</span>
                                     <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                                 </button>
+                                <div class="text-center mt-4">
+	                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                                </div>
                             </div>
                         </div>
                         <div class="mt-12">
@@ -7108,6 +8282,28 @@ function renderSystemActionsPage_ST(container, data) {
                         </div>
                     </div>`;
         setupInputToggle("systemFile", "systemFileLabel", "textInputArea", "docUploadArea");
+
+        // Attach listener for the feedback link
+                const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+                if (feedbackLink) {
+                    feedbackLink.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        
+                        // This just calls the navigateTo function.
+                        // It relies on your main `MapsTo` function to be
+                        // the *simplified one* (without memory logic)
+                        // and your `submitFeedbackPageBtn` listener
+                        // to be the *simplified one* (that just goes home).
+                        if (typeof navigateTo === 'function') {
+                            navigateTo('feedback');
+                        } else {
+                            console.error("navigateTo function is not defined.");
+                        }
+                    });
+                } else {
+                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                }
+                // --- END FIX ---
     }
    
     function createSemAnalysisLayout(template) {
@@ -7231,6 +8427,9 @@ function renderSystemActionsPage_ST(container, data) {
                             <span id="generateBtnText">📊 Run SEM Analysis</span>
                             <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                         </button>
+                        <div class="text-center mt-4">
+	                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                        </div>
                     </div>
                 </div>
 
@@ -7627,6 +8826,27 @@ function renderSystemActionsPage_ST(container, data) {
             // --- END OF MODIFIED LISTENER ---
         }
 
+        // Attach listener for the feedback link
+                const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+                if (feedbackLink) {
+                    feedbackLink.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        
+                        // This just calls the navigateTo function.
+                        // It relies on your main `MapsTo` function to be
+                        // the *simplified one* (without memory logic)
+                        // and your `submitFeedbackPageBtn` listener
+                        // to be the *simplified one* (that just goes home).
+                        if (typeof navigateTo === 'function') {
+                            navigateTo('feedback');
+                        } else {
+                            console.error("navigateTo function is not defined.");
+                        }
+                    });
+                } else {
+                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                }
+                // --- END FIX ---
     }
 
 /**
@@ -7730,6 +8950,9 @@ function createPredictiveAnalysisLayout(template) {
                         <span id="generateBtnText">📈 Generate Forecast</span>
                         <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                     </button>
+                    <div class="text-center mt-4">
+	                    <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                    </div>
                 </div>
             </div>
 
@@ -8079,6 +9302,28 @@ function createPredictiveAnalysisLayout(template) {
         $("analysisActions").classList.add("hidden");
     }
 
+    // Attach listener for the feedback link
+                const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+                if (feedbackLink) {
+                    feedbackLink.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        
+                        // This just calls the navigateTo function.
+                        // It relies on your main `MapsTo` function to be
+                        // the *simplified one* (without memory logic)
+                        // and your `submitFeedbackPageBtn` listener
+                        // to be the *simplified one* (that just goes home).
+                        if (typeof navigateTo === 'function') {
+                            navigateTo('feedback');
+                        } else {
+                            console.error("navigateTo function is not defined.");
+                        }
+                    });
+                } else {
+                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                }
+                // --- END FIX ---
+
 } // --- End of createPredictiveAnalysisLayout function ---
 
 // Copy to clipboard function for examples
@@ -8267,6 +9512,9 @@ The AI will read this and build the matrix for you."></textarea>
                     <span id="generateBtnText">Analyze Causal Factors</span>
                     <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                 </button>
+                <div class="text-center mt-4">
+	                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                </div>
             </div>
         </div>
 
@@ -8388,6 +9636,28 @@ The AI will read this and build the matrix for you."></textarea>
              $("dematelTextError").textContent = "";
         });
     }
+
+    // Attach listener for the feedback link
+                const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+                if (feedbackLink) {
+                    feedbackLink.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        
+                        // This just calls the navigateTo function.
+                        // It relies on your main `MapsTo` function to be
+                        // the *simplified one* (without memory logic)
+                        // and your `submitFeedbackPageBtn` listener
+                        // to be the *simplified one* (that just goes home).
+                        if (typeof navigateTo === 'function') {
+                            navigateTo('feedback');
+                        } else {
+                            console.error("navigateTo function is not defined.");
+                        }
+                    });
+                } else {
+                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                }
+                // --- END FIX ---
 }
 
     function setupInputToggle(fileInputId, fileLabelId, textInputAreaId, docUploadAreaId) {
@@ -21389,7 +22659,7 @@ function renderMiscPage_MSC(container, data) {
 
     // --- NEW FEEDBACK PAGE LOGIC (CALLING EDGE FUNCTION) ---
 
-    // 1. Populate the tool dropdown (This part stays the same)
+    // 1. Populate the tool dropdown
     const feedbackToolSelect = $("feedbackToolName");
     if (feedbackToolSelect) {
         for (const templateId in templates) {
@@ -21400,21 +22670,18 @@ function renderMiscPage_MSC(container, data) {
         }
     }
 
-    // 2. Add the submit button listener (This part is updated)
+    // 2. Add the submit button listener
     const submitFeedbackPageBtn = $("submitFeedbackPageBtn");
     if (submitFeedbackPageBtn) {
-        submitFeedbackPageBtn.addEventListener("click", async () => { // Make it async
+        submitFeedbackPageBtn.addEventListener("click", async () => { 
             
-            // Get all values from the new form
             const tool_name = $("feedbackToolName").value;
             const reason = $("feedbackReason").value;
             const content = $("feedbackTextPage").value.trim();
             const ratingInput = document.querySelector('input[name="feedbackRating"]:checked');
             
-            // Convert rating: "0" becomes null (for optional rating), others become integers
             const rating = ratingInput ? (ratingInput.value === "0" ? null : parseInt(ratingInput.value)) : null;
 
-            // --- Front-end Validation (mirrors your test script) ---
             if (!currentUser) {
                 showMessage("feedbackMessagePage", "You must be logged in to submit feedback.", "error");
                 return;
@@ -21423,55 +22690,44 @@ function renderMiscPage_MSC(container, data) {
                 showMessage("feedbackMessagePage", "Please select a reason.", "error");
                 return;
             }
-            // Your test script checks for "Too short", so we check for > 10
             if (content.length <= 10) { 
                 showMessage("feedbackMessagePage", "Please enter at least 10 characters in the details box.", "error");
                 return;
             }
 
-            setLoading("submitFeedbackPage", true); // Shows spinner
+            setLoading("submitFeedbackPage", true);
             
             try {
-                // --- Supabase Edge Function Logic ---
-                
-                // 1. Construct the feedback object matching your function's body
                 const feedbackObject = {
                     tool_name: tool_name,
                     reason: reason,
                     content: content,
                     rating: rating 
-                    // The function will get the user_id from the auth token
                 };
                 
-                // 2. Invoke the 'insert-feedback' Edge Function
-                // supabase.functions.invoke automatically sends the Authorization header (Bearer $TOKEN)
-                // and the apikey header for you.
                 const { data, error: invokeError } = await supabase.functions.invoke(
                     'insert-feedback', 
-                    { body: feedbackObject }
+                     { body: feedbackObject }
                 );
 
                 if (invokeError) {
-                    // This will catch auth errors, validation errors (like "content too short"),
-                    // and server errors from your function.
                     throw invokeError; 
                 }
 
                 // --- Success ---
-                setLoading("submitFeedbackPage", false); // Hides spinner
+                setLoading("submitFeedbackPage", false);
                 showMessage("feedbackMessagePage", "Thank you! Your feedback has been received.", "success");
                 
-                // Navigate home after 2 seconds
+                // --- MODIFIED BLOCK: Always go to home ---
                 setTimeout(() => {
-                    navigateTo("home"); // Navigate to home page
+                     console.log(`---> Feedback success. Navigating to "home".`);
+                     navigateTo("home"); 
                 }, 2000);
 
             } catch (error) {
                 // --- Error Handling ---
                 console.error("Feedback submission error:", error);
-                setLoading("submitFeedbackPage", false); // Hides spinner
-                // Your function should return a JSON error with a 'message' field,
-                // which will be in error.message.
+                setLoading("submitFeedbackPage", false);
                 showMessage("feedbackMessagePage", `Error: ${error.message || 'An unknown error occurred.'}`, "error");
             }
         });

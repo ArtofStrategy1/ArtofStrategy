@@ -1,0 +1,112 @@
+Date,Region,Marketing_Spend,Sales_Revenue,Customer_Satisfaction,Product_Category
+2024-01-01,North,5000,78500,4.2,Electronics
+2024-02-01,North,5200,79200,4.1,Apparel
+2024-03-01,North,5100,77000,4.3,Electronics
+2024-04-01,North,5500,85000,4.5,Home Goods
+2024-05-01,North,5400,83100,4.4,Electronics
+2024-06-01,North,6000,105000,4.6,Apparel
+2024-07-01,North,6200,108500,4.7,Electronics
+2024-08-01,North,5800,98200,4.5,Home Goods
+2024-09-01,North,5900,101000,4.6,Apparel
+2024-10-01,North,6100,103500,4.4,Electronics
+2024-11-01,North,6800,118000,4.8,Home Goods
+2024-12-01,North,7200,125000,4.9,Apparel
+2025-01-01,North,5500,82000,4.3,Electronics
+2025-02-01,North,5700,84500,4.4,Apparel
+2025-03-01,North,5600,83200,4.5,Electronics
+2025-04-01,North,6000,89000,4.6,Home Goods
+2025-05-01,North,5900,87500,4.5,Electronics
+2025-06-01,North,6400,109500,4.7,Apparel
+2025-07-01,North,6600,112000,4.8,Electronics
+2025-08-01,North,6200,102500,4.6,Home Goods
+2025-09-01,North,6300,105200,4.7,Apparel
+2025-10-01,North,6500,107800,4.5,Electronics
+2025-11-01,North,7200,122500,4.9,Home Goods
+2025-12-01,North,7600,129800,5.0,Apparel
+2024-01-01,South,3000,44500,3.8,Apparel
+2024-02-01,South,3200,48000,3.9,Home Goods
+2024-03-01,South,3100,46200,4.0,Apparel
+2024-04-01,South,3500,53000,4.1,Electronics
+2024-05-01,South,3400,50500,4.2,Home Goods
+2024-06-01,South,4000,70000,4.3,Apparel
+2024-07-01,South,4200,73500,4.4,Electronics
+2024-08-01,South,3800,59200,4.2,Home Goods
+2024-09-01,South,3900,62500,4.3,Apparel
+2024-10-01,South,4100,65800,4.1,Electronics
+2024-11-01,South,4600,78500,4.5,Home Goods
+2024-12-01,South,4900,84200,4.6,Apparel
+2025-01-01,South,3300,47800,3.9,Electronics
+2025-02-01,South,3500,52200,4.0,Apparel
+2025-03-01,South,3400,49500,4.1,Electronics
+2025-04-01,South,3800,58500,4.2,Home Goods
+2025-05-01,South,3700,55800,4.1,Electronics
+2025-06-01,South,4300,75500,4.4,Apparel
+2025-07-01,South,4500,78800,4.5,Electronics
+2025-08-01,South,4100,64200,4.3,Home Goods
+2025-09-01,South,4200,67100,4.4,Apparel
+2025-10-01,South,4400,71200,4.2,Electronics
+2025-11-01,South,4900,83800,4.6,Home Goods
+2025-12-01,South,5200,89500,4.7,Apparel
+2024-01-01,West,7000,108000,4.8,Electronics
+2024-02-01,West,7200,109500,4.7,Electronics
+2024-03-01,West,7100,107000,4.9,Home Goods
+2024-04-01,West,7500,115000,5.0,Apparel
+2024-05-01,West,7400,113000,4.9,Electronics
+2024-06-01,West,8000,140000,5.0,Home Goods
+2024-07-01,West,8200,143500,4.9,Electronics
+2024-08-01,West,7800,125800,4.8,Home Goods
+2024-09-01,West,7900,128500,4.9,Apparel
+2024-10-01,West,8100,132200,4.7,Electronics
+2024-11-01,West,8800,152500,4.9,Home Goods
+2024-12-01,West,9200,165800,5.0,Apparel
+2025-01-01,West,7600,114200,4.8,Electronics
+2025-02-01,West,7800,118500,4.7,Electronics
+2025-03-01,West,7700,115800,4.9,Home Goods
+2025-04-01,West,8100,123500,5.0,Apparel
+2025-05-01,West,8000,121200,4.8,Electronics
+2025-06-01,West,8600,148500,4.9,Home Goods
+2025-07-01,West,8800,152200,4.9,Electronics
+2025-08-01,West,8400,135800,4.8,Home Goods
+2025-09-01,West,8500,138900,4.9,Apparel
+2025-10-01,West,8700,142500,4.7,Electronics
+2025-11-01,West,9400,162800,4.9,Home Goods
+2025-12-01,West,9800,175500,5.0,Apparel
+2024-01-01,East,4500,65200,4.1,Electronics
+2024-02-01,East,4700,68500,4.0,Apparel
+2024-03-01,East,4600,66800,4.2,Electronics
+2024-04-01,East,5000,75500,4.4,Home Goods
+2024-05-01,East,4900,73200,4.3,Electronics
+2024-06-01,East,5400,92500,4.5,Apparel
+2024-07-01,East,5600,96200,4.6,Electronics
+2024-08-01,East,5200,82800,4.4,Home Goods
+2024-09-01,East,5300,85500,4.5,Apparel
+2024-10-01,East,5500,88200,4.3,Electronics
+2024-11-01,East,6100,105800,4.7,Home Goods
+2024-12-01,East,6400,112500,4.8,Apparel
+2025-01-01,East,4800,68500,4.2,Electronics
+2025-02-01,East,5000,72200,4.1,Apparel
+2025-03-01,East,4900,70500,4.3,Electronics
+2025-04-01,East,5300,79800,4.5,Home Goods
+2025-05-01,East,5200,77500,4.4,Electronics
+2025-06-01,East,5700,97200,4.6,Apparel
+2025-07-01,East,5900,101500,4.7,Electronics
+2025-08-01,East,5500,87200,4.5,Home Goods
+2025-09-01,East,5600,90100,4.6,Apparel
+2025-10-01,East,5800,93500,4.4,Electronics
+2025-11-01,East,6400,111200,4.8,Home Goods
+2025-12-01,East,6700,118800,4.9,Apparel
+2024-01-01,Central,3800,55500,3.9,Home Goods
+2024-02-01,Central,4000,58200,3.8,Electronics
+2024-03-01,Central,3900,56800,4.0,Apparel
+2024-04-01,Central,4300,65200,4.2,Home Goods
+2024-05-01,Central,4200,62800,4.1,Electronics
+2024-06-01,Central,4700,81500,4.3,Apparel
+2024-07-01,Central,4900,85200,4.4,Home Goods
+2024-08-01,Central,4500,69800,4.2,Electronics
+2024-09-01,Central,4600,72500,4.3,Apparel
+2024-10-01,Central,4800,75200,4.1,Home Goods
+2024-11-01,Central,5300,89500,4.5,Electronics
+2024-12-01,Central,5600,96200,4.6,Apparel
+2025-01-01,Central,4100,59200,4.0,Home Goods
+2025-02-01,Central,4300,62800,3.9,Electronics
+2025-03-01,Central,4200,60500,4.1,Apparel
