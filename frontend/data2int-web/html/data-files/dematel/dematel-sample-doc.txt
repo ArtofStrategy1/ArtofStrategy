@@ -1,0 +1,17 @@
+Subject: Analysis of E-commerce Customer Churn Factors
+
+Our analysis has identified five key factors driving customer churn and retention in our online retail business. We need to understand the causal relationships between them to prioritize our efforts.
+
+The factors are: (1) Product Quality (2) Website Usability (3) Customer Service (4) Delivery Speed (5) Price Competitiveness
+
+Here are the relationships we have observed between these factors:
+
+Product Quality (1) is a primary driver. It has a very strong positive influence on Customer Service (3) (fewer quality issues mean fewer complaints) and a moderate influence on Price Competitiveness (5) (we can charge more for better products, or must charge less for poor ones).
+
+Website Usability (2) also strongly influences Customer Service (3). A confusing website, poor search function, or difficult checkout process leads directly to more support calls and live chats.
+
+Customer Service (3) is a key factor but is mostly an effect or receiver. It is strongly influenced by Product Quality (1), Website Usability (2), and Delivery Speed (4). It does not seem to influence any of the other factors directly.
+
+Delivery Speed (4) has a very strong influence on Customer Service (3), as late or lost packages are our number one complaint category. It also moderately impacts Price Competitiveness (5), as customers are less willing to pay premium prices if shipping is slow.
+
+Price Competitiveness (5) appears to be almost entirely a 'receiver' factor. It is influenced by Product Quality (1) and Delivery Speed (4), but it does not seem to be a driver for better quality, usability, or service.

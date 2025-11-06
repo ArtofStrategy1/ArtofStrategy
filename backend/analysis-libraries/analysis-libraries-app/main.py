@@ -299,7 +299,94 @@ async def run_visualization_analysis(
         await safe_close_file(context_file)
 
 
-# --- Other Endpoints (Unchanged) ---
+# Add this to your main.py file after the other analysis imports
+
+# --- Import regression analysis function ---
+from analysis_modules import regression_analysis
+
+# --- Add this endpoint after your other analysis endpoints ---
+
+@app.post("/api/regression")
+async def run_regression_analysis(
+    data_file: Optional[UploadFile] = File(None),
+    data_text: Optional[str] = Form(None),
+    target_column: str = Form(...),
+    feature_columns: Optional[str] = Form(None),  # JSON string list
+    model_types: Optional[str] = Form(None),      # JSON string list
+    test_size: Optional[str] = Form(None),        # Float as string
+    context_file: Optional[UploadFile] = File(None)
+):
+    """Runs Regression analysis."""
+    try:
+        # 1. Get data
+        data_payload, input_filename, is_file_upload = get_data_payload(data_file, data_text)
+
+        # 2. Validate and convert regression parameters
+        # Parse feature columns
+        parsed_feature_columns = None
+        if feature_columns:
+            try:
+                parsed_feature_columns = json.loads(feature_columns)
+                if not isinstance(parsed_feature_columns, list):
+                    raise ValueError("Feature columns must be a list")
+            except json.JSONDecodeError:
+                raise HTTPException(status_code=400, detail="Invalid JSON format for feature columns.")
+
+        # Parse model types
+        parsed_model_types = None
+        if model_types:
+            try:
+                parsed_model_types = json.loads(model_types)
+                if not isinstance(parsed_model_types, list):
+                    raise ValueError("Model types must be a list")
+                # Validate model types
+                valid_models = ['linear', 'ridge', 'lasso', 'elastic_net', 'random_forest', 'gradient_boosting']
+                for model in parsed_model_types:
+                    if model not in valid_models:
+                        raise ValueError(f"Invalid model type: {model}. Valid options: {valid_models}")
+            except json.JSONDecodeError:
+                raise HTTPException(status_code=400, detail="Invalid JSON format for model types.")
+
+        # Parse test size
+        parsed_test_size = 0.2  # Default
+        if test_size:
+            try:
+                parsed_test_size = float(test_size)
+                if not (0.1 <= parsed_test_size <= 0.5):
+                    raise ValueError("Test size must be between 0.1 and 0.5")
+            except (ValueError, TypeError):
+                raise HTTPException(status_code=400, detail="Invalid test size. Must be a number between 0.1 and 0.5 (e.g., 0.2 for 20%).")
+
+        # 3. Run analysis
+        print(f"Routing to Regression Analysis...")
+        print(f"   Target column: {target_column}")
+        print(f"   Feature columns: {parsed_feature_columns or 'auto-detect'}")
+        print(f"   Model types: {parsed_model_types or 'default models'}")
+        print(f"   Test size: {parsed_test_size}")
+        
+        results = await regression_analysis.perform_regression_analysis(
+            data_payload=data_payload,
+            is_file_upload=is_file_upload,
+            input_filename=input_filename,
+            target_column=target_column,
+            feature_columns=parsed_feature_columns,
+            model_types=parsed_model_types,
+            test_size=parsed_test_size,
+            context_file=context_file
+        )
+        return JSONResponse(content=results)
+
+    except HTTPException as http_exc:
+        print(f"HTTP Exception in Regression: {http_exc.status_code} - {http_exc.detail}")
+        raise http_exc
+    except Exception as e:
+        print(f"Error during Regression analysis: {type(e).__name__} - {e}")
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"An internal server error occurred: {str(e)}")
+    finally:
+        # Ensure uploaded file streams are closed
+        await safe_close_file(data_file)
+        await safe_close_file(context_file)
 
 # Currently being worked on.
 # --- Save Document Endpoint ---

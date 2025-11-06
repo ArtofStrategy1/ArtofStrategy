@@ -1,0 +1,9 @@
+We are an e-commerce company analyzing our performance for the first half of 2024. Our primary goal is to understand the effectiveness of our marketing spend and its relationship with sales revenue across different regions.
+
+We are also very interested in customer satisfaction, as we believe it's a key driver for repeat business. Specifically, we want to see if satisfaction scores differ by product category or region.
+
+Key questions to answer:
+1. What is the overall sales trend over time?
+2. How does marketing spend correlate with sales revenue?
+3. Which product categories are most popular (by number of sales entries)?
+4. How is customer satisfaction distributed? Are there any low-performing areas?
