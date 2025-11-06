@@ -3061,7 +3061,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         }
                     });
                 } else {
-                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                    console.warn("Feedback link not found inside createDefaultLayout");
                 }
                 // --- END FIX ---
     }
@@ -3194,7 +3194,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         }
                     });
                 } else {
-                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                    console.warn("Feedback link not found inside createSystemGoalsLayout");
                 }
                 // --- END FIX ---
     }
@@ -3264,7 +3264,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         }
                     });
                 } else {
-                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                    console.warn("Feedback link not found inside createGoalsAndInitiativesLayout_SP");
                 }
                 // --- END FIX ---
     }
@@ -3334,7 +3334,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         }
                     });
                 } else {
-                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                    console.warn("Feedback link not found inside createActionPlansLayout_AP");
                 }
                 // --- END FIX ---
     }
@@ -3404,7 +3404,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         }
                     });
                 } else {
-                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                    console.warn("Feedback link not found inside createKpiLayout_KE");
                 }
                 // --- END FIX ---
     }
@@ -3474,7 +3474,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         }
                     });
                 } else {
-                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                    console.warn("Feedback link not found inside createNovelGoalsLayout_NS");
                 }
                 // --- END FIX ---
     }
@@ -3486,27 +3486,36 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div class="lg:col-span-1">
                          <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
                          <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">${template.description}</p>
-                        <div class="glass-container max-w-2xl mx-auto w-full p-6 space-y-4">
-                             <h3 class="text-xl font-bold mb-4 text-white">Analysis Setup</h3>
+      
+                   <div class="glass-container max-w-2xl mx-auto w-full p-6 space-y-4">
+                             
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-xl font-bold text-white">Analysis Setup</h3>
+                                <div class="flex items-center space-x-2">
+                                    <button type="button" id="regressionExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
+                                    <a href="data-files/regression/regression-sample-doc.txt" download="Regression_Sample_Doc.txt" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .txt</a>
+                                    <a href="data-files/regression/regression-sample.csv" download="Regression_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>
+                                </div>
+                            </div>
+
+                            <div id="regressionExamples" class="hidden mb-4 p-3 bg-black/20 border border-white/15 rounded-lg">
+                                <div id="regressionExampleContent" class="text-white/80">Loading example...</div>
+                            </div>
+
                             <div class="space-y-4">
+                                
                                 <div>
-                                    <label for="dependentVar" class="block text-sm font-medium text-gray-200 mb-2">Dependent Variable (Y)</label>
-                                    <input type="text" id="dependentVar" class="input-field" placeholder="The outcome you want to predict (e.g., 'Sales')">
-                                </div>
-                                <div>
-                                    <label for="independentVars" class="block text-sm font-medium text-gray-200 mb-2">Independent Variables (X)</label>
-                                    <input type="text" id="independentVars" class="input-field" placeholder="Comma-separated predictors (e.g., 'Marketing Spend, Website Traffic')">
-                                </div>
-                                <div>
-                                    <label for="regressionContextFile" class="block text-sm font-medium text-gray-200 mb-2">Company Document (.txt, .docx)</label>
+                                    <label for="regressionContextFile" class="block text-sm font-medium text-gray-200 mb-2">Company Document (Optional)</label>
                                     <div class="input-file-wrapper">
                                         <label for="regressionContextFile" id="regressionContextFileLabel" class="input-file-btn">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi 
+ bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
                                             <span class="file-name">Select context document...</span>
                                         </label>
                                         <input type="file" id="regressionContextFile" class="input-file" accept=".txt,.docx">
                                     </div>
                                 </div>
+                                
                                 <div>
                                     <label for="regressionFile" class="block text-sm font-medium text-gray-200 mb-2">Upload Data File (.csv)</label>
                                     <div class="input-file-wrapper">
@@ -3516,28 +3525,307 @@ document.addEventListener("DOMContentLoaded", () => {
                                         </label>
                                         <input type="file" id="regressionFile" class="input-file" accept=".csv">
                                     </div>
+                                    <div id="regressionFileError" class="text-red-400 text-sm mt-2"></div>
                                 </div>
+
+                                <div id="regressionDataPreview" class="space-y-2">
+                                    <label class="block text-sm font-medium text-gray-200">Data Preview (First 5 Rows)</label>
+                                    <div class="overflow-x-auto rounded-lg border border-white/20">
+                                        <table class="min-w-full text-left text-sm text-white/90" id="regressionPreviewTable">
+                                            <tbody>
+                                                <tr>
+                                                    <td class="p-4 text-center text-white/60" colspan="100%">Upload a .csv file to see a preview.</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label for="dependentVar" class="block text-sm font-medium text-gray-200 mb-2">Dependent Variable (Y)</label>
+                                    <div class="select-wrapper">
+                                        <select id="dependentVar" class="input-field" disabled>
+                                            <option value="">-- Upload data to see variables --</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-200 mb-2">Independent Variables (X)</label>
+                                    <div id="independentVarsContainer" class="max-h-40 overflow-y-auto space-y-1 p-3 bg-black/20 rounded-lg border border-white/20">
+                                        <p class="text-sm text-white/60 text-center">-- Upload data to see variables --</p>
+                                    </div>
+                                </div>
+
                             </div>
                             <button id="generateBtn" class="btn btn-primary w-full text-lg py-3 mt-4">
-                                <span id="generateBtnText">📈 Run Regression Analysis</span>
+                                 <span id="generateBtnText">📈 Run Regression Analysis</span>
                                 <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                             </button>
                             <div class="text-center mt-4">
 	                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
                             </div>
-                        </div>
+                 
+        </div>
                         <div class="mt-12">
                              <h2 class="text-3xl font-bold mb-4 text-center">Regression Results</h2>
                              <div id="analysisResult" class="glass-container min-h-[500px] overflow-x-auto"></div>
                              <div id="analysisActions" class="text-center mt-4 space-x-2 hidden">
                                 <button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>
-                                <button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
+                               
+  <button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
                             </div>
                         </div>
                     </div>
                 `;
 
-        // Helper to attach listeners to file inputs
+        // --- All Helper Functions are LOCAL to this function ---
+
+        /**
+         * Extracts headers from CSV text.
+         */
+        const getHeadersFromText = (text) => {
+            if (!text || typeof text !== 'string' || !text.trim()) throw new Error("Input text is empty.");
+            const firstLine = text.split(/[\r\n]+/)[0];
+            if (!firstLine || !firstLine.trim()) throw new Error("First line (header) is empty.");
+
+            let headers = firstLine.split(',').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+            if (headers.length <= 1) headers = firstLine.split(';').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+            if (headers.length <= 1) headers = firstLine.split('\t').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+            if (headers.length === 0) throw new Error("Could not parse headers (tried comma, semicolon, tab).");
+            return headers;
+        };
+        
+        /**
+         * Shows the first 5 data rows in a specified preview table.
+         */
+        const showDataPreview = (csvText, tableId, containerId) => {
+            const previewContainer = $(containerId);
+            const previewTable = $(tableId);
+            if (!previewContainer || !previewTable) return;
+
+            try {
+                // === BUG FIX: Removed [0] ===
+                const lines = csvText.split(/[\r\n]+/).filter(Boolean); // Filter empty lines
+                const rows = lines.slice(0, 6); 
+                
+                if (rows.length < 2) { 
+                    previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Data file is empty or has no data rows.</td></tr></tbody>';
+                    previewContainer.classList.remove("hidden"); 
+                    return; 
+                }
+
+                const headers = getHeadersFromText(rows[0]);
+                let tableHTML = '<thead class="bg-white/10 text-xs uppercase"><tr>';
+                headers.forEach(h => { tableHTML += `<th scope="col" class="px-4 py-2">${h}</th>`; });
+                tableHTML += '</tr></thead><tbody>';
+
+                rows.slice(1).forEach((line, rowIndex) => {
+                    let cells = line.split(',');
+                    if (cells.length !== headers.length) cells = line.split(';');
+                    if (cells.length !== headers.length) cells = line.split('\t');
+
+                    tableHTML += `<tr class="border-t border-white/10 ${rowIndex % 2 === 0 ? 'bg-white/5' : ''}">`;
+                    headers.forEach((_, cellIndex) => {
+                        tableHTML += `<td class="px-4 py-2">${cells[cellIndex] === undefined ? '' : cells[cellIndex]}</td>`;
+                    });
+                    tableHTML += '</tr>';
+                });
+                tableHTML += '</tbody>';
+                previewTable.innerHTML = tableHTML;
+                previewContainer.classList.remove("hidden");
+            } catch (e) {
+                console.error("Error showing data preview:", e);
+                previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-red-400" colspan="100%">Error reading data preview.</td></tr></tbody>';
+                previewContainer.classList.remove("hidden");
+            }
+        };
+
+        /**
+         * Populates the Regression tool's variable selectors based on CSV headers.
+         */
+        const updateRegressionVariables = (headers) => {
+            const dependentSelect = $("dependentVar");
+            const independentContainer = $("independentVarsContainer");
+            if (!dependentSelect || !independentContainer) return;
+
+            dependentSelect.innerHTML = ''; 
+            independentContainer.innerHTML = ''; 
+
+            let dependentFound = false;
+            const excludePatterns = ['id', 'date', 'time', 'timestamp', 'index', 'row'];
+            
+            headers.forEach((header, index) => {
+                const option = new Option(header, header);
+                dependentSelect.add(option);
+
+                const checkboxHtml = `
+                    <label class="flex items-center space-x-2 text-sm text-white/90 p-1.5 rounded hover:bg-white/10">
+                        <input type="checkbox" class="method-checkbox independent-var-checkbox" value="${header}">
+                        <span>${header}</span>
+                    </label>`;
+                independentContainer.innerHTML += checkboxHtml;
+
+                if (!dependentFound && !excludePatterns.some(pattern => header.toLowerCase().includes(pattern))) {
+                    dependentSelect.value = header;
+                    dependentFound = true;
+                }
+            });
+
+            if (!dependentFound && headers.length > 0) {
+                 dependentSelect.value = headers[0];
+            }
+
+            const selectedDependent = dependentSelect.value;
+            independentContainer.querySelectorAll('.independent-var-checkbox').forEach(cb => {
+                if (cb.value !== selectedDependent && !excludePatterns.some(pattern => cb.value.toLowerCase().includes(pattern))) {
+                    cb.checked = true;
+                }
+            });
+
+            dependentSelect.disabled = false;
+        };
+
+        /**
+         * Processes the uploaded regression data file.
+         */
+        const processDataInput_Regression = async (file) => {
+            const errorEl = $("regressionFileError");
+            const dependentSelect = $("dependentVar");
+            const independentContainer = $("independentVarsContainer");
+            const previewContainer = $("regressionDataPreview");
+            const previewTable = $("regressionPreviewTable");
+            
+            errorEl.textContent = "";
+            dependentSelect.disabled = true;
+            dependentSelect.innerHTML = '<option value="">-- Processing data... --</option>';
+            independentContainer.innerHTML = "";
+            
+            previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Processing data...</td></tr></tbody>';
+            previewContainer.classList.remove("hidden");
+
+            if (!file) {
+                 dependentSelect.innerHTML = '<option value="">-- Upload data file --</option>';
+                 independentContainer.innerHTML = '<p class="text-sm text-white/60 text-center">-- Upload data file --</p>';
+                 previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Upload a .csv file to see a preview.</td></tr></tbody>';
+                 return;
+            }
+
+            try {
+                const textContent = await extractTextFromFile(file); 
+                const originalHeaders = getHeadersFromText(textContent);
+
+                // === BUG FIX: Removed [0] ===
+                const lines = textContent.split(/[\r\n]+/).filter(Boolean);
+                if (lines.length < 10) {
+                    errorEl.textContent = "Warning: Small dataset (<10 rows). Regression may be unreliable.";
+                }
+
+                showDataPreview(textContent, 'regressionPreviewTable', 'regressionDataPreview');
+                updateRegressionVariables(originalHeaders); 
+
+            } catch (err) {
+                console.error("Regression input processing failed:", err);
+                errorEl.textContent = `Error: ${err.message}.`;
+                dependentSelect.disabled = true;
+                dependentSelect.innerHTML = '<option value="">-- Error reading data --</option>';
+                independentContainer.innerHTML = '<p class="text-sm text-red-400 text-center">Error reading data.</p>';
+                previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-red-400" colspan="100%">Error reading data preview.</td></tr></tbody>';
+                previewContainer.classList.remove("hidden");
+            }
+        };
+
+        // --- Attach Event Listeners ---
+        
+        const examplesBtn = $("regressionExamplesBtn");
+        const examplesDiv = $("regressionExamples");
+        const exampleContentEl = $("regressionExampleContent");
+
+        if (examplesBtn && examplesDiv && exampleContentEl) {
+            examplesBtn.addEventListener("click", () => {
+                const isHidden = examplesDiv.classList.toggle("hidden");
+                examplesBtn.textContent = isHidden ? "View Examples" : "Hide Examples";
+
+                if (!isHidden && exampleContentEl.textContent === "Loading example...") {
+                    // Populate with relevant regression example
+                    exampleContentEl.innerHTML = `
+                        <div class="text-xs font-medium text-white/90 mb-2">📋 How to Use Regression Analysis</div>
+                        <div class="space-y-2 text-xs">
+                            <div class="mb-4">
+                                <div class="flex items-center mb-2">
+                                    <span class="text-green-400 mr-2">✅</span>
+                                    <span class="text-sm font-medium text-green-400">GOOD EXAMPLE</span>
+                                    <span class="text-xs text-white/60 ml-2">(Results in clear, significant findings)</span>
+                                </div>
+                                <div class="bg-green-900/20 border border-green-500/30 rounded p-3">
+                                    <div class="text-xs text-white/90 mb-2"><strong>CSV Data (Snippet):</strong></div>
+                                    <div class="bg-black/30 p-2 rounded font-mono text-xs text-white/90">
+Date,Sales,Marketing_Spend,Website_Traffic,Customer_Service_Calls<br>
+2023-01-01,50000,5000,15000,300<br>
+2023-02-01,52000,5200,15500,320<br>
+2023-03-01,60000,6000,18000,280
+                                    </div>
+                                    <div class="text-xs text-white/90 mt-3 mb-1"><strong>Selected Variables:</strong></div>
+                                    <div class="text-xs text-white/80">
+                                        • <strong>Dependent (Y):</strong> Sales<br>
+                                        • <strong>Independent (X):</strong> Marketing_Spend, Website_Traffic
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <div class="flex items-center mb-2">
+                                    <span class="text-red-400 mr-2">❌</span>
+                                    <span class="text-sm font-medium text-red-400">BAD EXAMPLE</span>
+                                    <span class="text-xs text-white/60 ml-2">(Results in errors or unreliable findings)</span>
+                                </div>
+                                <div class="bg-red-900/20 border border-red-500/30 rounded p-3">
+                                    <div class="text-xs text-white/90 mb-2"><strong>CSV Data (Snippet with issues):</strong></div>
+                                    <div class="bg-black/30 p-2 rounded font-mono text-xs text-white/90">
+Date,Sales,Marketing,Traffic<br>
+Jan 1, "$50,000", "$5k", "15,000 visitors"<br>
+Feb 1, "$52,000", "$5.2k", "15,500 visitors"
+                                    </div>
+                                    <div class="text-xs text-white/90 mt-3 mb-1"><strong>Issues:</strong></div>
+                                    <div class="text-xs text-red-300">
+                                        • <strong>Non-Numeric Data:</strong> 'Sales' and 'Marketing' columns contain '$' and 'k', which will cause errors. Data must be numbers only (e.g., 50000, 5000).<br>
+                                        • <strong>Messy Data:</strong> 'Traffic' column contains text ("visitors") and commas. It should be a clean number (e.g., 15000).<br>
+                                        • <strong>Bad Column Names:</strong> 'Marketing Spend' (with a space) is better as 'Marketing_Spend'.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="border-t border-white/20 pt-3">
+                                <div class="text-xs font-medium text-white/90 mb-2">💡 How to Get the Best Results:</div>
+                                <div class="text-xs text-white/80 space-y-1">
+                                    <div>• <strong>Clean your data first!</strong> All columns used in the analysis (Y and X) must contain **numbers only**.</div>
+                                    <div>• Remove all text, commas (in numbers), and currency symbols ($, €) from your data columns.</div>
+                                    <div>• Use clear column names with **no spaces** (e.g., 'Website_Traffic' instead of 'Website Traffic').</div>
+                                    <div>• Ensure you have enough data (30+ rows recommended).</div>
+                                </div>
+                            </div>
+                        </div>`;
+                }
+            });
+        }
+        
+        const regressionFileInput = $("regressionFile");
+        if (regressionFileInput) {
+            regressionFileInput.addEventListener("change", (e) => {
+                const label = $("regressionFileLabel");
+                const fileNameSpan = label.querySelector(".file-name");
+                if (e.target.files.length > 0) {
+                    fileNameSpan.textContent = e.target.files[0].name;
+                    label.classList.add("has-file");
+                    processDataInput_Regression(e.target.files[0]);
+                } else {
+                    fileNameSpan.textContent = "Select .csv data file...";
+                    label.classList.remove("has-file");
+                    processDataInput_Regression(null);
+                }
+            });
+        }
+        
         const attachListener = (inputId, labelId) => {
             const fileInput = $(inputId);
             if (fileInput) {
@@ -3554,34 +3842,24 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
             }
         };
-
-        attachListener("regressionFile", "regressionFileLabel");
         attachListener("regressionContextFile", "regressionContextFileLabel");
 
         $("generateBtn").addEventListener("click", handleGenerate);
         reattachActionListeners();
 
-        // Attach listener for the feedback link
-                const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
-                if (feedbackLink) {
-                    feedbackLink.addEventListener("click", (e) => {
-                        e.preventDefault();
-                        
-                        // This just calls the navigateTo function.
-                        // It relies on your main `MapsTo` function to be
-                        // the *simplified one* (without memory logic)
-                        // and your `submitFeedbackPageBtn` listener
-                        // to be the *simplified one* (that just goes home).
-                        if (typeof navigateTo === 'function') {
-                            navigateTo('feedback');
-                        } else {
-                            console.error("navigateTo function is not defined.");
-                        }
-                    });
+        const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+        if (feedbackLink) {
+            feedbackLink.addEventListener("click", (e) => {
+                e.preventDefault();
+                if (typeof navigateTo === 'function') {
+                    navigateTo('feedback');
                 } else {
-                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                    console.error("navigateTo function is not defined.");
                 }
-                // --- END FIX ---
+            });
+        } else {
+            console.warn("Feedback link not found inside createRegressionLayout_DA");
+        }
     }
 
     function createPlsLayout_DA(template) {
@@ -3652,7 +3930,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         }
                     });
                 } else {
-                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                    console.warn("Feedback link not found inside createPlsLayout_DA");
                 }
                 // --- END FIX ---
     }
@@ -3664,12 +3942,18 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div class="lg:col-span-1">
                          <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
                          <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">${template.description}</p>
-                        <div class="glass-container max-w-2xl mx-auto w-full p-6 space-y-4">
+   
+                     <div class="glass-container max-w-2xl mx-auto w-full p-6 space-y-4">
                              
                             <div class="flex items-center justify-between mb-2">
                                 <h3 class="text-xl font-bold text-white">Upload Your Dataset & Context</h3>
-                                <button type="button" id="descConfigExamplesBtn" class="text-xs px-2 py-1 border border-white/30 rounded text-white/80 hover:bg-white/10 hover:text-white transition-all">View Examples</button>
+                                <div class="flex items-center space-x-2">
+                                    <button type="button" id="descConfigExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
+                                    <a href="data-files/descriptive/descriptive-sample-doc.txt" download="Descriptive_Sample_Doc.txt" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .txt</a>
+                                    <a href="data-files/descriptive/descriptive-sample-data.csv" download="Descriptive_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>
+                                </div>
                             </div>
+ 
                             <div id="descConfigExamples" class="hidden mb-4 p-3 bg-black/20 border border-white/15 rounded-lg">
                                 <div class="text-xs font-medium text-white/90 mb-2">📋 How to Use Descriptive Analysis</div>
                                 <div class="space-y-2 text-xs">
@@ -3682,24 +3966,39 @@ document.addEventListener("DOMContentLoaded", () => {
                                     <label for="descriptiveContextFile" class="block text-sm font-medium text-gray-200 mb-2">Company Document (.txt, .docx)</label>
                                     <div class="input-file-wrapper">
                                         <label for="descriptiveContextFile" id="descriptiveContextFileLabel" class="input-file-btn">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
                                             <span class="file-name">Select context document...</span>
                                         </label>
-                                        <input type="file" id="descriptiveContextFile" class="input-file" accept=".txt,.docx">
+                                         <input type="file" id="descriptiveContextFile" class="input-file" accept=".txt,.docx">
                                     </div>
                                 </div>
                                 <div>
                                     <label for="descriptiveFile" class="block text-sm font-medium text-gray-200 mb-2">Data File (.csv)</label>
-                                    <div class="input-file-wrapper">
+                                     <div class="input-file-wrapper">
                                         <label for="descriptiveFile" id="descriptiveFileLabel" class="input-file-btn">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
                                             <span class="file-name">Select .csv data file...</span>
                                         </label>
                                         <input type="file" id="descriptiveFile" class="input-file" accept=".csv">
                                     </div>
+                                    <div id="descriptiveFileError" class="text-red-400 text-sm mt-2"></div>
+                                </div>
+                                
+                                <div id="descriptiveDataPreview" class="space-y-2">
+                                    <label class="block text-sm font-medium text-gray-200">Data Preview (First 5 Rows)</label>
+                                    <div class="overflow-x-auto rounded-lg border border-white/20">
+                                        <table class="min-w-full text-left text-sm text-white/90" id="descriptivePreviewTable">
+                                            <tbody>
+                                                <tr>
+                                                    <td class="p-4 text-center text-white/60" colspan="100%">Upload a .csv file to see a preview.</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
-                            <button id="generateBtn" class="btn btn-primary w-full text-lg py-3 mt-4">
+        
+                             <button id="generateBtn" class="btn btn-primary w-full text-lg py-3 mt-4">
                                 <span id="generateBtnText">🔍 Analyze Data</span>
                                 <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                             </button>
@@ -3717,6 +4016,96 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                     </div>
                 `;
+
+        // --- All Helper Functions are LOCAL to this function ---
+
+        const getHeadersFromText = (text) => {
+            if (!text || typeof text !== 'string' || !text.trim()) throw new Error("Input text is empty.");
+            const firstLine = text.split(/[\r\n]+/)[0];
+            if (!firstLine || !firstLine.trim()) throw new Error("First line (header) is empty.");
+
+            let headers = firstLine.split(',').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+            if (headers.length <= 1) headers = firstLine.split(';').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+            if (headers.length <= 1) headers = firstLine.split('\t').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+            if (headers.length === 0) throw new Error("Could not parse headers (tried comma, semicolon, tab).");
+            return headers;
+        };
+        
+        const showDataPreview = (csvText, tableId, containerId) => {
+            const previewContainer = $(containerId);
+            const previewTable = $(tableId);
+            if (!previewContainer || !previewTable) return;
+
+            try {
+                const lines = csvText.split(/[\r\n]+/).filter(Boolean);
+                const rows = lines.slice(0, 6); 
+                
+                if (rows.length < 2) { 
+                    previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Data file is empty or has no data rows.</td></tr></tbody>';
+                    previewContainer.classList.remove("hidden"); 
+                    return; 
+                }
+
+                const headers = getHeadersFromText(rows[0]);
+                let tableHTML = '<thead class="bg-white/10 text-xs uppercase"><tr>';
+                headers.forEach(h => { tableHTML += `<th scope="col" class="px-4 py-2">${h}</th>`; });
+                tableHTML += '</tr></thead><tbody>';
+
+                rows.slice(1).forEach((line, rowIndex) => {
+                    let cells = line.split(',');
+                    if (cells.length !== headers.length) cells = line.split(';');
+                    if (cells.length !== headers.length) cells = line.split('\t');
+
+                    tableHTML += `<tr class="border-t border-white/10 ${rowIndex % 2 === 0 ? 'bg-white/5' : ''}">`;
+                    headers.forEach((_, cellIndex) => {
+                        tableHTML += `<td class="px-4 py-2">${cells[cellIndex] === undefined ? '' : cells[cellIndex]}</td>`;
+                    });
+                    tableHTML += '</tr>';
+                });
+                tableHTML += '</tbody>';
+                previewTable.innerHTML = tableHTML;
+                previewContainer.classList.remove("hidden");
+            } catch (e) {
+                console.error("Error showing data preview:", e);
+                previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-red-400" colspan="100%">Error reading data preview.</td></tr></tbody>';
+                previewContainer.classList.remove("hidden");
+            }
+        };
+
+        const processDataInput_Descriptive = async (file) => {
+            const errorEl = $("descriptiveFileError");
+            const previewContainer = $("descriptiveDataPreview");
+            const previewTable = $("descriptivePreviewTable");
+            
+            errorEl.textContent = "";
+            previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Processing data...</td></tr></tbody>';
+            previewContainer.classList.remove("hidden");
+
+            if (!file) {
+                 previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Upload a .csv file to see a preview.</td></tr></tbody>';
+                 return;
+            }
+
+            try {
+                const textContent = await extractTextFromFile(file); 
+                const originalHeaders = getHeadersFromText(textContent);
+
+                const lines = textContent.split(/[\r\n]+/).filter(Boolean);
+                if (lines.length < 10) {
+                    errorEl.textContent = "Warning: Small dataset (<10 rows). Analysis may be unreliable.";
+                }
+
+                showDataPreview(textContent, 'descriptivePreviewTable', 'descriptiveDataPreview');
+
+            } catch (err) {
+                console.error("Descriptive input processing failed:", err);
+                errorEl.textContent = `Error: ${err.message}.`;
+                previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-red-400" colspan="100%">Error reading data preview.</td></tr></tbody>';
+                previewContainer.classList.remove("hidden");
+            }
+        };
+
+        // === Simplified attachListener for context file ===
         const attachListener = (inputId, labelId) => {
             const fileInput = $(inputId);
             if (fileInput) {
@@ -3733,8 +4122,25 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
             }
         };
-        attachListener("descriptiveFile", "descriptiveFileLabel");
         attachListener("descriptiveContextFile", "descriptiveContextFileLabel");
+
+        // === NEW: Event listener for the descriptive data file ===
+        const descriptiveFileInput = $("descriptiveFile");
+        if (descriptiveFileInput) {
+            descriptiveFileInput.addEventListener("change", (e) => {
+                const label = $("descriptiveFileLabel");
+                const fileNameSpan = label.querySelector(".file-name");
+                if (e.target.files.length > 0) {
+                    fileNameSpan.textContent = e.target.files[0].name;
+                    label.classList.add("has-file");
+                    processDataInput_Descriptive(e.target.files[0]); // Process the file
+                } else {
+                    fileNameSpan.textContent = "Select .csv data file...";
+                    label.classList.remove("has-file");
+                    processDataInput_Descriptive(null); // Reset
+                }
+            });
+        }
 
         // --- Add Example Toggle ---
         const examplesBtn = $("descConfigExamplesBtn");
@@ -3747,7 +4153,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 examplesBtn.textContent = isHidden ? "View Examples" : "Hide Examples";
 
                 if (!isHidden && exampleContentEl.textContent === "Loading example...") {
-                    // Populate with relevant descriptive analysis example following DEMATEL pattern
                     exampleContentEl.innerHTML = `
                         <div class="mb-4">
                             <div class="flex items-center mb-2">
@@ -3755,7 +4160,6 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <span class="text-sm font-medium text-green-400">GOOD EXAMPLE</span>
                                 <span class="text-xs text-white/60 ml-2">(Results in comprehensive statistical insights with clear patterns)</span>
                             </div>
-                            
                             <div class="bg-green-900/20 border border-green-500/30 rounded p-3 mb-3">
                                 <div class="text-xs text-white/90 mb-2"><strong>Company Document:</strong></div>
                                 <div class="text-xs text-white/80 mb-3">
@@ -3763,7 +4167,6 @@ document.addEventListener("DOMContentLoaded", () => {
                                     Key areas of focus: regional performance variations, employee productivity trends, and customer retention patterns. 
                                     Strategic priority: identify underperforming segments and optimization opportunities."
                                 </div>
-                                
                                 <div class="text-xs text-white/90 mb-2"><strong>CSV Data (quarterly metrics):</strong></div>
                                 <div class="bg-black/30 p-2 rounded font-mono text-xs text-white/90">
 Quarter,Revenue_Millions,Customer_Count,Satisfaction_Score,Employee_Count,Regional_Performance
@@ -3773,29 +4176,24 @@ Q3_2023,15.2,310,4.5,140,South
 Q4_2023,16.9,325,4.8,145,West</div>
                             </div>
                         </div>
-                        
                         <div class="mb-4">
                             <div class="flex items-center mb-2">
                                 <span class="text-red-400 mr-2">❌</span>
                                 <span class="text-sm font-medium text-red-400">BAD EXAMPLE</span>
                                 <span class="text-xs text-white/60 ml-2">(Results in limited insights and unclear patterns)</span>
                             </div>
-                            
                             <div class="bg-red-900/20 border border-red-500/30 rounded p-3">
                                 <div class="text-xs text-white/80 mb-3">
                                     "Our company has some data and wants analysis. Please look at everything and tell us what's important."
                                 </div>
-                                
                                 <div class="bg-black/30 p-2 rounded font-mono text-xs text-white/90">
 Data1,Data2,Info,Stuff,$Revenue
 A,Good,5,Things,$15000
 B,Bad,3,Items,$12000</div>
                             </div>
                         </div>
-                        
                         <div class="border-t border-white/20 pt-3">
                             <div class="text-xs font-medium text-white/90 mb-2">📝 Key Differences Between Good & Bad Input:</div>
-                            
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                                 <div>
                                     <div class="text-green-400 font-medium mb-1">✅ Good Practices:</div>
@@ -3807,7 +4205,6 @@ B,Bad,3,Items,$12000</div>
                                         <div>• Meaningful time periods</div>
                                     </div>
                                 </div>
-                                
                                 <div>
                                     <div class="text-red-400 font-medium mb-1">❌ Bad Practices:</div>
                                     <div class="text-white/80 space-y-1">
@@ -3820,7 +4217,6 @@ B,Bad,3,Items,$12000</div>
                                 </div>
                             </div>
                         </div>
-                        
                         <div class="border-t border-white/20 pt-3 mt-3">
                             <div class="text-xs font-medium text-white/90 mb-2">💡 How to Use This Tool:</div>
                             <div class="text-xs text-white/80 space-y-1">
@@ -3841,27 +4237,19 @@ B,Bad,3,Items,$12000</div>
         reattachActionListeners();
 
         // Attach listener for the feedback link
-                const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
-                if (feedbackLink) {
-                    feedbackLink.addEventListener("click", (e) => {
-                        e.preventDefault();
-                        
-                        // This just calls the navigateTo function.
-                        // It relies on your main `MapsTo` function to be
-                        // the *simplified one* (without memory logic)
-                        // and your `submitFeedbackPageBtn` listener
-                        // to be the *simplified one* (that just goes home).
-                        if (typeof navigateTo === 'function') {
-                            navigateTo('feedback');
-                        } else {
-                            console.error("navigateTo function is not defined.");
-                        }
-                    });
+        const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+        if (feedbackLink) {
+            feedbackLink.addEventListener("click", (e) => {
+                e.preventDefault();
+                if (typeof navigateTo === 'function') {
+                    navigateTo('feedback');
                 } else {
-                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                    console.error("navigateTo function is not defined.");
                 }
-                // --- END FIX ---
-
+            });
+        } else {
+            console.warn("Feedback link not found inside createDescriptiveLayout_DA");
+        }
     }
     
     function createPrescriptiveLayout_DA(template) {
@@ -3927,7 +4315,7 @@ B,Bad,3,Items,$12000</div>
                         }
                     });
                 } else {
-                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                    console.warn("Feedback link not found inside createPrescriptiveLayout_DA");
                 }
                 // --- END FIX ---
     }
@@ -3935,15 +4323,14 @@ B,Bad,3,Items,$12000</div>
     /**
      * --- UPDATED (V15 - Final Fix) ---
      * Creates the layout for the Visualization tool.
-     * - REMOVES the broken line that referenced the
-     * deleted 'lastPageIdBeforeFeedback' variable.
-     * - The feedback link now correctly calls navigateTo('feedback').
+     * --- USER REQUESTED FORMATTING UPDATE V3 ---
+     * - Added "Download Sample .txt" link next to the CSV link.
      */
     function createVisualizationLayout_DA(template) {
         // Helper function to safely get element
         function safeGetElement(id) {
             try {
-                return document.getElementById(id);
+                 return document.getElementById(id);
             } catch (e) {
                 console.error("Error getting element:", id, e);
                 return null;
@@ -3963,10 +4350,19 @@ B,Bad,3,Items,$12000</div>
             '<h1 class="text-4xl font-bold text-center mb-2">' + (template.title || 'Visualization') + '</h1>',
             '<p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">' + (template.description || '') + '</p>',
             '<div class="glass-container max-w-2xl mx-auto w-full p-6 space-y-4">',
+            
+            // --- CHANGED BLOCK START ---
+            // Added the "Download Sample .txt" link here
             '<div class="flex items-center justify-between mb-2">',
             '<h3 class="text-xl font-bold text-white">Visualization Setup</h3>',
-            '<button type="button" id="vizConfigExamplesBtn" class="text-xs px-2 py-1 border border-white/30 rounded text-white/80 hover:bg-white/10 hover:text-white transition-all">View Examples</button>',
+            '<div class="flex items-center space-x-2">', 
+                '<button type="button" id="vizConfigExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>',
+                // Added the new .txt link
+                '<a href="data-files/visualization/visualization-sample-doc.txt" download="Visualization_Sample_Doc.txt" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .txt</a>',
+                '<a href="data-files/visualization/visualization-sample.csv" download="Visualization_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>',
             '</div>',
+            '</div>',
+            // --- CHANGED BLOCK END ---
             
             // --- Good vs. Bad Examples ---
             '<div id="vizConfigExamples" class="hidden mb-4 p-3 bg-black/20 border border-white/15 rounded-lg">',
@@ -4020,8 +4416,27 @@ B,Bad,3,Items,$12000</div>
             '<div>• <strong>Use clean headers:</strong> Use simple column names (e.g., Marketing_Spend not Marketing ($)).</div>',
             '</div>',
             '</div>',
+
+            // --- MOVED BLOCK START ---
+            // The Data Requirements Checklist is now inside the "vizConfigExamples" div
+            '<div class="mt-4 p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg">',
+            '<div class="mb-2">',
+                '<h4 class="text-sm font-medium text-blue-300">📋 Data Requirements Checklist</h4>',
             '</div>',
-            // --- End Examples ---
+            '<ul class="list-disc list-inside text-xs text-white/80 space-y-1">',
+            '<li><strong>File Format:</strong> CSV (UTF-8 encoded).</li>',
+            '<li><strong>Headers:</strong> Must be in the **first row**. Use simple names (e.g., `Sales_Revenue`, not `Sales ($)`).</li>',
+            '<li><strong>Numbers:</strong> Must be **numbers only** (no $, ,, or % symbols).</li>',
+            '<li><strong>Dates:</strong> Must be in a **consistent format** (e.g., YYYY-MM-DD or MM/DD/YYYY).</li>',
+            '<li><strong>Categorical:</strong> Must have **consistent spelling** (e.g., "North", not "North" and "N.").</li>',
+            '<li><strong>Data Quality:</strong> Check for missing values (nulls) or extreme outliers.</li>',
+            '<li><strong>Limits:</strong> Recommended 30-50+ rows for reliable insights. Max file size ~5MB.</li>',
+            '</ul>',
+            '</div>',
+            // --- MOVED BLOCK END ---
+
+            '</div>',
+            // --- End Examples Div ---
 
             '<div class="space-y-4">',
             '<div>',
@@ -4042,23 +4457,6 @@ B,Bad,3,Items,$12000</div>
             '</div>',
             '<div id="vizFileError" class="text-red-400 text-sm mt-2"></div>',
             '</div>',
-            '</div>',
-
-            // --- Data Requirements Checklist (V11) ---
-            '<div class="mt-4 p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg">',
-            '<div class="flex justify-between items-center mb-2">',
-                '<h4 class="text-sm font-medium text-blue-300">📋 Data Requirements Checklist</h4>',
-                '<a href="data-files/visualization/visualization-sample.csv" download="Visualization_Sample_Data.csv" class="btn btn-secondary text-xs px-2 py-1" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample CSV</a>',
-            '</div>',
-            '<ul class="list-disc list-inside text-xs text-white/80 space-y-1">',
-            '<li><strong>File Format:</strong> CSV (UTF-8 encoded).</li>',
-            '<li><strong>Headers:</strong> Must be in the **first row**. Use simple names (e.g., `Sales_Revenue`, not `Sales ($)`).</li>',
-            '<li><strong>Numbers:</strong> Must be **numbers only** (no $, ,, or % symbols).</li>',
-            '<li><strong>Dates:</strong> Must be in a **consistent format** (e.g., YYYY-MM-DD or MM/DD/YYYY).</li>',
-            '<li><strong>Categorical:</strong> Must have **consistent spelling** (e.g., "North", not "North" and "N.").</li>',
-            '<li><strong>Data Quality:</strong> Check for missing values (nulls) or extreme outliers.</li>',
-            '<li><strong>Limits:</strong> Recommended 30-50+ rows for reliable insights. Max file size ~5MB.</li>',
-            '</ul>',
             '</div>',
 
             // --- Column Guidance (V10) ---
@@ -5021,7 +5419,7 @@ B,Bad,3,Items,$12000</div>
                         }
                     });
                 } else {
-                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                    console.warn("Feedback link not found inside createSystemActionsLayout_ST");
                 }
                 // --- END FIX ---
     }
@@ -6046,7 +6444,7 @@ function renderSystemActionsPage_ST(container, data) {
                         }
                     });
                 } else {
-                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                    console.warn("Feedback link not found inside createSystemObjectivesLayout_ST");
                 }
                 // --- END FIX ---
     }
@@ -6318,7 +6716,7 @@ function renderSystemActionsPage_ST(container, data) {
                         }
                     });
                 } else {
-                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                    console.warn("Feedback link not found inside createCreativeDissonanceLayout_NS");
                 }
                 // --- END FIX ---
 
@@ -6778,7 +7176,7 @@ function renderSystemActionsPage_ST(container, data) {
                         }
                     });
                 } else {
-                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                    console.warn("Feedback link not found inside createLivingSystemLayout_NS");
                 }
                 // --- END FIX ---
     }
@@ -7232,7 +7630,7 @@ function renderSystemActionsPage_ST(container, data) {
                         }
                     });
                 } else {
-                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                    console.warn("Feedback link not found inside createThinkingSystemLayout_NS");
                 }
                 // --- END FIX ---
     }
@@ -7664,7 +8062,7 @@ function renderSystemActionsPage_ST(container, data) {
                         }
                     });
                 } else {
-                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                    console.warn("Feedback link not found inside createSwotTowsLayout");
                 }
                 // --- END FIX ---
     }
@@ -7734,7 +8132,7 @@ function renderSystemActionsPage_ST(container, data) {
                         }
                     });
                 } else {
-                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                    console.warn("Feedback link not found inside createMiscLayout_MSC");
                 }
                 // --- END FIX ---
     }
@@ -7809,7 +8207,7 @@ function renderSystemActionsPage_ST(container, data) {
                         }
                     });
                 } else {
-                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                    console.warn("Feedback link not found inside createLeveragePointsLayout");
                 }
                 // --- END FIX ---
     }
@@ -7921,7 +8319,7 @@ function renderSystemActionsPage_ST(container, data) {
                         }
                     });
                 } else {
-                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                    console.warn("Feedback link not found inside createArchetypeAnalysisLayout");
                 }
                 // --- END FIX ---
     }
@@ -8044,7 +8442,7 @@ function renderSystemActionsPage_ST(container, data) {
                         }
                     });
                 } else {
-                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                    console.warn("Feedback link not found inside createFactorAnalysisLayout");
                 }
                 // --- END FIX ---
     }
@@ -8157,7 +8555,7 @@ function renderSystemActionsPage_ST(container, data) {
                         }
                     });
                 } else {
-                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                    console.warn("Feedback link not found inside createParetoLayout");
                 }
                 // --- END FIX ---
     }
@@ -8230,7 +8628,7 @@ function renderSystemActionsPage_ST(container, data) {
                         }
                     });
                 } else {
-                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                    console.warn("Feedback link not found inside createProcessMappingLayout");
                 }
                 // --- END FIX ---
     }
@@ -8301,7 +8699,7 @@ function renderSystemActionsPage_ST(container, data) {
                         }
                     });
                 } else {
-                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                    console.warn("Feedback link not found inside createSystemThinkingLayout");
                 }
                 // --- END FIX ---
     }
@@ -8318,10 +8716,15 @@ function renderSystemActionsPage_ST(container, data) {
 
             <div class="max-w-2xl mx-auto w-full">
                 <div class="glass-container p-6 space-y-6">
+                    
                     <div class="flex items-center justify-between mb-2">
                         <h3 class="text-xl font-bold text-white">Analysis Configuration</h3>
-                        <button type="button" id="configExamplesBtn" class="text-xs px-2 py-1 border border-white/30 rounded text-white/80 hover:bg-white/10 hover:text-white transition-all">View Examples</button>
+                        <div class="flex items-center space-x-2">
+                            <button type="button" id="configExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
+                            <a href="data-files/sem/sem-sample-data.csv" download="SEM_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>
+                        </div>
                     </div>
+
                     <div id="configExamples" class="hidden mb-4 p-3 bg-black/20 border border-white/15 rounded-lg">
                         <div class="text-xs font-medium text-white/90 mb-2">📋 Configuration Examples</div>
                         <div class="space-y-2 text-xs">
@@ -8354,10 +8757,15 @@ function renderSystemActionsPage_ST(container, data) {
                             <div id="semTextError" class="text-red-400 text-sm mt-2"></div>
                         </div>
 
-                        <div id="semDataPreview" class="hidden space-y-2">
+                        <div id="semDataPreview" class="space-y-2">
                             <label class="block text-sm font-medium text-gray-200">Data Preview (First 5 Rows)</label>
                             <div class="overflow-x-auto rounded-lg border border-white/20">
                                 <table class="min-w-full text-left text-sm text-white/90" id="semPreviewTable">
+                                    <tbody>
+                                        <tr>
+                                            <td class="p-4 text-center text-white/60" colspan="100%">Upload or paste data to see a preview.</td>
+                                        </tr>
+                                    </tbody>
                                 </table>
                             </div>
                         </div>
@@ -8372,7 +8780,7 @@ function renderSystemActionsPage_ST(container, data) {
                     <div>
                         <div class="flex items-center justify-between mb-2">
                             <label for="semMeasurementSyntax" class="block text-sm font-medium text-gray-200">Measurement Model Syntax</label>
-                            <button type="button" id="measurementExamplesBtn" class="text-xs px-2 py-1 border border-white/30 rounded text-white/80 hover:bg-white/10 hover:text-white transition-all">View Examples</button>
+                            <button type="button" id="measurementExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
                         </div>
                         <div id="measurementExamples" class="hidden mb-2 p-3 bg-black/20 border border-white/15 rounded-lg">
                             <div class="text-xs font-medium text-white/90 mb-2">📊 Measurement Model Examples</div>
@@ -8380,14 +8788,12 @@ function renderSystemActionsPage_ST(container, data) {
                                 <div>
                                     <div class="text-white/80 mb-1">Basic Factor Structure:</div>
                                     <div class="bg-black/30 p-2 rounded font-mono text-white/90 relative">
-                                        <button class="absolute top-1 right-1 text-xs px-1 py-0.5 bg-white/10 rounded hover:bg-white/20" onclick="copyToClipboard(this, 'Anxiety =~ anx1 + anx2 + anx3 + anx4\\nDepression =~ dep1 + dep2 + dep3 + dep4')">Copy</button>
                                         Anxiety =~ anx1 + anx2 + anx3 + anx4<br>Depression =~ dep1 + dep2 + dep3 + dep4
                                     </div>
                                 </div>
                                 <div>
                                     <div class="text-white/80 mb-1">With Fixed Loadings:</div>
                                     <div class="bg-black/30 p-2 rounded font-mono text-white/90 relative">
-                                        <button class="absolute top-1 right-1 text-xs px-1 py-0.5 bg-white/10 rounded hover:bg-white/20" onclick="copyToClipboard(this, 'Performance =~ 1*perf1 + perf2 + perf3\\nSatisfaction =~ 1*sat1 + sat2 + sat3')">Copy</button>
                                         Performance =~ 1*perf1 + perf2 + perf3<br>Satisfaction =~ 1*sat1 + sat2 + sat3
                                     </div>
                                 </div>
@@ -8399,7 +8805,7 @@ function renderSystemActionsPage_ST(container, data) {
                     <div>
                         <div class="flex items-center justify-between mb-2">
                             <label for="semStructuralSyntax" class="block text-sm font-medium text-gray-200">Structural Model Syntax</label>
-                            <button type="button" id="structuralExamplesBtn" class="text-xs px-2 py-1 border border-white/30 rounded text-white/80 hover:bg-white/10 hover:text-white transition-all">View Examples</button>
+                            <button type="button" id="structuralExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
                         </div>
                         <div id="structuralExamples" class="hidden mb-2 p-3 bg-black/20 border border-white/15 rounded-lg">
                             <div class="text-xs font-medium text-white/90 mb-2">🔗 Structural Model Examples</div>
@@ -8407,14 +8813,12 @@ function renderSystemActionsPage_ST(container, data) {
                                 <div>
                                     <div class="text-white/80 mb-1">Simple Regression:</div>
                                     <div class="bg-black/30 p-2 rounded font-mono text-white/90 relative">
-                                        <button class="absolute top-1 right-1 text-xs px-1 py-0.5 bg-white/10 rounded hover:bg-white/20" onclick="copyToClipboard(this, 'Performance ~ Motivation + Ability\\nSatisfaction ~ Performance')">Copy</button>
                                         Performance ~ Motivation + Ability<br>Satisfaction ~ Performance
                                     </div>
                                 </div>
                                 <div>
                                     <div class="text-white/80 mb-1">Mediation Model:</div>
                                     <div class="bg-black/30 p-2 rounded font-mono text-white/90 relative">
-                                        <button class="absolute top-1 right-1 text-xs px-1 py-0.5 bg-white/10 rounded hover:bg-white/20" onclick="copyToClipboard(this, 'Outcome ~ c*Predictor + b*Mediator\\nMediator ~ a*Predictor\\n\\nindirect := a*b\\ntotal := c + (a*b)')">Copy</button>
                                         Outcome ~ c*Predictor + b*Mediator<br>Mediator ~ a*Predictor<br><br>indirect := a*b<br>total := c + (a*b)
                                     </div>
                                 </div>
@@ -8443,20 +8847,9 @@ function renderSystemActionsPage_ST(container, data) {
                 </div>
             </div>`;
 
-    // --- Helper function for copying to clipboard ---
-    window.copyToClipboard = function(button, text) {
-        navigator.clipboard.writeText(text.replace(/\\n/g, '\n')).then(() => {
-            const originalText = button.textContent;
-            button.textContent = 'Copied!';
-            setTimeout(() => {
-                button.textContent = originalText;
-            }, 2000);
-        });
-    };
-
     // --- Attach Core Event Listeners ---
-    $("generateBtn").addEventListener("click", handleGenerate); // Assumes handleGenerate exists and calls handleSemAnalysis
-    reattachActionListeners(); // Assumes this function attaches save button listeners
+    $("generateBtn").addEventListener("click", handleGenerate); 
+    reattachActionListeners(); 
 
     // --- Add Example Toggle Event Listeners ---
     $("configExamplesBtn").addEventListener("click", function() {
@@ -8510,10 +8903,8 @@ function renderSystemActionsPage_ST(container, data) {
         if (analysisCache[currentTemplateId]) {
             $("analysisResult").innerHTML = analysisCache[currentTemplateId];
             $("analysisActions").classList.remove("hidden");
-            // Re-attach listeners specific to the results content (e.g., tabs)
-            reattachTabListeners($("analysisResult")); // Assumes this function exists
+            reattachTabListeners($("analysisResult")); 
         } else {
-            // Default placeholder if no cached results
             $("analysisResult").innerHTML = '<div class="text-white/60 p-8 text-center">Your generated analysis will appear here.</div>';
             $("analysisActions").classList.add("hidden");
         }
@@ -8532,37 +8923,34 @@ function renderSystemActionsPage_ST(container, data) {
         const dataPreviewContainer = $("semDataPreview");
         const previewTable = $("semPreviewTable");
         const modelTemplateSelect = $("semModelTemplate");
-        let fullHeaders = []; // Holds the headers extracted from data
+        let fullHeaders = []; 
 
-        // --- SEM Helper Functions --- (Keep all helper functions as they were)
+        // --- SEM Helper Functions (with MODIFICATIONS) ---
 
-        /**
-         * Extracts headers from CSV text, trying common delimiters.
-         * @param {string} text - CSV content.
-         * @returns {string[]} Array of headers.
-         */
         const getHeadersFromText = (text) => {
             if (!text || typeof text !== 'string' || !text.trim()) throw new Error("Input text is empty.");
             const firstLine = text.split(/[\r\n]+/)[0];
             if (!firstLine || !firstLine.trim()) throw new Error("First line (header) is empty.");
 
             let headers = firstLine.split(',').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
-            if (headers.length <= 1) {
-                headers = firstLine.split(';').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
-            }
-            if (headers.length <= 1) {
-                headers = firstLine.split('\t').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
-            }
+            if (headers.length <= 1) headers = firstLine.split(';').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+            if (headers.length <= 1) headers = firstLine.split('\t').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
             if (headers.length === 0) throw new Error("Could not parse headers (tried comma, semicolon, tab).");
             return headers;
         };
 
-        /** Shows the first 5 data rows in the preview table. */
+        /** === MODIFIED showDataPreview === */
         const showDataPreview = (csvText) => {
             try {
-                const lines = csvText.split(/[\r\n]+/).filter(Boolean); // Filter empty lines
-                const rows = lines.slice(0, 6); // Header + 5 data rows
-                if (rows.length < 2) { dataPreviewContainer.classList.add("hidden"); return; }
+                const lines = csvText.split(/[\r\n]+/).filter(Boolean); 
+                const rows = lines.slice(0, 6); 
+                
+                // === MODIFIED: Show placeholder if file is empty/no rows ===
+                if (rows.length < 2) { 
+                    previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Data file is empty or has no data rows.</td></tr></tbody>';
+                    dataPreviewContainer.classList.remove("hidden"); 
+                    return; 
+                }
 
                 const headers = getHeadersFromText(rows[0]);
                 let tableHTML = '<thead class="bg-white/10 text-xs uppercase"><tr>';
@@ -8570,10 +8958,9 @@ function renderSystemActionsPage_ST(container, data) {
                 tableHTML += '</tr></thead><tbody>';
 
                 rows.slice(1).forEach((line, rowIndex) => {
-                    // Simple split for preview - assumes consistent delimiter detected by getHeadersFromText
                     let cells = line.split(',');
-                    if (cells.length <= 1) cells = line.split(';');
-                    if (cells.length <= 1) cells = line.split('\t');
+                    if (cells.length !== headers.length) cells = line.split(';');
+                    if (cells.length !== headers.length) cells = line.split('\t');
 
                     tableHTML += `<tr class="border-t border-white/10 ${rowIndex % 2 === 0 ? 'bg-white/5' : ''}">`;
                     headers.forEach((_, cellIndex) => {
@@ -8583,14 +8970,15 @@ function renderSystemActionsPage_ST(container, data) {
                 });
                 tableHTML += '</tbody>';
                 previewTable.innerHTML = tableHTML;
-                dataPreviewContainer.classList.remove("hidden");
+                dataPreviewContainer.classList.remove("hidden"); // Ensure it's visible
             } catch (e) {
                 console.error("Error showing data preview:", e);
-                dataPreviewContainer.classList.add("hidden");
+                // === MODIFIED: Show error in table ===
+                previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-red-400" colspan="100%">Error reading data preview.</td></tr></tbody>';
+                dataPreviewContainer.classList.remove("hidden"); // Ensure it's visible
             }
         };
 
-    /** Populates the model template dropdown based on detected headers. */
     const updateModelTemplates = (headers) => {
         fullHeaders = headers;
         modelTemplateSelect.innerHTML = '';
@@ -8600,17 +8988,16 @@ function renderSystemActionsPage_ST(container, data) {
         modelTemplateSelect.disabled = false;
     };
 
-        /** Splits syntax into measurement/structural parts and populates text boxes, removing comments first. */
         const populateSyntaxBoxes = (fullSyntax) => {
             const uncommentedSyntax = fullSyntax.split('\n')
-                .filter(line => !line.trim().startsWith('#')) // Remove comments
+                .filter(line => !line.trim().startsWith('#'))
                 .join('\n');
             const lines = uncommentedSyntax.split('\n');
             let measurement = [], structural = [], foundStructural = false;
 
             lines.forEach(line => {
                 const trimmedLine = line.trim();
-                if (!trimmedLine) return; // Skip blank lines after comment removal
+                if (!trimmedLine) return;
                 if (trimmedLine.includes('~') && !trimmedLine.includes('=~')) foundStructural = true;
                 if (foundStructural) structural.push(line);
                 else measurement.push(line);
@@ -8622,100 +9009,97 @@ function renderSystemActionsPage_ST(container, data) {
             structuralSyntaxBox.placeholder = structuralSyntaxBox.value ? structuralSyntaxBox.placeholder : "e.g., F1 ~ F2";
         };
 
-        /** Generates the recommended path analysis syntax (comment-free). */
         const generateRecommendedSyntax = () => {
             const fullSyntax = `
     Marketing =~ Ad_Spend_USD + Brand_Awareness_Pct
-
     Profit_USD ~ Marketing + Online_Sales_USD + Retail_Sales_USD`;
             populateSyntaxBoxes(fullSyntax);
         };
 
-    /** Generates a super simple SEM syntax based on columns (quick fix version). */
     const generateSyntax = () => {
         if (fullHeaders.length === 0) { 
             alert("Data headers not found for auto-suggestion."); 
             return; 
         }
-
-        // Filter out common non-analytical columns
         const excludePatterns = ['id', 'date', 'time', 'timestamp', 'index', 'row'];
         const analyticalHeaders = fullHeaders.filter(h => 
             !excludePatterns.some(pattern => h.toLowerCase().includes(pattern))
         );
-
-        // QUICK FIX: Check if we have enough columns
         if (analyticalHeaders.length < 4) {
             populateSyntaxBoxes(`# Need at least 4 numeric columns for SEM\n# Available: ${analyticalHeaders.join(', ')}\n# Please add more numeric variables to your data`);
             return;
         }
-
-        // QUICK FIX: Generate the simplest possible model
         let measurementPart = '';
         let structuralPart = '';
-        
-        // Just create 2 factors with 2 indicators each
         measurementPart += `Factor1 =~ ${analyticalHeaders[0]} + ${analyticalHeaders[1]}\n`;
         measurementPart += `Factor2 =~ ${analyticalHeaders[2]} + ${analyticalHeaders[3]}\n`;
-        
-        // Simple structural relationship
         structuralPart = 'Factor2 ~ Factor1\n';
-
-        // Combine parts
         let fullSyntax = measurementPart.trim() + '\n\n' + structuralPart.trim();
         populateSyntaxBoxes(fullSyntax);
     };
 
-        /** Processes data input (file or text) to update UI state. */
+        /** === MODIFIED processDataInput === */
         const processDataInput = async (isFileInput) => {
             let textContent = null;
             let originalHeaders = [];
             const errorEl = isFileInput === null ? null : (isFileInput ? fileError : textError);
             const inputEl = isFileInput === null ? null : (isFileInput ? fileInput : textInput);
 
-            // Clear errors
             if (fileError) fileError.textContent = "";
             if (textError) textError.textContent = "";
 
-            // Reset UI before processing
             modelTemplateSelect.disabled = true;
-            modelTemplateSelect.innerHTML = '<option value="">-- Upload or paste data first --</option>';
-            dataPreviewContainer.classList.add("hidden");
-            previewTable.innerHTML = "";
-            measurementSyntaxBox.value = ""; // Clear syntax boxes too
+            modelTemplateSelect.innerHTML = '<option value="">-- Processing data... --</option>';
+            // === MODIFIED: Show processing in table ===
+            previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Processing data...</td></tr></tbody>';
+            dataPreviewContainer.classList.remove("hidden"); // Make sure it's visible
+            
+            measurementSyntaxBox.value = ""; 
             structuralSyntaxBox.value = "";
             measurementSyntaxBox.placeholder = "Upload or paste data to see model templates...";
             structuralSyntaxBox.placeholder = "";
 
-            // If isFileInput is null, it means we just need to reset the UI (e.g., file deselected)
-            if (isFileInput === null) return;
+            if (isFileInput === null) {
+                // === MODIFIED: Show placeholder on reset ===
+                modelTemplateSelect.innerHTML = '<option value="">-- Upload or paste data first --</option>';
+                previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Upload or paste data to see a preview.</td></tr></tbody>';
+                return;
+            }
 
             try {
                 if (isFileInput) {
                     const file = inputEl.files[0];
-                    if (!file) return;
+                    if (!file) {
+                        // === MODIFIED: Show placeholder if no file ===
+                        modelTemplateSelect.innerHTML = '<option value="">-- Upload or paste data first --</option>';
+                        previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Upload or paste data to see a preview.</td></tr></tbody>';
+                        return;
+                    }
                     textContent = await extractTextFromFile(file);
                 } else {
                     textContent = inputEl.value;
-                    if (!textContent.trim()) return;
+                    if (!textContent.trim()) {
+                        // === MODIFIED: Show placeholder if no text ===
+                        modelTemplateSelect.innerHTML = '<option value="">-- Upload or paste data first --</option>';
+                        previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Upload or paste data to see a preview.</td></tr></tbody>';
+                        return;
+                    }
                 }
 
             originalHeaders = getHeadersFromText(textContent);
 
-            // QUICK FIX: Basic data validation
             const lines = textContent.split(/[\r\n]+/).filter(Boolean);
-            const dataRows = lines.slice(1); // Skip header
+            const dataRows = lines.slice(1); 
             
             if (dataRows.length < 10) {
                 if (errorEl) errorEl.textContent = "Warning: Very small dataset. Need at least 10 rows for reliable SEM analysis.";
             }
             
-            // Check for numeric data in first few rows
             let numericColumnsCount = 0;
             if (dataRows.length > 0) {
                 const firstRow = dataRows[0].split(/[,;\t]/);
                 firstRow.forEach((cell, index) => {
-                    if (index > 0 && !isNaN(parseFloat(cell)) && isFinite(cell)) { // Skip first column (might be date/id)
+                    if (index > 0 && !isNaN(parseFloat(cell)) && isFinite(cell)) {
                         numericColumnsCount++;
                     }
                 });
@@ -8725,11 +9109,9 @@ function renderSystemActionsPage_ST(container, data) {
                 if (errorEl) errorEl.textContent = "Warning: Most columns appear non-numeric. SEM requires numeric data.";
             }
 
-                // If headers parsed successfully:
                 showDataPreview(textContent);
-                updateModelTemplates(originalHeaders); // This enables the dropdown
+                updateModelTemplates(originalHeaders);
 
-            // AUTO-TRIGGER: Only if we have sufficient data
             if (dataRows.length >= 10 && numericColumnsCount >= 3) {
                 modelTemplateSelect.value = "autosuggest";
                 modelTemplateSelect.dispatchEvent(new Event('change'));
@@ -8738,10 +9120,11 @@ function renderSystemActionsPage_ST(container, data) {
             } catch (err) {
                 console.error("Input processing failed:", err);
                 if (errorEl) errorEl.textContent = `Error: ${err.message}.`;
-                // Reset UI to error state
                 modelTemplateSelect.disabled = true;
                 modelTemplateSelect.innerHTML = '<option value="">-- Error reading data --</option>';
-                dataPreviewContainer.classList.add("hidden");
+                // === MODIFIED: Show error in table ===
+                previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-red-400" colspan="100%">Error reading data preview.</td></tr></tbody>';
+                dataPreviewContainer.classList.remove("hidden");
                 measurementSyntaxBox.placeholder = "Error reading input data.";
                 structuralSyntaxBox.placeholder = "";
             }
@@ -8749,19 +9132,17 @@ function renderSystemActionsPage_ST(container, data) {
 
         // --- Attach Input Event Listeners ---
 
-        // Radio toggles
         fileToggle.addEventListener("change", () => {
             fileArea.classList.remove("hidden");
             textArea.classList.add("hidden");
-            processDataInput(fileInput.files.length > 0 ? true : null); // Re-process if file exists, else reset
+            processDataInput(fileInput.files.length > 0 ? true : null); 
         });
         textToggle.addEventListener("change", () => {
             fileArea.classList.add("hidden");
             textArea.classList.remove("hidden");
-            processDataInput(textInput.value.trim() ? false : null); // Re-process if text exists, else reset
+            processDataInput(textInput.value.trim() ? false : null); 
         });
 
-        // File input selection
         if (fileInput) {
             fileInput.addEventListener("change", () => {
                 const label = $("semFileLabel");
@@ -8769,61 +9150,54 @@ function renderSystemActionsPage_ST(container, data) {
                 if (fileInput.files.length > 0) {
                     fileNameSpan.textContent = fileInput.files[0].name;
                     label.classList.add("has-file");
-                    processDataInput(true); // Process the new file
-                } else { // File deselected
+                    processDataInput(true); 
+                } else { 
                     fileNameSpan.textContent = "Select data file...";
                     label.classList.remove("has-file");
-                    processDataInput(null); // Reset the UI
+                    processDataInput(null); 
                 }
             });
         }
 
-        // Text input typing (only process if text area is visible)
-        // Use 'blur' or a debounce mechanism if 'input' triggers too often
         if (textInput) {
-            textInput.addEventListener("blur", () => { // Changed from 'input' to 'blur'
+            textInput.addEventListener("blur", () => { 
                 if (!textArea.classList.contains("hidden")) {
                     processDataInput(textInput.value.trim() ? false : null);
                 }
             });
         }
 
-        // Model template selection change
         if (modelTemplateSelect) {
-            // --- MODIFIED LISTENER ---
-            modelTemplateSelect.addEventListener("change", async () => { // Make the handler async
+            modelTemplateSelect.addEventListener("change", async () => { 
                 const selected = modelTemplateSelect.value;
-                measurementSyntaxBox.value = ""; // Clear boxes when selection changes
+                measurementSyntaxBox.value = ""; 
                 structuralSyntaxBox.value = "";
 
                 switch (selected) {
                     case "custom":
                         measurementSyntaxBox.placeholder = "Type measurement model syntax here...";
                         structuralSyntaxBox.placeholder = "Type structural model syntax here...";
-                        measurementSyntaxBox.focus(); // Focus the first box for custom entry
+                        measurementSyntaxBox.focus(); 
                         break;
                     case "autosuggest":
                         measurementSyntaxBox.placeholder = "Auto-suggesting generic model...";
                         structuralSyntaxBox.placeholder = "Auto-suggesting generic model...";
-                        generateSyntax(); // Call the simple auto-suggest function
+                        generateSyntax(); 
                         measurementSyntaxBox.placeholder = measurementSyntaxBox.value ? "Review auto-suggested syntax." : "Could not auto-suggest.";
                         structuralSyntaxBox.placeholder = structuralSyntaxBox.value ? "Review auto-suggested syntax." : "";
-
                         break;
                     case "recommended":
                         measurementSyntaxBox.placeholder = "Loading recommended model...";
                         structuralSyntaxBox.placeholder = "Loading recommended model...";
-                        generateRecommendedSyntax(); // Call the specific recommended syntax function
+                        generateRecommendedSyntax(); 
                         measurementSyntaxBox.placeholder = "Review recommended syntax.";
                         structuralSyntaxBox.placeholder = "Review recommended syntax.";
                         break;
                     default:
-                        // Option "" selected (Select a model template...)
                         measurementSyntaxBox.placeholder = "Select a model template or type syntax...";
                         structuralSyntaxBox.placeholder = "";
                 }
             });
-            // --- END OF MODIFIED LISTENER ---
         }
 
         // Attach listener for the feedback link
@@ -8831,12 +9205,6 @@ function renderSystemActionsPage_ST(container, data) {
                 if (feedbackLink) {
                     feedbackLink.addEventListener("click", (e) => {
                         e.preventDefault();
-                        
-                        // This just calls the navigateTo function.
-                        // It relies on your main `MapsTo` function to be
-                        // the *simplified one* (without memory logic)
-                        // and your `submitFeedbackPageBtn` listener
-                        // to be the *simplified one* (that just goes home).
                         if (typeof navigateTo === 'function') {
                             navigateTo('feedback');
                         } else {
@@ -8844,16 +9212,10 @@ function renderSystemActionsPage_ST(container, data) {
                         }
                     });
                 } else {
-                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                    console.warn("Feedback link not found inside createSemAnalysisLayout");
                 }
-                // --- END FIX ---
     }
-
-/**
- * Combined function to create the layout for Predictive Analysis
- * and set up its specific event listeners.
- * Assumes the first column of the data is the date column.
- */
+         
 function createPredictiveAnalysisLayout(template) {
     const contentContainer = $("templateDetailContent");
     contentContainer.className = "grid lg:grid-cols-1 gap-12"; // Set layout class
@@ -8866,9 +9228,13 @@ function createPredictiveAnalysisLayout(template) {
 
             <div class="max-w-2xl mx-auto w-full">
                 <div class="glass-container p-6 space-y-6">
+                    
                     <div class="flex items-center justify-between mb-2">
                         <h3 class="text-xl font-bold text-white">Forecasting Configuration</h3>
-                        <button type="button" id="predictiveExamplesBtn" class="text-xs px-2 py-1 border border-white/30 rounded text-white/80 hover:bg-white/10 hover:text-white transition-all">View Examples</button>
+                        <div class="flex items-center space-x-2">
+                            <button type="button" id="predictiveExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
+                            <a href="data-files/predictive/predictive-sample-data.csv" download="Predictive_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>
+                        </div>
                     </div>
 
                     <div id="predictiveExamples" class="hidden mb-4 p-3 bg-black/20 border border-white/15 rounded-lg">
@@ -8886,11 +9252,13 @@ function createPredictiveAnalysisLayout(template) {
                         <label for="predictiveFile" class="block text-sm font-medium text-gray-200 mb-2">Time Series Data (.csv, .xlsx)</label>
                         <div class="input-file-wrapper">
                             <label for="predictiveFile" id="predictiveFileLabel" class="input-file-btn">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" 
+ fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16">
                                     <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
                                     <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/>
                                 </svg>
-                                <span class="file-name">Select data file...</span>
+                                <span class="file-name">Select data 
+ file...</span>
                             </label>
                             <input type="file" id="predictiveFile" class="input-file" accept=".csv,.xlsx">
                         </div>
@@ -8899,7 +9267,7 @@ function createPredictiveAnalysisLayout(template) {
 
                     <div id="predictiveTextInputArea" class="hidden">
                         <label for="predictiveDataText" class="block text-sm font-medium text-gray-200 mb-2">Paste CSV Data</label>
-                        <textarea id="predictiveDataText" class="input-field h-48" placeholder="Date,Revenue,Customers\\n2023-01-01,150000,1250\\n2023-02-01,162000,1340..."></textarea>
+                         <textarea id="predictiveDataText" class="input-field h-48" placeholder="Date,Revenue,Customers\n2023-01-01,150000,1250\n2023-02-01,162000,1340..."></textarea>
                         <div id="predictiveTextError" class="text-red-400 text-sm mt-2"></div>
                     </div>
 
@@ -8916,7 +9284,7 @@ function createPredictiveAnalysisLayout(template) {
                         <div>
                             <label for="predictiveTargetColumn" class="block text-sm font-medium text-gray-200 mb-2">Target Variable (to Forecast)</label>
                             <select id="predictiveTargetColumn" class="input-field" disabled>
-                                <option value="">-- Upload data first --</option>
+                                  <option value="">-- Upload data first --</option>
                             </select>
                         </div>
                     </div>
@@ -8924,27 +9292,27 @@ function createPredictiveAnalysisLayout(template) {
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label for="predictiveForecastPeriods" class="block text-sm font-medium text-gray-200 mb-2">Forecast Periods</label>
-                            <input type="number" id="predictiveForecastPeriods" class="input-field" value="12" min="1" max="48" placeholder="e.g., 12">
+                             <input type="number" id="predictiveForecastPeriods" class="input-field" value="12" min="1" max="48" placeholder="e.g., 12">
                         </div>
                         <div>
                             <label for="predictiveConfidenceLevel" class="block text-sm font-medium text-gray-200 mb-2">Confidence Level</label>
                             <select id="predictiveConfidenceLevel" class="input-field">
                                 <option value="0.80">80%</option>
-                                <option value="0.90" selected>90%</option>
+                                  <option value="0.90" selected>90%</option>
                                 <option value="0.95">95%</option>
                                 <option value="0.99">99%</option>
                             </select>
                         </div>
                          <div>
                             <label for="predictiveModelType" class="block text-sm font-medium text-gray-200 mb-2">Model Type</label>
-                            <select id="predictiveModelType" class="input-field">
+                             <select id="predictiveModelType" class="input-field">
                                 <option value="auto" selected>Auto-Select Best</option>
                                 <option value="trend">Simple Trend</option>
                                 <option value="seasonal">Seasonal Forecast</option>
                                 <option value="linear">Linear Regression</option>
                             </select>
                         </div>
-                    </div>
+                     </div>
 
                     <button id="generateBtn" class="btn btn-primary w-full text-lg py-3">
                         <span id="generateBtnText">📈 Generate Forecast</span>
@@ -8953,7 +9321,7 @@ function createPredictiveAnalysisLayout(template) {
                     <div class="text-center mt-4">
 	                    <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
                     </div>
-                </div>
+                 </div>
             </div>
 
             <div class="mt-12">
@@ -8964,7 +9332,7 @@ function createPredictiveAnalysisLayout(template) {
                 <div id="analysisActions" class="text-center mt-4 space-x-2 hidden">
                     <button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>
                     <button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
-                </div>
+                 </div>
             </div>
         </div>
     `;
@@ -8999,7 +9367,8 @@ function createPredictiveAnalysisLayout(template) {
         const firstLine = text.split(/[\r\n]+/)[0];
         if (!firstLine || !firstLine.trim()) throw new Error("First line (header) is empty.");
 
-        let headers = firstLine.split(',').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+        let headers = 
+ firstLine.split(',').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
         if (headers.length <= 1) {
             headers = firstLine.split(';').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
         }
@@ -9023,7 +9392,8 @@ function createPredictiveAnalysisLayout(template) {
             }
 
             const headers = getHeadersFromText(rows[0]);
-            let tableHTML = '<thead class="bg-white/10 text-xs uppercase"><tr>';
+            let tableHTML 
+ = '<thead class="bg-white/10 text-xs uppercase"><tr>';
             headers.forEach(h => { tableHTML += `<th scope="col" class="px-4 py-2">${h}</th>`; });
             tableHTML += '</tr></thead><tbody>';
 
@@ -9036,7 +9406,7 @@ function createPredictiveAnalysisLayout(template) {
                 headers.forEach((_, cellIndex) => {
                     const cellValue = cells[cellIndex]?.trim().replace(/^"|"$/g, '') ?? '';
                     tableHTML += `<td class="px-4 py-2 whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]" title="${cellValue}">${cellValue}</td>`;
-                });
+                 });
                 tableHTML += '</tr>';
             });
             tableHTML += '</tbody>';
@@ -9070,7 +9440,7 @@ function createPredictiveAnalysisLayout(template) {
 
         // Populate target dropdown (skip first column)
         headers.forEach((header, index) => {
-            if (index === 0) return; // Skip the assumed date column
+             if (index === 0) return; // Skip the assumed date column
 
             const optionTarget = new Option(header, header);
             targetColumnSelect.add(optionTarget);
@@ -9119,7 +9489,8 @@ function createPredictiveAnalysisLayout(template) {
         try {
             // Get data content
             if (isFileInput) {
-                const file = fileInput.files[0];
+                const 
+ file = fileInput.files[0];
                 if (!file) return;
                 textContent = await extractTextFromFile(file);
             } else {
@@ -9131,7 +9502,10 @@ function createPredictiveAnalysisLayout(template) {
             const headers = getHeadersFromText(textContent);
 
             // Basic Validation
+            // === BUG FIX: Use textContent, not csvText ===
             const lines = textContent.split(/[\r\n]+/).filter(Boolean);
+            // === END BUG FIX ===
+            
             if (lines.length < 10) {
                 if (errorEl) errorEl.textContent = "Warning: Small dataset (<10 rows). Forecasting might be unreliable.";
             } else {
@@ -9144,7 +9518,7 @@ function createPredictiveAnalysisLayout(template) {
 
         } catch (err) {
             // Handle errors
-            console.error("Input processing failed:", err);
+             console.error("Input processing failed:", err);
             if (errorEl) errorEl.textContent = `Error: ${err.message}. Please check data format/content.`;
             targetColumnSelect.disabled = true;
             targetColumnSelect.innerHTML = '<option value="">-- Error reading data --</option>';
@@ -9158,13 +9532,15 @@ function createPredictiveAnalysisLayout(template) {
     // Example button listener
     if (examplesBtn && examplesDiv) {
         examplesBtn.addEventListener("click", () => {
-            examplesDiv.classList.toggle("hidden");
-            if (!examplesDiv.classList.contains('hidden')) {
+            const isHidden = examplesDiv.classList.toggle("hidden");
+            examplesBtn.textContent = isHidden ? "View Examples" : "Hide Examples";
+
+            if (!isHidden) {
                 const exampleContent = $("predictiveExampleContent");
-                if (exampleContent) {
+                if (exampleContent && exampleContent.textContent === "Loading example...") {
                     exampleContent.innerHTML = `
                         <div class="text-xs font-medium text-white/90 mb-2">📊 Data Format Examples</div>
-                        <div class="space-y-2 text-xs">
+                         <div class="space-y-2 text-xs">
                              <div>
                                 <div class="text-white/80 mb-1">Time Series Data (CSV):</div>
                                 <pre class="bg-black/30 p-2 rounded font-mono text-white/90 text-xs whitespace-pre-wrap overflow-x-auto">Date,Revenue\n2023-01-01,150000\n2023-02-01,162000\n2023-03-01,175000</pre>
@@ -9179,7 +9555,6 @@ function createPredictiveAnalysisLayout(template) {
     <div>• Target variable column must contain only numbers</div>
 </div>
 
-<!-- Model Types Guide -->
 <div class="mt-4 p-3 bg-white/5 rounded border border-white/10">
     <h4 class="text-sm font-medium mb-3 text-blue-300">Model Types & Data Patterns</h4>
     
@@ -9190,7 +9565,7 @@ function createPredictiveAnalysisLayout(template) {
                 <div class="text-white/70">Best for: Steady growth or decline</div>
                 <div class="text-white/50">Examples: Subscription revenue, planned expansion</div>
             </div>
-            
+             
             <div class="p-2 bg-yellow-900/20 rounded border-l-2 border-yellow-400">
                 <div class="font-medium text-yellow-300">Seasonal Forecast</div>
                 <div class="text-white/70">Best for: Repeating cycles</div>
@@ -9203,7 +9578,7 @@ function createPredictiveAnalysisLayout(template) {
                 <div class="font-medium text-red-300">Simple Trend</div>
                 <div class="text-white/70">Best for: Stable operations</div>
                 <div class="text-white/50">Examples: Mature markets, utility bills</div>
-            </div>
+             </div>
             
             <div class="p-2 bg-green-900/20 rounded border-l-2 border-green-400">
                 <div class="font-medium text-green-300">Auto-Select (Recommended)</div>
@@ -9221,7 +9596,8 @@ function createPredictiveAnalysisLayout(template) {
 
     // Input type toggle listeners
     if (fileToggle && textToggle && fileArea && textArea) {
-        fileToggle.addEventListener("change", () => {
+        fileToggle.addEventListener("change", () => 
+ {
             if (fileToggle.checked) {
                 fileArea.classList.remove("hidden");
                 textArea.classList.add("hidden");
@@ -9239,7 +9615,8 @@ function createPredictiveAnalysisLayout(template) {
 
     // File input change listener
     if (fileInput) {
-        fileInput.addEventListener("change", () => {
+        
+ fileInput.addEventListener("change", () => {
             const label = $("predictiveFileLabel");
             const fileNameSpan = label ? label.querySelector(".file-name") : null;
             if (fileNameSpan) {
@@ -9250,7 +9627,7 @@ function createPredictiveAnalysisLayout(template) {
                 } else {
                     fileNameSpan.textContent = "Select data file...";
                     if (label) label.classList.remove("has-file");
-                    processDataInput(null);
+                     processDataInput(null);
                 }
             }
         });
@@ -9274,7 +9651,8 @@ function createPredictiveAnalysisLayout(template) {
     // Save button listeners
     const savePdfBtn = $("savePdfBtn");
     const saveDocxBtn = $("saveDocxBtn");
-    if (savePdfBtn) savePdfBtn.removeEventListener("click", handleSaveAsPdf);
+    if (savePdfBtn) 
+ savePdfBtn.removeEventListener("click", handleSaveAsPdf);
     if (saveDocxBtn) saveDocxBtn.removeEventListener("click", handleSaveAsDocx);
     reattachActionListeners(); // Use your global function to attach listeners
 
@@ -9290,7 +9668,7 @@ function createPredictiveAnalysisLayout(template) {
                     try {
                         Plotly.Plots.resize(chartDiv);
                         console.log(`Resized cached chart ${chartDiv.id}`);
-                    } catch (e) {
+                     } catch (e) {
                         console.error(`Error resizing cached chart ${chartDiv.id}:`, e);
                     }
                 }
@@ -9306,23 +9684,23 @@ function createPredictiveAnalysisLayout(template) {
                 const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
                 if (feedbackLink) {
                     feedbackLink.addEventListener("click", (e) => {
-                        e.preventDefault();
+                         e.preventDefault();
                         
                         // This just calls the navigateTo function.
                         // It relies on your main `MapsTo` function to be
                         // the *simplified one* (without memory logic)
                         // and your `submitFeedbackPageBtn` listener
                         // to be the *simplified one* (that just goes home).
-                        if (typeof navigateTo === 'function') {
+                         if (typeof navigateTo === 'function') {
                             navigateTo('feedback');
                         } else {
                             console.error("navigateTo function is not defined.");
                         }
                     });
                 } else {
-                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                    console.warn("Feedback link not found inside createPredictiveAnalysisLayout");
                 }
-                // --- END FIX ---
+                 // --- END FIX ---
 
 } // --- End of createPredictiveAnalysisLayout function ---
 
@@ -9381,15 +9759,7 @@ function reattachActionListeners() {
     }
 }
 
-/**
- * Creates the DOM layout for the DEMATEL analysis page.
- * --- UPDATED WITH ENHANCED EXAMPLE ---
- * - Removed the AI Preview step.
- * - Added a text preview for uploaded files, just like the SEM layout.
- * - Enhanced example with full spectrum of relationship intensities.
- * @param {object} template - The template object with title and description.
- */
-function createDematelLayout(template) {
+    function createDematelLayout(template) {
     const contentContainer = $("templateDetailContent");
     contentContainer.className = "grid lg:grid-cols-1 gap-12"; // Single column layout
 
@@ -9401,15 +9771,18 @@ contentContainer.innerHTML = `
 
         <div class="max-w-2xl mx-auto w-full">
             <div class="glass-container p-6 space-y-6">
+                
                 <div class="flex items-center justify-between mb-2">
                     <h3 class="text-xl font-bold text-white">Analysis Configuration</h3>
-                    <button type="button" id="configExamplesBtn" class="text-xs px-2 py-1 border border-white/30 rounded text-white/80 hover:bg-white/10 hover:text-white transition-all">View Examples</button>
+                    <div class="flex items-center space-x-2">
+                        <button type="button" id="configExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
+                        <a href="data-files/dematel/dematel-sample-doc.txt" download="DEMATEL_Sample_Context.txt" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .txt</a>
+                    </div>
                 </div>
                 
                 <div id="configExamples" class="hidden mb-4 p-3 bg-black/20 border border-white/15 rounded-lg">
                     <div class="text-xs font-medium text-white/90 mb-3">📋 Good vs Bad DEMATEL Input Examples</div>
                     
-                    <!-- GOOD EXAMPLE -->
                     <div class="mb-6">
                         <div class="flex items-center mb-2">
                             <span class="text-green-300 font-semibold text-xs mr-2">✅ GOOD EXAMPLE</span>
@@ -9422,7 +9795,6 @@ contentContainer.innerHTML = `
                         </div>
                     </div>
 
-                    <!-- BAD EXAMPLE -->
                     <div class="mb-6">
                         <div class="flex items-center mb-2">
                             <span class="text-red-300 font-semibold text-xs mr-2">❌ BAD EXAMPLE</span>
@@ -9435,7 +9807,6 @@ contentContainer.innerHTML = `
                         </div>
                     </div>
 
-                    <!-- KEY DIFFERENCES -->
                     <div class="text-white/60 text-xs space-y-1 mb-4">
                         <div class="font-medium text-white/80">Key Differences Between Good & Bad Input:</div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
@@ -9458,7 +9829,6 @@ contentContainer.innerHTML = `
                         </div>
                     </div>
 
-                    <!-- HOW TO USE INSTRUCTIONS -->
                     <div class="bg-blue-900/20 border border-blue-500/30 p-3 rounded">
                         <div class="text-blue-300 font-semibold text-xs mb-2">📝 How to Use This Tool:</div>
                         <div class="text-white/80 text-xs space-y-1">
@@ -9544,7 +9914,6 @@ The AI will read this and build the matrix for you."></textarea>
     }
 
     // --- Attach Core Event Listeners ---
-    // This button now correctly calls your main 'handleGenerate' router
     $("generateBtn").addEventListener("click", handleGenerate); 
     
     reattachActionListeners(); 
@@ -9610,7 +9979,7 @@ The AI will read this and build the matrix for you."></textarea>
                 
                 // --- NEW PREVIEW LOGIC ---
                 try {
-                    // extractTextFromFile is a global function in your script
+                     // extractTextFromFile is a global function in your script
                     const text = await extractTextFromFile(file); 
                     const first10Lines = text.split('\n').slice(0, 10).join('\n');
                     filePreview.textContent = first10Lines || "(File appears to be empty)";
@@ -9655,7 +10024,7 @@ The AI will read this and build the matrix for you."></textarea>
                         }
                     });
                 } else {
-                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
+                    console.warn("Feedback link not found inside createDematelLayout");
                 }
                 // --- END FIX ---
 }
@@ -18256,512 +18625,479 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
     }
 
     async function handleRegressionAnalysis_DA() {
-    const analysisResultContainer = $("analysisResult");
-    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div></div><div></div><div></div> </div><h3 class="text-xl font-semibold text-white mb-4">Running Comprehensive Regression...</h3><p class="text-white/80 mb-2">Building model, running diagnostics, and generating actionable insights...</p></div>`;
-    setLoading("generate", true);
+        const analysisResultContainer = $("analysisResult");
+        analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div></div><div></div><div></div> </div><h3 class="text-xl font-semibold text-white mb-4">Running scikit-learn Regression...</h3><p class="text-white/80 mb-2">Sending data to Python backend for statistical analysis...</p></div>`;
+        setLoading("generate", true);
+        $("analysisActions").classList.add("hidden");
 
-    // Define URL and Model
-    const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
-    // *** CHOOSE MODEL: qwen or llama ***
-    const MODEL_NAME = "llama3.1:latest"; // Use Qwen for potentially better numerical accuracy
-    // const MODEL_NAME = "llama3.1:latest"; // Alternative option
+        const API_URL = "https://analysis.data2int.com/api/regression"; // Your FastAPI endpoint
 
-    try {
-        // 1. Gather Inputs
-        const dependentVar = $("dependentVar").value.trim();
-        const independentVarsRaw = $("independentVars").value.trim();
-        const dataFile = $("regressionFile").files[0];
-        const contextFile = $("regressionContextFile").files[0];
+        try {
+            // --- 1. Gather Inputs from NEW UI Elements ---
+            const dependentVar = $("dependentVar").value;
+            
+            // Get all checked independent variables
+            const independentVarCheckboxes = document.querySelectorAll("#independentVarsContainer .independent-var-checkbox:checked");
+            const independentVarsList = Array.from(independentVarCheckboxes).map(cb => cb.value);
 
-        if (!dependentVar || !independentVarsRaw || !dataFile) {
-            throw new Error("❌ Please specify Dependent Variable, at least one Independent Variable, and upload a CSV data file.");
-        }
-        // Clean up independent vars list
-        const independentVars = independentVarsRaw.split(',').map(v => v.trim()).filter(v => v).join(', ');
-        if (!independentVars) {
-             throw new Error("❌ Please specify at least one valid Independent Variable.");
-        }
+            const dataFile = $("regressionFile").files[0];
+            const contextFile = $("regressionContextFile").files[0];
 
-
-        const fileContent = await extractTextFromFile(dataFile);
-        let businessContext = "No additional business context document provided.";
-        if (contextFile) {
-            try {
-                 businessContext = await extractTextFromFile(contextFile);
-                 console.log("Extracted text from context file for regression.");
-            } catch (e) {
-                 console.warn("Could not read context file:", e.message);
-                 businessContext = `Error reading context file: ${e.message}. Proceeding without document context.`;
+            // 2. Validate Inputs
+            if (!dataFile) {
+                throw new Error("❌ Please upload a CSV data file.");
             }
-        } else {
-             console.log("No business context file uploaded for regression.");
-        }
-
-
-        // Truncate if necessary
-        const MAX_DATA_LENGTH = 15000; // Keep data snippet reasonable
-        const MAX_CONTEXT_LENGTH = 7000; // Context less critical than data for pure regression
-        let truncatedNote = "";
-        let dataSnippet = fileContent;
-
-        if (fileContent.length > MAX_DATA_LENGTH) {
-            dataSnippet = fileContent.substring(0, MAX_DATA_LENGTH);
-            truncatedNote = `(Note: Analysis based on the first ${MAX_DATA_LENGTH} characters of the data file.)`;
-            console.warn(`Regression analysis data truncated.`);
-        }
-         if (businessContext.length > MAX_CONTEXT_LENGTH) {
-            businessContext = businessContext.substring(0, MAX_CONTEXT_LENGTH) + "\n... (business context truncated)";
-            console.warn(`Regression business context truncated.`);
-        }
-
-        // 2. Construct Enhanced Prompt
-        const prompt = `
-            You are a meticulous senior data analyst performing a comprehensive multiple regression analysis. Accuracy, clear interpretation of statistics, validation of assumptions, and actionable business insights grounded in data are paramount.
-
-            **ANALYSIS INPUTS:**
-            * **Dependent Variable (Y):** "${dependentVar}"
-            * **Independent Variables (X):** "${independentVars}"
-            * **Business Context:** """${businessContext}"""
-            * **Data Snippet:** ${truncatedNote}\n\`\`\`csv\n${dataSnippet}\n\`\`\`
-
-            **DETAILED TASKS:**
-            1.  **Model Summary & Fit:** Calculate and interpret key model statistics:
-                * **R-squared & Adj. R-squared:** Provide values and explain *precisely* what percentage of variance in "${dependentVar}" is explained by the model, considering the number of predictors (Adj. R²).
-                * **F-statistic & Prob(F-statistic):** Provide values and state clearly whether the overall model is statistically significant (typically p < 0.05).
-                * **Regression Equation:** Provide the calculated equation.
-                * **Overall Interpretation:** Summarize the model's goodness-of-fit based on these metrics.
-
-            2.  **Variable Importance (if applicable/calculable):** Estimate the relative importance of each independent variable in predicting the dependent variable. Provide a score or ranking and a brief rationale based on model coefficients or other standard methods (e.g., contribution to R²). If not directly calculable from standard OLS output, omit this section or state it's based on coefficient magnitude/significance.
-
-            3.  **Coefficients Analysis:** For *each* coefficient (including the Intercept):
-                * Provide: Variable Name, Coefficient value, Standard Error, P-value.
-                * **Interpretation:** Explain the practical meaning of the coefficient (e.g., "For each one-unit increase in [X variable], ${dependentVar} is predicted to [increase/decrease] by [coefficient value] units, holding other variables constant.").
-                * **Significance:** State clearly whether the coefficient is statistically significant (p < 0.05) and its implication (i.e., we are confident this variable has a real effect).
-
-            4.  **Residuals Analysis (Model Diagnostics):**
-                * Simulate/generate plausible 'predicted' vs. 'residuals' data points (around 15-20 points consistent with the fit stats).
-                * **Interpretation:** Analyze the *pattern* of these residuals. Explicitly check for:
-                    * **Linearity:** Do residuals scatter randomly around zero, or show a curve (suggesting non-linear relationship)?
-                    * **Homoscedasticity:** Is the spread of residuals roughly constant across predicted values, or does it fan out/in (heteroscedasticity)?
-                    * **Normality (Conceptual):** Do residuals seem roughly normally distributed around zero?
-                    * **Conclusion:** State whether the basic assumptions of linear regression appear to be met based *only* on the visual pattern of the simulated residuals.
-
-            5.  **Business Recommendations (3-4 recommendations):** Based *only* on the significant coefficients, variable importance, and the provided Business Context:
-                * **\`recommendation\`:** A clear, actionable title.
-                * **\`insight_link\`:** State which specific significant variable(s) or model finding drives this recommendation.
-                * **\`action_items\`:** List 2-3 concrete steps a business could take based on this finding and the context.
-                * **\`potential_risks\`:** Briefly mention 1-2 potential risks or considerations for implementing the action.
-                * **\`kpis_to_track\`:** List 2-3 KPIs to measure the success of the implemented action.
-
-            6.  **Self-Correction:** Before outputting JSON, rigorously check: Are R²/F-stat interpretations correct? Are coefficient p-values interpreted correctly? Does the residual analysis correctly check assumptions? Are recommendations directly linked ONLY to significant findings and business context? Fix all errors.
-
-            **ABSOLUTE CONSTRAINTS:**
-            - **DATA GROUNDING:** All interpretations and recommendations MUST derive *solely* from the analysis of the provided data snippet, variable definitions, and business context. No external knowledge.
-            - **STATISTICAL ACCURACY:** Interpretations of R², F-stat, p-values, and residual patterns must be statistically sound.
-            - **ACTIONABILITY & LINKAGE:** Recommendations must be practical and clearly linked back to specific, significant model results.
-            - **JSON FORMAT:** Adhere EXACTLY. Include all specified keys and sub-keys.
-
-            **RETURN FORMAT:**
-            Provide ONLY a valid JSON object. **CRITICAL: Include ALL keys specified below.**
-            {
-              "model_summary": {
-                "dependent_variable": "${dependentVar}",
-                "r_squared": 0.0, // Calculated
-                "adj_r_squared": 0.0, // Calculated
-                "f_statistic": 0.0, // Calculated
-                "prob_f_statistic": 0.0, // Calculated
-                "regression_equation": "Y = ...", // Calculated
-                "interpretation": "Precise interpretation of fit..." // Generated
-              },
-              "variable_importance": [ // Optional section if calculable, otherwise omit or explain basis
-                { "variable": "Var1", "importance_score": 0.0, "rationale": "Based on..." },
-                { "variable": "Var2", "importance_score": 0.0, "rationale": "Based on..." }
-              ],
-              "coefficients": [ // Include Intercept + all Independent Vars
-                {
-                  "variable": "Intercept", "coefficient": 0.0, "std_error": 0.0, "p_value": 0.0,
-                  "interpretation": "Baseline value interpretation...", "significance": "Is it significant? (p<0.05)"
-                },
-                {
-                   "variable": "X1", "coefficient": 0.0, "std_error": 0.0, "p_value": 0.0,
-                   "interpretation": "Practical meaning of coefficient...", "significance": "Is it significant? (p<0.05)"
-                } // ... for all variables ...
-              ],
-              "residuals_analysis": { // Renamed key for clarity
-                "predicted_vs_residuals": [ // Array of ~15-20 plausible points
-                    { "predicted": 0.0, "residual": 0.0 }
-                 ],
-                "interpretation": "Analysis of pattern for Linearity, Homoscedasticity, Normality. Conclusion on assumptions met/violated..." // Generated
-              },
-              "business_recommendations": [ // 3-4 recommendations
-                {
-                  "recommendation": "Action Title",
-                  "insight_link": "Driven by significance of [Variable X]...",
-                  "action_items": ["Step 1...", "Step 2..."],
-                  "potential_risks": "Risk 1...",
-                  "kpis_to_track": ["KPI 1...", "KPI 2..."]
-                } // ...
-              ]
+            if (!dependentVar) {
+                throw new Error("❌ Please select a Dependent Variable (Y).");
             }
+            if (independentVarsList.length === 0) {
+                 throw new Error("❌ Please select at least one Independent Variable (X).");
+            }
+            if (independentVarsList.includes(dependentVar)) {
+                throw new Error("❌ The Dependent Variable cannot also be an Independent Variable.");
+            }
+
+            // 3. Prepare FormData for the backend
+            const formData = new FormData();
+            
+            // Append files
+            formData.append("data_file", dataFile, dataFile.name);
+            if (contextFile) {
+                formData.append("context_file", contextFile, contextFile.name);
+            }
+
+            // Append simple text fields
+            formData.append("target_column", dependentVar);
+
+            // Convert and append fields that backend expects as JSON strings
+            formData.append("feature_columns", JSON.stringify(independentVarsList));
+            
+            // 4. Send Request to Python Backend
+            console.log(`Sending Regression request to Python backend at ${API_URL}...`);
+            
+            const response = await fetch(API_URL, {
+                method: "POST",
+                body: formData,
+            });
+
+            // 5. Handle Response
+            const parsedData = await response.json(); // Get JSON response regardless of status
+
+            if (!response.ok) {
+                // Handle HTTP errors (4xx, 5xx)
+                const errorMsg = parsedData.detail || `API Error: ${response.status} - ${response.statusText}`;
+                throw new Error(errorMsg);
+            }
+
+            // Check for application-level errors
+            if (parsedData.metadata && parsedData.metadata.error === true) {
+                console.error("Backend analysis failed:", parsedData.metadata.error_message);
+                throw new Error(`Backend Analysis Error: ${parsedData.metadata.error_message}`);
+            }
+
+            // 6. Render Results
+            renderAdvancedRegressionPage(analysisResultContainer, parsedData);
+
+        } catch (error) {
+            console.error(`Error in handleRegressionAnalysis_DA (Backend):`, error);
+            analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
+        } finally {
+            setLoading("generate", false);
+        }
+    }
+
+    /**
+     * --- NEW RENDERER v5 (Null-Safe) ---
+     * Replaces renderAdvancedRegressionPage.
+     * This function is designed to render the rich output from
+     * the new 'statsmodels' backend and safely handles
+     * null/undefined values from the JSON.
+     *
+     * --- FIX ---
+     * Added checks for statistical_analysis.target_stats and
+     * statistical_analysis.correlations before trying to access their properties.
+     */
+    function renderAdvancedRegressionPage(container, data) {
+        container.innerHTML = ""; // Clear loading state
+
+        /**
+         * Safely formats a number for display, handling null/undefined.
+         */
+        function safeFormat(num, digits, defaultVal = 'N/A') {
+            if (num === null || typeof num === 'undefined' || isNaN(num)) {
+                return defaultVal;
+            }
+            if (digits > 2 && num > 0 && num < (1 / Math.pow(10, digits))) {
+                return `< 0.${'0'.repeat(digits - 1)}1`;
+            }
+            return num.toFixed(digits);
+        }
+
+        // --- Validate the new data structure ---
+        if (!data || !data.statsmodels_results || !data.statistical_analysis || !data.dataset_info) {
+            console.error("Incomplete data passed to renderAdvancedRegressionPage:", data);
+            container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received from the backend.</div>`;
+            $("analysisActions").classList.add("hidden");
+            return;
+        }
+
+        const { statsmodels_results, sklearn_comparison, statistical_analysis, dataset_info } = data;
+        const { model_summary, coefficients, diagnostics } = statsmodels_results;
+
+        // --- Create Tab Navigation (6 Tabs) ---
+        const tabNav = document.createElement("div");
+        tabNav.className = "flex flex-wrap border-b border-white/20 -mx-6 px-6";
+        tabNav.innerHTML = `
+            <button class="analysis-tab-btn active" data-tab="dashboard">📊 Dashboard</button>
+            <button class="analysis-tab-btn" data-tab="coeffs">🔢 Coefficients</button>
+            <button class="analysis-tab-btn" data-tab="diagnostics">🩺 Diagnostics</button>
+            <button class="analysis-tab-btn" data-tab="correlations">🔗 Correlations</button>
+            <button class="analysis-tab-btn" data-tab="comparison">🔄 Model Comparison</button>
+            <button class="analysis-tab-btn" data-tab="dataInfo">📋 Data Info</button>
+        `;
+        container.appendChild(tabNav);
+
+        // --- Create Tab Panels (6 Panels) ---
+        const tabContent = document.createElement("div");
+        container.appendChild(tabContent);
+        tabContent.innerHTML = `
+            <div id="dashboardPanel" class="analysis-tab-panel active"></div>
+            <div id="coeffsPanel" class="analysis-tab-panel"></div>
+            <div id="diagnosticsPanel" class="analysis-tab-panel"></div>
+            <div id="correlationsPanel" class="analysis-tab-panel"></div>
+            <div id="comparisonPanel" class="analysis-tab-panel"></div>
+            <div id="dataInfoPanel" class="analysis-tab-panel"></div>
         `;
 
-        // 3. Send Request to Ollama
-        console.log(`Sending ENHANCED Regression prompt to ${MODEL_NAME}...`);
-        const response = await fetch(OLLAMA_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ model: MODEL_NAME, prompt: prompt, stream: false, format: "json", options: { num_ctx: 32768 } }) // Increased context
-        });
+        // --- 1. Populate Dashboard Panel ---
+        const dashboardPanel = $("dashboardPanel");
+        const r2 = model_summary.r_squared ?? 0;
+        const adj_r2 = model_summary.adj_r_squared ?? 0;
+        const f_pvalue = model_summary.prob_f_statistic ?? 1.0;
+        const f_stat = model_summary.f_statistic ?? 0;
 
-        if (!response.ok) {
-            let errorBody = `API error ${response.status}`;
-            try { errorBody += `: ${await response.text()}`; } catch (e) {}
-            throw new Error(errorBody);
-        }
-
-        const data = await response.json();
-        let parsedData;
-        try {
-            parsedData = JSON.parse(data.response);
-             // *** Robust Validation ***
-             console.log('--- RAW AI JSON RESPONSE (Parsed - Enhanced Regression) ---');
-             console.log(JSON.stringify(parsedData, null, 2));
-             console.log('------------------------------------');
-
-             if (!parsedData ||
-                 !parsedData.model_summary || typeof parsedData.model_summary !== 'object' || !parsedData.model_summary.hasOwnProperty('r_squared') ||
-                 // variable_importance is optional
-                 !parsedData.coefficients || !Array.isArray(parsedData.coefficients) || parsedData.coefficients.length === 0 ||
-                 (parsedData.coefficients.length > 0 && (typeof parsedData.coefficients[0] !== 'object' || !parsedData.coefficients[0].hasOwnProperty('p_value'))) ||
-                 !parsedData.residuals_analysis || typeof parsedData.residuals_analysis !== 'object' || !parsedData.residuals_analysis.hasOwnProperty('predicted_vs_residuals') || !Array.isArray(parsedData.residuals_analysis.predicted_vs_residuals) ||
-                 !parsedData.business_recommendations || !Array.isArray(parsedData.business_recommendations) || parsedData.business_recommendations.length < 2 || // Expect >= 2 recommendations
-                 (parsedData.business_recommendations.length > 0 && (typeof parsedData.business_recommendations[0] !== 'object' || !parsedData.business_recommendations[0].hasOwnProperty('insight_link')))
-                )
-             {
-                  console.error("Validation Failed (Regression): Required fields missing or invalid structure/count.", parsedData);
-                  throw new Error(`AI response structure is incorrect. Missing/invalid fields (model_summary, coefficients, residuals_analysis, or business_recommendations [>=2]). Check console.`);
-             }
-             console.log(`Successfully parsed ENHANCED Regression JSON using ${MODEL_NAME}. Found ${parsedData.coefficients.length} coefficients, ${parsedData.business_recommendations.length} recommendations.`);
-
-        } catch (e) {
-            console.error(`Failed to parse/validate ENHANCED Regression JSON using ${MODEL_NAME}:`, data?.response, e);
-            throw new Error(`Invalid JSON received or required fields missing in AI response: ${e.message}. Check console logs.`);
-        }
-
-        // 4. Render Results
-        renderRegressionPage_DA(analysisResultContainer, parsedData);
-
-    } catch (error) {
-        console.error(`Error in handleRegressionAnalysis_DA (Enhanced) using ${MODEL_NAME}:`, error);
-        analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
-        setLoading("generate", false);
-    } finally {
-        // Ensure loading stops
-         if ($("generateSpinner") && !$("generateSpinner").classList.contains("hidden")) {
-            setLoading("generate", false);
-         }
-    }
-}
-
-
-function renderRegressionPage_DA(container, data) {
-    container.innerHTML = ""; // Clear loading
-
-     // Basic Validation
-     if (!data || !data.model_summary || !data.coefficients || !data.residuals_analysis || !data.business_recommendations) {
-         console.error("Incomplete data passed to renderRegressionPage_DA:", data);
-         container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render results.</div>`;
-         $("analysisActions").classList.add("hidden");
-         return;
-     }
-
-    const { model_summary, variable_importance, coefficients, residuals_analysis, business_recommendations } = data; // Use new key 'residuals_analysis'
-
-    const tabNav = document.createElement("div");
-    tabNav.className = "flex flex-wrap border-b border-white/20 -mx-6 px-6";
-    // Added "Learn Regression" tab
-    tabNav.innerHTML = `
-        <button class="analysis-tab-btn active" data-tab="dashboard">📊 Dashboard</button>
-        <button class="analysis-tab-btn" data-tab="fit">⚙️ Model Fit & Diagnostics</button>
-        ${(variable_importance && variable_importance.length > 0) ? '<button class="analysis-tab-btn" data-tab="importance">🔑 Variable Importance</button>' : ''}
-        <button class="analysis-tab-btn" data-tab="coeffs">🔢 Coefficient Details</button>
-        <button class="analysis-tab-btn" data-tab="rec">💡 Recommendations</button>
-        <button class="analysis-tab-btn" data-tab="learn">🎓 Learn Regression</button>
-    `;
-    container.appendChild(tabNav);
-
-    const tabContent = document.createElement("div");
-    container.appendChild(tabContent);
-    // Added "learnPanel" and conditional "importancePanel"
-    tabContent.innerHTML = `
-        <div id="dashboardPanel" class="analysis-tab-panel active"></div>
-        <div id="fitPanel" class="analysis-tab-panel"></div>
-        ${(variable_importance && variable_importance.length > 0) ? '<div id="importancePanel" class="analysis-tab-panel"></div>' : ''}
-        <div id="coeffsPanel" class="analysis-tab-panel"></div>
-        <div id="recPanel" class="analysis-tab-panel"></div>
-        <div id="learnPanel" class="analysis-tab-panel"></div>
-    `;
-
-    // --- 1. Dashboard Panel (Updated interpretation source) ---
-    const dashboardPanel = $("dashboardPanel");
-    let dashboardHtml = `<div class="p-4">
-                <h3 class="text-2xl font-bold mb-4 text-center">Regression Dashboard</h3>
-                <div class="cascade-objective mb-6 text-center mx-auto max-w-4xl"><h4 class="text-lg font-bold text-indigo-300">Regression Equation</h4><p class="text-xl font-semibold break-words">${model_summary.regression_equation ?? 'N/A'}</p></div>
-                <blockquote class="p-4 italic border-l-4 border-gray-500 bg-black/20 text-white/90 mb-8 max-w-4xl mx-auto">${model_summary.interpretation ?? 'Model summary interpretation unavailable.'}</blockquote>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 max-w-2xl mx-auto">
-                    <div class="kpi-card"><p class="kpi-name" title="Proportion of variance explained by the model">R-Squared</p><p class="kpi-target">${model_summary.r_squared?.toFixed(3) ?? 'N/A'}</p></div>
-                    <div class="kpi-card"><p class="kpi-name" title="R-Squared adjusted for number of predictors">Adj. R-Squared</p><p class="kpi-target">${model_summary.adj_r_squared?.toFixed(3) ?? 'N/A'}</p></div>
+        let dashboardHtml = `<div class="p-4 space-y-8">
+            <h3 class="text-2xl font-bold text-center mb-4">Regression Dashboard (Statsmodels OLS)</h3>
+            
+            <div class="cascade-objective mb-6 text-center mx-auto max-w-4xl p-4">
+                <h4 class="text-lg font-bold text-indigo-300">Regression Equation</h4>
+                <p class="text-sm font-semibold break-words">${model_summary.equation}</p>
+            </div>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto mb-8">
+                <div class="summary-stat-card">
+                    <div class="stat-value text-green-400">${safeFormat(r2 * 100, 1)}%</div>
+                    <div class="stat-label">R-Squared</div>
                 </div>
-            </div>`;
-    dashboardPanel.innerHTML = dashboardHtml;
-
-    // --- 2. Model Fit & Diagnostics Panel (Updated interpretation source) ---
-    const fitPanel = $("fitPanel");
-    let fitHtml = `<div class="p-4">
-                <h3 class="text-2xl font-bold mb-6 text-center">Model Fit & Diagnostics</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto mb-8">
-                    <div class="diagnostic-card" title="Tests if the overall model is statistically significant"><div class="stat-value">${model_summary.f_statistic?.toFixed(2) ?? 'N/A'}</div><div class="stat-label">F-Statistic</div></div>
-                    <div class="diagnostic-card" title="P-value for the F-Statistic (low value indicates overall model significance)"><div class="stat-value">${model_summary.prob_f_statistic?.toFixed(3) ?? 'N/A'}</div><div class="stat-label">Prob (F-Statistic)</div></div>
+                <div class="summary-stat-card">
+                    <div class="stat-value text-green-400">${safeFormat(adj_r2 * 100, 1)}%</div>
+                    <div class="stat-label">Adj. R-Squared</div>
                 </div>
-                <h4 class="text-xl font-bold mb-2 text-center">Residuals Analysis</h4>
-                <blockquote class="p-4 italic border-l-4 border-gray-500 bg-black/20 text-white/90 mb-8 max-w-4xl mx-auto">${residuals_analysis.interpretation ?? 'Residual analysis interpretation unavailable.'}</blockquote>
+                <div class="summary-stat-card">
+                    <div class="stat-value">${safeFormat(model_summary.observations, 0)}</div>
+                    <div class="stat-label">Observations</div>
+                </div>
+                <div class="summary-stat-card">
+                    <div class="stat-value">${safeFormat(f_stat, 2)}</div>
+                    <div class="stat-label">F-Statistic</div>
+                </div>
+            </div>
+            
+            <blockquote class="p-4 italic border-l-4 border-gray-500 bg-black/20 text-white/90 max-w-4xl mx-auto">
+                <strong>Model Fit Interpretation:</strong> 
+                The model explains <strong>${safeFormat(adj_r2 * 100, 1)}%</strong> of the variance in <strong>${model_summary.dependent_variable}</strong> (Adj. R²). 
+                The overall model is statistically <strong>${f_pvalue < 0.05 ? "significant" : "NOT significant"}</strong> 
+                (F-stat p-value = ${safeFormat(f_pvalue, 3)}), suggesting the features
+                ${f_pvalue < 0.05 ? "collectively have a real effect." : "do not reliably predict the target."}
+            </blockquote>
+        </div>`;
+        dashboardPanel.innerHTML = dashboardHtml;
+
+        // --- 2. Populate Coefficients Panel ---
+        const coeffsPanel = $("coeffsPanel");
+        let coeffsHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4 text-center">Coefficient Details</h3>`;
+        coeffsHtml += `<div class="overflow-x-auto">
+                        <table class="coeff-table styled-table text-sm">
+                            <thead>
+                                <tr>
+                                    <th>Variable</th>
+                                    <th>Coefficient</th>
+                                    <th>Std. Error</th>
+                                    <th>t-Statistic</th>
+                                    <th>P-value</th>
+                                    <th>95% Conf. Interval</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+
+        for (const c of coefficients) {
+            const isSig = c.p_value !== null && typeof c.p_value !== 'undefined' && c.p_value < 0.05;
+            const pValueDisplay = safeFormat(c.p_value, 3, 'N/A');
+            const colorClass = isSig ? "text-green-300 font-bold" : "text-white/70";
+            
+            coeffsHtml += `<tr class="${colorClass}">
+                                <td class="font-semibold">${c.variable}</td>
+                                <td>${safeFormat(c.coefficient, 4)}</td>
+                                <td>${safeFormat(c.std_error, 4)}</td>
+                                <td>${safeFormat(c.t_statistic, 3)}</td>
+                                <td>${pValueDisplay} ${isSig ? '***' : ''}</td>
+                                <td>[${safeFormat(c.conf_int_low, 3)}, ${safeFormat(c.conf_int_high, 3)}]</td>
+                           </tr>`;
+        }
+        coeffsHtml += `</tbody></table></div>
+                       <p class="text-xs text-white/60 mt-4">*** Statistically significant at p < 0.05. Coefficients are *not* standardized.</p>
+                       </div>`;
+        coeffsPanel.innerHTML = coeffsHtml;
+
+        // --- 3. Populate Diagnostics Panel ---
+        const diagnosticsPanel = $("diagnosticsPanel");
+        const bp_pvalue = diagnostics.breusch_pagan_pvalue.statistic ?? 1.0;
+        const dw_stat = diagnostics.durbin_watson.statistic ?? 2.0;
+        const jb_pvalue = diagnostics.jarque_bera_pvalue.statistic ?? 1.0;
+
+        let diagHtml = `<div class="p-4 space-y-8">
+            <h3 class="text-2xl font-bold mb-4 text-center">Model Assumption Diagnostics</h3>
+            
+            <div>
+                <h4 class="text-xl font-semibold mb-2 text-center">Residuals vs. Predicted Plot</h4>
                 <div id="residualsPlot" class="w-full h-[500px] plotly-chart bg-black/10 rounded-lg"></div>
-            </div>`;
-    fitPanel.innerHTML = fitHtml;
-
-     // Render Residuals Plot
-     if (residuals_analysis.predicted_vs_residuals && residuals_analysis.predicted_vs_residuals.length > 0) {
-         try {
-             const residualsTrace = {
-                 x: residuals_analysis.predicted_vs_residuals.map(p => p.predicted),
-                 y: residuals_analysis.predicted_vs_residuals.map(p => p.residual),
-                 mode: 'markers', type: 'scatter', name: 'Residuals',
-                 marker: { color: 'rgba(142, 45, 226, 0.6)', size: 8 } // Use theme color semi-transparent
-             };
-             const residualsLayout = {
-                 title: 'Residuals vs. Predicted Values Plot',
-                 paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: 'white' },
-                 xaxis: { title: 'Predicted Values', gridcolor: 'rgba(255,255,255,0.1)', zeroline: false },
-                 yaxis: { title: 'Residuals', zerolinecolor: 'var(--accent)', zerolinewidth: 2, gridcolor: 'rgba(255,255,255,0.1)' },
-                 margin: { t: 50, b: 50, l: 60, r: 30 }
-             };
-             Plotly.newPlot('residualsPlot', [residualsTrace], residualsLayout, { responsive: true });
-         } catch(e) {
-             console.error("Error rendering residuals plot:", e);
-             $("residualsPlot").innerHTML = `<div class="p-4 text-center text-red-400">Could not render residuals plot.</div>`;
-         }
-     } else {
-         $("residualsPlot").innerHTML = `<div class="p-4 text-center text-white/60">Residual data points not available for plotting.</div>`;
-     }
-
-
-    // --- 3. Variable Importance Panel (Conditional, updated rationale source) ---
-    if (variable_importance && variable_importance.length > 0) {
-        const importancePanel = $("importancePanel");
-        if (importancePanel) {
-            let importanceHtml = `<div class="p-4">
-                        <h3 class="text-2xl font-bold mb-4 text-center">Variable Importance</h3>
-                        <div id="importancePlot" class="w-full h-[500px] plotly-chart bg-black/10 rounded-lg mb-8"></div>
-                        <div class="space-y-4 max-w-3xl mx-auto">`;
-             variable_importance.forEach(v => {
-                 importanceHtml += `
-                     <div class="bg-white/5 p-3 rounded-lg border-l-4 border-indigo-400">
-                         <p class="font-bold">${v.variable ?? 'N/A'}</p>
-                         <p class="text-sm text-white/80 italic"><strong>Rationale:</strong> ${v.rationale ?? 'Importance rationale not provided.'}</p>
-                     </div>`;
-             });
-             importanceHtml += `</div></div>`;
-             importancePanel.innerHTML = importanceHtml;
-
-             // Render Importance Plot
-             try {
-                 const importanceData = [...variable_importance].sort((a, b) => (a.importance_score ?? 0) - (b.importance_score ?? 0)); // Sort ascending for horizontal bar
-                 const importanceTrace = {
-                     y: importanceData.map(v => v.variable), // Use y for horizontal bars
-                     x: importanceData.map(v => v.importance_score ?? 0), // Use x for values
-                     type: 'bar', orientation: 'h', // Set orientation to horizontal
-                     marker: { color: 'var(--primary)' }
-                 };
-                 const importanceLayout = {
-                     title: 'Relative Importance of Predictors',
-                     paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: 'white' },
-                     yaxis: { automargin: true }, // Ensure labels fit
-                     xaxis: { title: 'Importance Score', gridcolor: 'rgba(255,255,255,0.1)', zeroline: false },
-                     margin: { t: 50, b: 50, l: 150, r: 30 } // Increase left margin for labels
-                 };
-                 Plotly.newPlot('importancePlot', [importanceTrace], importanceLayout, { responsive: true });
-             } catch(e) {
-                  console.error("Error rendering importance plot:", e);
-                  $("importancePlot").innerHTML = `<div class="p-4 text-center text-red-400">Could not render importance plot.</div>`;
-             }
-        }
-    }
-
-    // --- 4. Coefficient Details Panel (Updated significance source) ---
-    const coeffsPanel = $("coeffsPanel");
-    let coeffsHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">Coefficient Interpretation Details</h3><div class="space-y-4">`;
-    coefficients.forEach((c) => {
-        const isSignificant = (c.p_value != null && c.p_value <= 0.05); // Check p-value exists
-         // Use significance field from AI if available, otherwise calculate
-         const significanceText = c.significance ?? (isSignificant ? "Yes (p<0.05)" : "No (p>=0.05)");
-         const borderColor = isSignificant ? "border-green-400" : "border-gray-500";
-        coeffsHtml += `
-            <div class="bg-white/5 p-4 rounded-lg border-l-4 ${borderColor}">
-                <h4 class="text-lg font-bold">${c.variable ?? 'N/A'}</h4>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm mt-2 mb-3">
-                    <p><strong>Coefficient:</strong> ${c.coefficient?.toFixed(4) ?? 'N/A'}</p>
-                    <p><strong>Std. Error:</strong> ${c.std_error?.toFixed(4) ?? 'N/A'}</p>
-                    <p class="${isSignificant ? "text-green-300 font-semibold" : "text-white/70"}"><strong>P-value:</strong> ${c.p_value?.toFixed(3) ?? 'N/A'}</p>
-                    <p class="${isSignificant ? "text-green-300 font-semibold" : "text-white/70"}"><strong>Significant?:</strong> ${significanceText}</p>
+                <p class="text-xs text-white/60 text-center mt-2"><strong>Goal:</strong> Look for random scatter around 0. Patterns (like a cone or a U-shape) indicate problems.</p>
+            </div>
+            
+            <div>
+                <h4 class="text-xl font-semibold mb-2 text-center">Statistical Tests</h4>
+                <div class="overflow-x-auto max-w-3xl mx-auto">
+                    <table class="coeff-table styled-table text-sm">
+                        <thead>
+                            <tr>
+                                <th>Test</th>
+                                <th>Statistic</th>
+                                <th>Interpretation (p < 0.05 is Bad)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="font-semibold"><strong>Homoscedasticity (Breusch-Pagan)</strong><br><span class="text-xs text-white/60">Tests if residuals spread evenly.</span></td>
+                                <td class="font-mono">${safeFormat(bp_pvalue, 3)}</td>
+                                <td class="${bp_pvalue < 0.05 ? 'text-red-400' : 'text-green-300'}">${diagnostics.breusch_pagan_pvalue.interpretation}</td>
+                            </tr>
+                            <tr>
+                                <td class="font-semibold"><strong>Autocorrelation (Durbin-Watson)</strong><br><span class="text-xs text-white/60">Tests if residuals are independent. (Want ~2.0)</span></td>
+                                <td class="font-mono">${safeFormat(dw_stat, 3)}</td>
+                                <td class="${(dw_stat < 1.5 || dw_stat > 2.5) ? 'text-red-400' : 'text-green-300'}">${diagnostics.durbin_watson.interpretation}</td>
+                            </tr>
+                            <tr>
+                                <td class="font-semibold"><strong>Normality of Residuals (Jarque-Bera)</strong><br><span class="text-xs text-white/60">Tests if residuals form a bell curve.</span></td>
+                                <td class="font-mono">${safeFormat(jb_pvalue, 3)}</td>
+                                <td class="${jb_pvalue < 0.05 ? 'text-red-400' : 'text-green-300'}">${diagnostics.jarque_bera_pvalue.interpretation}</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-                <p class="text-sm text-white/80 italic"><strong>Interpretation:</strong> ${c.interpretation ?? 'N/A'}</p>
-            </div>`;
-    });
-    coeffsHtml += `</div><p class="text-xs text-white/60 mt-4">* Significance based on p-value < 0.05 threshold.</p></div>`;
-    coeffsPanel.innerHTML = coeffsHtml;
-
-    // --- 5. Recommendations Panel (Updated insight link source) ---
-    const recPanel = $("recPanel");
-    let recHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">💡 Actionable Recommendations</h3>`;
-     if (business_recommendations.length > 0) {
-         recHtml += `<div class="space-y-6">`;
-         business_recommendations.forEach((rec, index) => {
-             recHtml += `<div class="prescription-card">
-                         <h4 class="text-xl font-bold">${index + 1}. ${rec.recommendation ?? 'N/A'}</h4>
-                         <p class="rationale"><strong>Driven By:</strong> ${rec.insight_link ?? 'N/A'}</p>
-                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 text-sm">
-                             <div class="bg-black/20 p-3 rounded">
-                                 <h5 class="font-bold text-indigo-300 mb-2">Action Items</h5>
-                                 <ul class="list-disc list-inside space-y-1 text-white/90">${(rec.action_items || []).map(a => `<li>${a}</li>`).join("")}</ul>
-                             </div>
-                             <div class="bg-black/20 p-3 rounded">
-                                 <h5 class="font-bold text-indigo-300 mb-2">Potential Risks</h5>
-                                 <p class="text-white/90">${rec.potential_risks ?? 'N/A'}</p>
-                                 <h5 class="font-bold text-indigo-300 mt-3 mb-2">KPIs to Track</h5>
-                                 <p class="text-white/90 text-xs">${(rec.kpis_to_track || []).join(", ")}</p>
-                             </div>
-                         </div>
-                     </div>`;
-         });
-         recHtml += `</div>`;
-     } else {
-         recHtml += `<p class="text-center text-white/70 italic">No specific business recommendations generated based on the model results.</p>`;
-     }
-     recHtml += `</div>`;
-    recPanel.innerHTML = recHtml;
-
-
-    // --- 6. Populate Learn Regression Tab ---
-    const learnPanel = $("learnPanel");
-     learnPanel.innerHTML = `
-    <div class="p-6 space-y-6 text-white/90">
-        <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding Regression Analysis</h3>
-        [Image of scatter plot with regression line]
-        <div class="bg-black/20 p-4 rounded-lg">
-            <h4 class="text-lg font-bold mb-2 text-indigo-300">What is Regression Analysis?</h4>
-            <p class="text-sm text-white/80">Regression is a statistical method used to model the relationship between a dependent variable (the outcome you want to predict or explain) and one or more independent variables (the factors believed to influence the outcome).</p>
-             <p class="text-sm text-white/80 mt-2">Essentially, it tries to find the "best fit" line (or curve) through the data points to describe how changes in the independent variables are associated with changes in the dependent variable.</p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-white/5 p-4 rounded-lg border border-white/10">
-                <h4 class="text-lg font-bold mb-2">Key Concepts:</h4>
-                <ul class="list-disc list-inside space-y-1 text-sm">
-                    <li><strong>Dependent Variable (Y):</strong> The main variable you're interested in (e.g., Sales, Customer Score).</li>
-                    <li><strong>Independent Variables (X):</strong> Predictor variables (e.g., Ad Spend, Website Visits, Temperature).</li>
-                    <li><strong>Coefficients (β):</strong> Numbers representing the strength and direction of the relationship between each X and Y. A positive coefficient means X increases Y; negative means X decreases Y.</li>
-                    <li><strong>Intercept (β₀):</strong> The predicted value of Y when all X variables are zero.</li>
-                    <li><strong>R-squared (R²):</strong> Measures how well the model fits the data (0 to 1). A value of 0.7 means 70% of the variation in Y is explained by the X variables in the model.</li>
-                     <li><strong>Adjusted R-squared:</strong> R-squared adjusted for the number of predictors in the model. More useful when comparing models with different numbers of variables.</li>
-                    <li><strong>P-value:</strong> Indicates the statistical significance of a coefficient. A low p-value (typically < 0.05) suggests the variable likely has a real effect on Y.</li>
-                </ul>
             </div>
-            <div class="bg-white/5 p-4 rounded-lg border border-white/10">
-                <h4 class="text-lg font-bold mb-2">Interpreting Results:</h4>
-                 <p class="text-sm mb-2"><strong>Model Fit (R², F-stat P-value):</strong></p>
-                 <ul class="list-[circle] list-inside pl-4 text-xs mb-3">
-                    <li>High R² suggests a good fit *to the current data*.</li>
-                    <li>Low Prob(F-stat) (<0.05) means the overall model is significant (better than random chance).</li>
-                 </ul>
-                 <p class="text-sm mb-2"><strong>Coefficients & P-values:</strong></p>
-                  <ul class="list-[circle] list-inside pl-4 text-xs mb-3">
-                    <li>Focus on coefficients with low P-values (<0.05). These represent significant relationships.</li>
-                    <li>The coefficient's value tells you the magnitude and direction of the effect.</li>
-                 </ul>
-                  <p class="text-sm mb-2"><strong>Residuals Plot:</strong></p>
-                   <ul class="list-[circle] list-inside pl-4 text-xs">
-                    <li>Should show random scatter around zero.</li>
-                    <li>Patterns (curves, funnels) indicate model assumption violations (like non-linearity or heteroscedasticity), meaning results might be unreliable.</li>
-                 </ul>
-            </div>
-        </div>
+        </div>`;
+        diagnosticsPanel.innerHTML = diagHtml;
 
-        <details class="styled-details text-sm">
-            <summary class="font-semibold">Important Assumptions & Cautions</summary>
-            <div class="bg-black/20 p-4 rounded-b-lg space-y-3">
-                <p>⚠️ <strong>Correlation is NOT Causation:</strong> Regression shows association, not necessarily that X *causes* Y.</p>
-                <p> linearity <strong>Linearity:</strong> Assumes the relationship between X and Y is roughly linear (check residuals).</p>
-                <p>🏠 <strong>Homoscedasticity:</strong> Assumes the variance of errors (residuals) is constant across all levels of X (check residuals for fanning).</p>
-                <p>🚶 <strong>Independence:</strong> Assumes observations are independent of each other (important for time-series data).</p>
-                 <p>🔔 <strong>Normality of Residuals:</strong> Assumes errors are normally distributed (less critical with large samples, but good to check).</p>
-                <p>🗑️ <strong>Outliers:</strong> Extreme data points can heavily influence results.</p>
-                <p> extrapolating <strong>Extrapolation:</strong> Avoid making predictions far outside the range of your original data.</p>
-            </div>
-        </details>
-    </div>
-    `;
+        // Render Residuals Plot
+        try {
+            const residualsTrace = {
+                x: diagnostics.residuals_plot_data.map(p => p.predicted),
+                y: diagnostics.residuals_plot_data.map(p => p.residual),
+                mode: 'markers', type: 'scatter', name: 'Residuals',
+                marker: { color: 'rgba(142, 45, 226, 0.6)', size: 8 }
+            };
+            const residualsLayout = {
+                title: 'Residuals vs. Predicted Values',
+                paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: 'white' },
+                xaxis: { title: 'Predicted Values', gridcolor: 'rgba(255,255,255,0.1)', zeroline: false },
+                yaxis: { title: 'Residuals', zeroline: true, zerolinecolor: 'var(--accent)', zerolinewidth: 2, gridcolor: 'rgba(255,255,255,0.1)' },
+                margin: { t: 50, b: 50, l: 60, r: 30 }
+            };
+            Plotly.newPlot('residualsPlot', [residualsTrace], residualsLayout, { responsive: true });
+        } catch(e) {
+            console.error("Error rendering residuals plot:", e);
+            $("residualsPlot").innerHTML = `<div class="p-4 text-center text-red-400">Could not render residuals plot.</div>`;
+        }
 
+        // --- 4. Populate Correlations Panel ---
+        const correlationsPanel = $("correlationsPanel");
+        let corrHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4 text-center">Correlation with Target (${dataset_info.target_column})</h3>`;
+        
+        // --- THIS IS THE FIX ---
+        if (statistical_analysis.correlations) {
+        // --- END OF FIX ---
+            corrHtml += `<div class="overflow-x-auto max-w-lg mx-auto">
+                         <table class="coeff-table styled-table text-sm">
+                            <thead><tr><th>Feature</th><th>Correlation Coefficient</th></tr></thead>
+                            <tbody>`;
+            const sortedCorrs = Object.entries(statistical_analysis.correlations)
+                                    .sort(([, a], [, b]) => Math.abs(b ?? 0) - Math.abs(a ?? 0));
+            for (const [feature, corr] of sortedCorrs) {
+                const corrValue = corr ?? 0;
+                let colorClass = "text-white/70";
+                if (Math.abs(corrValue) > 0.7) colorClass = "text-green-300 font-bold";
+                else if (Math.abs(corrValue) > 0.4) colorClass = "text-yellow-300";
+                corrHtml += `<tr>
+                                <td class="font-semibold">${feature}</td>
+                                <td class="${colorClass}">${safeFormat(corrValue, 4)}</td>
+                             </tr>`;
+            }
+            corrHtml += `</tbody></table></div>
+                         <p class="text-xs text-white/60 text-center mt-4">Values close to +1.0 or -1.0 indicate a strong relationship.</p>`;
+        // --- THIS IS THE FIX ---
+        } else if (statistical_analysis.error) {
+            corrHtml += `<p class="text-center text-red-400 italic">Could not calculate correlations: ${statistical_analysis.error}</p>`;
+        } else {
+            corrHtml += `<p class="text-center text-white/70 italic">Correlation data not available.</p>`;
+        }
+        // --- END OF FIX ---
+        correlationsPanel.innerHTML = corrHtml;
+        
+        // --- 5. Populate Model Comparison Panel ---
+        const comparisonPanel = $("comparisonPanel");
+        let compHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4 text-center">Model Performance Comparison</h3>`;
+        compHtml += `<p class="text-sm text-white/70 mb-4 text-center">Comparing Statsmodels OLS (for inference) vs. Sklearn models (for prediction).</p>`;
+        compHtml += `<div class="overflow-x-auto">
+                        <table class="coeff-table styled-table text-sm">
+                            <thead>
+                                <tr>
+                                    <th>Model</th>
+                                    <th>Test R-Squared (R²)</th>
+                                    <th>Test RMSE</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b-2 border-indigo-400">
+                                    <td class="font-semibold">Statsmodels OLS</td>
+                                    <td class="text-green-300 font-bold">${safeFormat(model_summary.r_squared, 4)}</td>
+                                    <td>N/A (Full dataset used)</td>
+                                </tr>`;
 
-    // --- Final Touches ---
-    analysisCache[currentTemplateId] = container.innerHTML; // Cache result
-
-    // Tab switching logic (including chart resizing)
-    tabNav.addEventListener("click", (e) => {
-        if (e.target.tagName === "BUTTON") {
-            // Deactivate all
-            tabNav.querySelectorAll(".analysis-tab-btn").forEach(btn => btn.classList.remove("active"));
-            tabContent.querySelectorAll(".analysis-tab-panel").forEach(pnl => pnl.classList.remove("active"));
-
-            // Activate clicked
-            e.target.classList.add("active");
-            const targetPanelId = e.target.dataset.tab + "Panel";
-            const targetPanel = $(targetPanelId);
-            if (targetPanel) {
-                targetPanel.classList.add("active");
-
-                // Resize any Plotly charts within the newly active panel
-                const chartsInPanel = targetPanel.querySelectorAll('.plotly-chart');
-                chartsInPanel.forEach(chartDiv => {
-                    if (chartDiv.layout && typeof Plotly !== 'undefined') { // Check if it's a rendered Plotly chart
-                        try {
-                            Plotly.Plots.resize(chartDiv);
-                             console.log(`Resized chart ${chartDiv.id} on tab switch.`);
-                        } catch (resizeError) {
-                            console.error(`Error resizing chart ${chartDiv.id} on tab switch:`, resizeError);
-                        }
-                    }
-                });
+        // Sklearn Model Results
+        for (const modelName in sklearn_comparison) {
+            const result = sklearn_comparison[modelName];
+            if (result.error) {
+                compHtml += `<tr><td class="font-semibold">${modelName}</td><td colspan="2" class="text-red-400">${result.error}</td></tr>`;
             } else {
-                 console.warn("Target panel not found:", targetPanelId);
+                compHtml += `<tr>
+                                <td class="font-semibold">${modelName} (Sklearn)</td>
+                                <td class="text-green-300 font-bold">${safeFormat(result.test_r2, 4)}</td>
+                                <td>${safeFormat(result.test_rmse, 2)}</td>
+                              </tr>`;
             }
         }
-    });
+        compHtml += `</tbody></table></div>
+                    <div class="mt-6 p-4 bg-black/20 rounded-lg border border-white/10">
+                        <h4 class="text-lg font-bold text-indigo-300 mb-2">How to Interpret:</h4>
+                        <ul class="list-disc list-inside space-y-1 text-sm text-white/80">
+                            <li>Use <strong>Statsmodels OLS</strong> for p-values, diagnostics, and statistical *inference*.</li>
+                            <li>Use <strong>Sklearn Models (e.g., Random Forest)</strong> for *predictive accuracy*. A higher Test R² here might mean better predictions, even if it's less interpretable.</li>
+                            <li>If Random Forest R² is much higher than OLS R², it suggests your data has non-linear relationships that the linear model can't capture.</li>
+                        </ul>
+                    </div></div>`;
+        comparisonPanel.innerHTML = compHtml;
 
-     // Attempt initial resize for charts in the default active tab (dashboard has no charts, fit has one)
-     setTimeout(() => {
-         const activeTabButton = tabNav.querySelector(".analysis-tab-btn.active");
-         if (activeTabButton && activeTabButton.dataset.tab === "fit") {
-             const residualsChart = $("residualsPlot");
-             if (residualsChart && residualsChart.layout && typeof Plotly !== 'undefined') {
-                 try { Plotly.Plots.resize(residualsChart); } catch (e) { console.error("Initial resize error (residuals):", e); }
-             }
-         }
-         // Add similar checks if other default tabs have charts
-     }, 150);
+        // --- 6. Populate Data Info Panel ---
+        const dataInfoPanel = $("dataInfoPanel");
+        
+        // --- THIS IS THE FIX ---
+        let targetStatsHtml = "";
+        if (statistical_analysis.error) {
+            targetStatsHtml = `<p class="text-sm text-red-400">Error during statistical analysis: ${statistical_analysis.error}</p>`;
+        } else if (statistical_analysis.target_stats) {
+            // This is the original, good code block
+            targetStatsHtml = `
+                <p class="text-sm"><strong>Mean:</strong> ${safeFormat(statistical_analysis.target_stats.mean, 2)}</p>
+                <p class="text-sm"><strong>Std. Dev:</strong> ${safeFormat(statistical_analysis.target_stats.std, 2)}</p>
+                <p class="text-sm"><strong>Min:</strong> ${safeFormat(statistical_analysis.target_stats.min, 2)}</p>
+                <p class="text-sm"><strong>Max:</strong> ${safeFormat(statistical_analysis.target_stats.max, 2)}</p>
+            `;
+        } else {
+            // Fallback if target_stats is just missing
+            targetStatsHtml = `<p class="text-sm text-white/70 italic">Target variable statistics not available.</p>`;
+        }
 
-    $("analysisActions").classList.remove("hidden"); // Show save buttons
-    // setLoading('generate', false); // Already handled in the calling function's finally block
-}
+        const originalFeatures = dataset_info.original_feature_columns || [];
+        const finalFeatures = dataset_info.final_feature_columns_after_encoding || [];
+        // --- END OF FIX ---
+        
+        dataInfoPanel.innerHTML = `
+            <div class="p-4 space-y-6">
+                <h3 class="text-2xl font-bold mb-4 text-center">Analysis Data Summary</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+                    <div class="summary-stat-card"><div class="stat-value">${safeFormat(dataset_info.original_rows, 0)}</div><div class="stat-label">Original Rows</div></div>
+                    <div class="summary-stat-card"><div class="stat-value">${safeFormat(dataset_info.clean_rows, 0)}</div><div class="stat-label">Rows Used (After Clean)</div></div>
+                    <div class="summary-stat-card"><div class="stat-value">${safeFormat(model_summary.observations, 0)}</div><div class="stat-label">Final Observations</div></div>
+                    <div class="summary-stat-card"><div class="stat-value">${safeFormat(dataset_info.features_count, 0)}</div><div class="stat-label">Features Used</div></div>
+                </div>
+                <div class="bg-black/20 p-4 rounded-lg max-w-4xl mx-auto">
+                    <h4 class="text-lg font-semibold mb-2">Target Variable: ${dataset_info.target_column}</h4>
+                    ${targetStatsHtml} {/* <--- Inserted the safe HTML block here */}
+                </div>
+                <div class="bg-black/20 p-4 rounded-lg max-w-4xl mx-auto">
+                    <h4 class="text-lg font-semibold mb-2">Original Features Submitted (${originalFeatures.length})</h4>
+                    <p class="text-sm text-white/80"><strong>${originalFeatures.join(", ")}</strong></p>
+                    
+                    <h4 class="text-lg font-semibold mt-4 mb-2">Final Features Used (After Encoding: ${finalFeatures.length})</h4>
+                    <p class="text-xs text-white/70">${finalFeatures.join(", ")}</p>
+                </div>
+            </div>`;
+
+        // --- Final Touches ---
+        analysisCache[currentTemplateId] = container.innerHTML; // Cache the new HTML
+        $("analysisActions").classList.remove("hidden"); // Show save buttons
+
+        // --- Tab Switching Logic ---
+        tabNav.addEventListener("click", (e) => {
+            if (e.target.tagName === "BUTTON") {
+                tabNav.querySelectorAll(".analysis-tab-btn").forEach(btn => btn.classList.remove("active"));
+                tabContent.querySelectorAll(".analysis-tab-panel").forEach(pnl => pnl.classList.remove("active"));
+                
+                e.target.classList.add("active");
+                const targetPanelId = e.target.dataset.tab + "Panel";
+                const targetPanel = $(targetPanelId);
+
+                if (targetPanel) {
+                    targetPanel.classList.add("active");
+                    
+                    const chart = targetPanel.querySelector(".plotly-chart");
+                    if (chart && chart.layout && typeof Plotly !== 'undefined') {
+                        try {
+                            Plotly.Plots.resize(chart);
+                        } catch (resizeError) {
+                            console.error(`Error resizing chart ${chart.id} on tab switch:`, resizeError);
+                        }
+                    }
+                }
+            }
+        });
+
+        // --- Initial Chart Render ---
+        setTimeout(() => {
+            const residualsChart = $("residualsPlot");
+            if (residualsChart && !residualsChart.layout) { // Only render if not already rendered
+                try {
+                    const residualsTrace = {
+                        x: diagnostics.residuals_plot_data.map(p => p.predicted),
+                        y: diagnostics.residuals_plot_data.map(p => p.residual),
+                        mode: 'markers', type: 'scatter', name: 'Residuals',
+                        marker: { color: 'rgba(142, 45, 226, 0.6)', size: 8 }
+                    };
+                    const residualsLayout = {
+                        title: 'Residuals vs. Predicted Values',
+                        paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: 'white' },
+                        xaxis: { title: 'Predicted Values', gridcolor: 'rgba(255,255,255,0.1)', zeroline: false },
+                        yaxis: { title: 'Residuals', zeroline: true, zerolinecolor: 'var(--accent)', zerolinewidth: 2, gridcolor: 'rgba(255,255,255,0.1)' },
+                        margin: { t: 50, b: 50, l: 60, r: 30 }
+                    };
+                    Plotly.newPlot('residualsPlot', [residualsTrace], residualsLayout, { responsive: true });
+                } catch(e) {
+                    console.error("Error rendering residuals plot:", e);
+                    $("residualsPlot").innerHTML = `<div class="p-4 text-center text-red-400">Could not render residuals plot.</div>`;
+                }
+            }
+        }, 100); // Give the DOM a moment to settle
+    }
 
     async function handleLeveragePointsAnalysis() {
     const analysisResultContainer = $("analysisResult");

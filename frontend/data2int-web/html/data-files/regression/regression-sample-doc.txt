@@ -1,0 +1,11 @@
+Sales Revenue Prediction Analysis
+
+We want to understand the key drivers of our sales revenue to optimize our marketing budget and pricing strategy. 
+
+Key Questions:
+1. Which factors most strongly predict sales revenue?
+2. What's the optimal marketing spend level for ROI?
+3. How does pricing affect revenue across regions?
+4. Are there regional differences in sales patterns?
+
+This analysis will inform our Q2 marketing budget allocation.
