@@ -19,6 +19,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/lite.render.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4/dist/panzoom.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dagre@0.8.5/dist/dagre.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cytoscape@3.33.1/dist/cytoscape.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cytoscape-dagre@2.5.0/cytoscape-dagre.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
     <script type="importmap">
         {
@@ -39,9 +42,11 @@
                 <a href="#" class="text-2xl font-bold text-white nav-link" data-page="home">S.A.G.E.</a>
                 <div>
                     <a href="#" class="text-white/80 hover:text-white px-3 py-2 rounded-md text-sm font-medium nav-link"
+                        data-page="home">Home</a>
+                    <a href="#" class="text-white/80 hover:text-white px-3 py-2 rounded-md text-sm font-medium nav-link"
                         data-page="feedback">Give Us Feedback</a>
                     <a href="#" class="text-white/80 hover:text-white px-3 py-2 rounded-md text-sm font-medium nav-link"
-                        data-page="home">Home</a>
+                    data-page="blog">Blog</a>
                     <a href="#" class="text-white/80 hover:text-white px-3 py-2 rounded-md text-sm font-medium nav-link"
                         data-page="login">Login</a>
                 </div>
@@ -695,6 +700,17 @@
             </div>
         </div>
 
+        <div id="blog" class="page container mx-auto px-6 py-16">
+            <h1 class="text-5xl md:text-6xl font-extrabold text-white leading-tight mb-12 text-center">
+                S.A.G.E. Blog
+            </h1>
+            <div id="blogCardContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+        </div>
+
+        <div id="blogDetail" class="page container mx-auto px-6 py-16">
+            <button class="btn btn-secondary mb-8 nav-link" data-page="blog">&larr; Back to Blog</button>
+            <div id="blogDetailContent" class="glass-container p-6 md:p-10"></div>
+        </div>
     </div>
 
     <footer class="mt-auto py-8">

@@ -1340,3 +1340,50 @@ select.input-field option {
     padding: 1.5rem;
 }
 
+#fishboneCy {
+    position: relative;
+    width: 90%;
+    height: 500px; /* Adjust height as needed */
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 1.5rem;	/* The amount of rounding you want to apply */
+    overflow: hidden; /* So content inside is also rounded */
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    background-color: rgba(25, 25, 25, 0.8); 	/* Slightly transparent background */
+    padding: 1.5rem;
+}
+
+.diagram-controls {
+    padding: 20px 32px;
+    /* background: #f8f9fa; */
+    background: transparent;
+    /* border-top: 1px solid #e9ecef; */
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.diagram-fit-btn, .diagram-reset-btn, .diagram-export-btn {
+    padding: 10px 20px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.diagram-fit-btn:hover, .diagram-reset-btn:hover, .diagram-export-btn:hover {
+    background: #5568d3;
+}
+
+.diagram-fit-btn:active, .diagram-reset-btn:active, .diagram-export-btn:active {
+    transform: scale(0.98);
+}
+
+.error {
+    color: #e74c3c;
+    margin-top: 8px;
+    font-size: 14px;
+}
