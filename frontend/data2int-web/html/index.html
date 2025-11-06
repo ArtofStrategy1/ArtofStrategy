@@ -2133,6 +2133,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- Analysis Cache ---
     const analysisCache = {};
 
+    // --- Regression Analysis ---
+    let currentRegressionRowCount = 0; // Stores the row count for ratio validation
+
     // --- Template Data ---
     const templates = {
         "custom-template": {
@@ -3483,7 +3486,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const contentContainer = $("templateDetailContent");
         contentContainer.className = "grid lg:grid-cols-1 gap-12";
         contentContainer.innerHTML = `
-                    <div class="lg:col-span-1">
+                   <div class="lg:col-span-1">
                          <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
                          <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">${template.description}</p>
       
@@ -3513,11 +3516,13 @@ document.addEventListener("DOMContentLoaded", () => {
                                             <span class="file-name">Select context document...</span>
                                         </label>
                                         <input type="file" id="regressionContextFile" class="input-file" accept=".txt,.docx">
-                                    </div>
+                                </div>
                                 </div>
                                 
                                 <div>
-                                    <label for="regressionFile" class="block text-sm font-medium text-gray-200 mb-2">Upload Data File (.csv)</label>
+                                    <label for="regressionFile" class="block text-sm font-medium text-gray-200 mb-2" title="Must be a .csv file. All columns for analysis must be numeric. Ensure no spaces in headers (e.g., use 'Marketing_Spend').">
+                                        Upload Data File (.csv)
+                                    </label>
                                     <div class="input-file-wrapper">
                                         <label for="regressionFile" id="regressionFileLabel" class="input-file-btn">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
@@ -3526,6 +3531,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                         <input type="file" id="regressionFile" class="input-file" accept=".csv">
                                     </div>
                                     <div id="regressionFileError" class="text-red-400 text-sm mt-2"></div>
+                                    <div id="regressionDataWarning" class="text-yellow-400 text-sm mt-2"></div>
                                 </div>
 
                                 <div id="regressionDataPreview" class="space-y-2">
@@ -3542,7 +3548,9 @@ document.addEventListener("DOMContentLoaded", () => {
                                 </div>
 
                                 <div>
-                                    <label for="dependentVar" class="block text-sm font-medium text-gray-200 mb-2">Dependent Variable (Y)</label>
+                                    <label for="dependentVar" class="block text-sm font-medium text-gray-200 mb-2" title="This is the 'outcome' variable you want to predict (e.g., 'Sales'). It must be numeric.">
+                                        Dependent Variable (Y)
+                                    </label>
                                     <div class="select-wrapper">
                                         <select id="dependentVar" class="input-field" disabled>
                                             <option value="">-- Upload data to see variables --</option>
@@ -3551,7 +3559,9 @@ document.addEventListener("DOMContentLoaded", () => {
                                 </div>
 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-200 mb-2">Independent Variables (X)</label>
+                                    <label class="block text-sm font-medium text-gray-200 mb-2" title="These are the 'predictor' variables you think influence your outcome (e.g., 'Marketing_Spend', 'Website_Traffic'). They must be numeric.">
+                                        Independent Variables (X)
+                                    </label>
                                     <div id="independentVarsContainer" class="max-h-40 overflow-y-auto space-y-1 p-3 bg-black/20 rounded-lg border border-white/20">
                                         <p class="text-sm text-white/60 text-center">-- Upload data to see variables --</p>
                                     </div>
@@ -3572,7 +3582,7 @@ document.addEventListener("DOMContentLoaded", () => {
                              <div id="analysisResult" class="glass-container min-h-[500px] overflow-x-auto"></div>
                              <div id="analysisActions" class="text-center mt-4 space-x-2 hidden">
                                 <button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>
-                               
+                                
   <button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
                             </div>
                         </div>
@@ -3581,9 +3591,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // --- All Helper Functions are LOCAL to this function ---
 
-        /**
-         * Extracts headers from CSV text.
-         */
         const getHeadersFromText = (text) => {
             if (!text || typeof text !== 'string' || !text.trim()) throw new Error("Input text is empty.");
             const firstLine = text.split(/[\r\n]+/)[0];
@@ -3596,17 +3603,13 @@ document.addEventListener("DOMContentLoaded", () => {
             return headers;
         };
         
-        /**
-         * Shows the first 5 data rows in a specified preview table.
-         */
         const showDataPreview = (csvText, tableId, containerId) => {
             const previewContainer = $(containerId);
             const previewTable = $(tableId);
             if (!previewContainer || !previewTable) return;
 
             try {
-                // === BUG FIX: Removed [0] ===
-                const lines = csvText.split(/[\r\n]+/).filter(Boolean); // Filter empty lines
+                const lines = csvText.split(/[\r\n]+/).filter(Boolean); 
                 const rows = lines.slice(0, 6); 
                 
                 if (rows.length < 2) { 
@@ -3642,15 +3645,19 @@ document.addEventListener("DOMContentLoaded", () => {
         };
 
         /**
-         * Populates the Regression tool's variable selectors based on CSV headers.
+         * --- MODIFIED HELPER FUNCTION ---
+         * Populates variable selectors and adds event listeners
+         * to prevent Y/X conflicts and check data ratios.
          */
         const updateRegressionVariables = (headers) => {
             const dependentSelect = $("dependentVar");
             const independentContainer = $("independentVarsContainer");
-            if (!dependentSelect || !independentContainer) return;
+            const errorEl = $("regressionFileError"); // Get the error element
+            if (!dependentSelect || !independentContainer || !errorEl) return;
 
             dependentSelect.innerHTML = ''; 
             independentContainer.innerHTML = ''; 
+            errorEl.textContent = ""; // Clear errors
 
             let dependentFound = false;
             const excludePatterns = ['id', 'date', 'time', 'timestamp', 'index', 'row'];
@@ -3676,27 +3683,103 @@ document.addEventListener("DOMContentLoaded", () => {
                  dependentSelect.value = headers[0];
             }
 
-            const selectedDependent = dependentSelect.value;
-            independentContainer.querySelectorAll('.independent-var-checkbox').forEach(cb => {
-                if (cb.value !== selectedDependent && !excludePatterns.some(pattern => cb.value.toLowerCase().includes(pattern))) {
+            const allCheckboxes = independentContainer.querySelectorAll('.independent-var-checkbox');
+
+            // --- NEW: Function to sync checkbox states ---
+            const syncCheckboxes = () => {
+                const selectedDependent = dependentSelect.value;
+                errorEl.textContent = ""; // Clear any previous errors on change
+
+                allCheckboxes.forEach(cb => {
+                    if (cb.value === selectedDependent) {
+                        cb.checked = false;
+                        cb.disabled = true;
+                    } else {
+                        cb.disabled = false;
+                    }
+                });
+                // Trigger a change event on the container to re-run ratio check
+                independentContainer.dispatchEvent(new Event('change'));
+            };
+            
+            // --- Initial Checkbox State ---
+            const initialSelectedDependent = dependentSelect.value;
+            allCheckboxes.forEach(cb => {
+                if (cb.value === initialSelectedDependent) {
+                    cb.checked = false;
+                    cb.disabled = true;
+                } else if (!excludePatterns.some(pattern => cb.value.toLowerCase().includes(pattern))) {
                     cb.checked = true;
+                } else {
+                    cb.checked = false; 
                 }
             });
+            // --- End Initial State ---
 
+
+            // --- Add Event Listeners ---
+            
+            // 1. When Dependent var changes, disable/uncheck matching independent var
+            dependentSelect.removeEventListener('change', syncCheckboxes); // Avoid duplicates
+            dependentSelect.addEventListener('change', syncCheckboxes);
+
+            // 2. When Independent var is checked, check ratio
+            independentContainer.removeEventListener('change', handleIndepChange); // Avoid duplicates
+            independentContainer.addEventListener('change', handleIndepChange);
+            
+            function handleIndepChange(e) {
+                // Only run if a checkbox was clicked (or event was dispatched)
+                if (e.target.matches('.independent-var-checkbox') || e.type === 'change') {
+                    
+                    // Clear the general data warning (from file upload)
+                    const warningEl = $("regressionDataWarning");
+                    if (warningEl) warningEl.textContent = "";
+
+                    // Check ratio and show warning *in the error field*
+                    const numFeatures = independentContainer.querySelectorAll('.independent-var-checkbox:checked').length;
+                    const numObservations = currentRegressionRowCount;
+                    
+                    if (numFeatures === 0) {
+                        errorEl.textContent = ""; // Clear errors if no features selected
+                        return;
+                    }
+
+                    const ratio = numObservations / numFeatures;
+
+                    if (numObservations >= 30 && ratio < 10) {
+                         errorEl.textContent = `Warning: Data ratio is low (${ratio.toFixed(1)}-to-1). A 10-to-1 ratio (or ${numFeatures * 10} rows) is recommended.`;
+                         errorEl.className = "text-yellow-400 text-sm mt-2"; // Make it a yellow warning
+                    } else if (numObservations < 30) {
+                         // This warning is already shown by processDataInput, but good to have
+                         errorEl.textContent = `Warning: Insufficient data (${numObservations} rows). 30+ recommended.`;
+                         errorEl.className = "text-yellow-400 text-sm mt-2";
+                    } else {
+                         errorEl.textContent = ""; // Clear if ratio is fine
+                         errorEl.className = "text-red-400 text-sm mt-2"; // Reset class
+                    }
+                }
+            }
+            
             dependentSelect.disabled = false;
+            // Trigger initial ratio check
+            independentContainer.dispatchEvent(new Event('change'));
         };
+
 
         /**
          * Processes the uploaded regression data file.
          */
         const processDataInput_Regression = async (file) => {
             const errorEl = $("regressionFileError");
+            const warningEl = $("regressionDataWarning"); 
             const dependentSelect = $("dependentVar");
             const independentContainer = $("independentVarsContainer");
             const previewContainer = $("regressionDataPreview");
             const previewTable = $("regressionPreviewTable");
             
-            errorEl.textContent = "";
+            errorEl.textContent = ""; 
+            if (warningEl) warningEl.textContent = ""; 
+
             dependentSelect.disabled = true;
             dependentSelect.innerHTML = '<option value="">-- Processing data... --</option>';
             independentContainer.innerHTML = "";
@@ -3704,6 +3787,8 @@ document.addEventListener("DOMContentLoaded", () => {
             previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Processing data...</td></tr></tbody>';
             previewContainer.classList.remove("hidden");
 
+            currentRegressionRowCount = 0; // Reset row count
+            
             if (!file) {
                  dependentSelect.innerHTML = '<option value="">-- Upload data file --</option>';
                  independentContainer.innerHTML = '<p class="text-sm text-white/60 text-center">-- Upload data file --</p>';
@@ -3715,18 +3800,30 @@ document.addEventListener("DOMContentLoaded", () => {
                 const textContent = await extractTextFromFile(file); 
                 const originalHeaders = getHeadersFromText(textContent);
 
-                // === BUG FIX: Removed [0] ===
                 const lines = textContent.split(/[\r\n]+/).filter(Boolean);
-                if (lines.length < 10) {
-                    errorEl.textContent = "Warning: Small dataset (<10 rows). Regression may be unreliable.";
+                
+                currentRegressionRowCount = lines.length - 1; 
+
+                // --- MODIFIED WARNING LOGIC ---
+                if (currentRegressionRowCount < 10) { 
+                    // Use errorEl for critical file read errors/warnings
+                    errorEl.textContent = "Warning: Small dataset (<10 rows). Regression will be unreliable.";
+                    errorEl.className = "text-yellow-400 text-sm mt-2"; // Make it yellow
+                } 
+                else if (currentRegressionRowCount < 30) {
+                    // Use warningEl for non-blocking data warnings
+                    if (warningEl) warningEl.textContent = `Warning: Insufficient data (${currentRegressionRowCount} rows). A minimum of 30 rows is recommended.`;
                 }
+                // --- END MODIFIED LOGIC ---
 
                 showDataPreview(textContent, 'regressionPreviewTable', 'regressionDataPreview');
-                updateRegressionVariables(originalHeaders); 
+                updateRegressionVariables(originalHeaders); // This will trigger the initial ratio check
 
             } catch (err) {
                 console.error("Regression input processing failed:", err);
                 errorEl.textContent = `Error: ${err.message}.`;
+                errorEl.className = "text-red-400 text-sm mt-2"; // Make it red
+                if (warningEl) warningEl.textContent = "";
                 dependentSelect.disabled = true;
                 dependentSelect.innerHTML = '<option value="">-- Error reading data --</option>';
                 independentContainer.innerHTML = '<p class="text-sm text-red-400 text-center">Error reading data.</p>';
@@ -3787,10 +3884,10 @@ Jan 1, "$50,000", "$5k", "15,000 visitors"<br>
 Feb 1, "$52,000", "$5.2k", "15,500 visitors"
                                     </div>
                                     <div class="text-xs text-white/90 mt-3 mb-1"><strong>Issues:</strong></div>
-                                    <div class="text-xs text-red-300">
-                                        • <strong>Non-Numeric Data:</strong> 'Sales' and 'Marketing' columns contain '$' and 'k', which will cause errors. Data must be numbers only (e.g., 50000, 5000).<br>
-                                        • <strong>Messy Data:</strong> 'Traffic' column contains text ("visitors") and commas. It should be a clean number (e.g., 15000).<br>
-                                        • <strong>Bad Column Names:</strong> 'Marketing Spend' (with a space) is better as 'Marketing_Spend'.
+                                    <div class="text-xs text-red-300 font-medium space-y-1">
+                                        <div>• <strong>Non-Numeric Data:</strong> 'Sales' and 'Marketing' columns contain '$' and 'k', which will cause errors. Data must be numbers only (e.g., 50000, 5000).</div>
+                                        <div>• <strong>Messy Data:</strong> 'Traffic' column contains text ("visitors") and commas. It should be a clean number (e.g., 15000).</div>
+                                        <div>• <strong>Bad Column Names:</strong> 'Marketing Spend' (with a space) is better as 'Marketing_Spend'.</div>
                                     </div>
                                 </div>
                             </div>
@@ -18631,6 +18728,10 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
         $("analysisActions").classList.add("hidden");
 
         const API_URL = "https://analysis.data2int.com/api/regression"; // Your FastAPI endpoint
+        
+        // --- NEW: Get the warning div ---
+        const warningEl = $("regressionDataWarning");
+        if (warningEl) warningEl.textContent = ""; // Clear previous warnings
 
         try {
             // --- 1. Gather Inputs from NEW UI Elements ---
@@ -18656,6 +18757,22 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
             if (independentVarsList.includes(dependentVar)) {
                 throw new Error("❌ The Dependent Variable cannot also be an Independent Variable.");
             }
+
+            // --- VALIDATION BLOCK (uses the new error strings) ---
+            const numFeatures = independentVarsList.length;
+            const numObservations = currentRegressionRowCount; // Get stored row count
+            const ratio = numObservations / numFeatures;
+
+            console.log(`Validation: ${numObservations} observations, ${numFeatures} features. Ratio: ${ratio}`);
+
+            if (numObservations < 30) {
+                throw new Error(`❌ Insufficient Data: You have only ${numObservations} rows. A minimum of 30 is recommended for basic regression.`);
+            }
+            if (ratio < 10) {
+                throw new Error(`❌ Insufficient Data Ratio: You have ${numObservations} observations for ${numFeatures} features (a ratio of ${ratio.toFixed(1)}-to-1). A 10-to-1 ratio (or ${numFeatures * 10} rows) is recommended.`);
+            }
+            // --- END VALIDATION BLOCK ---
+
 
             // 3. Prepare FormData for the backend
             const formData = new FormData();
@@ -18700,7 +18817,22 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
 
         } catch (error) {
             console.error(`Error in handleRegressionAnalysis_DA (Backend):`, error);
-            analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
+            const errorMessage = error.message;
+
+            // --- MODIFIED ERROR HANDLING ---
+            // Check if it's one of our new validation errors
+            if (errorMessage.startsWith("❌")) {
+                 if (warningEl) {
+                    warningEl.textContent = errorMessage.substring(2); // Display it by the input
+                    warningEl.className = "text-red-400 text-sm mt-2"; // Make it red
+                 }
+                 analysisResultContainer.innerHTML = '<div class="text-white/60 p-8 text-center">Analysis stopped due to data issues.</div>'; // Reset results panel
+            } else {
+                // It's a different error, show it in the main results box
+                analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400"><strong>Error:</strong> ${errorMessage}</div>`;
+            }
+            // --- END MODIFIED BLOCK ---
+
         } finally {
             setLoading("generate", false);
         }
@@ -18708,14 +18840,12 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
 
     /**
      * --- NEW RENDERER v5 (Null-Safe) ---
-     * Replaces renderAdvancedRegressionPage.
+     * --- USER REQUESTED UPDATE V3 ---
+     * - Changed residual plot marker color to bright yellow for visibility.
+     *
      * This function is designed to render the rich output from
      * the new 'statsmodels' backend and safely handles
      * null/undefined values from the JSON.
-     *
-     * --- FIX ---
-     * Added checks for statistical_analysis.target_stats and
-     * statistical_analysis.correlations before trying to access their properties.
      */
     function renderAdvancedRegressionPage(container, data) {
         container.innerHTML = ""; // Clear loading state
@@ -18744,29 +18874,33 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
         const { statsmodels_results, sklearn_comparison, statistical_analysis, dataset_info } = data;
         const { model_summary, coefficients, diagnostics } = statsmodels_results;
 
-        // --- Create Tab Navigation (6 Tabs) ---
+        // --- Create Tab Navigation (8 Tabs) ---
         const tabNav = document.createElement("div");
         tabNav.className = "flex flex-wrap border-b border-white/20 -mx-6 px-6";
         tabNav.innerHTML = `
             <button class="analysis-tab-btn active" data-tab="dashboard">📊 Dashboard</button>
             <button class="analysis-tab-btn" data-tab="coeffs">🔢 Coefficients</button>
-            <button class="analysis-tab-btn" data-tab="diagnostics">🩺 Diagnostics</button>
+            <button class="analysis-tab-btn" data-tab="diagnostics">⚠️ Diagnostics</button>
+            <button class="analysis-tab-btn" data-tab="assumptions">🩺 Assumptions</button>
             <button class="analysis-tab-btn" data-tab="correlations">🔗 Correlations</button>
             <button class="analysis-tab-btn" data-tab="comparison">🔄 Model Comparison</button>
             <button class="analysis-tab-btn" data-tab="dataInfo">📋 Data Info</button>
+            <button class="analysis-tab-btn" data-tab="learn">🎓 Learn Regression</button> 
         `;
         container.appendChild(tabNav);
 
-        // --- Create Tab Panels (6 Panels) ---
+        // --- Create Tab Panels (8 Panels) ---
         const tabContent = document.createElement("div");
         container.appendChild(tabContent);
         tabContent.innerHTML = `
             <div id="dashboardPanel" class="analysis-tab-panel active"></div>
             <div id="coeffsPanel" class="analysis-tab-panel"></div>
             <div id="diagnosticsPanel" class="analysis-tab-panel"></div>
+            <div id="assumptionsPanel" class="analysis-tab-panel"></div>
             <div id="correlationsPanel" class="analysis-tab-panel"></div>
             <div id="comparisonPanel" class="analysis-tab-panel"></div>
             <div id="dataInfoPanel" class="analysis-tab-panel"></div>
+            <div id="learnPanel" class="analysis-tab-panel"></div>
         `;
 
         // --- 1. Populate Dashboard Panel ---
@@ -18849,14 +18983,14 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
                        </div>`;
         coeffsPanel.innerHTML = coeffsHtml;
 
-        // --- 3. Populate Diagnostics Panel ---
-        const diagnosticsPanel = $("diagnosticsPanel");
+        // --- 3. Populate Assumptions Panel (Formerly Diagnostics) ---
+        const assumptionsPanel = $("assumptionsPanel");
         const bp_pvalue = diagnostics.breusch_pagan_pvalue.statistic ?? 1.0;
         const dw_stat = diagnostics.durbin_watson.statistic ?? 2.0;
         const jb_pvalue = diagnostics.jarque_bera_pvalue.statistic ?? 1.0;
 
-        let diagHtml = `<div class="p-4 space-y-8">
-            <h3 class="text-2xl font-bold mb-4 text-center">Model Assumption Diagnostics</h3>
+        let assumpHtml = `<div class="p-4 space-y-8">
+            <h3 class="text-2xl font-bold mb-4 text-center">Model Assumption Checks</h3>
             
             <div>
                 <h4 class="text-xl font-semibold mb-2 text-center">Residuals vs. Predicted Plot</h4>
@@ -18896,7 +19030,7 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
                 </div>
             </div>
         </div>`;
-        diagnosticsPanel.innerHTML = diagHtml;
+        assumptionsPanel.innerHTML = assumpHtml;
 
         // Render Residuals Plot
         try {
@@ -18904,7 +19038,8 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
                 x: diagnostics.residuals_plot_data.map(p => p.predicted),
                 y: diagnostics.residuals_plot_data.map(p => p.residual),
                 mode: 'markers', type: 'scatter', name: 'Residuals',
-                marker: { color: 'rgba(142, 45, 226, 0.6)', size: 8 }
+                // --- MODIFICATION 1 ---
+                marker: { color: 'rgba(245, 158, 11, 0.7)', size: 8, line: { color: 'rgba(255,255,255,0.3)', width: 1 } }
             };
             const residualsLayout = {
                 title: 'Residuals vs. Predicted Values',
@@ -18923,9 +19058,7 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
         const correlationsPanel = $("correlationsPanel");
         let corrHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4 text-center">Correlation with Target (${dataset_info.target_column})</h3>`;
         
-        // --- THIS IS THE FIX ---
         if (statistical_analysis.correlations) {
-        // --- END OF FIX ---
             corrHtml += `<div class="overflow-x-auto max-w-lg mx-auto">
                          <table class="coeff-table styled-table text-sm">
                             <thead><tr><th>Feature</th><th>Correlation Coefficient</th></tr></thead>
@@ -18944,13 +19077,11 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
             }
             corrHtml += `</tbody></table></div>
                          <p class="text-xs text-white/60 text-center mt-4">Values close to +1.0 or -1.0 indicate a strong relationship.</p>`;
-        // --- THIS IS THE FIX ---
         } else if (statistical_analysis.error) {
             corrHtml += `<p class="text-center text-red-400 italic">Could not calculate correlations: ${statistical_analysis.error}</p>`;
         } else {
             corrHtml += `<p class="text-center text-white/70 italic">Correlation data not available.</p>`;
         }
-        // --- END OF FIX ---
         correlationsPanel.innerHTML = corrHtml;
         
         // --- 5. Populate Model Comparison Panel ---
@@ -19000,12 +19131,10 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
         // --- 6. Populate Data Info Panel ---
         const dataInfoPanel = $("dataInfoPanel");
         
-        // --- THIS IS THE FIX ---
         let targetStatsHtml = "";
         if (statistical_analysis.error) {
             targetStatsHtml = `<p class="text-sm text-red-400">Error during statistical analysis: ${statistical_analysis.error}</p>`;
         } else if (statistical_analysis.target_stats) {
-            // This is the original, good code block
             targetStatsHtml = `
                 <p class="text-sm"><strong>Mean:</strong> ${safeFormat(statistical_analysis.target_stats.mean, 2)}</p>
                 <p class="text-sm"><strong>Std. Dev:</strong> ${safeFormat(statistical_analysis.target_stats.std, 2)}</p>
@@ -19013,13 +19142,11 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
                 <p class="text-sm"><strong>Max:</strong> ${safeFormat(statistical_analysis.target_stats.max, 2)}</p>
             `;
         } else {
-            // Fallback if target_stats is just missing
             targetStatsHtml = `<p class="text-sm text-white/70 italic">Target variable statistics not available.</p>`;
         }
 
         const originalFeatures = dataset_info.original_feature_columns || [];
         const finalFeatures = dataset_info.final_feature_columns_after_encoding || [];
-        // --- END OF FIX ---
         
         dataInfoPanel.innerHTML = `
             <div class="p-4 space-y-6">
@@ -19032,7 +19159,7 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
                 </div>
                 <div class="bg-black/20 p-4 rounded-lg max-w-4xl mx-auto">
                     <h4 class="text-lg font-semibold mb-2">Target Variable: ${dataset_info.target_column}</h4>
-                    ${targetStatsHtml} {/* <--- Inserted the safe HTML block here */}
+                    ${targetStatsHtml}
                 </div>
                 <div class="bg-black/20 p-4 rounded-lg max-w-4xl mx-auto">
                     <h4 class="text-lg font-semibold mb-2">Original Features Submitted (${originalFeatures.length})</h4>
@@ -19042,6 +19169,12 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
                     <p class="text-xs text-white/70">${finalFeatures.join(", ")}</p>
                 </div>
             </div>`;
+
+        // --- 7. Populate Learn Panel ---
+        renderLearnRegressionPanel("learnPanel");
+
+        // --- 8. Populate NEW Diagnostics Panel ---
+        renderRegressionDiagnosticsTab("diagnosticsPanel", data);
 
         // --- Final Touches ---
         analysisCache[currentTemplateId] = container.innerHTML; // Cache the new HTML
@@ -19060,12 +19193,15 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
                 if (targetPanel) {
                     targetPanel.classList.add("active");
                     
-                    const chart = targetPanel.querySelector(".plotly-chart");
-                    if (chart && chart.layout && typeof Plotly !== 'undefined') {
-                        try {
-                            Plotly.Plots.resize(chart);
-                        } catch (resizeError) {
-                            console.error(`Error resizing chart ${chart.id} on tab switch:`, resizeError);
+                    // Check if the panel being activated is the "Assumptions" panel
+                    if (e.target.dataset.tab === "assumptions") {
+                        const chart = targetPanel.querySelector(".plotly-chart"); // Find the chart *inside* this panel
+                        if (chart && chart.layout && typeof Plotly !== 'undefined') {
+                            try {
+                                Plotly.Plots.resize(chart);
+                            } catch (resizeError) {
+                                console.error(`Error resizing chart ${chart.id} on tab switch:`, resizeError);
+                            }
                         }
                     }
                 }
@@ -19081,7 +19217,8 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
                         x: diagnostics.residuals_plot_data.map(p => p.predicted),
                         y: diagnostics.residuals_plot_data.map(p => p.residual),
                         mode: 'markers', type: 'scatter', name: 'Residuals',
-                        marker: { color: 'rgba(142, 45, 226, 0.6)', size: 8 }
+                        // --- MODIFICATION 2 ---
+                        marker: { color: 'rgba(245, 158, 11, 0.7)', size: 8, line: { color: 'rgba(255,255,255,0.3)', width: 1 } }
                     };
                     const residualsLayout = {
                         title: 'Residuals vs. Predicted Values',
@@ -19098,6 +19235,224 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
             }
         }, 100); // Give the DOM a moment to settle
     }
+    
+    /**
+ * --- NEW FUNCTION (Corrected) ---
+ * Renders the new "Diagnostics" tab for regression, focusing on warnings.
+ * --- FIX ---
+ * - Correctly destructures 'coefficients' from 'data.statsmodels_results' instead of 'data'.
+ *
+ * @param {string} containerId - The ID of the HTML element to render into.
+ * @param {object} data - The full backend response data.
+ */
+function renderRegressionDiagnosticsTab(containerId, data) {
+    const container = $(containerId);
+    if (!container) return;
+
+    // Helper to safely format numbers
+    function safeFormat(num, digits, defaultVal = 'N/A') {
+        if (num === null || typeof num === 'undefined' || isNaN(num)) return defaultVal;
+        if (digits > 2 && num > 0 && num < (1 / Math.pow(10, digits))) return `< 0.${'0'.repeat(digits - 1)}1`;
+        return num.toFixed(digits);
+    }
+
+    // --- CORRECTED DESTRUCTURING ---
+    // Destructure the main data object first
+    const { statsmodels_results, sklearn_comparison, statistical_analysis } = data;
+    // NOW destructure the nested objects
+    const { model_summary, coefficients, diagnostics } = statsmodels_results;
+    // --- END CORRECTION ---
+
+    const warnings = [];
+
+    // 1. Check for statistical_analysis errors
+    if (statistical_analysis.error) {
+        warnings.push({
+            level: 'high',
+            type: 'Data Preprocessing Error',
+            message: `Could not perform initial statistical analysis: ${statistical_analysis.error}`,
+            impact: 'Correlations and target stats are unavailable.'
+        });
+    }
+
+    // 2. Check Sklearn model errors
+    for (const modelName in sklearn_comparison) {
+        if (sklearn_comparison[modelName].error) {
+            warnings.push({
+                level: 'medium',
+                type: 'Sub-Model Failure',
+                message: `The ${modelName} (Sklearn) model failed to train: ${sklearn_comparison[modelName].error}`,
+                impact: 'Comparison data for this model is unavailable.'
+            });
+        }
+    }
+
+    // 3. Check overall model significance
+    const f_pvalue = model_summary.prob_f_statistic ?? 1.0;
+    if (f_pvalue >= 0.05) {
+        warnings.push({
+            level: 'high',
+            type: 'Model Not Significant',
+            message: `The overall model is not statistically significant (F-statistic p-value = ${safeFormat(f_pvalue, 3)}).`,
+            impact: 'The independent variables, as a group, do not reliably predict the dependent variable. The results should not be trusted.'
+        });
+    }
+
+    // 4. Check statistical assumption test FAILURES
+    const bp_pvalue = diagnostics.breusch_pagan_pvalue.statistic ?? 1.0;
+    if (bp_pvalue < 0.05) {
+        warnings.push({
+            level: 'medium',
+            type: 'Heteroscedasticity Detected',
+            message: `The Breusch-Pagan test failed (p = ${safeFormat(bp_pvalue, 3)}), suggesting residuals do not have constant variance.`,
+            impact: 'p-values and standard errors for coefficients may be unreliable.'
+        });
+    }
+
+    const dw_stat = diagnostics.durbin_watson.statistic ?? 2.0;
+    if (dw_stat < 1.5 || dw_stat > 2.5) {
+        warnings.push({
+            level: 'medium',
+            type: 'Autocorrelation Detected',
+            message: `The Durbin-Watson statistic is ${safeFormat(dw_stat, 3)} (ideal is ~2.0), suggesting residuals are not independent.`,
+            impact: 'This is a problem for time-series data. Standard errors and p-values may be inaccurate.'
+        });
+    }
+
+    const jb_pvalue = diagnostics.jarque_bera_pvalue.statistic ?? 1.0;
+    if (jb_pvalue < 0.05) {
+        warnings.push({
+            level: 'low',
+            type: 'Non-Normal Residuals',
+            message: `The Jarque-Bera test failed (p = ${safeFormat(jb_pvalue, 3)}), suggesting residuals are not normally distributed.`,
+            impact: 'This is less critical with large samples, but indicates a potential violation of OLS assumptions.'
+        });
+    }
+
+    // 5. Check for non-significant coefficients
+    // This line will now work because 'coefficients' is correctly defined
+    const nonSigCoeffs = coefficients.filter(c => c.variable.toLowerCase() !== 'const' && (c.p_value === null || c.p_value >= 0.05));
+    if (nonSigCoeffs.length > 0) {
+        warnings.push({
+            level: 'low',
+            type: 'Non-Significant Predictors',
+            message: `The following variables were not statistically significant (p >= 0.05): ${nonSigCoeffs.map(c => c.variable).join(', ')}`,
+            impact: 'These variables do not have a reliable, non-zero relationship with the target variable in this model.'
+        });
+    }
+
+    // --- Render the HTML ---
+    let html = `<div class="p-6 space-y-8 text-white/90 max-w-6xl mx-auto">
+                <h3 class="text-3xl font-bold text-center mb-6 bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text text-transparent">
+                     ⚠️ Warnings & Diagnostics
+                </h3>`;
+
+    if (warnings.length > 0) {
+        // Sort warnings: high, medium, low
+        const levelOrder = { 'high': 1, 'medium': 2, 'low': 3 };
+        warnings.sort((a, b) => (levelOrder[a.level] || 4) - (levelOrder[b.level] || 4));
+
+        html += `<div class="space-y-4">
+                    <h4 class="text-xl font-bold text-red-300 mb-4">🚨 Analysis Alerts</h4>`;
+        
+        warnings.forEach(warning => {
+            const colors = {
+                high: { bg: 'bg-red-900/20', border: 'border-red-500', text: 'text-red-300', icon: '🔴' },
+                medium: { bg: 'bg-yellow-900/20', border: 'border-yellow-500', text: 'text-yellow-300', icon: '🟡' },
+                low: { bg: 'bg-blue-900/20', border: 'border-blue-500', text: 'text-blue-300', icon: '🔵' }
+            };
+            const c = colors[warning.level] || colors.low;
+
+            html += `
+                <div class="p-4 rounded-lg border-l-4 ${c.bg} ${c.border}">
+                    <div class="flex items-start space-x-3">
+                        <div class="text-2xl">${c.icon}</div>
+                        <div class="flex-1">
+                            <h5 class="font-semibold text-lg ${c.text}">${warning.type}</h5>
+                            <p class="text-white/90 mt-1">${warning.message}</p>
+                            <p class="text-white/70 text-sm mt-2"><strong>Impact:</strong> ${warning.impact}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += `</div>`;
+    } else {
+        html += `
+            <div class="p-4 bg-green-900/20 border border-green-500/30 rounded-lg text-center">
+                <div class="text-2xl mb-2">✅</div>
+                <p class="text-green-300 font-semibold">No Critical Warnings Detected</p>
+                <p class="text-white/70 text-sm mt-1">The statistical model appears to be stable and assumption tests passed.</p>
+            </div>
+        `;
+    }
+
+    html += `</div>`;
+    container.innerHTML = html;
+}
+
+    /**
+ * --- NEW FUNCTION ---
+ * Renders the static 'Learn Regression' content into the specified container.
+ * @param {string} containerId - The ID of the HTML element to render into.
+ */
+function renderLearnRegressionPanel(containerId) {
+    const container = $(containerId);
+    if (!container) return; // Exit if container not found
+
+    // Static HTML content explaining Regression
+    container.innerHTML = `
+        <div class="p-6 space-y-6 text-white/90">
+            <h3 class="text-3xl font-bold text-center mb-4">🎓 Understanding Regression Analysis</h3>
+            
+            <div class="bg-black/20 p-4 rounded-lg">
+                <h4 class="text-lg font-bold mb-2 text-indigo-300">What is Regression Analysis?</h4>
+                <p class="text-sm text-white/80">Regression analysis is a statistical method used to model the relationship between a **dependent variable** (the outcome you want to predict) and one or more **independent variables** (the factors you believe influence the outcome).</p>
+                <p class="text-sm text-white/80 mt-2">It helps answer questions like: "How much does my marketing spend affect my sales?" or "Which factors have the biggest impact on customer satisfaction?"</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white/5 p-4 rounded-lg border border-white/10">
+                    <h4 class="text-lg font-bold mb-2">Key Concepts to Know:</h4>
+                    <ul class="list-disc list-inside space-y-2 text-sm">
+                        <li>
+                            <strong>Coefficient:</strong> The number showing how much the dependent variable is expected to change (on average) for a one-unit increase in the independent variable, holding all other variables constant.
+                        </li>
+                        <li>
+                            <strong>p-value:</strong> The probability that the observed relationship is just due to random chance. A p-value **< 0.05** is typically considered "statistically significant," meaning the relationship is likely real.
+                        </li>
+                        <li>
+                            <strong>R-Squared (R²):</strong> A score from 0% to 100% that indicates how much of the variation in the dependent variable is "explained" by the independent variables in your model. A higher R² is generally better.
+                        </li>
+                         <li>
+                            <strong>Adj. R-Squared:</strong> A modified version of R-Squared that adjusts for the number of variables in the model. It's often preferred for comparing models with different numbers of predictors.
+                        </li>
+                    </ul>
+                </div>
+                <div class="bg-white/5 p-4 rounded-lg border border-white/10">
+                    <h4 class="text-lg font-bold mb-2">Interpreting Your Results:</h4>
+                     <ol class="list-decimal list-inside space-y-1 text-sm">
+                        <li><strong>Check Model Fit (Dashboard):</strong> Is the **Adj. R-Squared** high enough to be useful? Is the **F-statistic p-value** < 0.05? If not, the model as a whole isn't very good at explaining the outcome.</li>
+                        <li><strong>Check Coefficients (Coefficients Tab):</strong> Look for variables with a **p-value < 0.05**. These are your significant predictors.</li>
+                        <li><strong>Analyze Coefficients:</strong> For significant predictors, look at the **Coefficient** value. Is it positive (+) or negative (-)? How large is it? This tells you the direction and strength of the relationship.</li>
+                        <li><strong>Check Diagnostics (Diagnostics Tab):</strong> Are there any red flags? You want random scatter in the residuals plot and "PASS" on the statistical tests.</li>
+                     </ol>
+                </div>
+            </div>
+
+             <details class="styled-details text-sm mt-4">
+                <summary class="font-semibold">⚠️ Common Pitfalls & Assumptions</summary>
+                <div class="bg-black/20 p-4 rounded-b-lg space-y-3">
+                    <p><strong>Multicollinearity (Check Correlations):</strong> If your independent variables are highly correlated with *each other* (e.g., > 0.8), it can make your coefficients unreliable. The model can't tell which variable is "responsible" for the effect.</p>
+                    <p><strong>Homoscedasticity (Check Breusch-Pagan):</strong> The model assumes residuals (errors) are spread randomly and evenly. If they form a cone or fan shape (heteroscedasticity), your p-values might be inaccurate. This is a common issue.</p>
+                    <p><strong>Normality of Residuals (Check Jarque-Bera):</strong> Assumes the errors are normally distributed (a bell curve). Violations are less critical with large samples but can be an issue.</p>
+                    <p><strong>Autocorrelation (Check Durbin-Watson):</strong> Assumes errors are independent. This is mainly a problem in time-series data (e.g., stock prices) where one day's error affects the next. You want a value around 2.0.</p>
+                </div>
+            </details>
+        </div>
+    `;
+}
 
     async function handleLeveragePointsAnalysis() {
     const analysisResultContainer = $("analysisResult");
