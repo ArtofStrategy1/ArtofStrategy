@@ -3,8 +3,9 @@
 // =====================================================================================================
 import { dom } from "../../utils/dom-utils.mjs";
 import { appState } from "../../state/app-state.mjs";
-import { generateProcessMappingMermaidCode } from '../../diagrams/diagram-generation.mjs'
-import { renderMermaidDiagram } from '../../diagrams/diagram-renderer.mjs'
+import { generateProcessMappingMermaidCode, parseFishboneData } from '../../diagrams/diagram-generation.mjs'
+import { renderMermaidDiagram, renderFishboneDiagram } from '../../diagrams/diagram-renderer.mjs'
+import { fitDiagram, resetZoom, exportPNG } from "../../diagrams/diagram-utils.mjs";
 
 function renderProcessMappingPage(container, data) {
     container.innerHTML = ""; // Clear the loading indicator
@@ -291,6 +292,7 @@ function renderParetoFishbonePage(container, data) {
     tabNav.innerHTML = `
         <button class="analysis-tab-btn active" data-tab="pareto">📊 Pareto Chart & Summary</button>
         <button class="analysis-tab-btn" data-tab="fishbone">🐟 Fishbone Diagram</button>
+        <button class="analysis-tab-btn" data-tab="fishboneDiagram">Fishbone DiagramC</button>
         <button class="analysis-tab-btn" data-tab="action">🎯 Action Plan (Vital Few)</button>
         <button class="analysis-tab-btn" data-tab="learn">🎓 Learn Techniques</button>
     `;
@@ -302,6 +304,7 @@ function renderParetoFishbonePage(container, data) {
     tabContent.innerHTML = `
         <div id="paretoPanel" class="analysis-tab-panel active"></div>
         <div id="fishbonePanel" class="analysis-tab-panel"></div>
+        <div id="fishboneDiagramPanel" class="analysis-tab-panel"></div>
         <div id="actionPanel" class="analysis-tab-panel"></div>
         <div id="learnPanel" class="analysis-tab-panel"></div>
     `;
@@ -397,6 +400,21 @@ function renderParetoFishbonePage(container, data) {
     actionHtml += `</div>`;
     actionPanel.innerHTML = actionHtml;
 
+    // Populate Fishbone Diagram Panel.
+    const fishboneDiagramPanel = dom.$("fishboneDiagramPanel");
+    const fishboneElements = parseFishboneData(data);
+    if (fishboneDiagramPanel) {
+        fishboneDiagramPanel.innerHTML = `
+        <div id="fishboneCy" class="fishboneCy"></div>
+        <div class="diagram-controls">
+            <button class="diagram-fit-btn" data-action="fit">Fit to View</button>
+            <button class="diagram-reset-btn" data-action="reset">Reset Zoom</button>
+            <button class="diagram-export-btn" data-action="export">Export as PNG</button>
+        </div>
+        `
+    }
+    
+
     // --- 4. Populate Learn Techniques Tab ---
     const learnPanel = dom.$("learnPanel");
     learnPanel.innerHTML = `
@@ -466,6 +484,17 @@ function renderParetoFishbonePage(container, data) {
                 }
             } else {
                 console.warn("Target panel not found:", targetPanelId);
+            }
+
+            if (e.target.dataset.tab === "fishboneDiagram") {
+                const fishboneDiagramContainer = targetPanel.querySelector("#fishboneCy");
+                if (fishboneDiagramContainer && fishboneElements) {
+                    let cy;
+                    cy = renderFishboneDiagram(fishboneDiagramContainer, fishboneElements);
+                    document.querySelector('.diagram-fit-btn').addEventListener('click', () => fitDiagram(cy));
+                    document.querySelector('.diagram-reset-btn').addEventListener('click', () => resetZoom(cy));
+                    document.querySelector('.diagram-export-btn').addEventListener('click', () => exportPNG(cy));
+                }
             }
         }
     });

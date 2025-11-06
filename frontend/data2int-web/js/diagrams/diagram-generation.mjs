@@ -124,6 +124,141 @@ function generateAlphaNumericId(index) {
     return `${String.fromCharCode(65 + letterIndex)}${numberSuffix}`;
 }
 
+
+/**
+ * Parses the fishbone JSON schema and generates a Cytoscape.js elements array
+ * with preset positions for a fishbone diagram layout.
+ *
+ * @param {object} jsonData The input JSON data.
+ * @returns {Array} A Cytoscape.js elements array.
+ */
+function parseFishboneData(jsonData) {
+    const elements = [];
+
+    // --- 1. Layout Constants (Tweak these to change the diagram's appearance) ---
+    const Y_SPINE = 500;        // Y-coordinate for the horizontal spine
+    const X_HEAD = 1300;        // X-coordinate for the "Problem" node (the head)
+    const X_TAIL = 0;           // X-coordinate for the tail
+    
+    const Y_RIB_TOP = 250;      // Y-coordinate for top-row categories
+    const Y_RIB_BOTTOM = 750;   // Y-coordinate for bottom-row categories
+    
+    const X_RIB_START = 250;    // X-coordinate for the first group of ribs
+    const X_RIB_SPACING = 350;  // Horizontal gap between rib groups
+
+    // --- 2. Add Head and Tail Nodes ---
+    
+    // Add the "Head" (Problem)
+    elements.push({
+        data: { id: 'problem', label: jsonData.problem_statement, type: 'head' },
+        position: { x: X_HEAD, y: Y_SPINE },
+        locked: true,
+    });
+
+    // Add the "Tail" (an invisible node to anchor the spine)
+    elements.push({
+        data: { id: 'tail', type: 'spine' },
+        position: { x: X_TAIL, y: Y_SPINE },
+        locked: true,
+    });
+
+    // --- 3. Process Categories (Ribs) and Causes (Bones) ---
+
+    // Filter out any categories that have no causes
+    const categories = Object.keys(jsonData.fishbone)
+                            .filter(key => jsonData.fishbone[key].length > 0);
+
+    const spineNodesToConnect = ['tail']; // Start the spine connection list
+
+    categories.forEach((categoryName, index) => {
+        const causes = jsonData.fishbone[categoryName];
+        const n = causes.length;
+
+        // Alternate categories between top and bottom
+        const isTop = index % 2 === 0;
+        const yCategory = isTop ? Y_RIB_TOP : Y_RIB_BOTTOM;
+        
+        // Group ribs in pairs (e.g., 0 & 1, 2 & 3) at the same horizontal level
+        const ribGroupIndex = Math.floor(index / 2);
+        const xCategory = X_RIB_START + (ribGroupIndex * X_RIB_SPACING);
+
+        // A. Create the invisible "Spine" node for this rib group to connect to
+        const spineNodeId = 'spine-' + ribGroupIndex;
+        let xSpinePoint;
+        if (!elements.find(el => el.data.id === spineNodeId)) {
+            xSpinePoint = xCategory + (X_RIB_SPACING / 3); // Make ribs angle forward
+            elements.push({
+                data: { id: spineNodeId, type: 'spine' },
+                position: { x: xSpinePoint, y: Y_SPINE },
+                locked: true,
+            });
+            spineNodesToConnect.push(spineNodeId);
+        } else {
+            // Get position of existing spine node
+            xSpinePoint = elements.find(el => el.data.id === spineNodeId).position.x;
+        }
+        
+        // B. Create the "Category" node (the rib end)
+        const categoryNodeId = 'cat-' + index;
+        elements.push({
+            data: { id: categoryNodeId, label: categoryName, type: 'category' },
+            position: { x: xCategory, y: yCategory },
+            locked: true,
+        });
+
+        // C. Create the "Cause" nodes and chain the edges
+        let lastNodeId = categoryNodeId; // Start the chain from the category node
+
+        causes.forEach((causeText, causeIndex) => {
+            const causeNodeId = 'cause-' + index + '-' + causeIndex;
+            
+            // Calculate position by interpolating between category and spine node
+            // (causeIndex + 1) / (n + 1) ensures nodes are evenly spaced *between* start and end
+            const percent = (causeIndex + 1) / (n + 1);
+            
+            const xCause = xCategory + (percent * (xSpinePoint - xCategory));
+            const yCause = yCategory + (percent * (Y_SPINE - yCategory));
+
+            // Add the cause node
+            elements.push({
+                data: { id: causeNodeId, label: causeText, type: 'cause' },
+                position: { x: xCause, y: yCause },
+                locked: true
+            });
+
+            // Add the "bone" edge from the *previous* node in the chain
+            elements.push({
+                data: { id: 'edge-' + lastNodeId + '-' + causeNodeId, source: lastNodeId, target: causeNodeId, type: 'bone' },
+            });
+            
+            lastNodeId = causeNodeId; // This cause becomes the next source
+        });
+
+        // D. Connect the *last* cause node to the spine node
+        elements.push({
+            data: { id: 'edge-' + lastNodeId + '-' + spineNodeId, source: lastNodeId, target: spineNodeId, type: 'bone' },
+        });
+    });
+
+    // --- 4. Connect the Spine Nodes ---
+    spineNodesToConnect.push('problem'); // Add the head as the final connection
+
+    for (let i = 0; i < spineNodesToConnect.length - 1; i++) {
+        elements.push({
+            data: {
+                id: 'spine-edge-' + i,
+                source: spineNodesToConnect[i],
+                target: spineNodesToConnect[i+1],
+                type: 'spine-bone'
+            },
+        });
+    }
+
+    return elements;
+}
+
+
 export {
-    generateProcessMappingMermaidCode
+    generateProcessMappingMermaidCode,
+    parseFishboneData
 }
