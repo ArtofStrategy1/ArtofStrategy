@@ -2592,6 +2592,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         // --- END OF ADDED BLOCK ---
 
+        // --- ADDED: Create the dashboard layout if it's the admin page ---
+        if (pageId === "adminDashboard") {
+            // Ensure the dynamic layout is built before fetching data into it
+            createAdminDashboardTabs(); 
+        }
+
         const targetPage = $(pageId);
         if (targetPage) {
             targetPage.classList.add("active");
@@ -2686,6 +2692,92 @@ document.addEventListener("DOMContentLoaded", () => {
         navigateTo(pageId);
     }
 
+    // --- NEW FUNCTION TO CREATE DYNAMIC DASHBOARD LAYOUT ---
+function createAdminDashboardTabs() {
+    const dashboardContainer = $("adminDashboard");
+    if (!dashboardContainer) return;
+
+    // 1. Capture existing static content (metrics and stats panels)
+    const usersOnlineGrid = dashboardContainer.querySelector('.grid.md\\:grid-cols-3');
+    const statsContainer = dashboardContainer.querySelector('.glass-container.mt-8');
+
+    // 2. Clear the dashboard content
+    dashboardContainer.innerHTML = '';
+
+    // 3. Define Tab Navigation
+    const tabNav = document.createElement("div");
+    tabNav.id = "adminTabsNav";
+    tabNav.className = "flex flex-wrap space-x-2 border-b-2 border-white/10 mt-8 mb-8";
+    tabNav.innerHTML = `
+        <button class="home-tab-btn active" data-tab="metrics">📊 Metrics & Stats</button>
+        <button class="home-tab-btn" data-tab="approvals">📧 Contact Approvals</button>
+        <button class="home-tab-btn" data-tab="tickets">🎫 Ticket System</button>
+        <button class="home-tab-btn" data-tab="dbView">💾 View DB Content</button>
+    `;
+    
+    // 4. Define Tab Content Panels
+    const tabContent = document.createElement("div");
+    tabContent.id = "adminTabsContent";
+    tabContent.innerHTML = `
+        <div id="metricsPanel" class="home-tab-panel active grid grid-cols-1 gap-8">
+            ${usersOnlineGrid ? usersOnlineGrid.outerHTML : ''}
+            ${statsContainer ? statsContainer.outerHTML : ''}
+        </div>
+        <div id="approvalsPanel" class="home-tab-panel"></div>
+        <div id="ticketsPanel" class="home-tab-panel"></div>
+        <div id="dbViewPanel" class="home-tab-panel"></div>
+    `;
+
+    // 5. Append new elements to the dashboard
+    dashboardContainer.appendChild(tabNav);
+    dashboardContainer.appendChild(tabContent);
+    
+    // 6. Attach the common tab switching listener
+    setupAdminTabsListeners();
+}
+
+// --- NEW FUNCTION TO HANDLE TAB SWITCHING LOGIC ---
+function setupAdminTabsListeners() {
+    const tabsNav = $("adminTabsNav");
+    const tabPanels = document.querySelectorAll("#adminTabsContent .home-tab-panel");
+    const tabBtns = document.querySelectorAll("#adminTabsNav .home-tab-btn");
+
+    // Ensure the initial state is correct for the metrics panel
+    tabPanels.forEach(panel => {
+         if (panel.id === "metricsPanel") {
+             panel.style.display = "grid"; 
+         } else {
+             panel.style.display = "none";
+         }
+    });
+
+    tabsNav.addEventListener("click", (e) => {
+        if (e.target.tagName !== "BUTTON") return;
+        const targetTab = e.target.dataset.tab;
+
+        tabBtns.forEach((btn) => {
+            // Apply home-tab-btn active styles
+            btn.classList.toggle("active", btn.dataset.tab === targetTab);
+        });
+
+        tabPanels.forEach((panel) => {
+            panel.classList.remove("active");
+            if (panel.id === targetTab + "Panel") {
+                panel.classList.add("active");
+                panel.style.display = "grid"; // Show grid for content pages
+                
+                // *CRUCIAL: Trigger loading for specific tabs upon activation*
+                if (targetTab === 'approvals') renderContactApprovalsTab();
+                if (targetTab === 'tickets') renderTicketSystemTab();
+                if (targetTab === 'dbView') renderViewDatabaseTab();
+
+            } else {
+                panel.style.display = "none";
+            }
+        });
+    });
+}
+
     // --- Admin Dashboard Stats Logic ---
     const refreshStatsBtn = $("refreshStatsBtn");
     if (refreshStatsBtn) {
@@ -2759,6 +2851,138 @@ document.addEventListener("DOMContentLoaded", () => {
             textEl.textContent = "Refresh Stats";
         }
     }
+
+async function handleContactSubmit() {
+    // 1. Gather Inputs (IDs are from lines 62-65 in the HTML snippet)
+    const firstName = $("contactFirstName").value.trim();
+    const lastName = $("contactLastName").value.trim();
+    const companyName = $("contactCompanyName").value.trim();
+    const email = $("contactEmail").value.trim();
+    const phone = $("contactPhone").value.trim();
+    const subject = $("contactSubject").value.trim();
+    const message = $("contactMessage").value.trim();
+    const messageResultEl = $("contactMessageResult");
+
+    // Basic client-side validation (matching Edge Function requirements)
+    if (!firstName || !lastName || !email || !subject || !message || message.length < 5) {
+        showMessage("contactMessageResult", "Please fill in all required fields, and ensure the message is at least 5 characters long.", "error");
+        messageResultEl.classList.remove("hidden");
+        return;
+    }
+
+    // 2. Set loading state
+    setLoading("contactSubmit", true);
+    messageResultEl.classList.add("hidden");
+
+    try {
+        // 3. Prepare JSON payload
+        const payload = {
+            first_name: firstName,
+            last_name: lastName,
+            company_name: companyName, // Passes null/empty string if not provided
+            email: email,
+            phone: phone, // Passes null/empty string if not provided
+            subject: subject,
+            message: message
+        };
+
+        // 4. Call the Supabase Edge Function via HTTP POST
+        // Note: The function name here must match the deployed function endpoint
+        const FUNCTION_ENDPOINT = "https://supabase.data2int.com/functions/v1/insert-contact"; 
+        
+        const response = await fetch(FUNCTION_ENDPOINT, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                // API Key/Authorization is generally not needed if the function is public,
+                // but the service role key is used internally by the function itself.
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        // 5. Handle response (2xx success vs. 4xx/5xx error)
+        if (!response.ok) {
+            // Error details from the Edge Function's own error response
+            throw new Error(data.details || data.error || `HTTP Error ${response.status}`);
+        }
+
+        // Success: Clear form and show message
+        $("contactFirstName").value = "";
+        $("contactLastName").value = "";
+        $("contactCompanyName").value = "";
+        $("contactEmail").value = "";
+        $("contactPhone").value = "";
+        $("contactSubject").value = "";
+        $("contactMessage").value = "";
+        
+        showMessage("contactMessageResult", "Thank you! Your message has been sent to the admin team.", "success");
+        messageResultEl.classList.remove("hidden");
+
+    } catch (e) {
+        // Display detailed error message from the try block
+        console.error("Contact submission failed:", e);
+        showMessage("contactMessageResult", `Submission failed: ${e.message}`, "error");
+        messageResultEl.classList.remove("hidden");
+    } finally {
+        setLoading("contactSubmit", false);
+    }
+}
+
+// --- Function called when the 'Contact Approvals' tab is activated ---
+async function renderContactApprovalsTab() {
+    const container = $("approvalsPanel");
+    container.innerHTML = `<div class="glass-container p-6">
+        <h3 class="text-2xl font-bold mb-4">Contact Section Approvals</h3>
+        <p class="text-sm text-white/70 mb-4">Review and approve contact messages before processing (from publicv2.contacts).</p>
+        <div id="contactApprovalList" class="space-y-4">
+            <div class="text-center text-white/70">Loading messages... <span class="loading-spinner ml-2"></span></div>
+        </div>
+        <div id="contactApprovalMessage" class="hidden mt-4"></div>
+    </div>`;
+
+    const listContainer = $("contactApprovalList");
+    
+    // *** Fetch contacts explicitly targeting the publicv2 schema and only unapproved messages ***
+    const { data: contacts, error } = await supabase
+        .schema('publicv2') 
+        .from('contacts')
+        .select('*')
+        .eq('is_approved', false) // Filters for pending messages
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        listContainer.innerHTML = `<p class="error-message">Error loading contacts: ${error.message}</p>`;
+        return;
+    }
+
+    if (contacts.length === 0) {
+        listContainer.innerHTML = `<p class="text-center text-white/70">✅ No pending contact messages found.</p>`;
+        return;
+    }
+
+    let html = '';
+    contacts.forEach(contact => {
+        html += `
+            <div id="contact-${contact.id}" class="bg-black/20 p-4 rounded-lg border border-white/10">
+                <p class="font-bold">${contact.first_name} ${contact.last_name} (${contact.email})</p>
+                <p class="text-xs text-indigo-300 mt-1">Subject: ${contact.subject} | Phone: ${contact.phone || 'N/A'}</p>
+                <p class="text-xs text-white/70">Company: ${contact.company_name || 'N/A'}</p>
+                <p class="text-sm text-white/80 mt-2 whitespace-pre-wrap">${contact.message}</p>
+                <div class="text-right mt-3 space-x-2">
+                    <button class="btn btn-primary btn-sm" data-id="${contact.id}" data-action="approve">Approve & Archive</button>
+                    <button class="btn btn-danger btn-sm" data-id="${contact.id}" data-action="delete">Delete Permanently</button>
+                </div>
+            </div>`;
+    });
+    listContainer.innerHTML = html;
+
+    // Attach event listeners (relying on handleContactApproval being defined)
+    listContainer.querySelectorAll('button').forEach(button => {
+        button.addEventListener('click', (e) => handleContactApproval(e));
+    });
+}
 
     // --- Home Page Card & Tab Logic ---
     function setupHomeTabs() {
@@ -23432,6 +23656,11 @@ function renderMiscPage_MSC(container, data) {
         navigateTo("home");
     } else {
         navigateTo("home");
+    }
+    // *** FIX: Attach the Contact Submit Handler ***
+    const contactSubmitBtn = $("contactSubmitBtn");
+    if (contactSubmitBtn) {
+        contactSubmitBtn.addEventListener("click", handleContactSubmit);
     }
 
     setupHomeTabs();
