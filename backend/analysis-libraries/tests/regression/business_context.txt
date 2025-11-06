@@ -1,0 +1,11 @@
+We are analyzing sales revenue prediction for our e-commerce platform.
+The goal is to understand how marketing spend, product pricing, and customer ratings
+impact sales revenue across different regions.
+
+Key business questions:
+1. Which factors most strongly predict sales revenue?
+2. Is there a optimal marketing spend level for ROI?
+3. How does pricing strategy affect revenue?
+4. Are there regional differences in sales patterns?
+
+This analysis will inform our Q2 marketing budget allocation and pricing strategy.
