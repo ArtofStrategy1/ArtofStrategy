@@ -5,183 +5,261 @@
 import { dom } from '../../utils/dom-utils.mjs';
 import { appState } from '../../state/app-state.mjs';
 
-// Modified renderFactorAnalysisPage to add Learn Tab
-// NEW renderFactorAnalysisPage - Creates a detailed 6-tab view
-function renderFactorAnalysisPage(container, data) {
-    container.innerHTML = ""; // Clear loading state
+/**
+ * RENDERER: Mission Vision (DEEP ANALYSIS v4 - LAYOUT FIX)
+ * - Fixes all layout/spacing issues by using `white-space: normal` and proper padding.
+ * - Renders the full Mission, Vision, Values, and Goals into a 5-tab interface.
+ * - Displays all new detailed data (breakdowns, initiatives, KPIs, etc.).
+ */
+function renderMissionVisionPage(container, data) {
+    // --- THIS IS THE FIX FOR SPACING ---
+    // This overrides the `white-space: pre-wrap;` style on the #analysisResult container
+    container.style.whiteSpace = 'normal';
+    // --- END OF FIX ---
 
-    // Basic validation
-    if (!data || !data.internal_factors || !data.external_factors) {
-         console.error("Incomplete data passed to renderFactorAnalysisPage:", data);
-         container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received.</div>`;
-         dom.$("analysisActions").classList.add("hidden");
-         return;
+    container.innerHTML = ""; // Clear loading indicator
+
+    const { mission, vision, values, goals } = data;
+
+    // --- Validation for the NEW deep structure ---
+    if (!mission || !mission.statement || !Array.isArray(mission.breakdown) ||
+        !vision || !vision.statement || !Array.isArray(vision.breakdown) ||
+        !Array.isArray(values) || !Array.isArray(goals)) {
+        console.error("Invalid data passed to renderMissionVisionPage:", data);
+        container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Analysis data is incomplete or has the wrong structure.</div>`;
+        dom.$("analysisActions").classList.add("hidden");
+        return;
     }
-
-    const { internal_factors, external_factors } = data;
-    const allFactors = [
-        ...(internal_factors.strengths || []),
-        ...(internal_factors.weaknesses || []),
-        ...(external_factors.opportunities || []),
-        ...(external_factors.threats || [])
-    ];
-
-    // --- Create Tab Navigation (6 Tabs) ---
+    
+    // --- Create Tab Navigation (5 Tabs) ---
     const tabNav = document.createElement("div");
     tabNav.className = "flex flex-wrap border-b border-white/20 -mx-6 px-6";
     tabNav.innerHTML = `
-        <button class="analysis-tab-btn active" data-tab="dashboard">📊 Dashboard</button>
-        <button class="analysis-tab-btn" data-tab="strengths">💪 Strengths</button>
-        <button class="analysis-tab-btn" data-tab="weaknesses">⚠️ Weaknesses</button>
-        <button class="analysis-tab-btn" data-tab="opportunities">✨ Opportunities</button>
-        <button class="analysis-tab-btn" data-tab="threats">🛡️ Threats</button>
-        <button class="analysis-tab-btn" data-tab="learn">🎓 Learn Factor Analysis</button>
+        <button class="analysis-tab-btn active" data-tab="summary">📊 Summary</button>
+        <button class="analysis-tab-btn" data-tab="statements">📜 Mission & Vision</button>
+        <button class="analysis-tab-btn" data-tab="values">🧭 Core Values</button>
+        <button class="analysis-tab-btn" data-tab="goals">🎯 Strategic Goals</button>
+        <button class="analysis-tab-btn" data-tab="learn">🎓 Learn Framework</button>
     `;
     container.appendChild(tabNav);
 
-    // --- Create Tab Panels (6 Panels) ---
+    // --- Create Tab Panels (5 Panels) ---
     const tabContent = document.createElement("div");
     container.appendChild(tabContent);
+    // Added padding (p-4 or p-6) to each panel for consistent spacing
     tabContent.innerHTML = `
-        <div id="dashboardPanel" class="analysis-tab-panel active"></div>
-        <div id="strengthsPanel" class="analysis-tab-panel"></div>
-        <div id="weaknessesPanel" class="analysis-tab-panel"></div>
-        <div id="opportunitiesPanel" class="analysis-tab-panel"></div>
-        <div id="threatsPanel" class="analysis-tab-panel"></div>
-        <div id="learnPanel" class="analysis-tab-panel"></div>
+        <div id="summaryPanel" class="analysis-tab-panel active p-4 md:p-6"></div>
+        <div id="statementsPanel" class="analysis-tab-panel p-4 md:p-6"></div>
+        <div id="valuesPanel" class="analysis-tab-panel p-4 md:p-6"></div>
+        <div id="goalsPanel" class="analysis-tab-panel p-4 md:p-6"></div>
+        <div id="learnPanel" class="analysis-tab-panel p-4 md:p-6"></div>
     `;
 
-    // --- Helper Function to Render a Detail Tab ---
-    const renderFactorDetailTab = (panelId, factors, title, borderColorClass) => {
-        const panel = dom.$(panelId);
-        if (!panel) return;
-
-        let html = `<div class="p-4 space-y-6"><h3 class="text-3xl font-bold mb-4 text-center">${title} (${factors.length})</h3>`;
-        if (factors.length > 0) {
-            // Sort by impact score, highest first
-            factors.sort((a, b) => (b.impact_score || 0) - (a.impact_score || 0));
-            
-            factors.forEach((factor, index) => {
-                html += `
-                    <div class="prescription-card ${borderColorClass}">
-                        <div class="flex justify-between items-start mb-2">
-                            <h4 class="text-xl font-bold">${index + 1}. ${factor.factor}</h4>
-                            <span class="text-lg font-bold text-yellow-300" title="Impact Score">(${factor.impact_score}/10)</span>
-                        </div>
-                        <p class="text-xs font-semibold text-indigo-300 uppercase mb-2">Category: ${factor.category || 'N/A'}</p>
-                        <p class="text-sm text-white/80 italic mb-3"><strong>Description:</strong> ${factor.description || 'N/A'}</p>
-                        
-                        <div class="rationale">
-                            <strong>Deep Analysis:</strong> ${factor.deep_analysis || 'No deep analysis provided.'}
-                        </div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 text-sm">
-                            <div class="bg-black/20 p-3 rounded">
-                                <h5 class="font-bold text-green-300 mb-2">Actionable Recommendation</h5>
-                                <p class="text-white/90">${factor.actionable_recommendation || 'N/A'}</p>
-                            </div>
-                            <div class="bg-black/20 p-3 rounded">
-                                <h5 class="font-bold text-green-300 mb-2">Relevant KPIs</h5>
-                                <ul class="list-disc list-inside text-white/90">
-                                    ${(factor.relevant_kpis && factor.relevant_kpis.length > 0) 
-                                        ? factor.relevant_kpis.map(kpi => `<li>${kpi}</li>`).join('') 
-                                        : '<li>N/A</li>'}
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-        } else {
-            html += `<p class="text-center text-white/70 italic">No factors identified for this category based on the provided text.</p>`;
-        }
-        html += `</div>`; // Close p-4
-        panel.innerHTML = html;
-    };
-    
-    // --- 1. Populate Dashboard Panel ---
-    const dashboardPanel = dom.$("dashboardPanel");
-    let dashboardHtml = `<div class="p-4">
-                            <h3 class="text-2xl font-bold mb-6 text-center">Factor Analysis Dashboard</h3>
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto mb-8">
-                                <div class="summary-stat-card"><div class="stat-value text-green-400">${internal_factors.strengths.length}</div><div class="stat-label">Strengths</div></div>
-                                <div class="summary-stat-card"><div class="stat-value text-red-400">${internal_factors.weaknesses.length}</div><div class="stat-label">Weaknesses</div></div>
-                                <div class="summary-stat-card"><div class="stat-value text-blue-400">${external_factors.opportunities.length}</div><div class="stat-label">Opportunities</div></div>
-                                <div class="summary-stat-card"><div class="stat-value text-yellow-400">${external_factors.threats.length}</div><div class="stat-label">Threats</div></div>
-                            </div>`;
-    
-    // Find most critical factor
-    const allSorted = allFactors.sort((a, b) => (b.impact_score || 0) - (a.impact_score || 0));
-    const criticalFactor = allSorted[0];
-
-    if (criticalFactor) {
-        dashboardHtml += `<div class="bg-black/20 p-6 rounded-lg max-w-3xl mx-auto border-l-4 border-red-500">
-                            <h4 class="text-xl font-bold mb-3 text-center text-red-300">Most Critical Factor Identified (Highest Impact)</h4>
-                            <p class="text-lg font-bold text-center">${criticalFactor.factor} (Impact: ${criticalFactor.impact_score}/10)</p>
-                            <p class="text-sm text-center text-white/70 italic mb-3">${criticalFactor.description}</p>
-                            <div class="rationale text-sm">
-                                <strong>Deep Analysis:</strong> ${criticalFactor.deep_analysis || 'N/A'}
-                            </div>
-                         </div>`;
-    }
-    dashboardHtml += `</div>`; // Close p-4
-    dashboardPanel.innerHTML = dashboardHtml;
-
-    // --- 2. Populate Detail Tabs ---
-    renderFactorDetailTab("strengthsPanel", internal_factors.strengths || [], "💪 Strengths", "border-green-500");
-    renderFactorDetailTab("weaknessesPanel", internal_factors.weaknesses || [], "⚠️ Weaknesses", "border-red-500");
-    renderFactorDetailTab("opportunitiesPanel", external_factors.opportunities || [], "✨ Opportunities", "border-blue-500");
-    renderFactorDetailTab("threatsPanel", external_factors.threats || [], "🛡️ Threats", "border-yellow-500");
-    
-    // --- 3. Populate Learn Panel ---
-    const learnPanel = dom.$("learnPanel");
-    learnPanel.innerHTML = `
-    <div class="p-6 space-y-6 text-white/90">
-        <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding Factor Analysis (Strategic Context)</h3>
+    // --- 1. Populate Summary Panel ---
+    const summaryPanel = dom.$("summaryPanel");
+    summaryPanel.innerHTML = `
+    <div class="space-y-8">
+        <h3 class="text-3xl font-bold text-center mb-6">Strategic Foundation Summary</h3>
         
-        <div class="bg-black/20 p-4 rounded-lg">
-            <h4 class="text-lg font-bold mb-2 text-indigo-300">What is Strategic Factor Analysis?</h4>
-            <p class="text-sm text-white/80">In strategic planning, factor analysis involves systematically identifying and evaluating key internal and external elements that can influence an organization's ability to achieve its objectives. It's often a precursor to SWOT analysis.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            <div class="p-6 rounded-lg bg-black/20 border-l-4 border-indigo-400 glass-container">
+                <h4 class="text-xl font-bold mb-3 text-indigo-300">🧬 Mission</h4>
+                <p class="text-lg italic text-white/90">"${mission.statement}"</p>
+            </div>
+            <div class="p-6 rounded-lg bg-black/20 border-l-4 border-green-400 glass-container">
+                <h4 class="text-xl font-bold mb-3 text-green-300">🚀 Vision</h4>
+                <p class="text-lg italic text-white/90">"${vision.statement}"</p>
+            </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-white/5 p-4 rounded-lg border border-white/10">
-                <h4 class="text-lg font-bold mb-2">🌍 External Factor Analysis (PESTEL+)</h4>
-                <p class="text-xs text-white/70 mb-2 italic">Understanding the macro-environment.</p>
-                <ul class="space-y-1 text-sm">
-                    <li><strong>P</strong>olitical: Government stability, policy, regulation, taxes.</li>
-                    <li><strong>E</strong>conomic: Growth rates, inflation, interest rates, exchange rates, employment.</li>
-                    <li><strong>S</strong>ocial: Demographics, cultural trends, lifestyle changes, consumer attitudes.</li>
-                    <li><strong>T</strong>echnological: Innovation, automation, R&D, digital trends.</li>
-                    <li><strong>E</strong>nvironmental: Climate change, sustainability, weather, resource availability.</li>
-                    <li><strong>L</strong>egal: Laws affecting employment, competition, health & safety, consumer protection.</li>
-                    <li><strong>+ Market/Competitive:</strong> Industry trends, market size, competition intensity, supplier/buyer power.</li>
-                </ul>
-                <p class="text-xs text-white/70 mt-2"><strong>Goal:</strong> Identify Opportunities & Threats.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            <div class="bg-black/20 p-4 rounded-lg glass-container">
+                <h4 class="text-lg font-bold mb-3 text-yellow-300">🧭 Top Core Values</h4>
+                ${values.length > 0 ? 
+                    `<ul class="list-disc list-inside space-y-1 text-sm text-white/80">
+                        ${values.slice(0, 3).map(v => `<li><strong>${v.value}:</strong> ${v.description.substring(0, 80)}...</li>`).join('')}
+                    </ul>` : 
+                    `<p class="text-white/70 italic text-sm">No core values were extracted.</p>`
+                }
             </div>
-            <div class="bg-white/5 p-4 rounded-lg border border-white/10">
-                <h4 class="text-lg font-bold mb-2">🏢 Internal Factor Analysis (Resources & Capabilities)</h4>
-                 <p class="text-xs text-white/70 mb-2 italic">Assessing the organization's own assets and abilities.</p>
-                <ul class="space-y-1 text-sm">
-                    <li><strong>Financial:</strong> Profitability, cash flow, funding access, cost structure.</li>
-                    <li><strong>Physical:</strong> Facilities, equipment, location, raw materials access.</li>
-                    <li><strong>Human Resources:</strong> Skills, experience, motivation, culture, leadership.</li>
-                    <li><strong>Technological:</strong> IT infrastructure, patents, R&D capabilities, proprietary tech.</li>
-                    <li><strong>Organizational:</strong> Structure, processes, reputation, brand equity, partnerships.</li>
-                    <li><strong>Marketing & Sales:</strong> Brand recognition, distribution channels, customer relationships.</li>
-                 </ul>
-                 <p class="text-xs text-white/70 mt-2"><strong>Goal:</strong> Identify Strengths & Weaknesses.</p>
+            <div class="bg-black/20 p-4 rounded-lg glass-container">
+                <h4 class="text-lg font-bold mb-3 text-red-300">🎯 Top Strategic Goals</h4>
+                ${goals.length > 0 ? 
+                    `<ul class="list-disc list-inside space-y-1 text-sm text-white/80">
+                        ${goals.slice(0, 3).map(g => `<li><strong>${g.goal_name}</strong></li>`).join('')}
+                    </ul>` :
+                    `<p class="text-white/70 italic text-sm">No strategic goals were extracted.</p>`
+                }
             </div>
         </div>
-         <p class="text-xs text-center text-white/60 mt-4">This tool uses AI to identify factors from your text and then provide a deep analysis for each one.</p>
     </div>
     `;
 
+    // --- 2. Populate Mission & Vision Statements Panel ---
+    const statementsPanel = dom.$("statementsPanel");
+    statementsPanel.innerHTML = `
+    <div class="space-y-8">
+        <h3 class="text-3xl font-bold text-center mb-6">Mission & Vision Breakdown</h3>
+        
+        <div class="glass-container p-6">
+            <h4 class="text-2xl font-bold mb-3 text-indigo-300">🧬 Mission Statement</h4>
+            <blockquote class="p-4 italic text-lg border-l-4 border-indigo-400 bg-black/20 text-white/90 mb-6">
+                "${mission.statement}"
+            </blockquote>
+            <h5 class="text-lg font-semibold mb-3">Component Breakdown:</h5>
+            <div class="overflow-x-auto">
+                <table class="coeff-table styled-table text-sm">
+                    <thead><tr><th class="w-1/3">Component</th><th>Analysis (Based on Text)</th></tr></thead>
+                    <tbody>
+                        ${mission.breakdown.map(b => `
+                            <tr>
+                                <td class="font-semibold text-white/90">${b.component}</td>
+                                <td class="text-white/80">${b.analysis}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="glass-container p-6">
+            <h4 class="text-2xl font-bold mb-3 text-green-300">🚀 Vision Statement</h4>
+            <blockquote class="p-4 italic text-lg border-l-4 border-green-400 bg-black/20 text-white/90 mb-6">
+                "${vision.statement}"
+            </blockquote>
+            <h5 class="text-lg font-semibold mb-3">Component Breakdown:</h5>
+            <div class="overflow-x-auto">
+                <table class="coeff-table styled-table text-sm">
+                    <thead><tr><th class="w-1/3">Component</th><th>Analysis (Based on Text)</th></tr></thead>
+                    <tbody>
+                        ${vision.breakdown.map(b => `
+                            <tr>
+                                <td class="font-semibold text-white/90">${b.component}</td>
+                                <td class="text-white/80">${b.analysis}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    `;
+
+    // --- 3. Populate Core Values Panel ---
+    const valuesPanel = dom.$("valuesPanel");
+    let valuesHtml = `<div class="space-y-6">
+                        <h3 class="text-3xl font-bold text-center mb-8">🧭 Core Values</h3>
+                        <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">`;
+    if (values.length > 0) {
+        values.forEach((v_obj) => {
+            valuesHtml += `
+            <div class="insight-card border-l-4 border-yellow-400">
+                <h4 class="text-xl font-bold mb-2">${v_obj.value}</h4>
+                <p class="text-sm text-white/80 italic">${v_obj.description}</p>
+            </div>
+            `;
+        });
+    } else {
+        valuesHtml += `<p class="text-white/70 italic text-center md:col-span-2">No core values were generated from the context.</p>`;
+    }
+    valuesHtml += `</div></div>`;
+    valuesPanel.innerHTML = valuesHtml;
+
+
+    // --- 4. Populate Strategic Goals Panel ---
+    const goalsPanel = dom.$("goalsPanel");
+    let goalsHtml = `<div class="space-y-6">
+                        <h3 class="text-3xl font-bold text-center mb-8">🎯 Strategic Goals (${goals.length})</h3>
+                        <div class="max-w-4xl mx-auto space-y-6">`;
+    if (goals.length > 0) {
+        goals.forEach((g_obj, index) => {
+            goalsHtml += `
+            <div class="prescription-card border-l-4 border-red-400">
+                <h4 class="text-xl font-bold mb-2">${index + 1}. ${g_obj.goal_name}</h4>
+                <p class="rationale"><strong>Rationale:</strong> ${g_obj.description}</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 text-sm">
+                    <div class="bg-black/20 p-3 rounded">
+                        <h5 class="font-bold text-indigo-300 mb-2">Key Initiatives</h5>
+                        ${g_obj.key_initiatives && g_obj.key_initiatives.length > 0 ? 
+                            `<ul class="list-disc list-inside space-y-1 text-white/90">${g_obj.key_initiatives.map(k => `<li>${k}</li>`).join('')}</ul>` :
+                            `<p class="text-white/70 italic text-xs">No specific initiatives identified from text.</p>`
+                        }
+                    </div>
+                    <div class="bg-black/20 p-3 rounded">
+                        <h5 class="font-bold text-green-300 mb-2">KPIs to Track</h5>
+                        ${g_obj.kpis_to_track && g_obj.kpis_to_track.length > 0 ? 
+                            `<ul class="list-disc list-inside space-y-1 text-white/90">${g_obj.kpis_to_track.map(k => `<li>${k}</li>`).join('')}</ul>` :
+                            `<p class="text-white/70 italic text-xs">No specific KPIs identified from text.</p>`
+                        }
+                    </div>
+                </div>
+            </div>
+            `;
+        });
+    } else {
+        goalsHtml += `<p class="text-white/70 italic text-center">No specific goals were generated from the context.</p>`;
+    }
+    goalsHtml += `</div></div>`;
+    goalsPanel.innerHTML = goalsHtml;
+
+    // --- 5. Populate Learn Panel (Fixed Layout) ---
+    const learnPanel = dom.$("learnPanel");
+    learnPanel.innerHTML = `
+    <div class="space-y-6 text-white/90 glass-container max-w-4xl mx-auto p-6 md:p-10">
+        <h3 class="text-3xl font-bold text-center mb-4">🎓 Understanding Mission, Vision, Values & Goals</h3>
+        
+        
+
+[Image of Mission, Vision, and Goals hierarchy]
+
+
+        <div class="bg-black/20 p-4 rounded-lg border border-white/10">
+            <h4 class="text-xl font-bold mb-2 text-indigo-300">🧬 What is a Mission Statement?</h4>
+            <p class="text-sm text-white/80">A Mission statement defines the company's fundamental purpose. It's about the **PRESENT**.</p>
+            <ul class="list-disc list-inside space-y-1 text-sm text-white/80 mt-2 pl-4">
+                <li><strong>What</strong> do we do? (Purpose)</li>
+                <li><strong>Who</strong> do we do it for? (Audience)</li>
+                <li><strong>Why</strong> do we do it? (Value Proposition)</li>
+            </ul>
+            <p class="text-sm text-white/80 mt-2"><strong>This tool's AI breaks down your text to find these three components and synthesizes a statement from them.</strong></p>
+        </div>
+
+        <div class="bg-black/20 p-4 rounded-lg border border-white/10">
+            <h4 class="text-xl font-bold mb-2 text-green-300">🚀 What is a Vision Statement?</h4>
+            <p class="text-sm text-white/80">A Vision statement describes the organization's desired future state. It's an aspirational declaration. It's about the **FUTURE**.</p>
+            <ul class="list-disc list-inside space-y-1 text-sm text-white/80 mt-2 pl-4">
+                <li><strong>Where</strong> are we going? (Future State)</li>
+                <li><strong>How</strong> will we win? (Differentiator)</li>
+                <li><strong>What</strong> will be the result? (Impact)</li>
+            </ul>
+            <p class="text-sm text-white/80 mt-2"><strong>This tool's AI identifies your long-term ambitions from the text to construct a forward-looking vision.</strong></p>
+        </div>
+
+        <div class="bg-black/20 p-4 rounded-lg border border-white/10">
+            <h4 class="text-xl font-bold mb-2 text-yellow-300">🧭 What are Core Values?</h4>
+            <p class="text-sm text-white/80">Values are the guiding principles that define the company's culture and behavior. They are the **RULES** of conduct.</p>
+            <ul class="list-disc list-inside space-y-1 text-sm text-white/80 mt-2 pl-4">
+                <li>How do we behave?</li>
+                <li>What principles guide our decisions?</li>
+            </ul>
+            <p class="text-sm text-white/80 mt-2"><strong>This tool's AI scans your text for principles or cultural themes (e.g., "our commitment to innovation") and provides a description based on that context.</strong></p>
+        </div>
+
+        <div class="bg-black/20 p-4 rounded-lg border border-white/10">
+            <h4 class="text-xl font-bold mb-2 text-red-300">🎯 What are Strategic Goals?</h4>
+            <p class="text-sm text-white/80">Goals are the critical, high-level objectives that translate the aspirational Vision into specific, measurable targets. They are the **STEPS** to reach the vision.</p>
+            <p class="text-sm text-white/80 mt-2">Good goals are often **S.M.A.R.T.** (Specific, Measurable, Achievable, Relevant, Time-bound).</p>
+            <p class="text-sm text-white/80 mt-2"><strong>This tool's AI extracts major goals from your text and identifies their supporting initiatives and KPIs to create an actionable plan.</strong></p>
+        </div>
+    </div>
+    `;
 
     // --- Final Touches ---
-    appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache result
+    appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache the merged result
+    dom.$("analysisActions").classList.remove("hidden"); // Show the 'Save PDF' / 'Save DOCX' buttons
 
-    // Tab switching logic
+    // Add tab switching logic
     tabNav.addEventListener("click", (e) => {
         if (e.target.tagName === "BUTTON") {
             tabNav.querySelectorAll(".analysis-tab-btn").forEach((btn) => btn.classList.remove("active"));
@@ -192,267 +270,10 @@ function renderFactorAnalysisPage(container, data) {
             if (targetPanel) {
                 targetPanel.classList.add("active");
             } else {
-                 console.warn("Target panel not found:", targetPanelId);
+                console.warn("Target panel not found:", targetPanelId);
             }
         }
     });
-
-    dom.$("analysisActions").classList.remove("hidden"); // Show save buttons
-}
-
-
-
-// Modified renderFactorTab to use AI categories and factor details
-function renderFactorTab(containerId, title, factors) {
-    const container = dom.$(containerId);
-    let contentHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">${title}</h3>`; // Added p-4
-
-    if (factors && factors.length > 0) {
-        // Group factors by AI-provided category
-        const categories = factors.reduce((acc, f) => {
-            const category = f.category || "Uncategorized"; // Handle missing category
-            if (!acc[category]) acc[category] = [];
-            acc[category].push(f);
-            return acc;
-        }, {});
-
-        // Sort categories alphabetically
-        const sortedCategories = Object.keys(categories).sort();
-
-        // Chart: Factor Count by Category
-        contentHtml += `<div id="${containerId}-chart" class="w-full h-[400px] mb-8 bg-black/10 rounded-lg p-2 plotly-chart"></div>`;
-
-        // Details sections for each category
-         sortedCategories.forEach(category => {
-            contentHtml += `<div class="mb-6"><details class="styled-details" ${sortedCategories.length <= 3 ? 'open' : ''}> <!-- Open details if few categories -->
-                            <summary class="font-semibold text-lg">${category} (${categories[category].length} factors)</summary>
-                            <div class="bg-black/20 p-4 rounded-b-lg space-y-4">`; // Use styled-details background
-            // Sort factors within category by rank (desc impact)
-            categories[category].sort((a, b) => a.rank - b.rank);
-            categories[category].forEach((factor) => {
-                 const priorityColor = factor.priority === "High" ? "text-red-400" : "text-yellow-400";
-                 const swotColor = factor.swot === 'Strength' || factor.swot === 'Opportunity' ? 'text-green-400' : 'text-red-400';
-                 contentHtml += `<div class="py-2 border-b border-white/10 last:border-b-0">
-                                <p class="flex justify-between items-center">
-                                    <span class="font-semibold text-white">${factor.factor}</span>
-                                    <span class="text-xs ${priorityColor}"><strong>Rank #${factor.rank}</strong> | Prio: ${factor.priority}</span>
-                                </p>
-                                <p class="text-sm text-white/80 my-1 italic">${factor.description || 'No description provided.'}</p>
-                                <p class="text-xs text-white/60">
-                                    <span class="${swotColor}">${factor.swot}</span> |
-                                    Score: ${factor.impact_score.toFixed(1)} |
-                                    Cumul %: ${factor.cumulative_percentage}%
-                                </p>
-                            </div>`;
-            });
-            contentHtml += `</div></details></div>`; // Close details content and details tag
-         });
-
-    } else {
-        contentHtml += '<p class="text-white/70 italic text-center">No factors identified in this category based on the provided text.</p>';
-    }
-
-    contentHtml += `</div>`; // Close p-4
-    container.innerHTML = contentHtml;
-
-    // Render Category Chart
-    if (factors && factors.length > 0) {
-        const categoryCounts = Object.entries(
-            factors.reduce((acc, f) => {
-                const category = f.category || "Uncategorized";
-                acc[category] = (acc[category] || 0) + 1;
-                return acc;
-            }, {})
-        ).sort((a, b) => b[1] - a[1]); // Sort by count desc
-
-        try {
-            Plotly.newPlot(
-                `${containerId}-chart`,
-                [{
-                    x: categoryCounts.map(c => c[0]),
-                    y: categoryCounts.map(c => c[1]),
-                    type: 'bar',
-                    marker: { color: 'var(--primary)' }
-                }],
-                {
-                    title: `${title.split('(')[0]} Factors by Category`, // Clean title
-                    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: 'white' },
-                    xaxis: { automargin: true, tickangle: -30, tickfont: { size: 10 } }, // Smaller font
-                    yaxis: { title: 'Number of Factors', gridcolor: 'rgba(255,255,255,0.1)' },
-                    margin: { t: 50, b: 80, l: 50, r: 20 } // Adjust margins
-                },
-                { responsive: true }
-            );
-        } catch(e) { console.error(`Chart render error for ${containerId}-chart:`, e); dom.$(`${containerId}-chart`).innerHTML = "<p class='text-red-400 text-center pt-10'>Chart render error.</p>"; }
-    }
-}
-
-
-
-// Modified renderParetoTab to use AI factors and details
-function renderParetoTab(containerId, allFactors) {
-    const container = dom.$(containerId);
-    let contentHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">📈 80/20 Pareto Analysis - Combined Factors</h3>`; // Added p-4
-
-    if (allFactors && allFactors.length > 0) {
-        // Sort ALL factors by rank (desc impact) for the chart
-        const sortedFactors = [...allFactors].sort((a, b) => a.rank - b.rank);
-        const topFactorsForChart = sortedFactors.slice(0, 20); // Limit chart display for readability
-
-        contentHtml += `<div id="pareto-chart-container" class="w-full h-[600px] mb-8 bg-black/10 rounded-lg p-2 plotly-chart"></div>`;
-
-        const highPriorityFactors = sortedFactors.filter(f => f.priority === "High");
-        contentHtml += `<h4 class="text-xl font-semibold mt-8 mb-3 text-center">🎯 High Priority Factors (Top ~80% Impact)</h4>
-                        <p class="text-sm text-white/70 mb-6 italic text-center">Focus strategic efforts on these ${highPriorityFactors.length} factors identified by the AI and prioritized using the Pareto principle.</p>`;
-
-        // Display high priority factors in two columns: Internal vs External
-        const highInternal = highPriorityFactors.filter(f => f.type === 'Internal');
-        const highExternal = highPriorityFactors.filter(f => f.type === 'External');
-
-        contentHtml += `<div class="grid grid-cols-1 md:grid-cols-2 gap-6">`;
-        // Internal High Priority
-        contentHtml += `<div class="bg-black/20 p-4 rounded-lg">
-                           <h5 class="font-bold mb-3 text-center text-blue-300">Internal Priorities (${highInternal.length})</h5>
-                           <div class="space-y-3">`;
-        if (highInternal.length > 0) {
-            highInternal.forEach(f => {
-                const swotColor = f.swot === 'Strength' ? 'text-green-400' : 'text-red-400';
-                 contentHtml += `<div class="text-xs p-2 bg-black/30 rounded">
-                                    <p class="flex justify-between items-center">
-                                        <span class="font-semibold text-white">${f.factor}</span>
-                                        <span class="text-red-400">Rank #${f.rank}</span>
-                                    </p>
-                                    <p class="text-white/70 italic my-1">${f.description || ''}</p>
-                                    <p class="text-white/60"><span class="${swotColor}">${f.swot}</span> | Cat: ${f.category || 'N/A'} | Score: ${f.impact_score.toFixed(1)}</p>
-                                 </div>`;
-            });
-        } else {
-            contentHtml += `<p class="text-white/60 italic text-center text-sm">No high priority internal factors identified.</p>`;
-        }
-        contentHtml += `</div></div>`; // Close internal div
-
-        // External High Priority
-        contentHtml += `<div class="bg-black/20 p-4 rounded-lg">
-                            <h5 class="font-bold mb-3 text-center text-yellow-300">External Priorities (${highExternal.length})</h5>
-                            <div class="space-y-3">`;
-        if (highExternal.length > 0) {
-            highExternal.forEach(f => {
-                const swotColor = f.swot === 'Opportunity' ? 'text-green-400' : 'text-red-400';
-                 contentHtml += `<div class="text-xs p-2 bg-black/30 rounded">
-                                     <p class="flex justify-between items-center">
-                                        <span class="font-semibold text-white">${f.factor}</span>
-                                        <span class="text-red-400">Rank #${f.rank}</span>
-                                    </p>
-                                    <p class="text-white/70 italic my-1">${f.description || ''}</p>
-                                    <p class="text-white/60"><span class="${swotColor}">${f.swot}</span> | Cat: ${f.category || 'N/A'} | Score: ${f.impact_score.toFixed(1)}</p>
-                                  </div>`;
-            });
-        } else {
-             contentHtml += `<p class="text-white/60 italic text-center text-sm">No high priority external factors identified.</p>`;
-        }
-        contentHtml += `</div></div>`; // Close external div
-        contentHtml += `</div>`; // Close grid
-
-    } else {
-        contentHtml += '<p class="text-white/70 italic text-center">No factors available for Pareto analysis.</p>';
-    }
-
-    contentHtml += `</div>`; // Close p-4
-    container.innerHTML = contentHtml;
-
-    // Render Pareto Chart
-    if (allFactors && allFactors.length > 0) {
-         // Use the limited, sorted list for the chart
-         const sortedFactors = [...allFactors].sort((a, b) => a.rank - b.rank);
-         const topFactorsForChart = sortedFactors.slice(0, 20);
-
-        const trace1 = {
-            x: topFactorsForChart.map(f => `(#${f.rank}) ${f.factor.substring(0, 30)}...`), // Add rank, shorten name
-            y: topFactorsForChart.map(f => f.impact_score),
-            name: 'Impact Score',
-            type: 'bar',
-            marker: { color: topFactorsForChart.map(f => f.priority === 'High' ? 'var(--accent)' : 'var(--primary)') }
-        };
-
-        const trace2 = {
-            x: topFactorsForChart.map(f => `(#${f.rank}) ${f.factor.substring(0, 30)}...`),
-            y: topFactorsForChart.map(f => f.cumulative_percentage),
-            name: 'Cumulative %',
-            type: 'scatter', mode: 'lines+markers', // Add markers
-            yaxis: 'y2',
-            line: { color: '#FFF', width: 2 }, // Thicker white line
-            marker: {size: 6}
-        };
-
-        const layout = {
-            title: '80/20 Pareto Analysis - Top 20 Factors by Impact', // Updated title
-            xaxis: { tickangle: -45, automargin: true, tickfont: { size: 9 } }, // Even smaller font
-            yaxis: { title: 'Impact Score (1-10)', gridcolor: 'rgba(255,255,255,0.1)' },
-            yaxis2: { title: 'Cumulative Impact %', overlaying: 'y', side: 'right', range: [0, 101], gridcolor: 'rgba(255,255,255,0.1)', zeroline: false },
-            paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: 'white' },
-            legend: { orientation: 'h', y: -0.3 }, // Adjust legend position maybe
-            shapes: [{
-                type: 'line', xref: 'paper', yref: 'y2', x0: 0, y0: 80, x1: 1, y1: 80,
-                line: { color: 'orange', width: 2, dash: 'dash' }
-            }],
-             margin: { t: 50, b: 120, l: 50, r: 50 } // Adjust margins
-        };
-
-        try {
-            Plotly.newPlot('pareto-chart-container', [trace1, trace2], layout, { responsive: true });
-        } catch(e) { console.error("Pareto chart render error:", e); dom.$("pareto-chart-container").innerHTML = "<p class='text-red-400 text-center pt-10'>Chart render error.</p>"; }
-    }
-}
-
-
-
-// Modified renderSummaryTab to use AI factors
-function renderSummaryTab(containerId, external, internal) {
-    const container = dom.$(containerId);
-
-     // Ensure factors are arrays
-     external = Array.isArray(external) ? external : [];
-     internal = Array.isArray(internal) ? internal : [];
-
-    const highPriorityExternal = external.filter(f => f.priority === 'High').length;
-    const highPriorityInternal = internal.filter(f => f.priority === 'High').length;
-
-    // Find top categories based on *count* of high-priority items
-    const getTopHighPriorityCategory = (factors) => {
-         if (!factors || factors.length === 0) return "N/A";
-         const highPriority = factors.filter(f => f.priority === 'High');
-         if (highPriority.length === 0) return "N/A (None High Priority)";
-         const counts = highPriority.reduce((acc, f) => {
-              const cat = f.category || "Uncategorized";
-              acc[cat] = (acc[cat] || 0) + 1;
-              return acc;
-         }, {});
-         return Object.entries(counts).sort((a,b) => b[1] - a[1])[0][0];
-    };
-
-    const topExtCatHighPrio = getTopHighPriorityCategory(external);
-    const topIntCatHighPrio = getTopHighPriorityCategory(internal);
-
-    container.innerHTML = `
-        <div class="p-4"> <!-- Added p-4 -->
-            <h3 class="text-2xl font-bold mb-4">📋 Executive Summary</h3>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <div class="summary-stat-card"><div class="stat-value">${external.length}</div><div class="stat-label">Total External Factors</div></div>
-                <div class="summary-stat-card"><div class="stat-value">${internal.length}</div><div class="stat-label">Total Internal Factors</div></div>
-                <div class="summary-stat-card ${highPriorityExternal > 0 ? 'border-l-4 border-red-500' : ''}"><div class="stat-value">${highPriorityExternal}</div><div class="stat-label">High-Priority External</div></div>
-                <div class="summary-stat-card ${highPriorityInternal > 0 ? 'border-l-4 border-red-500' : ''}"><div class="stat-value">${highPriorityInternal}</div><div class="stat-label">High-Priority Internal</div></div>
-            </div>
-            <div class="bg-black/20 p-4 rounded-lg">
-                <h4 class="text-xl font-semibold mb-3">Key Insights & Strategic Focus</h4>
-                <ul class="list-disc list-inside space-y-2 text-sm">
-                    <li>A total of <strong>${external.length + internal.length}</strong> strategic factors were identified from the text.</li>
-                    <li>Pareto analysis highlighted <strong>${highPriorityExternal + highPriorityInternal}</strong> factors (${highPriorityExternal} external, ${highPriorityInternal} internal) as 'High Priority', representing the critical few likely driving ~80% of strategic impact.</li>
-                    <li>The most frequent category among high-priority <strong>external</strong> factors appears to be <strong>${topExtCatHighPrio}</strong>. Strategies should consider leveraging opportunities or mitigating threats in this area.</li>
-                    <li>The most frequent category among high-priority <strong>internal</strong> factors appears to be <strong>${topIntCatHighPrio}</strong>. Strategies should focus on exploiting related strengths or addressing related weaknesses.</li>
-                    <li><strong>Recommendation:</strong> Focus primary strategic efforts on the ${highPriorityExternal + highPriorityInternal} 'High Priority' factors identified in the '80/20 Analysis' tab.</li>
-                </ul>
-            </div>
-         </div>`; // Close p-4
 }
 
 
@@ -802,7 +623,11 @@ function renderDetailedAnalysis(swotData, towsData, containerId) {
 }
 
 
-
+/**
+ * RENDERER: Goals & Strategic Initiatives (Strategic Planning)
+ * - NEW: Renders the full 6-tab OGSM interface.
+ * - Includes: Cascade View, Objective, Goals, Strategies, Measures, and Learn tabs.
+ */
 function renderGoalsAndInitiativesPage_SP(container, data) {
     container.innerHTML = ""; // Clear loading
 
@@ -815,32 +640,32 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
     }
     const { main_objective, goals } = data;
 
-    // --- Create Tab Navigation (Updated with More Tabs) ---
+    // --- Create Tab Navigation (6 Tabs) ---
     const tabNav = document.createElement("div");
     tabNav.className = "flex flex-wrap border-b border-white/20 -mx-6 px-6";
     tabNav.innerHTML = `
-        <button class="analysis-tab-btn active" data-tab="cascade">🌊 Cascade View</button> <!-- Renamed -->
-        <button class="analysis-tab-btn" data-tab="objective">🎯 Objective</button> <!-- New -->
-        <button class="analysis-tab-btn" data-tab="goals"> G Goals</button> <!-- New -->
-        <button class="analysis-tab-btn" data-tab="strategies"> S Strategies</button> <!-- New -->
-        <button class="analysis-tab-btn" data-tab="measures"> M Measures</button> <!-- New -->
+        <button class="analysis-tab-btn active" data-tab="cascade">🌊 Cascade View</button>
+        <button class="analysis-tab-btn" data-tab="objective">🎯 Objective</button>
+        <button class="analysis-tab-btn" data-tab="goals"> G Goals</button>
+        <button class="analysis-tab-btn" data-tab="strategies"> S Strategies</button>
+        <button class="analysis-tab-btn" data-tab="measures"> M Measures</button>
         <button class="analysis-tab-btn" data-tab="learn">🎓 Learn OGSM</button>
     `;
     container.appendChild(tabNav);
 
-    // --- Create Tab Panels (Updated with More Panels) ---
+    // --- Create Tab Panels (6 Panels) ---
     const tabContent = document.createElement("div");
     container.appendChild(tabContent);
     tabContent.innerHTML = `
         <div id="cascadePanel" class="analysis-tab-panel active"></div>
-        <div id="objectivePanel" class="analysis-tab-panel"></div> <!-- New -->
-        <div id="goalsPanel" class="analysis-tab-panel"></div> <!-- New -->
-        <div id="strategiesPanel" class="analysis-tab-panel"></div> <!-- New -->
-        <div id="measuresPanel" class="analysis-tab-panel"></div> <!-- New -->
+        <div id="objectivePanel" class="analysis-tab-panel"></div>
+        <div id="goalsPanel" class="analysis-tab-panel"></div>
+        <div id="strategiesPanel" class="analysis-tab-panel"></div>
+        <div id="measuresPanel" class="analysis-tab-panel"></div>
         <div id="learnPanel" class="analysis-tab-panel"></div>
     `;
 
-    // --- 1. Populate Strategic Cascade Panel (Keep as is) ---
+    // --- 1. Populate Strategic Cascade Panel ---
     const cascadePanel = dom.$("cascadePanel");
     let cascadeHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-6 text-center">🌊 Strategic Cascade (OGSM)</h3><div class="cascade-container">
         <div class="cascade-objective">
@@ -873,7 +698,7 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
     cascadeHtml += `</div></div></div>`;
     cascadePanel.innerHTML = cascadeHtml;
 
-    // --- 2. Populate Objective Panel (New) ---
+    // --- 2. Populate Objective Panel ---
     const objectivePanel = dom.$("objectivePanel");
     objectivePanel.innerHTML = `
         <div class="p-6">
@@ -886,22 +711,21 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
         </div>`;
 
 
-    // --- 3. Populate Goals Panel (New) ---
+    // --- 3. Populate Goals Panel ---
     const goalsPanel = dom.$("goalsPanel");
     let goalsHtml = `<div class="p-4 space-y-6"><h3 class="text-2xl font-bold mb-4 text-center"> G Goals</h3>`;
     goalsHtml += `<p class="text-sm text-white/70 mb-6 italic text-center">These are the specific, high-level results needed to achieve the main Objective.</p>`;
     goals.forEach((goal, index) => {
-        goalsHtml += `<div class="cascade-goal-card max-w-3xl mx-auto p-4 border-l-4 border-red-400"> <!-- Add styling -->
+        goalsHtml += `<div class="cascade-goal-card max-w-3xl mx-auto p-4 border-l-4 border-red-400">
             <h4 class="text-md font-bold text-red-300">GOAL ${index + 1}</h4>
             <p class="text-lg font-semibold">${goal.goal_name}</p>
-            <!-- Optionally add short description here if AI provides it -->
         </div>`;
     });
     goalsHtml += `</div>`;
     goalsPanel.innerHTML = goalsHtml;
 
 
-    // --- 4. Populate Strategies Panel (New) ---
+    // --- 4. Populate Strategies Panel ---
     const strategiesPanel = dom.$("strategiesPanel");
     let strategiesHtml = `<div class="p-4 space-y-6"><h3 class="text-2xl font-bold mb-4 text-center"> S Strategies</h3>`;
     strategiesHtml += `<p class="text-sm text-white/70 mb-6 italic text-center">These are the key approaches and choices ('how') to achieve each Goal.</p>`;
@@ -916,13 +740,13 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
                 <p class="text-xs text-white/70 italic my-2">${strategy.rationale || 'N/A'}</p>
             </div>`;
         });
-         strategiesHtml += `</div></div>`; // Close space-y-4 and mb-6 bg-black/10
+         strategiesHtml += `</div></div>`;
     });
     strategiesHtml += `</div>`;
     strategiesPanel.innerHTML = strategiesHtml;
 
 
-    // --- 5. Populate Measures Panel (New) ---
+    // --- 5. Populate Measures Panel ---
     const measuresPanel = dom.$("measuresPanel");
     let measuresHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4 text-center"> M Measures (KPIs)</h3>`;
     measuresHtml += `<p class="text-sm text-white/70 mb-6 italic text-center">These metrics track the progress and success of the Strategies.</p>`;
@@ -950,11 +774,14 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
     measuresPanel.innerHTML = measuresHtml;
 
 
-    // --- 6. Populate Learn OGSM Panel (Keep as is) ---
+    // --- 6. Populate Learn OGSM Panel ---
     const learnPanel = dom.$("learnPanel");
      learnPanel.innerHTML = `
     <div class="p-6 space-y-6 text-white/90">
         <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding the OGSM Framework</h3>
+        
+
+[Image of OGSM framework diagram]
 
         <div class="bg-black/20 p-4 rounded-lg">
             <h4 class="text-lg font-bold mb-2 text-indigo-300">What is OGSM?</h4>
@@ -1028,27 +855,284 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
 
 
 
+/**
+ * RENDERER: Objectives (DEEP ANALYSIS v4 - 5 TABS)
+ * - Renders the 5-tab layout.
+ * - Tabs 1-3 are populated from the deep `data.ollama_data`
+ * - Tab 4 is populated from the parsed `data.n8n_data`
+ */
+function renderObjectivesPage(container, data) {
+    // --- THIS IS THE FIX FOR SPACING ---
+    container.style.whiteSpace = 'normal';
+    // --- END OF FIX ---
+    
+    container.innerHTML = ""; // Clear loading indicator
+
+    const { ollama_data, n8n_data } = data;
+
+    // --- Validation ---
+    if (!ollama_data || !ollama_data.main_goal || !Array.isArray(ollama_data.smart_objectives) ||
+        !Array.isArray(n8n_data)) {
+        console.error("Invalid data passed to renderObjectivesPage:", data);
+        container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Merged analysis data is incomplete or has the wrong structure.</div>`;
+        dom.$("analysisActions").classList.add("hidden");
+        return;
+    }
+    
+    const { main_goal, smart_objectives } = ollama_data;
+
+    // --- Create Tab Navigation (5 Tabs) ---
+    const tabNav = document.createElement("div");
+    tabNav.className = "flex flex-wrap border-b border-white/20 -mx-6 px-6";
+    tabNav.innerHTML = `
+        <button class="analysis-tab-btn active" data-tab="dashboard">📊 Dashboard</button>
+        <button class="analysis-tab-btn" data-tab="details">📋 S.M.A.R.T. Details</button>
+        <button class="analysis-tab-btn" data-tab="plan">⚙️ Actions & Risks</button>
+        <button class="analysis-tab-btn" data-tab="n8n">📑 n8n Table</button>
+        <button class="analysis-tab-btn" data-tab="learn">🎓 Learn S.M.A.R.T.</button>
+    `;
+    container.appendChild(tabNav);
+
+    // --- Create Tab Panels (5 Panels) ---
+    const tabContent = document.createElement("div");
+    container.appendChild(tabContent);
+    // Added padding (p-4 or p-6) to each panel
+    tabContent.innerHTML = `
+        <div id="dashboardPanel" class="analysis-tab-panel active p-4 md:p-6"></div>
+        <div id="detailsPanel" class="analysis-tab-panel p-4 md:p-6"></div>
+        <div id="planPanel" class="analysis-tab-panel p-4 md:p-6"></div>
+        <div id="n8nPanel" class="analysis-tab-panel p-4 md:p-6"></div>
+        <div id="learnPanel" class="analysis-tab-panel p-4 md:p-6"></div>
+    `;
+
+    // --- 1. Populate Dashboard Panel ---
+    const dashboardPanel = dom.$("dashboardPanel");
+    let dashboardHtml = `<div class="space-y-8">
+        <div class="p-6 rounded-lg bg-black/20 border border-white/10 text-center glass-container max-w-3xl mx-auto">
+            <h3 class="text-xl font-bold mb-2 text-indigo-300">🎯 Main Goal (from Context)</h3>
+            <p class="text-2xl italic text-white/90">${main_goal}</p>
+        </div>
+        <h3 class="text-2xl font-bold text-center">Formulated S.M.A.R.T. Objectives (${smart_objectives.length})</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">`;
+    
+    if (smart_objectives.length > 0) {
+        smart_objectives.forEach((obj) => {
+            const breakdown = obj.smart_breakdown || {};
+            dashboardHtml += `
+                <div class="kpi-card">
+                    <div><p class="kpi-name">${obj.objective_name || 'Unnamed Objective'}</p></div>
+                    <div class="my-4">
+                        <p class="text-xs text-white/70">Measurable By:</p>
+                        <p class="text-lg font-bold text-indigo-300">${breakdown.measurable || 'N/A'}</p>
+                    </div>
+                    <div><p class="kpi-type">${breakdown.time_bound || 'N/A'}</p></div>
+                </div>`;
+        });
+    } else {
+        dashboardHtml += `<p class="col-span-full text-center text-white/60 italic">No S.M.A.R.T. objectives were generated by the deep analysis.</p>`;
+    }
+    dashboardHtml += `</div></div>`;
+    dashboardPanel.innerHTML = dashboardHtml;
+
+    // --- 2. Populate S.M.A.R.T. Details Panel ---
+    const detailsPanel = dom.$("detailsPanel");
+    let detailsHtml = `<div class="space-y-6"><h3 class="text-2xl font-bold mb-4 text-center">📋 S.M.A.R.T. Details</h3>`;
+    if (smart_objectives.length > 0) {
+        smart_objectives.forEach((obj) => {
+            const s = obj.smart_breakdown || {}; 
+            detailsHtml += `
+                <div class="bg-black/20 p-5 rounded-lg border-l-4 border-indigo-400 glass-container max-w-4xl mx-auto">
+                    <h4 class="text-xl font-bold mb-4">${obj.objective_name || 'Unnamed Objective'}</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
+                        <div class="border-b border-white/10 pb-2"><strong>S (Specific):</strong><br><span class="text-white/80">${s.specific || 'N/A'}</span></div>
+                        <div class="border-b border-white/10 pb-2"><strong>M (Measurable):</strong><br><span class="text-white/80">${s.measurable || 'N/A'}</span></div>
+                        <div class="border-b border-white/10 pb-2"><strong>A (Achievable):</strong><br><span class="text-white/80">${s.achievable || 'N/A'}</span></div>
+                        <div class="border-b border-white/10 pb-2"><strong>R (Relevant):</strong><br><span class="text-white/80">${s.relevant || 'N/A'}</span></div>
+                        <div class="border-b border-white/10 pb-2 col-span-full"><strong>T (Time-bound):</strong><br><span class="text-white/80">${s.time_bound || 'N/A'}</span></div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+    detailsHtml += `</div>`;
+    detailsPanel.innerHTML = detailsHtml;
+
+    // --- 3. Populate Actions & Risks Panel ---
+    const planPanel = dom.$("planPanel");
+    let planHtml = `<div class="space-y-6"><h3 class="text-2xl font-bold mb-4 text-center">⚙️ Actions & Risks</h3>`;
+    if (smart_objectives.length > 0) {
+        smart_objectives.forEach((obj) => {
+            planHtml += `
+                <div class="prescription-card max-w-4xl mx-auto">
+                    <h4 class="text-xl font-bold">${obj.objective_name || 'Unnamed Objective'}</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 text-sm">
+                        <div class="bg-black/20 p-3 rounded">
+                            <h5 class="font-bold text-green-300 mb-2">Key Actions</h5>
+                            <ul class="list-disc list-inside space-y-1 text-white/90">
+                                ${(obj.key_actions && obj.key_actions.length > 0) 
+                                    ? obj.key_actions.map(a => `<li>${a}</li>`).join('') 
+                                    : '<li>No specific actions identified.</li>'}
+                            </ul>
+                        </div>
+                        <div class="bg-black/20 p-3 rounded">
+                            <h5 class="font-bold text-red-300 mb-2">Potential Risks</h5>
+                            <ul class="list-disc list-inside space-y-1 text-white/90">
+                                ${(obj.potential_risks && obj.potential_risks.length > 0) 
+                                    ? obj.potential_risks.map(r => `<li>${r}</li>`).join('') 
+                                    : '<li>No specific risks identified.</li>'}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+    planHtml += `</div>`;
+    planPanel.innerHTML = planHtml;
+
+    // --- 4. Populate n8n Table Panel (NEW) ---
+    const n8nPanel = dom.$("n8nPanel");
+    let n8nHtml = `<div class="space-y-6">
+                    <h3 class="text-3xl font-bold text-center mb-8">📑 n8n Workflow Output</h3>
+                    <p class="text-center text-white/70 italic text-sm max-w-2xl mx-auto -mt-6">
+                        This is the raw, table-based output from the base ` + "`objectives-v1`" + ` workflow, as parsed by the AI.
+                    </p>
+                    <div class="max-w-6xl mx-auto overflow-x-auto">
+                        <table class="coeff-table styled-table text-sm">`;
+    
+    if (n8n_data.length > 0) {
+        const headers = Object.keys(n8n_data[0]);
+        n8nHtml += `<thead><tr>`;
+        headers.forEach(h => {
+            n8nHtml += `<th>${h}</th>`;
+        });
+        n8nHtml += `</tr></thead><tbody>`;
+
+        n8n_data.forEach(row => {
+            n8nHtml += `<tr>`;
+            headers.forEach(h => {
+                n8nHtml += `<td class="text-white/80">${row[h] || 'N/A'}</td>`;
+            });
+            n8nHtml += `</tr>`;
+        });
+        n8nHtml += `</tbody>`;
+    } else {
+        n8nHtml += `<tbody><tr><td class="text-center text-white/70 italic p-4">No data was returned from the n8n workflow.</td></tr></tbody>`;
+    }
+    n8nHtml += `</table></div></div>`;
+    n8nPanel.innerHTML = n8nHtml;
+
+
+    // --- 5. Populate Learn S.M.A.R.T. Panel ---
+    const learnPanel = dom.$("learnPanel");
+    learnPanel.innerHTML = `
+    <div class="space-y-6 text-white/90 glass-container max-w-4xl mx-auto p-6 md:p-10">
+        <h3 class="text-3xl font-bold text-center mb-4">🎓 Understanding S.M.A.R.T. Objectives</h3>
+        
+        
+
+[Image of S.M.A.R.T. acronym breakdown]
+
+
+        <div class="bg-black/20 p-4 rounded-lg border border-white/10">
+            <h4 class="text-xl font-bold mb-2 text-indigo-300">What does S.M.A.R.T. stand for?</h4>
+            <p class="text-sm text-white/80">S.M.A.R.T. is a mnemonic acronym used to guide the setting of goals and objectives. To be S.M.A.R.T., an objective must be:</p>
+        </div>
+
+        <div class="space-y-4">
+            <div class="bg-white/5 p-4 rounded-lg border-l-4 border-blue-400">
+                <h4 class="text-lg font-bold text-blue-300">S - Specific</h4>
+                <p class="text-sm text-white/80">Clearly state what needs to be accomplished. Answer the "W" questions: Who, What, Where, When, Which, Why.</p>
+            </div>
+            <div class="bg-white/5 p-4 rounded-lg border-l-4 border-green-400">
+                <h4 class="text-lg font-bold text-green-300">M - Measurable</h4>
+                <p class="text-sm text-white/80">Define concrete criteria for measuring progress and success. How will you know when it's done? (e.g., "Increase sales by 10%").</p>
+            </div>
+            <div class="bg-white/5 p-4 rounded-lg border-l-4 border-yellow-400">
+                <h4 class="text-lg font-bold text-yellow-300">A - Achievable</h4>
+                <p class="text-sm text-white/80">The objective should be challenging but realistic and attainable given available resources, constraints, and time.</p>
+            </div>
+            <div class="bg-white/5 p-4 rounded-lg border-l-4 border-red-400">
+                <h4 class="text-lg font-bold text-red-300">R - Relevant</h4>
+                <p class="text-sm text-white/80">The objective must align with the broader business goals and overall strategy. It must be worthwhile.</p>
+            </div>
+            <div class="bg-white/5 p-4 rounded-lg border-l-4 border-purple-400">
+                <h4 class="text-lg font-bold text-purple-300">T - Time-bound</h4>
+                <p class="text-sm text-white/80">The objective must have a clear target date or timeframe (e.g., "by the end of Q3", "within 6 months"). This creates urgency.</p>
+            </div>
+        </div>
+        
+            <div class="bg-black/20 p-4 rounded-lg mt-6 border border-white/10">
+            <h4 class="text-lg font-bold mb-2">Why Use S.M.A.R.T.?</h4>
+                <ul class="list-disc list-inside space-y-1 text-sm">
+                <li>Provides clarity and focus for everyone involved.</li>
+                <li>Eliminates ambiguity and sets clear expectations.</li>
+                <li>Makes it easy to track progress and identify when you've succeeded.</li>
+                <li>Ensures that objectives are aligned with the company's main goals.</li>
+            </ul>
+        </div>
+    </div>
+    `;
+
+    // --- Final Touches ---
+    appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache the merged result
+    dom.$("analysisActions").classList.remove("hidden"); // Show the 'Save PDF' / 'Save DOCX' buttons
+
+    // Add tab switching logic
+    tabNav.addEventListener("click", (e) => {
+        if (e.target.tagName === "BUTTON") {
+            tabNav.querySelectorAll(".analysis-tab-btn").forEach((btn) => btn.classList.remove("active"));
+            tabContent.querySelectorAll(".analysis-tab-panel").forEach((pnl) => pnl.classList.remove("active"));
+            e.target.classList.add("active");
+            const targetPanelId = e.target.dataset.tab + "Panel";
+            const targetPanel = dom.$(targetPanelId);
+            if (targetPanel) {
+                targetPanel.classList.add("active");
+            } else {
+                    console.warn("Target panel not found:", targetPanelId);
+            }
+        }
+    });
+}
+
+
+
 function renderActionPlansPage_AP(container, data) {
     container.innerHTML = ""; // Clear loading
 
-    // Add validation for new fields
+    // --- Validation for new fields ---
     if (!data || !data.project_name || !data.action_items) {
         console.error("Incomplete data passed to renderActionPlansPage_AP:", data);
         container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render Action Plan results.</div>`;
         dom.$("analysisActions").classList.add("hidden");
         return;
     }
-    const { project_name, action_items } = data;
+
+    // --- NEW CHECK FOR UNANALYZABLE TEXT ---
+    // If the AI returns no action items and the project name contains "analyz", it's an error.
+    if (data.action_items.length === 0 && data.project_name.toLowerCase().includes("analyz")) {
+        console.warn("Data is unanalyzable. Displaying summary as error.");
+        container.innerHTML = `<div class="p-4 text-center text-yellow-300">
+                                    <h4 class="text-xl font-bold mb-3">Analysis Incomplete</h4>
+                                    <p class="text-white/80">${data.project_name}</p>
+                                    <p class="text-sm text-white/70 mt-2">Please try again with text describing a project, goal, or company plan.</p>
+                                </div>`;
+        dom.$("analysisActions").classList.add("hidden"); // Hide save buttons
+        return; // Stop rendering
+    }
+    // --- END NEW CHECK ---
+
+    const {
+        project_name,
+        action_items
+    } = data;
 
     // --- Create Tab Navigation (Updated with MORE Tabs) ---
     const tabNav = document.createElement("div");
     tabNav.className = "flex flex-wrap border-b border-white/20 -mx-6 px-6";
     tabNav.innerHTML = `
-        <button class="analysis-tab-btn active" data-tab="timeline">🗓️ Timeline View</button> <!-- Renamed -->
-        <button class="analysis-tab-btn" data-tab="details">📋 Task Details</button>
-        <button class="analysis-tab-btn" data-tab="resources">🔗 Resources & Dependencies</button> <!-- New -->
-        <button class="analysis-tab-btn" data-tab="tracking">📊 Priorities & KPIs</button> <!-- New, Renamed -->
-        <button class="analysis-tab-btn" data-tab="learn">🎓 Learn Action Planning</button>
+        <button class="analysis-tab-btn active" data-tab="timeline">🗓️ Timeline View</button> <button class="analysis-tab-btn" data-tab="details">📋 Task Details</button>
+        <button class="analysis-tab-btn" data-tab="resources">🔗 Resources & Dependencies</button> <button class="analysis-tab-btn" data-tab="tracking">📊 Priorities & KPIs</button> <button class="analysis-tab-btn" data-tab="learn">🎓 Learn Action Planning</button>
     `;
     container.appendChild(tabNav);
 
@@ -1058,24 +1142,23 @@ function renderActionPlansPage_AP(container, data) {
     tabContent.innerHTML = `
         <div id="timelinePanel" class="analysis-tab-panel active"></div>
         <div id="detailsPanel" class="analysis-tab-panel"></div>
-        <div id="resourcesPanel" class="analysis-tab-panel"></div> <!-- New -->
-        <div id="trackingPanel" class="analysis-tab-panel"></div> <!-- New -->
-        <div id="learnPanel" class="analysis-tab-panel"></div>
+        <div id="resourcesPanel" class="analysis-tab-panel"></div> <div id="trackingPanel" class="analysis-tab-panel"></div> <div id="learnPanel" class="analysis-tab-panel"></div>
     `;
 
     // --- 1. Populate Timeline Panel (Keep as is) ---
     const timelinePanel = dom.$("timelinePanel");
-     const sorted_action_items = [...action_items].sort((a, b) => {
-         const getTimeValue = (timeline) => {
-             timeline = String(timeline || '').toLowerCase(); // Ensure timeline is string
-             if (timeline.includes('week')) return parseInt(timeline.match(/\d+/)?.[0] || '0') * 7;
-             if (timeline.includes('month')) return parseInt(timeline.match(/\d+/)?.[0] || '0') * 30;
-             if (timeline.includes('q')) return parseInt(timeline.match(/\d+/)?.[0] || '0') * 90;
-             if (timeline.includes('sprint')) return parseInt(timeline.match(/\d+/)?.[0] || '0') * 14;
-             return 9999;
-         };
-         return getTimeValue(a.timeline) - getTimeValue(b.timeline);
-     });
+    const sorted_action_items = [...action_items].sort((a, b) => {
+        const getTimeValue = (timeline) => {
+            timeline = String(timeline || '').toLowerCase(); // Ensure timeline is string
+            if (timeline.includes('week')) return parseInt(timeline.match(/\d+/)?.[0] || '0') * 7;
+            if (timeline.includes('month')) return parseInt(timeline.match(/\d+/)?.[0] || '0') * 30;
+            if (timeline.includes('q')) return parseInt(timeline.match(/\d+/)?.[0] || '0') * 90;
+            if (timeline.includes('sprint')) return parseInt(timeline.match(/\d+/)?.[0] || '0') * 14;
+            if (timeline.includes('phase')) return parseInt(timeline.match(/\d+/)?.[0] || '0') * 100; // Give phases a high value
+            return 9999;
+        };
+        return getTimeValue(a.timeline) - getTimeValue(b.timeline);
+    });
 
     let timelineHtml = `<div class="p-4"><h2 class="text-3xl font-bold text-center mb-8">${project_name} - Timeline View</h2><div class="action-plan-container flex flex-col items-center">`;
     sorted_action_items.forEach((item) => {
@@ -1103,21 +1186,20 @@ function renderActionPlansPage_AP(container, data) {
     // --- 2. Populate Task Details Panel (Focus on Name, Desc, Owner, Timeline) ---
     const detailsPanel = dom.$("detailsPanel");
     let detailsHtml = `<div class="p-4 space-y-6"><h2 class="text-3xl font-bold mb-6 text-center">${project_name} - Task Details</h2>`;
-     if (action_items.length > 0) {
-         action_items.forEach((item, index) => {
-             detailsHtml += `
-                 <div class="action-card bg-black/20 p-4 rounded-lg border-l-4 border-gray-500"> <!-- Neutral border -->
-                     <h4 class="text-lg font-bold mb-2">${index + 1}. ${item.task_name}</h4>
-                     <p class="text-sm text-white/80 mb-3">${item.description || 'No description.'}</p>
-                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs border-t border-white/10 pt-3">
-                         <div><strong>Owner:</strong><br>${item.owner || 'N/A'}</div>
-                         <div><strong>Timeline:</strong><br>${item.timeline || 'N/A'}</div>
-                     </div>
-                 </div>`;
-         });
-     } else {
-          detailsHtml += `<p class="text-center text-white/70 italic">No action items were generated.</p>`;
-     }
+    if (action_items.length > 0) {
+        action_items.forEach((item, index) => {
+            detailsHtml += `
+                <div class="action-card bg-black/20 p-4 rounded-lg border-l-4 border-gray-500"> <h4 class="text-lg font-bold mb-2">${index + 1}. ${item.task_name}</h4>
+                    <p class="text-sm text-white/80 mb-3">${item.description || 'No description.'}</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs border-t border-white/10 pt-3">
+                        <div><strong>Owner:</strong><br>${item.owner || 'N/A'}</div>
+                        <div><strong>Timeline:</strong><br>${item.timeline || 'N/A'}</div>
+                    </div>
+                </div>`;
+        });
+    } else {
+        detailsHtml += `<p class="text-center text-white/70 italic">No action items were generated.</p>`;
+    }
     detailsHtml += `</div>`;
     detailsPanel.innerHTML = detailsHtml;
 
@@ -1128,17 +1210,17 @@ function renderActionPlansPage_AP(container, data) {
                         <table class="coeff-table styled-table text-sm">
                             <thead><tr><th>Task Name</th><th>Resources Needed</th><th>Key Dependency</th></tr></thead>
                             <tbody>`;
-     if (action_items.length > 0) {
+    if (action_items.length > 0) {
         action_items.forEach((item) => {
-             resourcesHtml += `<tr>
-                                 <td class="font-semibold">${item.task_name}</td>
-                                 <td class="text-white/80">${(item.resources_needed || []).join(', ') || 'N/A'}</td>
-                                 <td class="text-white/70 italic">${item.key_dependency || 'None'}</td>
-                              </tr>`;
-         });
-     } else {
-         resourcesHtml += `<tr><td colspan="3" class="text-center text-white/60 italic p-4">No resource or dependency information generated.</td></tr>`;
-     }
+            resourcesHtml += `<tr>
+                                    <td class="font-semibold">${item.task_name}</td>
+                                    <td class="text-white/80">${(item.resources_needed || []).join(', ') || 'N/A'}</td>
+                                    <td class="text-white/70 italic">${item.key_dependency || 'None'}</td>
+                                </tr>`;
+        });
+    } else {
+        resourcesHtml += `<tr><td colspan="3" class="text-center text-white/60 italic p-4">No resource or dependency information generated.</td></tr>`;
+    }
     resourcesHtml += `</tbody></table></div></div>`;
     resourcesPanel.innerHTML = resourcesHtml;
 
@@ -1146,39 +1228,46 @@ function renderActionPlansPage_AP(container, data) {
     // --- 4. Populate Priorities & KPIs Panel (New) ---
     const trackingPanel = dom.$("trackingPanel");
     let trackingHtml = `<div class="p-4"><h2 class="text-3xl font-bold mb-6 text-center">${project_name} - Priorities & KPIs</h2>`;
-     trackingHtml += `<div class="overflow-x-auto">
+    trackingHtml += `<div class="overflow-x-auto">
                         <table class="coeff-table styled-table text-sm">
                             <thead><tr><th>Task Name</th><th>Priority</th><th>KPIs to Track</th></tr></thead>
                             <tbody>`;
-     if (action_items.length > 0) {
-         // Sort by priority High > Medium > Low for this view
-         const priorityOrder = { 'High': 1, 'Medium': 2, 'Low': 3 };
-         const sortedByPriority = [...action_items].sort((a,b) => (priorityOrder[a.priority] || 4) - (priorityOrder[b.priority] || 4));
+    if (action_items.length > 0) {
+        // Sort by priority High > Medium > Low for this view
+        const priorityOrder = {
+            'High': 1,
+            'Medium': 2,
+            'Low': 3
+        };
+        const sortedByPriority = [...action_items].sort((a, b) => (priorityOrder[a.priority] || 4) - (priorityOrder[b.priority] || 4));
 
-         sortedByPriority.forEach((item) => {
-             let priorityColor = "text-blue-400"; // Low
-             if (item.priority === 'High') priorityColor = "text-red-400";
-             else if (item.priority === 'Medium') priorityColor = "text-yellow-400";
+        sortedByPriority.forEach((item) => {
+            let priorityColor = "text-blue-400"; // Low
+            if (item.priority === 'High') priorityColor = "text-red-400";
+            else if (item.priority === 'Medium') priorityColor = "text-yellow-400";
 
-             trackingHtml += `<tr>
-                                 <td class="font-semibold">${item.task_name}</td>
-                                 <td><span class="font-bold ${priorityColor}">${item.priority}</span></td>
-                                 <td class="text-white/80">${(item.kpis_to_track || []).join(', ') || 'N/A'}</td>
-                              </tr>`;
-         });
-     } else {
-          trackingHtml += `<tr><td colspan="3" class="text-center text-white/60 italic p-4">No priority or KPI information generated.</td></tr>`;
-     }
+            trackingHtml += `<tr>
+                                    <td class="font-semibold">${item.task_name}</td>
+                                    <td><span class="font-bold ${priorityColor}">${item.priority}</span></td>
+                                    <td class="text-white/80">${(item.kpis_to_track || []).join(', ') || 'N/A'}</td>
+                                </tr>`;
+        });
+    } else {
+        trackingHtml += `<tr><td colspan="3" class="text-center text-white/60 italic p-4">No priority or KPI information generated.</td></tr>`;
+    }
     trackingHtml += `</tbody></table></div></div>`;
     trackingPanel.innerHTML = trackingHtml;
 
 
     // --- 5. Populate Learn Action Planning Panel (Keep as is) ---
     const learnPanel = dom.$("learnPanel");
-     learnPanel.innerHTML = `
+    learnPanel.innerHTML = `
     <div class="p-6 space-y-6 text-white/90">
         <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding Action Planning</h3>
-        [Image of a Gantt chart or project timeline]
+        
+
+[Image of a Gantt chart or project timeline]
+
         <div class="bg-black/20 p-4 rounded-lg">
             <h4 class="text-lg font-bold mb-2 text-indigo-300">What is an Action Plan?</h4>
             <p class="text-sm text-white/80">An action plan is a detailed document outlining the specific tasks, steps, resources, and timelines required to achieve a particular goal or objective. It bridges the gap between strategy and execution.</p>
@@ -1199,7 +1288,7 @@ function renderActionPlansPage_AP(container, data) {
             </div>
             <div class="bg-white/5 p-4 rounded-lg border border-white/10">
                 <h4 class="text-lg font-bold mb-2">Why Create Action Plans?</h4>
-                 <ul class="list-disc list-inside space-y-1 text-sm">
+                    <ul class="list-disc list-inside space-y-1 text-sm">
                     <li><strong>Clarity & Direction:</strong> Provides a clear roadmap for execution.</li>
                     <li><strong>Accountability:</strong> Assigns responsibility for each task.</li>
                     <li><strong>Prioritization:</strong> Helps focus effort on the most important activities.</li>
@@ -1207,7 +1296,7 @@ function renderActionPlansPage_AP(container, data) {
                     <li><strong>Progress Tracking:</strong> Allows monitoring of progress towards the goal.</li>
                     <li><strong>Coordination:</strong> Facilitates collaboration by showing dependencies.</li>
                     <li><strong>Risk Management:</strong> Helps anticipate potential roadblocks.</li>
-                 </ul>
+                    </ul>
             </div>
         </div>
 
@@ -1224,7 +1313,7 @@ function renderActionPlansPage_AP(container, data) {
                 <p><strong>8. Review and Update Regularly:</strong> Action plans are living documents; adapt as needed.</p>
             </div>
         </details>
-         <p class="text-xs text-center text-white/60 mt-4">This tool uses AI to generate a potential action plan structure based strictly on the objective you provided.</p>
+            <p class="text-xs text-center text-white/60 mt-4">This tool uses AI to generate a potential action plan structure based strictly on the objective you provided.</p>
     </div>
     `;
 
@@ -1245,9 +1334,9 @@ function renderActionPlansPage_AP(container, data) {
             const targetPanel = dom.$(targetPanelId);
             if (targetPanel) {
                 targetPanel.classList.add("active");
-                 // No Plotly charts expected in this tool
+                // No Plotly charts expected in this tool
             } else {
-                 console.warn("Target panel not found:", targetPanelId);
+                console.warn("Target panel not found:", targetPanelId);
             }
         }
     });
@@ -1258,29 +1347,37 @@ function renderActionPlansPage_AP(container, data) {
 
 
 
+/**
+ * RENDERER: KPI & Critical Events (Strategic Planning)
+ * - NEW: Re-engineered to render the `kpi_groups` structure.
+ * - Tab 1 (Dashboard): Cleaned up. Shows Goal, Summary, and Critical Events.
+ * - Tab 2 (KPI Details): NEW grouped layout. Renders KPIs under their parent construct.
+ * - Tabs 3, 4, 5 (Timeline, Event Details, Learn): Unchanged, as they were already good.
+ */
 function renderKpiPage_KE(container, data) {
     container.innerHTML = ""; // Clear loading state
 
-    // --- Input Data Validation ---
+    // --- Input Data Validation (for NEW kpi_groups structure) ---
     if (!data || typeof data !== 'object' ||
         !data.main_goal || typeof data.main_goal !== 'string' ||
-        !Array.isArray(data.kpis) ||
+        !Array.isArray(data.kpi_groups) || // Check for kpi_groups
         !Array.isArray(data.critical_events) ||
         !data.performance_summary || typeof data.performance_summary !== 'string')
     {
-        console.error("Incomplete or invalid data passed to renderKpiPage_KE:", data);
-        container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete or invalid analysis data received. Cannot render KPI & Events results. Check console for details.</div>`;
-        dom.$("analysisActions").classList.add("hidden"); // Ensure save buttons are hidden on error
-        return; // Stop execution if data is bad
+        console.error("Incomplete or invalid data passed to renderKpiPage_KE (v2):", data);
+        container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received (kpi_groups missing). Cannot render results.</div>`;
+        dom.$("analysisActions").classList.add("hidden");
+        return;
     }
     // Destructure data *after* validation
-    const { main_goal, kpis, critical_events, performance_summary } = data;
+    const { main_goal, kpi_groups, critical_events, performance_summary } = data;
+    const all_kpis_flat = kpi_groups.flatMap(g => g.kpis); // For the "Learn" tab example, if needed
 
     // --- Create Tab Navigation (5 Tabs) ---
     const tabNav = document.createElement("div");
     tabNav.className = "flex flex-wrap border-b border-white/20 -mx-6 px-6";
     tabNav.innerHTML = `
-        <button class="analysis-tab-btn active" data-tab="dashboard">📊 KPI Dashboard</button>
+        <button class="analysis-tab-btn active" data-tab="dashboard">📊 Dashboard</button>
         <button class="analysis-tab-btn" data-tab="kpiDetails">📋 KPI Details</button>
         <button class="analysis-tab-btn" data-tab="timeline">🗓️ Events Timeline</button>
         <button class="analysis-tab-btn" data-tab="eventDetails">📝 Event Details</button>
@@ -1299,7 +1396,7 @@ function renderKpiPage_KE(container, data) {
         <div id="learnPanel" class="analysis-tab-panel"></div>
     `;
 
-    // --- 1. Populate KPI Dashboard Panel ---
+    // --- 1. Populate KPI Dashboard Panel (NEW CLEANED VERSION) ---
     try {
         const dashboardPanel = dom.$("dashboardPanel");
         let dashboardHtml = `<div class="p-4 space-y-8">
@@ -1310,88 +1407,99 @@ function renderKpiPage_KE(container, data) {
             <blockquote class="p-4 italic border-l-4 border-gray-500 bg-black/20 text-white/90 text-sm">
                 <strong>Performance Summary:</strong> ${performance_summary}
             </blockquote>
-            <h3 class="text-2xl font-bold text-center">Key Performance Indicators</h3>
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-${Math.min(kpis.length, 5)} gap-4">`; // Dynamic columns
-        if (kpis.length > 0) {
-            kpis.forEach((kpi) => {
-                    // Validate kpi object structure before accessing properties
-                    if (kpi && typeof kpi === 'object' && kpi.hasOwnProperty('name') && kpi.hasOwnProperty('target') && kpi.hasOwnProperty('type')) {
-                        const targetDisplay = kpi.target === "Target Not Specified in Text" ? "N/A" : kpi.target;
-                        const targetClass = targetDisplay === 'N/A' ? 'text-xl text-white/60' : ''; // Style N/A differently
-                        dashboardHtml += `
-                        <div class="kpi-card">
-                            <div><p class="kpi-name">${kpi.name || 'Unnamed KPI'}</p></div>
-                            <div><p class="kpi-target ${targetClass}">${targetDisplay}</p></div>
-                            <div><p class="kpi-type">${kpi.type || 'N/A'}</p></div>
+            <h3 class="text-2xl font-bold text-center">Critical Events</h3>`;
+
+        if (critical_events.length > 0) {
+             dashboardHtml += `<div class="grid grid-cols-1 md:grid-cols-${Math.min(critical_events.length, 3)} gap-6">`;
+             critical_events.forEach((event) => {
+                 if (event && typeof event === 'object' && event.hasOwnProperty('event_name')) {
+                     const importanceColor = event.importance === 'High' ? 'border-red-500' : 'border-yellow-500';
+                     dashboardHtml += `
+                        <div class="summary-stat-card text-left p-4 border-l-4 ${importanceColor}">
+                            <p class="font-bold text-lg text-white">${event.event_name || 'Unnamed Event'}</p>
+                            <p class="text-sm text-white/80">${event.description || 'N/A'}</p>
+                            <p class="text-xs text-indigo-300 font-semibold mt-2">Timeline: ${event.timeline || 'N/A'}</p>
                         </div>`;
-                    } else {
-                        console.warn("Skipping invalid KPI object in dashboard:", kpi);
-                    }
-            });
+                 }
+             });
+             dashboardHtml += `</div>`; // Close grid
         } else {
-            dashboardHtml += `<p class="col-span-full text-center text-white/60 italic">No KPIs identified.</p>`;
+            dashboardHtml += `<p class="col-span-full text-center text-white/60 italic">No critical events identified.</p>`;
         }
-        dashboardHtml += `</div></div>`; // Close grid and p-4 space-y-8
+        dashboardHtml += `</div>`; // Close p-4 space-y-8
         dashboardPanel.innerHTML = dashboardHtml;
     } catch (e) {
-            console.error("Error rendering Dashboard Panel:", e);
-            dom.$("dashboardPanel").innerHTML = `<div class="p-4 text-center text-red-400">Error rendering dashboard.</div>`;
+         console.error("Error rendering Dashboard Panel:", e);
+         dom.$("dashboardPanel").innerHTML = `<div class="p-4 text-center text-red-400">Error rendering dashboard.</div>`;
     }
 
-    // --- 2. Populate KPI Details Panel ---
+    // --- 2. Populate KPI Details Panel (NEW GROUPED VERSION) ---
     try {
         const kpiDetailsPanel = dom.$("kpiDetailsPanel");
-        let kpiDetailsHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4 text-center">📋 KPI Details</h3>`;
-        kpiDetailsHtml += `<div class="overflow-x-auto">
-                            <table class="coeff-table styled-table text-sm">
-                                <thead><tr><th>KPI Name</th><th>Description</th><th>Formula / Calculation</th><th>Target</th><th>Type</th></tr></thead>
-                                <tbody>`;
-        if (kpis.length > 0) {
-            kpis.forEach((kpi) => {
-                    if (kpi && typeof kpi === 'object' && kpi.hasOwnProperty('name')) { // Basic validation
-                    const targetDisplay = kpi.target === "Target Not Specified in Text" ? "<i class='text-white/50'>N/A in text</i>" : (kpi.target || 'N/A');
-                    kpiDetailsHtml += `<tr>
+        let kpiDetailsHtml = `<div class="p-4 space-y-8"><h3 class="text-2xl font-bold mb-4 text-center">📋 KPI Details (Grouped by Construct)</h3>`;
+
+        if (kpi_groups.length > 0) {
+            kpi_groups.forEach((group) => {
+                if (group && typeof group === 'object' && group.construct_name && Array.isArray(group.kpis)) {
+                    kpiDetailsHtml += `
+                        <div class="bg-black/10 p-4 rounded-lg">
+                            <h4 class="text-xl font-semibold mb-3 text-indigo-300">${group.construct_name}</h4>
+                            <div class="overflow-x-auto">
+                                <table class="coeff-table styled-table text-sm">
+                                    <thead><tr>
+                                        <th>KPI (Indicator)</th>
+                                        <th>Measurement Scale / Formula</th>
+                                        <th>Type</th>
+                                    </tr></thead>
+                                    <tbody>`;
+                    
+                    if (group.kpis.length > 0) {
+                        group.kpis.forEach((kpi) => {
+                            if (kpi && typeof kpi === 'object' && kpi.hasOwnProperty('name')) {
+                                kpiDetailsHtml += `<tr>
                                     <td class="font-semibold">${kpi.name || 'Unnamed KPI'}</td>
-                                    <td class="text-white/80">${kpi.description || 'N/A'}</td>
                                     <td class="font-mono text-xs">${kpi.formula || 'N/A'}</td>
-                                    <td>${targetDisplay}</td>
                                     <td class="text-white/70">${kpi.type || 'N/A'}</td>
-                                    </tr>`;
+                                </tr>`;
+                            }
+                        });
                     } else {
-                        console.warn("Skipping invalid KPI object in details table:", kpi);
+                        kpiDetailsHtml += `<tr><td colspan="3" class="text-center text-white/60 italic p-4">No KPIs identified for this construct.</td></tr>`;
                     }
+
+                    kpiDetailsHtml += `</tbody></table></div></div>`; // Close table div and group div
+                }
             });
         } else {
-            kpiDetailsHtml += `<tr><td colspan="5" class="text-center text-white/60 italic p-4">No KPIs were identified from the text.</td></tr>`;
+            kpiDetailsHtml += `<p class="text-center text-white/60 italic p-4">No KPI groups were identified from the text.</p>`;
         }
-        kpiDetailsHtml += `</tbody></table></div></div>`; // Close table div and p-4
+        kpiDetailsHtml += `</div>`; // Close p-4
         kpiDetailsPanel.innerHTML = kpiDetailsHtml;
     } catch (e) {
-            console.error("Error rendering KPI Details Panel:", e);
-            dom.$("kpiDetailsPanel").innerHTML = `<div class="p-4 text-center text-red-400">Error rendering KPI details.</div>`;
+         console.error("Error rendering KPI Details Panel:", e);
+         dom.$("kpiDetailsPanel").innerHTML = `<div class="p-4 text-center text-red-400">Error rendering KPI details.</div>`;
     }
 
-    // --- 3. Populate Events Timeline Panel ---
+    // --- 3. Populate Events Timeline Panel (Unchanged) ---
     try {
         const timelinePanel = dom.$("timelinePanel");
-        // Use main_goal for title consistency
         let timelineHtml = `<div class="p-4"><h2 class="text-3xl font-bold text-center mb-8">${main_goal} - Critical Events Timeline</h2><div class="action-plan-container flex flex-col items-center">`;
         if (critical_events.length > 0) {
-            // Sorting logic included
             const sorted_events = [...critical_events].sort((a, b) => {
-                    const getTimeValue = (timeline) => {
-                        timeline = String(timeline || '').toLowerCase();
-                        if (timeline.includes('week')) return parseInt(timeline.match(/\d+/)?.[0] || '0') * 7;
-                        if (timeline.includes('month')) return parseInt(timeline.match(/\d+/)?.[0] || '0') * 30;
-                        if (timeline.includes('q')) return parseInt(timeline.match(/\d+/)?.[0] || '0') * 90;
-                        return 9999;
-                    };
-                    return getTimeValue(a.timeline) - getTimeValue(b.timeline);
-                });
+                 const getTimeValue = (timeline) => {
+                     timeline = String(timeline || '').toLowerCase();
+                     if (timeline.includes('week')) return parseInt(timeline.match(/\d+/)?.[0] || '0') * 7;
+                     if (timeline.includes('month')) return parseInt(timeline.match(/\d+/)?.[0] || '0') * 30;
+                     if (timeline.includes('q')) return parseInt(timeline.match(/\d+/)?.[0] || '0') * 90;
+                     if (timeline.includes('year')) return parseInt(timeline.match(/\d+/)?.[0] || '0') * 365;
+                     return 9999;
+                 };
+                 return getTimeValue(a.timeline) - getTimeValue(b.timeline);
+             });
 
             sorted_events.forEach((event) => {
-                    if (event && typeof event === 'object' && event.hasOwnProperty('event_name')) { // Basic validation
-                    const importanceColor = event.importance === 'High' ? '#ef4444' : '#f97316'; // Red for High, Orange for Medium
+                 if (event && typeof event === 'object' && event.hasOwnProperty('event_name')) {
+                    const importanceColor = event.importance === 'High' ? '#ef4444' : '#f97316';
                     const importanceIcon = event.importance === 'High' ? '🔴' : '🟠';
 
                     timelineHtml += `
@@ -1403,21 +1511,19 @@ function renderKpiPage_KE(container, data) {
                                 <p class="text-xs font-bold mt-1">${importanceIcon} Importance: ${event.importance || 'N/A'}</p>
                             </div>
                         </div>`;
-                    } else {
-                        console.warn("Skipping invalid event object in timeline:", event);
-                    }
+                 }
             });
         } else {
             timelineHtml += `<p class="text-center text-white/70 italic">No critical events were identified from the text.</p>`;
         }
-        timelineHtml += `</div></div>`; // Close container and p-4
+        timelineHtml += `</div></div>`;
         timelinePanel.innerHTML = timelineHtml;
     } catch (e) {
         console.error("Error rendering Timeline Panel:", e);
         dom.$("timelinePanel").innerHTML = `<div class="p-4 text-center text-red-400">Error rendering timeline.</div>`;
     }
 
-    // --- 4. Populate Event Details Panel ---
+    // --- 4. Populate Event Details Panel (Unchanged) ---
     try {
         const eventDetailsPanel = dom.$("eventDetailsPanel");
         let eventDetailsHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4 text-center">📝 Event Details</h3>`;
@@ -1427,133 +1533,105 @@ function renderKpiPage_KE(container, data) {
                                 <tbody>`;
         if (critical_events.length > 0) {
             critical_events.forEach((event) => {
-                    if (event && typeof event === 'object' && event.hasOwnProperty('event_name')) { // Basic validation
+                 if (event && typeof event === 'object' && event.hasOwnProperty('event_name')) {
                     const importanceColor = event.importance === 'High' ? 'text-red-400' : 'text-yellow-400';
                     eventDetailsHtml += `<tr>
                                     <td class="font-semibold">${event.event_name || 'Unnamed Event'}</td>
                                     <td class="text-white/80">${event.description || 'N/A'}</td>
                                     <td class="text-white/70">${event.timeline || 'N/A'}</td>
                                     <td><span class="font-bold ${importanceColor}">${event.importance || 'N/A'}</span></td>
-                                    </tr>`;
-                    } else {
-                        console.warn("Skipping invalid event object in details table:", event);
-                    }
+                                  </tr>`;
+                 }
             });
         } else {
             eventDetailsHtml += `<tr><td colspan="4" class="text-center text-white/60 italic p-4">No event details were identified from the text.</td></tr>`;
         }
-        eventDetailsHtml += `</tbody></table></div></div>`; // Close table div and p-4
+        eventDetailsHtml += `</tbody></table></div></div>`;
         eventDetailsPanel.innerHTML = eventDetailsHtml;
     } catch (e) {
         console.error("Error rendering Event Details Panel:", e);
         dom.$("eventDetailsPanel").innerHTML = `<div class="p-4 text-center text-red-400">Error rendering event details.</div>`;
     }
 
-    // --- 5. Populate Learn KPIs & Milestones Panel ---
+    // --- 5. Populate Learn KPIs & Milestones Panel (Unchanged) ---
     try {
         const learnPanel = dom.$("learnPanel");
-        // Re-using the content previously generated for this tab
         learnPanel.innerHTML = `
         <div class="p-6 space-y-6 text-white/90">
             <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding KPIs & Milestones</h3>
-                
+             
             <div class="bg-black/20 p-4 rounded-lg">
                 <h4 class="text-lg font-bold mb-2 text-indigo-300">Why Track Performance?</h4>
                 <p class="text-sm text-white/80">Tracking performance is crucial for strategy execution. Key Performance Indicators (KPIs) measure progress towards goals, while Critical Events (Milestones) mark significant achievements along the way. Together, they provide visibility and enable course correction.</p>
             </div>
-
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="bg-white/5 p-4 rounded-lg border border-white/10">
                     <h4 class="text-lg font-bold mb-2 text-green-300">📊 Key Performance Indicators (KPIs)</h4>
                     <ul class="list-disc list-inside space-y-2 text-sm">
                         <li><strong>Definition:</strong> Measurable values demonstrating how effectively a company is achieving key business objectives.</li>
-                        <li><strong>Characteristics (SMART):</strong> Specific, Measurable, Achievable, Relevant, Time-bound.</li>
+                        <li><strong>In Research:</strong> KPIs are often the specific *indicators* or *survey questions* used to measure a larger, abstract *construct*.</li>
                         <li><strong>Types:</strong>
                             <ul class="list-[circle] list-inside pl-4 text-xs">
-                                <li><strong>Lagging Indicators:</strong> Measure past performance (e.g., Revenue, Profit, Churn Rate). Show results.</li>
-                                <li><strong>Leading Indicators:</strong> Measure activities likely to drive future results (e.g., Website Visits, Sales Leads, Employee Training Hours). Predict success.</li>
-                                <li><strong>Financial:</strong> Related to money (e.g., ROI, Margin).</li>
-                                <li><strong>Customer:</strong> Related to customer perception/behavior (e.g., CSAT, NPS, Retention).</li>
-                                <li><strong>Operational:</strong> Related to internal processes (e.g., Cycle Time, Defect Rate).</li>
+                               <li><strong>Lagging Indicators:</strong> Measure past performance (e.g., Revenue, Churn Rate).</li>
+                               <li><strong>Leading Indicators:</strong> Measure activities likely to drive future results (e.g., Website Visits, Training Hours).</li>
+                               <li><strong>Operational:</strong> Measures process efficiency (e.g., Website responsiveness).</li>
+                               <li><strong>Customer:</strong> Measures perception/behavior (e.g., NPS, CSAT).</li>
                             </ul>
                         </li>
-                            <li><strong>Purpose:</strong> Monitor health, identify trends, inform decisions, measure strategic success.</li>
                     </ul>
                 </div>
                 <div class="bg-white/5 p-4 rounded-lg border border-white/10">
                     <h4 class="text-lg font-bold mb-2 text-yellow-300">🗓️ Critical Events (Milestones)</h4>
-                        <ul class="list-disc list-inside space-y-2 text-sm">
+                     <ul class="list-disc list-inside space-y-2 text-sm">
                         <li><strong>Definition:</strong> Significant points or achievements in a project or strategic initiative timeline.</li>
-                        <li><strong>Characteristics:</strong> Clearly defined, mark transition between phases, often represent completion of major deliverables.</li>
                         <li><strong>Examples:</strong> Project Kick-off, Design Approval, Product Launch, Funding Secured, Regulatory Approval, First Customer Acquired.</li>
-                        <li><strong>Purpose:</strong> Break down large projects, track progress, provide clear deadlines, facilitate communication, celebrate achievements.</li>
-                        </ul>
+                        <li><strong>In Research:</strong> Milestones include "Conduct Survey," "Analyze Data," and "Present Findings," or "Develop Roadmap."</li>
+                        <li><strong>Purpose:</strong> Break down large projects, track progress, provide clear deadlines, facilitate communication.</li>
+                     </ul>
                 </div>
             </div>
-
-                <div class="bg-black/20 p-4 rounded-lg mt-6">
+             <div class="bg-black/20 p-4 rounded-lg mt-6">
                 <h4 class="text-lg font-bold mb-2">Connecting KPIs and Milestones</h4>
-                    <ul class="list-disc list-inside space-y-1 text-sm">
-                    <li>Milestones mark *when* key things happen; KPIs measure *how well* things are happening or the *results* of those happenings.</li>
-                    <li>Achieving milestones should ideally lead to improvements in relevant KPIs.</li>
-                    <li>KPI trends can signal potential issues *before* a milestone is missed.</li>
-                    <li>Both are essential for effective strategy execution and performance management.</li>
+                 <ul class="list-disc list-inside space-y-1 text-sm">
+                    <li>Milestones mark *when* key things happen; KPIs measure *how well* things are happening.</li>
+                    <li>Achieving a milestone (e.g., "Launch Survey") enables the measurement of KPIs (e.g., "NPS").</li>
+                    <li>KPI trends (e.g., "Low CSAT") can trigger the need for new projects with new milestones.</li>
                 </ul>
             </div>
-                <p class="text-xs text-center text-white/60 mt-4">This tool uses AI to identify potential KPIs and Critical Events based strictly on the goal/project description you provided.</p>
+             <p class="text-xs text-center text-white/60 mt-4">This tool uses AI to identify potential KPIs (as indicators) and Critical Events based strictly on the goal/project description you provided.</p>
         </div>
         `;
     } catch (e) {
-            console.error("Error rendering Learn Panel:", e);
-            dom.$("learnPanel").innerHTML = `<div class="p-4 text-center text-red-400">Error rendering learning content.</div>`;
+         console.error("Error rendering Learn Panel:", e);
+         dom.$("learnPanel").innerHTML = `<div class="p-4 text-center text-red-400">Error rendering learning content.</div>`;
     }
 
     // --- Final Touches ---
     try {
         appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache result
-
         // Tab switching logic
         tabNav.addEventListener("click", (e) => {
             if (e.target.tagName === "BUTTON") {
-                // Deactivate all
                 tabNav.querySelectorAll(".analysis-tab-btn").forEach(btn => btn.classList.remove("active"));
                 tabContent.querySelectorAll(".analysis-tab-panel").forEach(pnl => pnl.classList.remove("active"));
-
-                // Activate clicked
                 e.target.classList.add("active");
                 const targetPanelId = e.target.dataset.tab + "Panel";
                 const targetPanel = dom.$(targetPanelId);
                 if (targetPanel) {
                     targetPanel.classList.add("active");
-                        // No Plotly charts expected here, no resize needed
                 } else {
-                        console.warn("Target panel not found:", targetPanelId);
+                     console.warn("Target panel not found:", targetPanelId);
                 }
             }
         });
-
         dom.$("analysisActions").classList.remove("hidden"); // Show save buttons
     } catch (e) {
-            console.error("Error setting up final touches (tabs, cache, buttons):", e);
-            // Don't overwrite the container if there was a rendering error earlier
-            if (!container.innerHTML.includes('text-red-400')) {
-                container.innerHTML += `<div class="p-4 text-center text-red-400">Error setting up UI components.</div>`;
-            }
+         console.error("Error setting up final touches (tabs, cache, buttons):", e);
+         if (!container.innerHTML.includes('text-red-400')) {
+              container.innerHTML += `<div class="p-4 text-center text-red-400">Error setting up UI components.</div>`;
+         }
     }
-    // setLoading('generate', false); // This is handled in the calling function
 }
-
-
-
-
-// Modified renderFullSwotTowsPage to add Learn Tab and use detailed data
-
-
-
-
-
-
-
 
 
 
@@ -1790,9 +1868,10 @@ function renderMiscPage_MSC(container, data) {
 
 
 export {
-    renderFactorAnalysisPage,
+    renderMissionVisionPage,
     renderFullSwotTowsPage,
     renderGoalsAndInitiativesPage_SP,
+    renderObjectivesPage,
     renderActionPlansPage_AP,
     renderKpiPage_KE,
     renderMiscPage_MSC

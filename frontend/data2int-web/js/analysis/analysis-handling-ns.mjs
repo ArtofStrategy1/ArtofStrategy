@@ -135,6 +135,190 @@ async function handleNovelGoalsAnalysis_NS() {
 
 
 
+/**
+ * Handles the "HEFTY" parallel AI generation for all 6 frameworks + 1 synthesis.
+ */
+async function handleAllFrameworkAnalysis() {
+    const analysisResultContainer = dom.$("analysisResult");
+    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white mb-4">Running Comprehensive Multi-Framework Analysis...</h3><p class="text-white/80 mb-2">This is a hefty task and may take several minutes. Please wait.</p><p id="analysisStatus" class="text-white/60 text-sm">Initializing...</p></div>`;
+    setLoading("generate", true);
+
+    const statusEl = dom.$("analysisStatus");
+    const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
+    const MODEL_NAME = "llama3.1:latest";
+
+    try {
+        // 1. Gather Inputs
+        statusEl.textContent = "Reading and processing your context...";
+        const useDoc = dom.$("docUpload").checked;
+        let text = "";
+        if (useDoc) {
+            const file = dom.$("allFrameworkFile").files[0];
+            if (!file) throw new Error("Please select a document.");
+            text = await extractTextFromFile(file);
+        } else {
+            text = dom.$("allFrameworkContent").value.trim();
+            if (!text.trim()) throw new Error("Please provide your business problem or context.");
+        }
+
+        // Truncate if necessary
+        const MAX_CONTEXT_LENGTH = 15000;
+        let truncatedNote = "";
+        if (text.length > MAX_CONTEXT_LENGTH) {
+            text = text.substring(0, MAX_CONTEXT_LENGTH);
+            truncatedNote = `(Note: Analysis based on the first ${MAX_CONTEXT_LENGTH} characters of the provided text.)`;
+            console.warn(`All Framework context truncated.`);
+        }
+
+        // 2. Define Helper for Parallel AI Calls
+        async function generateOllamaResponse(prompt, statusUpdate) {
+            statusEl.textContent = statusUpdate;
+            console.log(`Sending prompt for: ${statusUpdate}`);
+            const response = await fetch(OLLAMA_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    model: MODEL_NAME,
+                    prompt: prompt,
+                    stream: false,
+                    format: "json",
+                    options: { num_ctx: 32768 }
+                })
+            });
+            if (!response.ok) {
+                throw new Error(`Ollama API error for ${statusUpdate}: ${response.status} ${response.statusText}`);
+            }
+            const data = await response.json();
+            try {
+                return JSON.parse(data.response);
+            } catch (e) {
+                console.error(`Failed to parse JSON for ${statusUpdate}:`, data.response, e);
+                throw new Error(`Invalid JSON received from AI for ${statusUpdate}.`);
+            }
+        }
+
+        // 3. Define ALL 6 Framework Prompts
+        const textContext = `**USER'S BUSINESS CONTEXT:**\n\`\`\`\n${text}\n\`\`\`\n**ABSOLUTE CONSTRAINTS:** Base **ALL** output **EXCLUSIVELY** on the provided "USER'S BUSINESS CONTEXT". **DO NOT** invent information. ${truncatedNote}`;
+
+        const prompt_blue_ocean = `
+            ${textContext}
+            **TASK:** Apply the Blue Ocean Strategy "Eliminate-Reduce-Raise-Create" (ERRC) grid to the user's context. Identify 2-3 specific factors for each of the four actions **based ONLY on the text**.
+            **RETURN FORMAT:** Provide ONLY a valid JSON object: 
+            {"eliminate": ["Factor 1 to eliminate (from text)...", "..."], "reduce": ["Factor 1 to reduce (from text)...", "..."], "raise": ["Factor 1 to raise (from text)...", "..."], "create": ["Factor 1 to create (from text)...", "..."]}`;
+        
+        const prompt_design_thinking = `
+            ${textContext}
+            **TASK:** Apply the 5 stages of Design Thinking to the user's context. For each stage, provide a 2-3 sentence description of the key activity or focus **based ONLY on the text**.
+            **RETURN FORMAT:** Provide ONLY a valid JSON object:
+            {"empathize": "Description of user/problem to empathize with (from text)...", "define": "The core problem statement to define (from text)...", "ideate": "Key areas for brainstorming solutions (from text)...", "prototype": "A potential low-fi solution to test (from text)...", "test": "How to test this prototype with users (from text)..."}`;
+        
+        const prompt_reframing = `
+            ${textContext}
+            **TASK:** Apply Reframing Thinking. Identify 2-3 core assumptions **from the text**. For each assumption, provide 1-2 alternative "reframes" or perspectives.
+            **RETURN FORMAT:** Provide ONLY a valid JSON object:
+            {"reframes": [{"assumption": "Core assumption from text...", "alternatives": ["Alternative perspective 1...", "Alternative perspective 2..."]}, {"assumption": "...", "alternatives": ["..."]}]}`;
+        
+        const prompt_thinking_hats = `
+            ${textContext}
+            **TASK:** Apply De Bono's Six Thinking Hats to the user's context. Provide 1-2 key points for each hat **based ONLY on the text**.
+            **RETURN FORMAT:** Provide ONLY a valid JSON object:
+            {"white_hat": "Facts & data mentioned in text...", "red_hat": "Feelings or emotions implied in text...", "black_hat": "Risks or cautions mentioned in text...", "yellow_hat": "Benefits or positives mentioned in text...", "green_hat": "Creative ideas or opportunities from text...", "blue_hat": "Process or 'next step' summary from text..."}`;
+        
+        const prompt_creative_dissonance = `
+            ${textContext}
+            **TASK:** Apply Creative Dissonance. Identify the \`current_reality\` (problem) and the \`future_vision\` (goal) **from the text**. Then, list 2-3 key \`tension_points\` (gaps) between them.
+            **RETURN FORMAT:** Provide ONLY a valid JSON object:
+            {"current_reality": "The main problem/situation from text...", "future_vision": "The main goal/aspiration from text...", "tension_points": ["Gap 1...", "Gap 2..."]}`;
+        
+        const prompt_ladder_of_inference = `
+            ${textContext}
+            **TASK:** Apply the Ladder of Inference. Identify a core \`belief_or_action\` **from the text**. Deconstruct it into \`observations\`, \`interpretations\`, and \`assumptions\` **from the text**.
+            **RETURN FORMAT:** Provide ONLY a valid JSON object:
+            {"belief_or_action": "The core conclusion from text...", "deconstruction": {"observations": "What data is seen in text...", "interpretations": "How that data is interpreted in text...", "assumptions": "Underlying assumptions from text..."}}`;
+
+        // 4. Run All 6 Frameworks in Parallel
+        const [
+            data_blue_ocean,
+            data_design_thinking,
+            data_reframing,
+            data_thinking_hats,
+            data_creative_dissonance,
+            data_ladder_of_inference
+        ] = await Promise.all([
+            generateOllamaResponse(prompt_blue_ocean, "Running Blue Ocean Strategy..."),
+            generateOllamaResponse(prompt_design_thinking, "Applying Design Thinking..."),
+            generateOllamaResponse(prompt_reframing, "Reframing Assumptions..."),
+            generateOllamaResponse(prompt_thinking_hats, "Using Six Thinking Hats..."),
+            generateOllamaResponse(prompt_creative_dissonance, "Analyzing Creative Dissonance..."),
+            generateOllamaResponse(prompt_ladder_of_inference, "Deconstructing Thinking System...")
+        ]);
+
+        // 5. Run the 7th "Synthesis" AI Call
+        // We create a summary of the 6 outputs to feed to the synthesis prompt.
+        statusEl.textContent = "Synthesizing all framework insights...";
+        const synthesis_context = `
+            **CONTEXT:** ${text.substring(0, 1000)}...
+            **Blue Ocean ERRC:** ${JSON.stringify(data_blue_ocean)}
+            **Design Thinking:** ${JSON.stringify(data_design_thinking)}
+            **Reframing:** ${JSON.stringify(data_reframing)}
+            **Thinking Hats:** ${JSON.stringify(data_thinking_hats)}
+            **Creative Dissonance:** ${JSON.stringify(data_creative_dissonance)}
+            **Ladder of Inference:** ${JSON.stringify(data_ladder_of_inference)}
+        `;
+
+        const prompt_synthesis = `
+            You are a master strategist. You have just run 6 different strategic frameworks on a business problem. Now, synthesize all these findings into a cohesive analysis.
+
+            **ANALYSIS INPUTS:**
+            ${synthesis_context}
+
+            **TASK:**
+            Generate a synthesis of all 6 framework outputs.
+            1.  **\`strategic_narrative\`**: Write a 3-4 sentence narrative summarizing the core problem and the overall strategic direction suggested by all frameworks combined.
+            2.  **\`top_insights\`**: Identify the 3-5 most critical insights that appeared across multiple frameworks (e.g., a "Black Hat" risk that is also a "Weakness" in the dissonance gap).
+            3.  **\`primary_leverage_point\`**: What is the single most powerful area for intervention, as suggested by the frameworks?
+            4.  **\`priority_actions\`**: List the top 3-4 specific, actionable "first steps" that synthesize the recommendations from all frameworks.
+
+            **RETURN FORMAT:** Provide ONLY a valid JSON object:
+            {
+                "strategic_narrative": "...",
+                "top_insights": ["Insight 1...", "Insight 2...", "Insight 3..."],
+                "primary_leverage_point": "The single most critical point of intervention is...",
+                "priority_actions": ["Action 1...", "Action 2...", "Action 3..."]
+            }`;
+        
+        const data_synthesis = await generateOllamaResponse(prompt_synthesis, "Creating final synthesis...");
+
+        // 6. Assemble Final Data Object
+        const parsedData = {
+            synthesis: data_synthesis,
+            blue_ocean: data_blue_ocean,
+            design_thinking: data_design_thinking,
+            reframing: data_reframing,
+            thinking_hats: data_thinking_hats,
+            creative_dissonance: data_creative_dissonance,
+            ladder_of_inference: data_ladder_of_inference
+        };
+
+        console.log("Successfully assembled all 7 analysis parts.");
+        
+        // 7. Render Results
+        statusEl.textContent = "Rendering comprehensive analysis...";
+        renderNS.renderAllFrameworkPage(analysisResultContainer, parsedData);
+
+    } catch (error) {
+        console.error(`Error in handleAllFrameworkAnalysis (Hefty) using ${MODEL_NAME}:`, error);
+        analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
+        setLoading("generate", false);
+    } finally {
+        if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
+            setLoading("generate", false);
+        }
+    }
+}
+
+
+
 async function handleCreativeDissonanceAnalysis_NS() {
     const analysisResultContainer = dom.$("analysisResult");
     analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white mb-4">Analyzing Creative Gap (Prioritizing Files)...</h3><p class="text-white/80 mb-2">Generating initiatives based primarily on document and data context...</p></div>`;
@@ -597,6 +781,7 @@ async function handleThinkingSystemAnalysis_NS() {
 
 export {
     handleNovelGoalsAnalysis_NS,
+    handleAllFrameworkAnalysis,
     handleCreativeDissonanceAnalysis_NS,
     handleLivingSystemAnalysis_NS,
     handleThinkingSystemAnalysis_NS

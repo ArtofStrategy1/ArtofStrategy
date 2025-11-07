@@ -1,7 +1,7 @@
 // =====================================================================================================
 // ===================      Novel Strategies Page Template Creation Functions       ====================
 // =====================================================================================================
-import { handleGenerate } from "../../analysis/handle-generate.mjs"
+import { handleGenerate } from "../../analysis/analysis-helpers.mjs"
 import { reattachActionListeners } from "./template-creation.mjs";
 import { dom } from "../../utils/dom-utils.mjs";
 import { setupInputToggle } from "../../utils/ui-utils.mjs";
@@ -50,6 +50,58 @@ function createNovelGoalsLayout_NS(template) {
             `;
     setupInputToggle("novelGoalsFile", "novelGoalsFileLabel", "textInputArea", "docUploadArea");
 }
+
+
+
+/**
+ * Creates the UI for the "All Framework" Novel Strategies tool.
+ */
+function createAllFrameworkLayout(template) {
+    const contentContainer = dom.$("templateDetailContent");
+    contentContainer.className = "grid lg:grid-cols-1 gap-12";
+    contentContainer.innerHTML = `
+                <div class="lg:col-span-1">
+                        <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
+                        <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">${template.description}</p>
+                    <div class="glass-container max-w-2xl mx-auto w-full p-6 space-y-4">
+                            <h3 class="text-xl font-bold mb-4 text-white">Provide Business Problem or Context</h3>
+                        <div class="input-radio-group">
+                            <input type="radio" name="inputType" id="textInput" class="input-radio" checked>
+                            <label for="textInput" class="input-radio-label">Text Input</label>
+                            <input type="radio" name="inputType" id="docUpload" class="input-radio">
+                            <label for="docUpload" class="input-radio-label">Document Upload</label>
+                        </div>
+                        <div id="textInputArea">
+                            <textarea id="allFrameworkContent" class="input-field h-48" placeholder="Describe your strategic challenge, business situation, or the problem you want to solve. The AI will apply multiple frameworks to this context..."></textarea>
+                        </div>
+                        <div id="docUploadArea" class="hidden">
+                            <div class="input-file-wrapper">
+                                <label for="allFrameworkFile" id="allFrameworkFileLabel" class="input-file-btn">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                                    <span class="file-name">Select .docx or .txt file...</span>
+                                </label>
+                                <input type="file" id="allFrameworkFile" class="input-file" accept=".txt,.docx">
+                            </div>
+                        </div>
+                        <button id="generateBtn" class="btn btn-primary w-full text-lg py-3">
+                            <span id="generateBtnText">🚀 Generate Comprehensive Analysis</span>
+                            <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
+                        </button>
+                    </div>
+                    <div class="mt-12">
+                            <h2 class="text-3xl font-bold mb-4 text-center">Novel Strategy Synthesis</h2>
+                            <div id="analysisResult" class="glass-container min-h-[500px] overflow-x-auto"></div>
+                            <div id="analysisActions" class="text-center mt-4 space-x-2 hidden">
+                            <button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>
+                            <button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+    setupInputToggle("allFrameworkFile", "allFrameworkFileLabel", "textInputArea", "docUploadArea");
+}
+
+
 
 function createCreativeDissonanceLayout_NS(template) {
     const contentContainer = dom.$("templateDetailContent");
@@ -243,6 +295,7 @@ function createThinkingSystemLayout_NS(template) {
 
 export {
     createNovelGoalsLayout_NS,
+    createAllFrameworkLayout,
     createCreativeDissonanceLayout_NS,
     createLivingSystemLayout_NS,
     createThinkingSystemLayout_NS

@@ -5,6 +5,7 @@ import { dom } from '../utils/dom-utils.mjs';
 import { setLoading } from '../utils/ui-utils.mjs';
 import { extractTextFromFile } from '../utils/file-utils.mjs';
 import * as renderDA from '../ui/analysis-rendering/analysis-rendering-da.mjs';
+import * as renderSEM from '../ui/analysis-rendering/analysis-rendering-sem.mjs';
 
 async function handleDescriptiveAnalysis_DA() {
     const analysisResultContainer = dom.$("analysisResult");
@@ -969,7 +970,7 @@ async function handleSemAnalysis() {
 
         // Render the results using the SEM-specific rendering function
         // Assumes renderSemAnalysisPage exists and handles the parsedData structure
-        renderDA.renderSemAnalysisPage(analysisResultContainer, parsedData);
+        renderSEM.renderSemAnalysisPage(analysisResultContainer, parsedData);
 
     } catch (error) { // Catch errors from input validation, fetch, or response handling
         console.error("Error during SEM analysis:", error);

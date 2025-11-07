@@ -4,7 +4,7 @@
 import { appState } from "../../state/app-state.mjs";
 import { dom } from "../../utils/dom-utils.mjs";
 import { templateConfig } from "./template-config.mjs";
-import { handleGenerate } from "../../analysis/handle-generate.mjs"
+import { handleGenerate } from "../../analysis/analysis-helpers.mjs"
 import { handleSaveAsPdf, handleSaveAsDocx } from "../../utils/file-utils.mjs"
 import { navigateTo } from '../navigation.mjs';
 import { configureFrameworkSelector, frameworkCheckboxChangeHandler } from "./framework-selection.mjs";
@@ -54,9 +54,17 @@ function showTemplateDetail(templateId) {
     } else if (rule.useVisualizationLayout_DA) {
         // <-- ADD THIS BLOCK
         createDA.createVisualizationLayout_DA(template);
+    } else if (appState.currentTemplateId === "all-framework") {
+        createNS.createAllFrameworkLayout(template);
+        // --- ⬆️ END OF NEW BLOCK ⬆️ ---
+    } else if (appState.currentTemplateId === "mission-vision") {
+        createSP.createMissionVisionLayout(template);
     } else if (rule.useSystemObjectivesLayout_ST) {
         // <-- ADD THIS BLOCK
         createST.createSystemObjectivesLayout_ST(template);
+    } else if (appState.currentTemplateId === "objectives") {
+        createSP.createObjectivesLayout(template);
+        // --- ⬆️ END OF NEW BLOCK ⬆️ ---
     } else if (rule.useCreativeDissonanceLayout_NS) {
         // <-- ADD THIS BLOCK
         createNS.createCreativeDissonanceLayout_NS(template);
