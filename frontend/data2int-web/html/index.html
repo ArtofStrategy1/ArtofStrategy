@@ -1405,6 +1405,45 @@ select.input-field option {
             </div>
         </div>
 
+        <div id="userManagementModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] hidden">
+            <div class="glass-container w-full max-w-lg">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-3xl font-bold">Manage User</h2>
+                    <button id="closeUserModalBtn" class="text-2xl font-bold p-2 leading-none hover:text-white/70">&times;</button>
+                </div>
+        
+                <div id="userModalContent">
+                    <div class="flex items-center justify-center p-10">
+                    <div class="loading-spinner mr-3"></div>
+                    <span class="text-white/80">Fetching user data...</span>
+                </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="bulkActionModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] hidden">
+    <div class="glass-container w-full max-w-md">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-3xl font-bold">Manage</h2>
+            <button id="closeBulkModalBtn" class="text-2xl font-bold p-2 leading-none hover:text-white/70">&times;</button>
+        </div>
+        
+        <div class="space-y-4">
+            <p>Select an action to apply to all <strong id="bulkUserCount">0</strong> selected users.</p>
+            <div>
+                <label for="bulkActionSelect" class="block text-sm font-medium text-gray-200 mb-2">Action</label>
+                <select id="bulkActionSelect" class="input-field">
+                    <option value="">-- Select an action --</option>
+                    <option value="upgrade-to-premium">Upgrade to Premium</option>
+                    <option value="downgrade-to-basic">Downgrade to Basic</option>
+                </select>
+            </div>
+            <div id="bulkModalMessage" class="hidden"></div>
+            <button id="modalConfirmBulkBtn" class="btn btn-primary w-full">Apply Action</button>
+        </div>
+    </div>
+</div>
+
         <div id="home" class="page active container mx-auto px-6 py-16">
             <div class="text-center">
                 <h1 class="text-5xl md:text-6xl font-extrabold text-white leading-tight mb-4">Unlock Your Strategic Potential</h1>
@@ -1581,61 +1620,6 @@ select.input-field option {
         </ul>
     </div>
     <!-- END OF LEADERSHIP / SYSTEM BLAH BLAH FROM HIS BOOK SECTION!-->
-</div>
-
-    <div class="glass-container mt-16 mb-12">
-    <h2 class="text-4xl font-bold mb-4 text-indigo-300 text-center">Contact Us</h2>
-    <p class="text-white/80 mb-8 text-center max-w-2xl mx-auto">
-        Interested in learning more or require strategic services? Get in touch.
-    </p>
-    <div class="max-w-2xl mx-auto">
-        <div class="space-y-4">
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label for="contactFirstName" class="block text-sm font-medium text-gray-200 mb-2">First Name</label>
-                    <input type="text" id="contactFirstName" class="input-field" placeholder="Enter your first name" required>
-                </div>
-                <div>
-                    <label for="contactLastName" class="block text-sm font-medium text-gray-200 mb-2">Last Name</label>
-                    <input type="text" id="contactLastName" class="input-field" placeholder="Enter your last name" required>
-                </div>
-            </div>
-
-            <div>
-                <label for="contactCompanyName" class="block text-sm font-medium text-gray-200 mb-2">Company Name</label>
-                <input type="text" id="contactCompanyName" class="input-field" placeholder="Enter your company's name">
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label for="contactEmail" class="block text-sm font-medium text-gray-200 mb-2">Contact Email Address</label>
-                    <input type="email" id="contactEmail" class="input-field" placeholder="Enter your email" required>
-                </div>
-                <div>
-                    <label for="contactPhone" class="block text-sm font-medium text-gray-200 mb-2">Phone Number (Optional)</label>
-                    <input type="tel" id="contactPhone" class="input-field" placeholder="(123) 456-7890">
-                </div>
-            </div>
-
-            <div>
-                <label for="contactSubject" class="block text-sm font-medium text-gray-200 mb-2">Subject</label>
-                <input type="text" id="contactSubject" class="input-field" placeholder="What is this regarding?" required>
-            </div>
-
-            <div>
-                <label for="contactMessage" class="block text-sm font-medium text-gray-200 mb-2">Message</label>
-                <textarea id="contactMessage" class="input-field h-32" placeholder="How can I help you?"></textarea>
-            </div>
-            
-            <button id="contactSubmitBtn" class="btn btn-primary w-full">
-                <span id="contactSubmitBtnText">Send Message</span>
-                <span id="contactSubmitSpinner" class="loading-spinner hidden ml-2"></span>
-            </button>
-            
-            <div id="contactMessageResult" class="hidden"></div>
-        </div>
-    </div>
 </div>
 
     <div class="glass-container mt-16 mb-12">
@@ -2898,7 +2882,6 @@ document.addEventListener("DOMContentLoaded", () => {
         navigateTo(pageId);
     }
 
-    // --- NEW FUNCTION TO CREATE DYNAMIC DASHBOARD LAYOUT ---
 function createAdminDashboardTabs() {
     const dashboardContainer = $("adminDashboard");
     if (!dashboardContainer) return;
@@ -2910,29 +2893,29 @@ function createAdminDashboardTabs() {
     // 2. Clear the dashboard content
     dashboardContainer.innerHTML = '';
 
-    // 3. Define Tab Navigation
+    // 3. Define Tab Navigation (MODIFIED - Tabs Removed)
     const tabNav = document.createElement("div");
     tabNav.id = "adminTabsNav";
     tabNav.className = "flex flex-wrap space-x-2 border-b-2 border-white/10 mt-8 mb-8";
     tabNav.innerHTML = `
-        <button class="home-tab-btn active" data-tab="metrics">📊 Metrics & Stats</button>
-        <button class="home-tab-btn" data-tab="approvals">📧 Contact Approvals</button>
-        <button class="home-tab-btn" data-tab="tickets">🎫 Ticket System</button>
-        <button class="home-tab-btn" data-tab="dbView">💾 View DB Content</button>
-    `;
+        <button class="home-tab-btn active" data-tab="dbStats">📊 Database Statistics</button>
+        <button class="home-tab-btn" data-tab="users">👥 Users</button>
+    `; // "Content", "Support", and "System" buttons are GONE
     
-    // 4. Define Tab Content Panels
+    // 4. Define Tab Content Panels (MODIFIED - Panels Removed)
     const tabContent = document.createElement("div");
     tabContent.id = "adminTabsContent";
     tabContent.innerHTML = `
-        <div id="metricsPanel" class="home-tab-panel active grid grid-cols-1 gap-8">
+        
+        <div id="dbStatsPanel" class="home-tab-panel active grid grid-cols-1 gap-8">
             ${usersOnlineGrid ? usersOnlineGrid.outerHTML : ''}
             ${statsContainer ? statsContainer.outerHTML : ''}
         </div>
-        <div id="approvalsPanel" class="home-tab-panel"></div>
-        <div id="ticketsPanel" class="home-tab-panel"></div>
-        <div id="dbViewPanel" class="home-tab-panel"></div>
-    `;
+
+        <div id="usersPanel" class="home-tab-panel">
+        </div>
+
+        `;
 
     // 5. Append new elements to the dashboard
     dashboardContainer.appendChild(tabNav);
@@ -2942,19 +2925,18 @@ function createAdminDashboardTabs() {
     setupAdminTabsListeners();
 }
 
-// --- NEW FUNCTION TO HANDLE TAB SWITCHING LOGIC ---
 function setupAdminTabsListeners() {
     const tabsNav = $("adminTabsNav");
     const tabPanels = document.querySelectorAll("#adminTabsContent .home-tab-panel");
     const tabBtns = document.querySelectorAll("#adminTabsNav .home-tab-btn");
 
-    // Ensure the initial state is correct for the metrics panel
+    // --- MODIFIED: Ensure the initial state is correct for 'dbStatsPanel' ---
     tabPanels.forEach(panel => {
-         if (panel.id === "metricsPanel") {
-             panel.style.display = "grid"; 
-         } else {
-             panel.style.display = "none";
-         }
+        if (panel.id === "dbStatsPanel") { // This is the default active tab
+            panel.style.display = "grid"; 
+        } else {
+            panel.style.display = "none";
+        }
     });
 
     tabsNav.addEventListener("click", (e) => {
@@ -2972,16 +2954,468 @@ function setupAdminTabsListeners() {
                 panel.classList.add("active");
                 panel.style.display = "grid"; // Show grid for content pages
                 
-                // *CRUCIAL: Trigger loading for specific tabs upon activation*
-                if (targetTab === 'approvals') renderContactApprovalsTab();
-                if (targetTab === 'tickets') renderTicketSystemTab();
-                if (targetTab === 'dbView') renderViewDatabaseTab();
+                // --- MODIFIED: Removed checks for 'content' and 'support' ---
+                if (targetTab === 'users') renderViewDatabaseTab(); 
+                // 'dbStats' is pre-filled
 
             } else {
                 panel.style.display = "none";
             }
         });
     });
+}
+
+async function renderViewDatabaseTab() {
+    const usersPanel = $("usersPanel");
+    if (!usersPanel) {
+        console.error("Admin Dashboard: usersPanel not found.");
+        return;
+    }
+
+    // 1. Build the UI (Toolbar + Table Placeholder)
+    usersPanel.innerHTML = `
+        <div class="glass-container p-6">
+            <div class="flex flex-col md:flex-row gap-4 mb-4">
+                <div class="flex-grow">
+                    <input type="text" id="adminUserSearch" class="input-field" placeholder="Search email or name...">
+                </div>
+                <div class="flex-shrink-0">
+                    <select id="adminTierFilter" class="input-field">
+                        <option value="">All Tiers</option>
+                        <option value="basic">Basic</option>
+                        <option value="premium">Premium</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="flex-shrink-0">
+                    <select id="adminSortBy" class="input-field">
+                        <option value="created_at" selected>Sort by: Created At</option>
+                        <option value="last_name">Sort by: Last Name</option>
+                        <option value="email">Sort by: Email</option>
+                    </select>
+                </div>
+                <div class="flex-shrink-0">
+                    <button id="adminManageBtn" class="btn btn-primary w-full md:w-auto" disabled>
+                        Manage
+                    </button>
+                </div>
+            </div>
+
+            <div id="adminUserTableContainer" class="overflow-x-auto">
+                </div>
+        </div>
+    `;
+
+    // 2. Attach event listeners to filters
+    const searchInput = $("adminUserSearch");
+    const tierFilter = $("adminTierFilter");
+    const sortSelect = $("adminSortBy");
+
+    let searchTimeout;
+    searchInput.addEventListener('input', () => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            fetchAndRenderUsers(1); // Reset to page 1
+        }, 500); // 500ms debounce
+    });
+
+    tierFilter.addEventListener('change', () => {
+        fetchAndRenderUsers(1); // Reset to page 1
+    });
+
+    sortSelect.addEventListener('change', () => {
+        fetchAndRenderUsers(1); // Reset to page 1
+    });
+
+    // 3. Initial data load
+    await fetchAndRenderUsers();
+}
+
+function renderUserTable(container, users, pagination) {
+    if (!Array.isArray(users) || users.length === 0) {
+        container.innerHTML = `<p class="text-white/70 text-center p-10">No users found matching your criteria.</p>`;
+        return;
+    }
+
+    // --- HTML TABLE: "Actions" column is REMOVED ---
+    let tableHtml = `
+        <table class="w-full text-left styled-table">
+            <thead>
+                <tr>
+                    <th class="p-3 w-10"><input type="checkbox" id="selectAllUsers" /></th>
+                    <th class="p-3">UID</th>
+                    <th class="p-3">Display Name</th>
+                    <th class="p-3">Email</th>
+                    <th class="p-3">Tier</th>
+                    <th class="p-3">Created At</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    users.forEach(user => {
+        const displayName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'N/A';
+        const uid = user.auth_user_id || user.id; 
+        
+        tableHtml += `
+            <tr class="border-b border-white/10">
+                <td class="p-3"><input type="checkbox" class="user-checkbox" data-id="${user.id}" /></td>
+                <td class="p-3 text-xs font-mono" title="${uid}">${uid ? uid.split('-')[0] + '...' : 'N/A'}</td>
+                <td class="p-3">${displayName}</td>
+                <td class="p-3">${user.email || 'N/A'}</td>
+                <td class="p-3">${user.tier || 'N/A'}</td>
+                <td class="p-3 text-sm">${user.created_at ? new Date(user.created_at).toLocaleString() : 'N/A'}</td>
+            </tr>
+        `; // The "Manage" button <td> is GONE
+    });
+
+    tableHtml += `</tbody></table>`;
+
+    // Add Pagination controls
+    if (pagination && pagination.totalPages > 1) {
+        tableHtml += `<div class="flex justify-between items-center mt-4 text-sm">`;
+        tableHtml += `<span class="text-white/70">Page ${pagination.page} of ${pagination.totalPages} (Total: ${pagination.total})</span>`;
+        tableHtml += `<div class="flex gap-2">`;
+        if (pagination.page > 1) {
+            tableHtml += `<button class="btn btn-secondary pagination-btn" data-page="${pagination.page - 1}">Previous</button>`;
+        }
+        if (pagination.page < pagination.totalPages) {
+            tableHtml += `<button class="btn btn-secondary pagination-btn" data-page="${pagination.page + 1}">Next</button>`;
+        }
+        tableHtml += `</div></div>`;
+    }
+
+    container.innerHTML = tableHtml;
+
+    // --- NEW: "SMART BUTTON" LOGIC ---
+    const manageBtn = $("adminManageBtn"); // The button in the toolbar
+    const allUserCheckboxes = container.querySelectorAll('.user-checkbox');
+    const selectAllCheckbox = container.querySelector('#selectAllUsers');
+
+    /**
+     * This function checks how many boxes are ticked and changes
+     * the text and click action of the main "Manage" button.
+     */
+    function updateManageButtonState() {
+        const checkedBoxes = container.querySelectorAll('.user-checkbox:checked');
+        const checkedCount = checkedBoxes.length;
+
+        if (checkedCount === 0) {
+            // 0 selected: Disable button
+            manageBtn.disabled = true;
+            manageBtn.textContent = "Manage";
+            manageBtn.onclick = null;
+        } else if (checkedCount === 1) {
+            // 1 selected: Set to "Manage 1 User" and open singular modal
+            manageBtn.disabled = false;
+            manageBtn.textContent = "Manage";
+            manageBtn.onclick = () => {
+                const userId = checkedBoxes[0].dataset.id;
+                openUserManagementModal(userId);
+            };
+        } else {
+            // 2+ selected: Set to "Bulk Actions (x)" and open bulk modal
+            manageBtn.disabled = false;
+            manageBtn.textContent = `Manage`;
+            manageBtn.onclick = () => {
+                // This is the logic we moved from renderViewDatabaseTab
+                const modal = $("bulkActionModal");
+                const countSpan = $("bulkUserCount");
+                const confirmBtn = $("modalConfirmBulkBtn");
+                const closeModalBtn = $("closeBulkModalBtn");
+                const actionSelect = $("bulkActionSelect");
+                const messageEl = $("bulkModalMessage");
+
+                const userIds = Array.from(checkedBoxes).map(cb => cb.dataset.id);
+
+                countSpan.textContent = userIds.length;
+                actionSelect.value = "";
+                messageEl.classList.add("hidden");
+                modal.classList.remove("hidden");
+
+                closeModalBtn.onclick = () => modal.classList.add("hidden");
+                
+                confirmBtn.onclick = async () => {
+                    const action = actionSelect.value;
+                    if (!action) {
+                        showMessage("bulkModalMessage", "Please select an action.", "error");
+                        return;
+                    }
+                    
+                    await handleBulkUserUpdate(action, userIds);
+                    
+                    if (!messageEl.classList.contains("error-message")) {
+                        await fetchAndRenderUsers(1); 
+                        modal.classList.add("hidden"); 
+                    }
+                };
+            };
+        }
+        
+        // Update "Select All" state
+        selectAllCheckbox.checked = checkedCount > 0 && checkedCount === allUserCheckboxes.length;
+    }
+
+    // --- ADD LISTENERS FOR ALL CHECKBOXES ---
+    selectAllCheckbox.addEventListener('change', (e) => {
+        const isChecked = e.target.checked;
+        allUserCheckboxes.forEach(cb => cb.checked = isChecked);
+        updateManageButtonState();
+    });
+
+    allUserCheckboxes.forEach(cb => {
+        cb.addEventListener('change', updateManageButtonState);
+    });
+
+    // Add event listeners for pagination buttons
+    container.querySelectorAll('.pagination-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const newPage = e.target.dataset.page;
+            fetchAndRenderUsers(parseInt(newPage));
+        });
+    });
+
+    // --- This listener block is no longer needed, as the buttons are gone ---
+    // container.querySelectorAll('.admin-manage-user-btn')...
+    
+    // Set the initial state of the button (disabled)
+    updateManageButtonState();
+}
+
+/**
+ * Fetches user data from the API and calls the renderer.
+ * This is now a standalone function.
+ */
+async function fetchAndRenderUsers(page = 1, limit = 20) {
+    const tableContainer = $("adminUserTableContainer");
+    
+    // Show loading state
+    tableContainer.innerHTML = `
+        <div class="flex items-center justify-center p-10">
+            <div class="loading-spinner mr-3"></div>
+            <span class="text-white/80">Fetching secure user data...</span>
+        </div>
+    `;
+
+    try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!session) throw new Error("You are not logged in. Please log in as an admin.");
+
+        // Get filter values from the UI
+        const searchTerm = $("adminUserSearch").value.trim();
+        const tierValue = $("adminTierFilter").value;
+        const sortByValue = $("adminSortBy").value;
+        const sortOrderValue = 'desc';
+
+        // Build the URL with query parameters
+        const params = new URLSearchParams({
+            page: page,
+            limit: limit,
+            sortBy: sortByValue,
+            sortOrder: sortOrderValue
+        });
+        if (searchTerm) params.append('search', searchTerm);
+        if (tierValue) params.append('tier', tierValue);
+
+        const url = `${SUPABASE_URL}/functions/v1/admin-users-secure/users?${params.toString()}`;
+        
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+            }
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || `Failed to fetch users: ${response.statusText}`);
+        }
+
+        // Render the table with the new data
+        renderUserTable(tableContainer, data.data, data.pagination);
+
+    } catch (error) {
+        console.error("Error in fetchAndRenderUsers:", error);
+        tableContainer.innerHTML = `
+            <div class="p-6 text-center">
+                <h4 class="text-xl font-bold text-red-400 mb-2">Error Fetching User Data</h4>
+                <pre class="bg-black/30 p-2 rounded mt-2 text-red-300 text-xs">${error.message}</pre>
+            </div>`;
+    }
+}
+
+/**
+ * NEW: Fetches a single user's data and opens the edit modal.
+ */
+async function openUserManagementModal(userId) {
+    const modal = $("userManagementModal");
+    const modalContent = $("userModalContent");
+    const closeModalBtn = $("closeUserModalBtn");
+    if (!modal || !modalContent || !closeModalBtn) return;
+
+    modal.classList.remove("hidden");
+    modalContent.innerHTML = `<div class="flex items-center justify-center p-10"><div class="loading-spinner mr-3"></div><span class="text-white/80">Fetching user data...</span></div>`;
+    
+    // Assign close button listener
+    const closeModal = () => modal.classList.add("hidden");
+    closeModalBtn.onclick = closeModal;
+
+    try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!session) throw new Error("Not logged in");
+
+        // Fetch specific user data (GET /users/:id) [cite: 254-279]
+        const url = `${SUPABASE_URL}/functions/v1/admin-users-secure/users/${userId}`;
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+            }
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Failed to fetch user");
+        
+        const user = data.data; // The user object
+
+        // Populate modal with form
+        modalContent.innerHTML = `
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-200 mb-2">Email</label>
+                    <input type="email" id="modalUserEmail" class="input-field" value="${user.email || ''}">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="modalUserFirstName" class="block text-sm font-medium text-gray-200 mb-2">First Name</label>
+                        <input type="text" id="modalUserFirstName" class="input-field" value="${user.first_name || ''}">
+                    </div>
+                    <div>
+                        <label for="modalUserLastName" class="block text-sm font-medium text-gray-200 mb-2">Last Name</label>
+                        <input type="text" id="modalUserLastName" class="input-field" value="${user.last_name || ''}">
+                    </div>
+                </div>
+                <div>
+                    <label for="modalUserTier" class="block text-sm font-medium text-gray-200 mb-2">User Tier</label>
+                    <select id="modalUserTier" class="input-field">
+                        <option value="basic" ${user.tier === 'basic' ? 'selected' : ''}>Basic</option>
+                        <option value="premium" ${user.tier === 'premium' ? 'selected' : ''}>Premium</option>
+                        <option value="admin" ${user.tier === 'admin' ? 'selected' : ''}>Admin</option>
+                    </select>
+                </div>
+                <div id="userModalMessage" class="hidden"></div>
+                <div class="flex justify-between items-center mt-6">
+                    <button id="modalDisableUserBtn" class="btn btn-danger" ${user.tier === 'admin' ? 'disabled' : ''}>Disable User</button>
+                    <button id="modalUpdateUserBtn" class="btn btn-primary">Save Changes</button>
+                </div>
+            </div>
+        `;
+
+        // Add listeners for the new buttons *inside* the modal
+        $("modalUpdateUserBtn").onclick = () => handleUserUpdate(user.id);
+        if (user.tier !== 'admin') {
+            $("modalDisableUserBtn").onclick = () => handleUserDisable(user.id, user.email, closeModal);
+        }
+
+    } catch (error) {
+        modalContent.innerHTML = `<div class="error-message">${error.message}</div>`;
+    }
+}
+
+/**
+ * NEW: Handles the PUT /users/:id request to update a user.
+ */
+async function handleUserUpdate(userId) {
+    const messageEl = $("userModalMessage");
+    const updateBtn = $("modalUpdateUserBtn");
+    const originalBtnText = updateBtn.innerHTML;
+    updateBtn.disabled = true;
+    updateBtn.innerHTML = `<span class="loading-spinner mr-2"></span> Saving...`;
+
+    try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!session) throw new Error("Not logged in");
+
+        // Get new data from modal fields
+        const updatedData = {
+            first_name: $("modalUserFirstName").value,
+            last_name: $("modalUserLastName").value,
+            email: $("modalUserEmail").value, // Added email
+            tier: $("modalUserTier").value
+        };
+
+        // Call PUT /users/:id [cite: 282-351]
+        const url = `${SUPABASE_URL}/functions/v1/admin-users-secure/users/${userId}`;
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify(updatedData)
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Failed to update user");
+
+        showMessage("userModalMessage", "User updated successfully!", "success");
+        await fetchAndRenderUsers(); // Refresh the main user table
+
+    } catch (error) {
+        showMessage("userModalMessage", error.message, "error");
+    } finally {
+        updateBtn.disabled = false;
+        updateBtn.innerHTML = originalBtnText;
+    }
+}
+
+/**
+ * NEW: Handles the PUT /users/:id/disable request.
+ */
+async function handleUserDisable(userId, userEmail, closeModalCallback) {
+    if (!confirm(`Are you sure you want to disable this user?\n\nEmail: ${userEmail}\nID: ${userId}\n\nThis action is reversible and does NOT delete data.`)) {
+        return;
+    }
+
+    const messageEl = $("userModalMessage");
+    const disableBtn = $("modalDisableUserBtn");
+    const originalBtnText = disableBtn.innerHTML;
+    disableBtn.disabled = true;
+    disableBtn.innerHTML = `<span class="loading-spinner mr-2"></span> Disabling...`;
+
+    try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!session) throw new Error("Not logged in");
+        
+        // Call PUT /users/:id/disable [cite: 354-419]
+        const url = `${SUPABASE_URL}/functions/v1/admin-users-secure/users/${userId}/disable`;
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}` 
+            }
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Failed to disable user");
+
+        showMessage("userModalMessage", `User ${data.disabled_user?.email || ''} disabled successfully.`, "success");
+        await fetchAndRenderUsers(); // Refresh the main user table
+        setTimeout(closeModalCallback, 1500); // Close modal on success
+
+    } catch (error) {
+        showMessage("userModalMessage", error.message, "error");
+    } finally {
+        disableBtn.disabled = false;
+        disableBtn.innerHTML = originalBtnText;
+    }
 }
 
     // --- Admin Dashboard Stats Logic ---
@@ -3134,60 +3568,6 @@ async function handleContactSubmit() {
     } finally {
         setLoading("contactSubmit", false);
     }
-}
-
-// --- Function called when the 'Contact Approvals' tab is activated ---
-async function renderContactApprovalsTab() {
-    const container = $("approvalsPanel");
-    container.innerHTML = `<div class="glass-container p-6">
-        <h3 class="text-2xl font-bold mb-4">Contact Section Approvals</h3>
-        <p class="text-sm text-white/70 mb-4">Review and approve contact messages before processing (from publicv2.contacts).</p>
-        <div id="contactApprovalList" class="space-y-4">
-            <div class="text-center text-white/70">Loading messages... <span class="loading-spinner ml-2"></span></div>
-        </div>
-        <div id="contactApprovalMessage" class="hidden mt-4"></div>
-    </div>`;
-
-    const listContainer = $("contactApprovalList");
-    
-    // *** Fetch contacts explicitly targeting the publicv2 schema and only unapproved messages ***
-    const { data: contacts, error } = await supabase
-        .schema('publicv2') 
-        .from('contacts')
-        .select('*')
-        .eq('is_approved', false) // Filters for pending messages
-        .order('created_at', { ascending: false });
-
-    if (error) {
-        listContainer.innerHTML = `<p class="error-message">Error loading contacts: ${error.message}</p>`;
-        return;
-    }
-
-    if (contacts.length === 0) {
-        listContainer.innerHTML = `<p class="text-center text-white/70">✅ No pending contact messages found.</p>`;
-        return;
-    }
-
-    let html = '';
-    contacts.forEach(contact => {
-        html += `
-            <div id="contact-${contact.id}" class="bg-black/20 p-4 rounded-lg border border-white/10">
-                <p class="font-bold">${contact.first_name} ${contact.last_name} (${contact.email})</p>
-                <p class="text-xs text-indigo-300 mt-1">Subject: ${contact.subject} | Phone: ${contact.phone || 'N/A'}</p>
-                <p class="text-xs text-white/70">Company: ${contact.company_name || 'N/A'}</p>
-                <p class="text-sm text-white/80 mt-2 whitespace-pre-wrap">${contact.message}</p>
-                <div class="text-right mt-3 space-x-2">
-                    <button class="btn btn-primary btn-sm" data-id="${contact.id}" data-action="approve">Approve & Archive</button>
-                    <button class="btn btn-danger btn-sm" data-id="${contact.id}" data-action="delete">Delete Permanently</button>
-                </div>
-            </div>`;
-    });
-    listContainer.innerHTML = html;
-
-    // Attach event listeners (relying on handleContactApproval being defined)
-    listContainer.querySelectorAll('button').forEach(button => {
-        button.addEventListener('click', (e) => handleContactApproval(e));
-    });
 }
 
     // --- Home Page Card & Tab Logic ---
