@@ -12,6 +12,12 @@ let preFillData = ""; // Used to pass context from home card to template detail
 // --- Analysis Cache ---
 const analysisCache = {};
 
+// --- Variables for merging async results ---
+let pendingOllamaResult = null;
+let pendingN8nResult = null;
+let currentAnalysisMessageId = null;
+let currentAnalysisContext = null;
+
 export const appState = {
     userLoggedIn,
     currentUser,
@@ -20,23 +26,9 @@ export const appState = {
     currentSelectionLimit,
     selectedTemplateForModal,
     preFillData,
-    analysisCache
+    analysisCache,
+    pendingOllamaResult,
+    pendingN8nResult,
+    currentAnalysisMessageId,
+    currentAnalysisContext
 }
-
-
-// export const appState = {
-//     // --- User Session State ---
-//     userLoggedIn: false,
-//     currentUser: null,
-    
-//     // --- Version Control State ---
-//     pendingAnalysisRequests: new Map(),
-//     currentTemplateId: null,
-//     currentSelectionLimit: 3, // Default to paid
-//     selectedTemplateForModal: null,
-//     preFillData: "", // Used to pass context from home card to template detail
-
-//     // --- Analysis Cache ---
-//     analysisCache: {}
-// }
-

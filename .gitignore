@@ -9,6 +9,7 @@
 *-matt*
 *-khaled*
 *-latest*
+*-old*
 open-webui-data
 ollama-data
 n8n-data
@@ -28,6 +29,7 @@ process-mapping-cyto.js
 knowledge-graph-vis.html
 ts/
 tsconfig.json
+dist/
 
 utility/
 .roo
@@ -141,3 +143,4 @@ docker-compose.override.yml
 sem_plot
 sem_plot.png
 eslint.config.mjs
+webpack.config.js

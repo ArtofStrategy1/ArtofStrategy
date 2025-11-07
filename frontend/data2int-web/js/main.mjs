@@ -7,45 +7,10 @@ import { updateNavBar, navigateTo } from './ui/navigation.mjs';
 import { setupHomeTabs, attachHomeCardListeners } from './ui/home.mjs';
 import { handleLogin, handleRegister } from './services/auth-service.mjs';
 import { fetchAndDisplayStatistics } from './services/stats-service.mjs';
-import * as THREE from 'three';
-
 
 document.addEventListener("DOMContentLoaded", () => {
-    // --- Supabase Configuration ---
-    // const SUPABASE_URL = "https://supabase.data2int.com";
-    // const SUPABASE_ANON_KEY =
-    //     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNjQwOTk1MjAwLCJleHAiOjE5NTYzNTUyMDB9.KHXKQpsN6MNB08H_IPxP4Gh0gjcsvXG9IeJuK3XpnAU";
-
-    // const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    // --- DOM Element References ---
-    // const $ = (id) => document.getElementById(id);
-    // const pages = document.querySelectorAll(".page");
-    // let currentTemplateId = null;
-    
-    // let pendingAnalysisRequests = new Map();
-
-    // // --- User Session State ---
-    // let userLoggedIn = false;
-    // let currentUser = null;
-
-    // // --- Version Control State ---
-    // let currentSelectionLimit = 3; // Default to paid
-    // let selectedTemplateForModal = null;
-    // let preFillData = ""; // Used to pass context from home card to template detail
-
-    // // --- Analysis Cache ---
-    // const analysisCache = {};
-
-    // let websocket = null;
-    // let reconnectAttempts = 0;
-    // const maxReconnectAttempts = 5;
-    // const reconnectDelay = 3000;
-
-
     // Initialize WebSocket connection
     initializeWebSocket();
-
 
     // --- Session Management ---
     appConfig.supabase.auth.onAuthStateChange((event, session) => {
@@ -59,19 +24,11 @@ document.addEventListener("DOMContentLoaded", () => {
         updateNavBar();
     });
 
-    
-
     // --- Admin Dashboard Stats Logic ---
     const refreshStatsBtn = dom.$("refreshStatsBtn");
     if (refreshStatsBtn) {
         refreshStatsBtn.addEventListener("click", fetchAndDisplayStatistics);
     }        
-
-
-
-    
-
-   
 
     // --- Three.js Animation Logic ---
     let scene, camera, renderer, group;

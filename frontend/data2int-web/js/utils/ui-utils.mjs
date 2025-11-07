@@ -1,6 +1,6 @@
 import { dom } from './dom-utils.mjs';
 import { appState } from '../state/app-state.mjs';
-import { handleGenerate } from '../analysis/handle-generate.mjs';
+import { handleGenerate } from '../analysis/analysis-helpers.mjs';
 import { reattachActionListeners, reattachTabListeners, showTemplateDetail } from '../ui/template-creation/template-creation.mjs';
 // --- UI Helpers ---
 /**
