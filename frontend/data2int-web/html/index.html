@@ -1353,6 +1353,476 @@ select.input-field option {
     font-weight: 600;
 }
 
+/* --- Feedback Tab Styles --- */
+.feedback-tabs {
+    display: flex;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 1.5rem;
+}
+.feedback-tab-btn {
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.6);
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
+    margin-bottom: -2px; /* Aligns with the border */
+}
+.feedback-tab-btn:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.05);
+}
+.feedback-tab-btn.active {
+    color: white;
+    font-weight: 600;
+    border-bottom-color: var(--primary);
+}
+
+.feedback-card {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+}
+.feedback-card:hover {
+    transform: translateY(-3px);
+    background: rgba(0, 0, 0, 0.3);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.feedback-tag {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    margin-right: 0.5rem;
+    line-height: 1.2;
+}
+/* Re-using your risk-pill colors and adding new ones */
+.tag-priority-high { background-color: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+.tag-priority-medium { background-color: rgba(249, 115, 22, 0.2); color: #fdba74; }
+.tag-priority-low { background-color: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+
+.tag-status-open { background-color: rgba(34, 197, 94, 0.2); color: #86efac; }
+.tag-status-in progress { background-color: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+.tag-status-pending { background-color: rgba(245, 158, 11, 0.2); color: #fcd34d; }
+.tag-status-resolved { background-color: rgba(168, 85, 247, 0.2); color: #d8b4fe; }
+
+.tag-type { background-color: rgba(255, 255, 255, 0.1); color: #e5e7eb; }
+
+.star-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.15rem;
+    color: #f59e0b; /* Amber/Yellow */
+}
+.star-rating .star-empty {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+/* --- Feedback Detail Modal Styles --- */
+.feedback-action-btn {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+.feedback-action-btn.primary {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+.feedback-action-btn.primary:hover {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
+}
+.feedback-action-btn.secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+.feedback-action-btn.secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.feedback-action-btn svg {
+    margin-right: 0.75rem;
+}
+
+.feedback-notes-textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: .5rem;
+    font-size: 1rem;
+    transition: all .2s;
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+}
+.feedback-notes-textarea::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+.feedback-notes-textarea:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.2);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+/* Add this to your existing CSS file */
+
+/* Feedback Sidebar Styles */
+.feedback-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    transform: translateX(100%);
+    transition: transform 0.3s ease-in-out;
+}
+
+.feedback-sidebar.open {
+    transform: translateX(0);
+}
+
+.feedback-sidebar-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+.feedback-sidebar-content {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 500px;
+    max-width: 90vw;
+    height: 100%;
+    background: linear-gradient(-45deg, var(--grad-1), var(--grad-2));
+    border-left: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.feedback-sidebar-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.feedback-sidebar-header h2 {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: white;
+    margin: 0;
+}
+
+.feedback-close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 2rem;
+    cursor: pointer;
+    padding: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.2s ease;
+}
+
+.feedback-close-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.feedback-sidebar-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .feedback-sidebar-content {
+        width: 100vw;
+    }
+}
+
+/* Replace your existing sidebar CSS with this improved version */
+
+/* Feedback Sidebar Styles - Enhanced Design */
+.feedback-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    transform: translateX(100%);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0;
+    visibility: hidden;
+}
+
+.feedback-sidebar.open {
+    transform: translateX(0);
+    opacity: 1;
+    visibility: visible;
+}
+
+.feedback-sidebar-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.feedback-sidebar-content {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 550px;
+    max-width: 90vw;
+    height: 100%;
+    background: linear-gradient(-45deg, var(--grad-1), var(--grad-2));
+    background-size: 400% 400%;
+    animation: gradientBG 18s ease infinite;
+    border-left: 1px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5);
+}
+
+.feedback-sidebar-header {
+    padding: 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+
+.feedback-sidebar-header h2 {
+    font-size: 1.75rem;
+    font-weight: bold;
+    color: white;
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.feedback-close-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.feedback-close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: scale(1.1);
+}
+
+.feedback-sidebar-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 2rem;
+    /* Custom scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+.feedback-sidebar-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.feedback-sidebar-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.feedback-sidebar-body::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+}
+
+.feedback-sidebar-body::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* Enhanced glass containers in sidebar */
+.feedback-sidebar-body .glass-container {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2);
+    transition: all 0.3s ease;
+}
+
+.feedback-sidebar-body .glass-container:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.35);
+    transform: translateY(-2px);
+}
+
+/* Enhanced buttons in sidebar */
+.feedback-sidebar-body .btn {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+    font-weight: 600;
+    padding: 1rem 1.5rem;
+    border-radius: 0.75rem;
+}
+
+.feedback-sidebar-body .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.feedback-sidebar-body .btn-primary {
+    background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+    border-color: var(--primary);
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.feedback-sidebar-body .btn-primary:hover {
+    background: linear-gradient(135deg, var(--primary-hover), var(--primary));
+    border-color: var(--primary-hover);
+}
+
+.feedback-sidebar-body .btn-secondary {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+.feedback-sidebar-body .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Enhanced form elements in sidebar */
+.feedback-sidebar-body .input-field {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.feedback-sidebar-body .input-field:focus {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent),
+                0 8px 25px rgba(0, 0, 0, 0.2);
+    transform: translateY(-1px);
+}
+
+/* Enhanced feedback tags in sidebar */
+.feedback-sidebar-body .feedback-tag {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.feedback-sidebar-body .feedback-tag:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Enhanced star rating in sidebar */
+.feedback-sidebar-body .star-rating {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.feedback-sidebar-body .star-rating .star-filled {
+    color: #fbbf24;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Enhanced typography in sidebar */
+.feedback-sidebar-body h3 {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.feedback-sidebar-body h4 {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .feedback-sidebar-content {
+        width: 100vw;
+    }
+    
+    .feedback-sidebar-header {
+        padding: 1.5rem;
+    }
+    
+    .feedback-sidebar-body {
+        padding: 1.5rem;
+    }
+}
+
+/* Smooth entry animation */
+@keyframes slideInFromRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
     </style>
 </head>
 
@@ -1422,10 +1892,10 @@ select.input-field option {
         </div>
 
         <div id="bulkActionModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] hidden">
-    <div class="glass-container w-full max-w-md">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-3xl font-bold">Manage</h2>
-            <button id="closeBulkModalBtn" class="text-2xl font-bold p-2 leading-none hover:text-white/70">&times;</button>
+            <div class="glass-container w-full max-w-md">
+                <div class="flex justify-between items-center mb-4">
+                <h2 class="text-3xl font-bold">Manage</h2>
+                <button id="closeBulkModalBtn" class="text-2xl font-bold p-2 leading-none hover:text-white/70">&times;</button>
         </div>
         
         <div class="space-y-4">
@@ -1442,7 +1912,7 @@ select.input-field option {
             <button id="modalConfirmBulkBtn" class="btn btn-primary w-full">Apply Action</button>
         </div>
     </div>
-</div>
+        </div>
 
         <div id="home" class="page active container mx-auto px-6 py-16">
             <div class="text-center">
@@ -2165,7 +2635,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const SUPABASE_ANON_KEY =
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNjQwOTk1MjAwLCJleHAiOjE5NTYzNTUyMDB9.KHXKQpsN6MNB08H_IPxP4Gh0gjcsvXG9IeJuK3XpnAU";
 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        db: { schema: 'publicv2' }
+    });
+
+    
 
     // --- DOM Element References ---
     const $ = (id) => document.getElementById(id);
@@ -2181,8 +2655,9 @@ document.addEventListener("DOMContentLoaded", () => {
     let userLoggedIn = false;
     let currentUser = null;
 
-    // --- Admin Dashboard Stats Timer ---
-    let statsInterval = null;
+    // --- Admin Dashboard ---
+    let statsInterval = null; // Admin Dashboard Stats Timer
+    let currentFeedbackItems = []; // Caches the feedback list
 
     // --- NEW: Variables for merging async results ---
     let pendingOllamaResult = null;
@@ -2893,16 +3368,17 @@ function createAdminDashboardTabs() {
     // 2. Clear the dashboard content
     dashboardContainer.innerHTML = '';
 
-    // 3. Define Tab Navigation (MODIFIED - Tabs Removed)
+    // 3. Define Tab Navigation (MODIFIED - Added Feedback)
     const tabNav = document.createElement("div");
     tabNav.id = "adminTabsNav";
     tabNav.className = "flex flex-wrap space-x-2 border-b-2 border-white/10 mt-8 mb-8";
     tabNav.innerHTML = `
         <button class="home-tab-btn active" data-tab="dbStats">📊 Database Statistics</button>
         <button class="home-tab-btn" data-tab="users">👥 Users</button>
-    `; // "Content", "Support", and "System" buttons are GONE
+        <button class="home-tab-btn" data-tab="feedback">🎫 Feedback</button> 
+    `;
     
-    // 4. Define Tab Content Panels (MODIFIED - Panels Removed)
+    // 4. Define Tab Content Panels (MODIFIED - Added feedbackPanel)
     const tabContent = document.createElement("div");
     tabContent.id = "adminTabsContent";
     tabContent.innerHTML = `
@@ -2915,7 +3391,9 @@ function createAdminDashboardTabs() {
         <div id="usersPanel" class="home-tab-panel">
         </div>
 
-        `;
+        <div id="feedbackPanel" class="home-tab-panel">
+        </div>
+    `;
 
     // 5. Append new elements to the dashboard
     dashboardContainer.appendChild(tabNav);
@@ -2930,9 +3408,8 @@ function setupAdminTabsListeners() {
     const tabPanels = document.querySelectorAll("#adminTabsContent .home-tab-panel");
     const tabBtns = document.querySelectorAll("#adminTabsNav .home-tab-btn");
 
-    // --- MODIFIED: Ensure the initial state is correct for 'dbStatsPanel' ---
     tabPanels.forEach(panel => {
-        if (panel.id === "dbStatsPanel") { // This is the default active tab
+        if (panel.id === "dbStatsPanel") { // Default active tab
             panel.style.display = "grid"; 
         } else {
             panel.style.display = "none";
@@ -2944,7 +3421,6 @@ function setupAdminTabsListeners() {
         const targetTab = e.target.dataset.tab;
 
         tabBtns.forEach((btn) => {
-            // Apply home-tab-btn active styles
             btn.classList.toggle("active", btn.dataset.tab === targetTab);
         });
 
@@ -2952,10 +3428,11 @@ function setupAdminTabsListeners() {
             panel.classList.remove("active");
             if (panel.id === targetTab + "Panel") {
                 panel.classList.add("active");
-                panel.style.display = "grid"; // Show grid for content pages
+                panel.style.display = "grid"; 
                 
-                // --- MODIFIED: Removed checks for 'content' and 'support' ---
+                // --- MODIFIED: Added check for 'feedback' ---
                 if (targetTab === 'users') renderViewDatabaseTab(); 
+                if (targetTab === 'feedback') renderFeedbackTab(); // <-- NEW
                 // 'dbStats' is pre-filled
 
             } else {
@@ -3417,6 +3894,472 @@ async function handleUserDisable(userId, userEmail, closeModalCallback) {
         disableBtn.innerHTML = originalBtnText;
     }
 }
+
+// --- COMPLETE FEEDBACK SIDEBAR IMPLEMENTATION ---
+
+/**
+ * Helper function to generate star ratings.
+ * (Moved to global scope to be shared)
+ */
+function getStars(rating) {
+    let stars = '';
+    const maxStars = 5;
+    const numRating = parseInt(rating);
+    if (isNaN(numRating) || numRating < 1) return '<div></div>'; // Return empty div if no rating
+    
+    for (let i = 1; i <= maxStars; i++) {
+        stars += `<span class="${i <= numRating ? 'star-filled' : 'star-empty'}">★</span>`;
+    }
+    return `<div class="star-rating">${stars}</div>`;
+}
+
+/**
+ * Helper function to generate status/type tags.
+ * (Moved to global scope to be shared)
+ */
+function getTag(label, value, tagType = 'type') {
+    if (!value) return '';
+    const className = String(value).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    return `<span class="feedback-tag tag-${tagType}-${className}">${value}</span>`;
+}
+
+/**
+ * Main controller for the Feedback Tab.
+ * Renders the static UI (tabs, filters) and calls for the initial data load.
+ */
+function renderFeedbackTab() {
+    console.log("DEBUG: renderFeedbackTab() called. Building UI..."); 
+    const panel = $("feedbackPanel");
+    if (!panel) {
+        console.error("DEBUG: feedbackPanel element not found!"); 
+        return;
+    }
+
+    // Build the static UI
+    panel.innerHTML = `
+        <div class="glass-container p-6"> 
+            <h2 class="text-3xl font-bold mb-4">Feedback Management</h2>
+            
+            <div id="feedbackStatusTabs" class="feedback-tabs">
+                <button class="feedback-tab-btn active" data-status="">All</button>
+                <button class="feedback-tab-btn" data-status="Open">Open</button>
+                <button class="feedback-tab-btn" data-status="In Progress">In Progress</button>
+                <button class="feedback-tab-btn" data-status="Pending">Pending</button>
+                <button class="feedback-tab-btn" data-status="Resolved">Resolved</button>
+            </div>
+            
+            <div class="flex flex-col md:flex-row gap-4 mb-6">
+                <div class="flex-grow">
+                    <input type="text" id="feedbackSearch" class="input-field" placeholder="Search feedback...">
+                </div>
+                <div class="flex-shrink-0">
+                    <select id="feedbackTypeFilter" class="input-field">
+                        <option value="">All Types</option>
+                        <option value="Bug / Error">Bug / Error</option>
+                        <option value="Suggestion / Improvement">Suggestion / Improvement</option>
+                        <option value="Not Satisfied">Not Satisfied</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div id="feedbackCardContainer">
+                <p class="text-white/70 text-center p-10">Initializing feedback tab...</p>
+            </div>
+        </div>
+    `;
+
+    // Add event listeners
+    const statusTabs = panel.querySelector("#feedbackStatusTabs");
+    const searchInput = panel.querySelector("#feedbackSearch");
+    const typeFilter = panel.querySelector("#feedbackTypeFilter");
+
+    // Tab click logic
+    statusTabs.addEventListener("click", (e) => {
+        if (e.target.tagName === "BUTTON") {
+            console.log(`DEBUG: Status tab clicked. New status: '${e.target.dataset.status}'`); 
+            statusTabs.querySelectorAll(".feedback-tab-btn").forEach(btn => btn.classList.remove("active"));
+            e.target.classList.add("active");
+            fetchAndRenderFeedback();
+        }
+    });
+
+    // Search logic (with debounce)
+    let searchTimeout;
+    searchInput.addEventListener("input", () => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            console.log(`DEBUG: Search triggered. Term: '${searchInput.value}'`); 
+            fetchAndRenderFeedback();
+        }, 500);
+    });
+
+    // Filter logic
+    typeFilter.addEventListener("change", () => {
+        console.log(`DEBUG: Type filter changed. New type: '${typeFilter.value}'`); 
+        fetchAndRenderFeedback();
+    });
+
+    // Initial data load
+    console.log("DEBUG: renderFeedbackTab() finished. Calling fetchAndRenderFeedback() for the first time."); 
+    fetchAndRenderFeedback();
+}
+
+/**
+ * Fetches feedback data from Supabase based on current filters.
+ */
+async function fetchAndRenderFeedback() {
+    console.log("DEBUG: fetchAndRenderFeedback() called."); 
+    const container = $("feedbackCardContainer");
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="flex items-center justify-center p-10">
+            <div class="loading-spinner mr-3"></div>
+            <span class="text-white/80">Fetching feedback...</span>
+        </div>
+    `;
+
+    try {
+        const status = document.querySelector("#feedbackStatusTabs .active").dataset.status || "";
+        const searchTerm = $("feedbackSearch").value.trim();
+        const type = $("feedbackTypeFilter").value;
+
+        console.log(`DEBUG: Fetching with filters: Status='${status}', Search='${searchTerm}', Type='${type}'`); 
+
+        let query = supabase
+            .from('feedback')
+            .select(`
+                *,
+                users (
+                    first_name,
+                    last_name,
+                    email
+                )
+            `, { count: 'exact' });
+
+        if (status) {
+            query = query.eq('status', status); 
+        }
+        if (type) {
+            query = query.eq('reason', type); 
+        }
+        if (searchTerm) {
+            query = query.ilike('content', `%${searchTerm}%`); 
+        }
+
+        query = query.order('priority', { ascending: true, nullsFirst: false }); 
+        query = query.order('created_at', { ascending: false });
+
+        const { data, error, count } = await query.limit(50); 
+
+        if (error) {
+            console.error("DEBUG: Supabase fetch error:", error); 
+            if (error.code === "42703") { 
+                throw new Error("Database error. Did you add the `status` and `priority` columns to your `publicv2.feedback` table?");
+            }
+            throw error;
+        }
+
+        console.log(`DEBUG: Supabase fetch success. Received ${data ? data.length : 0} items. Total count: ${count}`); 
+
+        currentFeedbackItems = data || [];
+        console.log("DEBUG: Updated 'currentFeedbackItems' cache.", currentFeedbackItems); 
+
+        renderFeedbackCards(container, data, count);
+
+    } catch (error) {
+        console.error("Error fetching feedback:", error);
+        container.innerHTML = `<div class="error-message p-4">${error.message}</div>`;
+    }
+}
+
+/**
+ * Renders the individual feedback cards into the container.
+ */
+function renderFeedbackCards(container, feedbackItems, totalCount) {
+    console.log(`DEBUG: renderFeedbackCards() called. Rendering ${feedbackItems ? feedbackItems.length : 0} cards.`); 
+    if (!feedbackItems || feedbackItems.length === 0) {
+        container.innerHTML = `<p class="text-white/70 text-center p-10">No feedback found matching your criteria.</p>`;
+        return;
+    }
+
+    let cardsHtml = `<p class="text-white/70 text-sm mb-4">Showing ${feedbackItems.length} of ${totalCount} items.</p>`;
+
+    feedbackItems.forEach(item => {
+        const user = item.users;
+        const displayName = (user && user.first_name) 
+            ? `${user.first_name} ${user.last_name || ''}`.trim() 
+            : (user && user.email) ? user.email.split('@')[0] : 'Anonymous';
+        const displayEmail = user ? user.email : 'N/A';
+
+        cardsHtml += `
+            <div class="feedback-card">
+                <div class="flex justify-between items-center mb-3">
+                    <div>
+                        ${getTag('Type', item.reason, 'type')}
+                        ${getTag('Priority', item.priority, 'priority')}
+                        ${getTag('Status', item.status, 'status')}
+                    </div>
+                    
+                    <button class="admin-view-feedback-btn btn btn-secondary py-1 px-3 text-xs" title="View details" data-id="${item.id}">
+                        View Details
+                    </button>
+                </div>
+                
+                <h4 class="text-xl font-bold text-white mb-2">${item.reason || 'Feedback Submitted'}</h4> 
+                <p class="text-white/80 text-sm mb-4">${item.content}</p>
+                
+                <div class="flex justify-between items-center border-t border-white/10 pt-3">
+                    <div class="text-xs text-white/60">
+                        <span class="font-medium">${displayName}</span>
+                        <span class="mx-1">·</span>
+                        <span>${displayEmail}</span>
+                    </div>
+                    ${getStars(item.rating)}
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = cardsHtml;
+
+    console.log("DEBUG: Cards HTML rendered. Attaching click listeners..."); 
+
+    // Add event listeners for "View Details" buttons
+    container.querySelectorAll('.admin-view-feedback-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const feedbackId = e.currentTarget.dataset.id;
+            console.log(`DEBUG: 'View Details' button clicked for feedback ID: ${feedbackId}`); 
+            openFeedbackSidebar(feedbackId);  // Changed from openFeedbackModal
+        });
+    });
+    console.log("DEBUG: Click listeners attached."); 
+}
+
+/**
+ * Opens the feedback detail sidebar (replaces the modal approach).
+ */
+function openFeedbackSidebar(feedbackId) {
+    console.log(`DEBUG: openFeedbackSidebar() called for ID: ${feedbackId}`);
+    
+    const sidebar = $("feedbackDetailSidebar");
+    const sidebarContent = $("feedbackSidebarContent");
+    
+    if (!sidebar || !sidebarContent) {
+        console.error("DEBUG: Sidebar elements not found!");
+        return;
+    }
+
+    // Find the item from our cache
+    const item = currentFeedbackItems.find(f => f.id == feedbackId);
+    if (!item) {
+        console.error(`DEBUG: Failed to find feedbackId ${feedbackId} in cache!`);
+        alert("Error: Could not find feedback data.");
+        return;
+    }
+
+    console.log("DEBUG: Found item in cache. Building sidebar content...", item);
+    
+    // Show sidebar
+    sidebar.classList.add("open");
+    
+    const user = item.users;
+    const displayName = (user && user.first_name) ? `${user.first_name} ${user.last_name || ''}`.trim() : (user && user.email) ? user.email.split('@')[0] : 'Anonymous';
+    const displayEmail = user ? user.email : 'N/A';
+
+    // Build the sidebar content
+    sidebarContent.innerHTML = `
+        <div class="mb-4">
+            <div class="flex justify-between items-start mb-3">
+                <h3 class="text-2xl font-bold text-white">${item.reason || 'Feedback'}</h3>
+                ${getStars(item.rating)}
+            </div>
+            <div class="mb-4">
+                ${getTag('Type', item.reason, 'type')}
+                ${getTag('Priority', item.priority, 'priority')}
+                ${getTag('Status', item.status, 'status')}
+            </div>
+        </div>
+        
+        <div class="glass-container mb-4">
+            <p class="text-white/90">${item.content}</p>
+        </div>
+        
+        <div class="grid grid-cols-1 gap-4 text-sm mb-6">
+            <div class="glass-container">
+                <strong class="text-white/70 block mb-1">From:</strong>
+                <div class="font-medium text-white">${displayName}</div>
+                <div class="text-white/60">${displayEmail}</div>
+            </div>
+            <div class="glass-container">
+                <strong class="text-white/70 block mb-1">Submitted:</strong>
+                <div class="text-white">${new Date(item.created_at).toLocaleString()}</div>
+            </div>
+            <div class="glass-container">
+                <strong class="text-white/70 block mb-1">Status:</strong>
+                <div class="text-white">${item.status}</div>
+            </div>
+            <div class="glass-container">
+                <strong class="text-white/70 block mb-1">Category:</strong>
+                <div class="text-white">${item.tool_name}</div>
+            </div>
+        </div>
+        
+        <h4 class="text-lg font-bold mb-3 text-white">Actions</h4>
+        <div id="sidebarMessage" class="mb-4" style="display: none;"></div>
+        <div class="space-y-3 mb-6">
+            <button class="btn btn-primary w-full" id="sidebarReplyUserBtn">
+                Reply to User
+            </button>
+            <button class="btn btn-secondary w-full" id="sidebarMarkResolvedBtn">
+                Mark as Resolved
+            </button>
+            <button class="btn btn-secondary w-full" id="sidebarArchiveBtn">
+                Archive (Coming Soon)
+            </button>
+        </div>
+
+        <h4 class="text-lg font-bold mb-3 text-white">Update Status</h4>
+        <div class="flex gap-2 mb-6">
+            <select id="sidebarStatusSelect" class="input-field flex-grow">
+                <option value="Open" ${item.status === 'Open' ? 'selected' : ''}>Open</option>
+                <option value="In Progress" ${item.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                <option value="Pending" ${item.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                <option value="Resolved" ${item.status === 'Resolved' ? 'selected' : ''}>Resolved</option>
+            </select>
+            <button id="sidebarUpdateStatusBtn" class="btn btn-primary">Update</button>
+        </div>
+        
+        <h4 class="text-lg font-bold mb-3 text-white">Internal Notes</h4>
+        <textarea id="sidebarInternalNotes" class="input-field mb-3" rows="4" placeholder="Add internal notes about this feedback..."></textarea>
+        <button id="sidebarSaveNoteBtn" class="btn btn-secondary w-full">Save Note (Coming Soon)</button>
+    `;
+
+    console.log("DEBUG: Sidebar content generated. Attaching listeners...");
+
+    // Attach event listeners with slight delay
+    setTimeout(() => {
+        const replyBtn = $("sidebarReplyUserBtn");
+        const resolvedBtn = $("sidebarMarkResolvedBtn");
+        const updateBtn = $("sidebarUpdateStatusBtn");
+        const archiveBtn = $("sidebarArchiveBtn");
+        const saveNoteBtn = $("sidebarSaveNoteBtn");
+        
+        if (replyBtn) {
+            replyBtn.onclick = () => {
+                console.log("DEBUG: 'Reply' clicked");
+                showSidebarMessage("Reply feature is not yet connected.", "error");
+            };
+        }
+
+        if (resolvedBtn) {
+            resolvedBtn.onclick = async () => {
+                console.log("DEBUG: 'Mark Resolved' clicked");
+                await handleUpdateFeedbackStatus(item.id, 'Resolved', closeFeedbackSidebar);
+            };
+        }
+
+        if (updateBtn) {
+            updateBtn.onclick = async () => {
+                const statusSelect = $("sidebarStatusSelect");
+                const newStatus = statusSelect ? statusSelect.value : 'Open';
+                console.log(`DEBUG: 'Update Status' clicked. New status: ${newStatus}`);
+                await handleUpdateFeedbackStatus(item.id, newStatus, closeFeedbackSidebar);
+            };
+        }
+
+        if (archiveBtn) {
+            archiveBtn.onclick = () => {
+                console.log("DEBUG: 'Archive' clicked");
+                showSidebarMessage("Archive feature is not yet connected.", "error");
+            };
+        }
+
+        if (saveNoteBtn) {
+            saveNoteBtn.onclick = () => {
+                console.log("DEBUG: 'Save Note' clicked");
+                showSidebarMessage("Internal notes are not yet connected.", "error");
+            };
+        }
+    }, 100);
+}
+
+/**
+ * Closes the feedback sidebar.
+ */
+function closeFeedbackSidebar() {
+    console.log("DEBUG: closeFeedbackSidebar() called");
+    const sidebar = $("feedbackDetailSidebar");
+    if (sidebar) {
+        sidebar.classList.remove("open");
+    }
+}
+
+/**
+ * Shows messages in the sidebar.
+ */
+function showSidebarMessage(message, type) {
+    const messageEl = $("sidebarMessage");
+    if (messageEl) {
+        messageEl.style.display = "block";
+        messageEl.className = type === "error" ? "error-message" : "success-message";
+        messageEl.textContent = message;
+        
+        // Auto-hide after 3 seconds
+        setTimeout(() => {
+            messageEl.style.display = "none";
+        }, 3000);
+    }
+}
+
+/**
+ * Handles updating the status of a feedback item.
+ */
+async function handleUpdateFeedbackStatus(feedbackId, newStatus, closeCallback) {
+    console.log(`DEBUG: handleUpdateFeedbackStatus() called. ID: ${feedbackId}, New Status: ${newStatus}`); 
+    const updateBtn = $("sidebarUpdateStatusBtn");
+    const markResolvedBtn = $("sidebarMarkResolvedBtn");
+    
+    // Disable buttons
+    if(updateBtn) updateBtn.disabled = true;
+    if(markResolvedBtn) markResolvedBtn.disabled = true;
+    showSidebarMessage("Updating...", "success");
+    
+    try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!session) throw new Error("Not logged in");
+
+        const { data, error } = await supabase
+            .from('feedback')
+            .update({ status: newStatus })
+            .eq('id', feedbackId)
+            .select();
+            
+        if (error) {
+            console.error("DEBUG: Supabase update error:", error); 
+            throw error;
+        }
+        
+        console.log("DEBUG: Supabase update success:", data); 
+        showSidebarMessage(`Status updated to "${newStatus}"!`, "success");
+        await fetchAndRenderFeedback(); // Refresh the main feedback list
+        
+        setTimeout(() => {
+            if (closeCallback) closeCallback();
+        }, 1500);
+
+    } catch (error) {
+        console.error("Error updating status:", error);
+        showSidebarMessage(error.message, "error");
+    } finally {
+        if(updateBtn) updateBtn.disabled = false;
+        if(markResolvedBtn) markResolvedBtn.disabled = false;
+    }
+}
+
+// --- END OF FEEDBACK FUNCTIONS ---
 
     // --- Admin Dashboard Stats Logic ---
     const refreshStatsBtn = $("refreshStatsBtn");
@@ -27172,6 +28115,23 @@ function renderMiscPage_MSC(container, data) {
 });
 
     </script>
+
+    <div id="feedbackDetailSidebar" class="feedback-sidebar">
+    <div class="feedback-sidebar-overlay" onclick="closeFeedbackSidebar()"></div>
+    <div class="feedback-sidebar-content">
+        <div class="feedback-sidebar-header">
+            <h2>Feedback Details</h2>
+            <button id="closeFeedbackSidebarBtn" class="feedback-close-btn" onclick="closeFeedbackSidebar()">&times;</button>
+        </div>
+        
+        <div id="feedbackSidebarContent" class="feedback-sidebar-body">
+            <div class="flex items-center justify-center p-10">
+                <div class="loading-spinner mr-3"></div>
+                <span class="text-white/80">Loading details...</span>
+            </div>
+        </div>
+    </div>
+</div>
 
 </body>
 
