@@ -30,7 +30,6 @@ origins = [
     "http://localhost:8080",       # For local testing
     "http://127.0.0.1:8080",      # For local testing
     "http://localhost:8000",       # For python -m http.server
-    "http://127.0.0.1:8000",       # For python -m http.server
     "http://10.0.0.243:8000"       # From server log
 ]
 
