@@ -258,7 +258,88 @@ function parseFishboneData(jsonData) {
 }
 
 
+
+/**
+ * Helper function to build a DOT string for Viz.js from analysis data.
+ * --- FIX v2 --- Added safety checks for loop and loop.type
+ */
+function buildDotString(elements, causal_links, feedback_loops) {
+    if (!elements || !causal_links) return "digraph G {}"; // Return empty graph if data is missing
+    
+    let dot = 'digraph G {\n';
+    dot += '  layout=dot;\n';
+    dot += '  overlap=false;\n';
+    dot += '  splines=true;\n';
+    dot += '  sep="+15,15";\n';
+    dot += '  bgcolor="transparent";\n';
+    dot += '  node [style=filled, shape=oval, fillcolor="rgba(0,0,0,0.3)", fontcolor="white", color="rgba(255,255,255,0.3)"];\n';
+    dot += '  edge [fontcolor="white", fontsize=10];\n\n';
+
+    // Define nodes
+    elements.forEach(el => {
+        // Safety check for el.type
+        if (el.type && typeof el.type === 'string' && el.type.toLowerCase() === 'stock') {
+            dot += `  "${el.name}" [shape=box, style="filled,bold", color="var(--primary)"];\n`;
+        } else {
+            dot += `  "${el.name}";\n`;
+        }
+    });
+
+    // Get loop colors
+    const loopColors = {};
+    const colors = ["#2ECC71", "#E74C3C", "#3498DB", "#F39C12", "#9B59B6", "#1ABC9C"];
+    let colorIndex = 0;
+    
+    if (feedback_loops) {
+        // --- START FIX ---
+        // Added checks for loop, loop.type, and typeof loop.type
+        feedback_loops.forEach(loop => {
+            const loopName = loop.name || loop.loop_name; // Handle both possible name keys
+            if (loop && loop.type && typeof loop.type === 'string' && loop.type.toLowerCase() === 'reinforcing') {
+                loopColors[loopName] = colors[colorIndex % colors.length];
+                colorIndex++;
+            }
+        });
+        feedback_loops.forEach(loop => {
+            const loopName = loop.name || loop.loop_name; // Handle both possible name keys
+             if (loop && loop.type && typeof loop.type === 'string' && loop.type.toLowerCase() === 'balancing') {
+                loopColors[loopName] = colors[colorIndex % colors.length];
+                colorIndex++;
+            }
+        });
+        // --- END FIX ---
+    }
+
+    // Define edges
+    dot += '\n';
+    causal_links.forEach(link => {
+        // Use loop color if available, otherwise default
+        const color = loopColors[link.loop_name] || (link.loop_name === 'H' ? "rgba(100,100,255,0.6)" : "rgba(255,255,255,0.4)");
+        let style = `color="${color}"`;
+        if (link.polarity === '-') {
+            style += ', arrowhead=tee';
+        }
+        // Add description as label, fallback to polarity
+        const label = link.description || ` ${link.polarity} `;
+        dot += `  "${link.from}" -> "${link.to}" [label=" ${label} ", ${style}];\n`;
+    });
+
+    // Add loop labels (if they exist)
+    if (feedback_loops && feedback_loops.length > 0) {
+        dot += '\n  labelloc="b";\n';
+        let label = 'Key: ';
+        Object.entries(loopColors).forEach(([name, color]) => {
+             label += `<font color="${color}">${name}</font>  `;
+        });
+        dot += `  label = <${label}>;\n`;
+    }
+
+    dot += '}';
+    return dot;
+}
+
 export {
     generateProcessMappingMermaidCode,
-    parseFishboneData
+    parseFishboneData,
+    buildDotString
 }

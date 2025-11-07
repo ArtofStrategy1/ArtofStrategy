@@ -3,7 +3,7 @@
 // =====================================================================================================
 import { dom } from "../../utils/dom-utils.mjs";
 import { appState } from "../../state/app-state.mjs";
-import { generateProcessMappingMermaidCode, parseFishboneData } from '../../diagrams/diagram-generation.mjs'
+import { generateProcessMappingMermaidCode, parseFishboneData, buildDotString } from '../../diagrams/diagram-generation.mjs'
 import { renderMermaidDiagram, renderFishboneDiagram } from '../../diagrams/diagram-renderer.mjs'
 import { fitDiagram, resetZoom, exportPNG } from "../../diagrams/diagram-utils.mjs";
 
@@ -514,116 +514,314 @@ function renderParetoFishbonePage(container, data) {
 
 
 
+/**
+ * RENDERER: System Thinking Analysis
+ * - NEW (v3): This renderer is now flexible.
+ * - It checks if `system_archetype` exists. If not, it assumes a "research_plan"
+ * and displays `focus_areas` instead of `leverage_points` and archetypes.
+ * - FIX (v4): Added checks for loop.type, finalFocusAreas, and system_archetype before access.
+ * - FIX (v5): Added check for "Unanalyzable" state.
+ */
 function renderSystemThinkingPage(container, data) {
     container.innerHTML = ""; // Clear the loading indicator
 
-    // Add validation for new fields
-    if (!data || !data.elements || !data.feedback_loops || !data.summary || !data.leverage_points) {
-        console.error("Incomplete data passed to renderSystemThinkingPage:", data);
-        container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render System Thinking results.</div>`;
+    // --- Validation for the flexible structure ---
+    if (!data || !data.summary || !data.elements || !data.causal_links ||
+        (data.system_archetype === undefined && data.focus_areas === undefined)) {
+        console.error("Incomplete data passed to renderSystemThinkingPage (v3):", data);
+        container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render results.</div>`;
         dom.$("analysisActions").classList.add("hidden");
         return;
     }
-    const { elements, feedback_loops, summary, leverage_points } = data;
+    
+    // --- NEW CHECK FOR UNANALYZABLE TEXT ---
+    // If the AI returns no elements AND (no leverage points AND no focus areas), it's unanalyzable.
+    if (data.elements.length === 0 && (!data.leverage_points || data.leverage_points.length === 0) && (!data.focus_areas || data.focus_areas.length === 0)) {
+        console.warn("Data is unanalyzable. Displaying summary as error.");
+        container.innerHTML = `<div class="p-4 text-center text-yellow-300">
+                                 <h4 class="text-xl font-bold mb-3">Analysis Incomplete</h4>
+                                 <p class="text-white/80">${data.summary}</p>
+                                 <p class="text-sm text-white/70 mt-2">Please try again with text describing a business, a system problem, or a research plan.</p>
+                               </div>`;
+        dom.$("analysisActions").classList.add("hidden"); // Hide save buttons
+        return; // Stop rendering
+    }
+    // --- END NEW CHECK ---
 
+    // Destructure all possible fields
+    const {
+        elements,
+        feedback_loops,
+        summary,
+        causal_links,
+        system_archetype,
+        focus_areas,
+        leverage_points
+    } = data;
 
-    // --- Create Tab Navigation (Updated) ---
+    // Determine which mode we are in
+    // A research model is identified by having `focus_areas` and no `system_archetype`.
+    const isResearchModel = (!!focus_areas && !system_archetype);
+    // Use leverage_points OR focus_areas. Ensure finalFocusAreas is an array.
+    const finalFocusAreas = focus_areas || leverage_points || [];
+
+    // --- Create Tab Navigation (5 Tabs) ---
     const tabNav = document.createElement("div");
     tabNav.className = "flex flex-wrap border-b border-white/20 -mx-6 px-6";
+    // Customize tab name based on input type
+    const focusTabName = isResearchModel ? "⚡ Key Research Questions" : "⚡ Elements & Leverage";
+    const loopTabName = (feedback_loops && feedback_loops.length > 0) ? "🔄 Feedback Loops" : "🔗 Causal Links (Hypotheses)"; // <-- Use feedback_loops to decide name
     tabNav.innerHTML = `
-        <button class="analysis-tab-btn active" data-tab="gist">📝 Gist & Elements</button> <!-- Renamed -->
-        <button class="analysis-tab-btn" data-tab="loops">🔄 Feedback Loops</button>
-        <button class="analysis-tab-btn" data-tab="leverage">⚡ Leverage Points</button>
-        <button class="analysis-tab-btn" data-tab="learn">🎓 Learn System Thinking</button> <!-- New -->
+        <button class="analysis-tab-btn active" data-tab="dashboard">📊 Dashboard</button>
+        <button class="analysis-tab-btn" data-tab="diagram">🗺️ Causal Diagram</button>
+        <button class="analysis-tab-btn" data-tab="loops">${loopTabName}</button>
+        <button class="analysis-tab-btn" data-tab="focus">${focusTabName}</button>
+        <button class="analysis-tab-btn" data-tab="learn">🎓 Learn System Thinking</button>
     `;
     container.appendChild(tabNav);
 
-    // --- Create Tab Panels (Updated) ---
+    // --- Create Tab Panels (5 Panels) ---
     const tabContent = document.createElement("div");
     container.appendChild(tabContent);
     tabContent.innerHTML = `
-        <div id="gistPanel" class="analysis-tab-panel active"></div>
+        <div id="dashboardPanel" class="analysis-tab-panel active"></div>
+        <div id="diagramPanel" class="analysis-tab-panel"></div>
         <div id="loopsPanel" class="analysis-tab-panel"></div>
-        <div id="leveragePanel" class="analysis-tab-panel"></div>
-        <div id="learnPanel" class="analysis-tab-panel"></div> <!-- New -->
+        <div id="focusPanel" class="analysis-tab-panel"></div>
+        <div id="learnPanel" class="analysis-tab-panel"></div>
     `;
 
-    // --- 1. Populate Gist & Elements Panel (Updated) ---
-    const gistPanel = dom.$("gistPanel");
-    let gistHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">System Overview</h3>`;
-    gistHtml += `<blockquote class="p-4 italic border-l-4 border-gray-500 bg-black/20 text-white/90 mb-6 text-sm">"${summary}"</blockquote>`; // Use enhanced summary
-    gistHtml += `<h4 class="text-xl font-semibold mb-3">Key System Elements Identified</h4>`;
-    // Table for elements
-     gistHtml += `<div class="overflow-x-auto">
-                    <table class="coeff-table styled-table text-sm">
-                        <thead><tr><th>Element Name</th><th>Type</th><th>Description (Inferred Role)</th></tr></thead>
-                        <tbody>`;
-    elements.forEach(el => {
-         let description = "";
-         if (el.type === "Stock") description = "Accumulation over time (e.g., Customers, Inventory, Cash)";
-         else if (el.type === "Flow") description = "Rate of change affecting a Stock (e.g., Sales Rate, Production Rate)";
-         else if (el.type === "Variable") description = "Factor influencing Flows or other Variables (e.g., Price, Quality)";
-         else if (el.type === "Parameter") description = "Constant or policy influencing the system (e.g., Tax Rate, Standard Procedure)";
+    // --- 1. Populate Dashboard Panel ---
+    const dashboardPanel = dom.$("dashboardPanel");
 
-        gistHtml += `<tr>
-                        <td class="font-semibold">${el.name}</td>
-                        <td class="font-mono text-xs">${el.type}</td>
-                        <td class="text-white/70">${description}</td>
-                     </tr>`;
-    });
-     gistHtml += `</tbody></table></div>`;
+    // Find the top focus area/leverage point
+    let topFocusHtml = "";
+    if (finalFocusAreas && finalFocusAreas.length > 0) { // <-- Added check for finalFocusAreas
+        // Find the first item (either ranked "High" or just the first in the list)
+        const topFocus = [...finalFocusAreas].sort((a, b) => { // <-- Use spread to avoid mutating original
+            const order = {
+                "High": 1,
+                "Medium": 2,
+                "Low": 3
+            };
+            // Handle both 'impact' and 'potential_impact_rank' keys
+            const rankA = order[a.potential_impact_rank || a.impact] || 4;
+            const rankB = order[b.potential_impact_rank || b.impact] || 4;
+            return rankA - rankB;
+        })[0];
 
-    gistHtml += `</div>`; // Close p-4
-    gistPanel.innerHTML = gistHtml;
+        const title = isResearchModel ? "Top Research Question" : "Top Leverage Point";
+        // Handle both 'description'/'intervention' and 'area_name'/'point_name'
+        const desc = topFocus.description || topFocus.intervention || "No description provided.";
+        const pointName = topFocus.area_name || topFocus.point_name || "Unnamed Point";
 
-    // --- 2. Populate Feedback Loops Panel (Updated for detail) ---
-    const loopsPanel = dom.$("loopsPanel");
-    let loopsHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">Identified Feedback Loops</h3><div class="space-y-6">`; // Increased spacing
-    feedback_loops.forEach((loop) => {
-        const isReinforcing = loop.type.toLowerCase() === "reinforcing";
-        const loopIcon = isReinforcing ? "📈" : "⚖️"; // More distinct icons
-        const loopColor = isReinforcing ? "border-green-400" : "border-yellow-400";
-        loopsHtml += `
-            <div class="bg-black/20 p-4 rounded-lg border-l-4 ${loopColor}">
-                <h4 class="text-lg font-bold flex items-center gap-2">${loopIcon} ${loop.name} <span class="text-xs font-light text-white/60">(${loop.type})</span></h4>
-                <p class="text-sm text-white/80 my-3 italic"><strong>Causal Chain:</strong> ${loop.description}</p>
-                <div class="text-xs text-white/60"><strong>Key Elements Involved:</strong> ${loop.elements.join(", ")}</div>
+        topFocusHtml = `
+            <div class="prescription-card border-l-4 border-red-500">
+                <h3 class="text-lg font-bold text-red-300">${title}</h3>
+                <p class="text-xl font-semibold mt-1">${pointName}</p>
+                <p class="text-sm text-white/80 mt-2"><strong>Description:</strong> ${desc}</p>
             </div>`;
-    });
-    loopsHtml += `</div></div>`; // Close space-y-6 and p-4
-    loopsPanel.innerHTML = loopsHtml;
+    }
 
-    // --- 3. Populate Leverage Points Panel (Updated for detail) ---
-    const leveragePanel = dom.$("leveragePanel");
-    let leverageHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">⚡ High-Impact Leverage Points</h3>`;
-    if (leverage_points && leverage_points.length > 0) {
-        leverageHtml += `<p class="text-sm text-white/70 mb-6 italic">Interventions at these points are likely to cause significant shifts in the system's behavior by influencing the core feedback loops.</p>`;
-        leverageHtml += `<div class="space-y-6">`;
-        leverage_points.forEach((point, index) => {
-            leverageHtml += `
-                <div class="prescription-card border-l-4 border-indigo-400">
-                     <h4 class="text-xl font-bold">${index + 1}. ${point.point_name}</h4>
-                     <p class="text-xs font-semibold my-1 text-indigo-300">TARGET ELEMENT: ${point.target_element || 'N/A'}</p>
-                     <p class="rationale"><strong>Proposed Intervention:</strong> ${point.intervention || 'N/A'}</p>
-                     <div class="p-3 bg-black/20 rounded mt-3 text-sm">
-                         <p><strong>Expected Impact on Loops:</strong> ${point.expected_impact || 'N/A'}</p>
-                     </div>
+    // Find the archetype (if it exists)
+    let archetypeHtml = "";
+    // Check for archetype *object* and *name property*
+    if (system_archetype && typeof system_archetype === 'object' && system_archetype.name) {
+        archetypeHtml = `
+            <div class="archetype-card">
+                <h3 class="text-lg font-bold text-indigo-300">Dominant System Archetype</h3>
+                <p class="text-2xl font-semibold mt-1">${system_archetype.name}</p>
+                <p class="text-sm text-white/80 mt-2 italic">${system_archetype.description || 'No description provided.'}</p>
+            </div>`;
+    } else if (isResearchModel) {
+        // If it's a research model, create a simpler card
+        archetypeHtml = `
+            <div class="archetype-card">
+                <h3 class="text-lg font-bold text-indigo-300">Analysis Type</h3>
+                <p class="text-2xl font-semibold mt-1">Hypothesis Model</p>
+                <p class="text-sm text-white/80 mt-2 italic">The system is a set of hypothesized causal links to be tested, not a dynamic problem archetype.</p>
+            </div>`;
+    } else {
+        // Fallback if archetype is null/undefined but not a research model
+        archetypeHtml = `
+            <div class="archetype-card">
+                <h3 class="text-lg font-bold text-indigo-300">Dominant System Archetype</h3>
+                <p class="text-2xl font-semibold mt-1">Not Identified</p>
+                <p class="text-sm text-white/80 mt-2 italic">No single dominant archetype was identified from the text.</p>
+            </div>`;
+    }
+
+    dashboardPanel.innerHTML = `
+        <div class="p-4 space-y-6">
+            <h3 class="text-2xl font-bold mb-4 text-center">System Analysis Dashboard</h3>
+            <blockquote class="p-4 italic border-l-4 border-gray-500 bg-black/20 text-white/90 text-sm">
+                <strong>Analysis Summary:</strong> ${summary}
+            </blockquote>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                ${archetypeHtml}
+                ${topFocusHtml}
+            </div>
+        </div>`;
+
+    // --- 2. Populate Causal Loop Diagram Panel ---
+    const diagramPanel = dom.$("diagramPanel");
+    const diagramTitle = isResearchModel ? "Hypothesis Model Diagram" : "Causal Loop Diagram (CLD)";
+    diagramPanel.innerHTML = `
+        <div class="p-4">
+            <h3 class="text-2xl font-bold mb-4 text-center">${diagramTitle}</h3>
+            <p class="text-sm text-white/70 text-center mb-4 italic">This diagram shows the causal relationships between system elements.</p>
+            <div id="cldGraphContainer" class="w-full min-h-[600px] flex justify-center items-center bg-black/10 rounded-lg">
+                <p class="text-white/70">Rendering diagram...</p>
+            </div>
+            <div id="cldKey" class="mt-4 text-xs text-white/70 text-center space-x-4"></div>
+        </div>`;
+
+    try {
+        // This assumes buildDotString is available in the global scope and has the fix
+        const dotString = buildDotString(elements, causal_links, feedback_loops);
+        const viz = new Viz();
+        viz.renderSVGElement(dotString)
+            .then(svgElement => {
+                const container = dom.$("cldGraphContainer");
+                container.innerHTML = "";
+                svgElement.style.width = "100%";
+                svgElement.style.height = "auto";
+                container.appendChild(svgElement);
+
+                // Add key
+                const keyContainer = dom.$("cldKey");
+                let keyHtml = "";
+                if (feedback_loops && feedback_loops.length > 0) {
+                    // --- START FIX ---
+                    // Check for loop types again with safety
+                    const hasR = feedback_loops.some(l => l && l.type && typeof l.type === 'string' && l.type.toLowerCase() === 'reinforcing');
+                    const hasB = feedback_loops.some(l => l && l.type && typeof l.type === 'string' && l.type.toLowerCase() === 'balancing');
+                    // --- END FIX ---
+                    if (hasR) keyHtml += `<span><span class="inline-block w-3 h-3 rounded-full bg-green-400 mr-1"></span> Reinforcing Loop</span> `;
+                    if (hasB) keyHtml += `<span><span class="inline-block w-3 h-3 rounded-full bg-yellow-400 mr-1"></span> Balancing Loop</span>`;
+                }
+                keyHtml += `<span><span class="inline-block w-3 h-0.5 bg-white mr-1" style="transform: translateY(-2px);"></span> (+) Same Direction</span> <span><span class="inline-block w-3 h-0.5 bg-white mr-1" style="transform: translateY(-2px); clip-path: polygon(0% 0%, 75% 0%, 75% 100%, 0% 100%);">T</span> (-) Opposite Direction</span>`;
+                keyContainer.innerHTML = keyHtml;
+            })
+            .catch(error => {
+                console.error("Viz.js rendering error:", error);
+                dom.$("cldGraphContainer").innerHTML = `<p class="text-red-400">Error rendering diagram: ${error.message}</p>`;
+            });
+    } catch (e) {
+        console.error("Error creating DOT string or initializing Viz.js:", e);
+        dom.$("cldGraphContainer").innerHTML = `<p class="text-red-400">Error initializing diagram: ${e.message}</p>`;
+    }
+
+
+    // --- 3. Populate Feedback Loops / Causal Links Panel ---
+    const loopsPanel = dom.$("loopsPanel");
+    let loopsHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4 text-center">${loopTabName}</h3><div class="space-y-6">`;
+    if (feedback_loops && feedback_loops.length > 0) {
+        // Mode A: Dynamic Problem
+        feedback_loops.forEach((loop) => {
+            // --- START FIX ---
+            // Check if loop and loop.type are valid before calling toLowerCase()
+            const loopType = (loop && loop.type && typeof loop.type === 'string') ? loop.type.toLowerCase() : 'unknown';
+            const isReinforcing = loopType === "reinforcing";
+            // --- END FIX ---
+
+            const loopIcon = isReinforcing ? "📈" : "⚖️";
+            const loopColor = isReinforcing ? "border-green-400" : "border-yellow-400";
+            const elementsList = Array.isArray(loop.elements) ? loop.elements.join(", ") : 'Elements not specified';
+            const loopTypeName = loop.type || 'Type N/A'; // <-- Use safe value for display
+            const loopName = loop.name || loop.loop_name || "Unnamed Loop"; // <-- Handle missing name
+
+            loopsHtml += `
+                <div class="bg-black/20 p-4 rounded-lg border-l-4 ${loopColor}">
+                    <h4 class="text-lg font-bold flex items-center gap-2">${loopIcon} ${loopName} <span class="text-xs font-light text-white/60">(${loopTypeName})</span></h4>
+                    <p class="text-sm text-white/80 my-3 italic"><strong>Causal Chain:</strong> ${loop.description || 'No description provided.'}</p>
+                    <div class="text-xs text-white/60"><strong>Key Elements Involved:</strong> ${elementsList}</div>
                 </div>`;
         });
-        leverageHtml += `</div>`;
+    } else if (isResearchModel && causal_links.length > 0) {
+        // Mode B: Research Plan
+        causal_links.forEach((link) => {
+            loopsHtml += `
+                <div class="bg-black/20 p-4 rounded-lg border-l-4 border-blue-400">
+                    <h4 class="text-lg font-bold flex items-center gap-2">🔗 ${link.description || `${link.from} -> ${link.to}`}</h4>
+                    <p class="text-sm text-white/80 my-3 font-mono"><code>${link.from}</code> --( ${link.polarity} )--> <code>${link.to}</code></p>
+                </div>`;
+        });
     } else {
-        leverageHtml += `<p class="text-center text-white/70 italic">No specific leverage points were clearly identified from the provided system description.</p>`;
+        loopsHtml += `<p class="text-center text-white/70 italic">No feedback loops or causal links were identified from the text.</p>`;
     }
-    leverageHtml += `</div>`; // Close p-4
-    leveragePanel.innerHTML = leverageHtml;
+    loopsHtml += `</div></div>`;
+    loopsPanel.innerHTML = loopsHtml;
 
+    // --- 4. Populate Elements & Focus Panel ---
+    const focusPanel = dom.$("focusPanel");
+    let focusHtml = `<div class="p-4 space-y-8">
+                        <div>
+                            <h3 class="text-2xl font-bold mb-4 text-center">Key System Elements</h3>
+                            <div class="overflow-x-auto">
+                                <table class="coeff-table styled-table text-sm">
+                                    <thead><tr><th>Element Name</th><th>Type</th><th>Role in Model</th></tr></thead>
+                                    <tbody>`;
+    elements.forEach(el => {
+        let description = "A key construct in the model.";
+        if (causal_links.some(l => l.from === el.name) && !causal_links.some(l => l.to === el.name)) {
+            description = "Exogenous Driver (Predictor)";
+        } else if (!causal_links.some(l => l.from === el.name) && causal_links.some(l => l.to === el.name)) {
+            description = "Endogenous Outcome (Result)";
+        } else if (causal_links.some(l => l.from === el.name) && causal_links.some(l => l.to === el.name)) {
+            description = "Mediating Variable (Driver & Outcome)";
+        }
 
-    // --- 4. Populate Learn System Thinking Panel (New) ---
+        focusHtml += `<tr>
+                            <td class="font-semibold">${el.name}</td>
+                            <td class="font-mono text-xs">${el.type}</td>
+                            <td class="text-white/70">${description}</td>
+                         </tr>`;
+    });
+    focusHtml += `</tbody></table></div></div>`;
+
+    // Focus Areas / Leverage Points Section
+    focusHtml += `<div><h3 class="text-2xl font-bold mb-4 text-center">${focusTabName}</h3><div class="space-y-6">`;
+    const sortedFocusAreas = [...finalFocusAreas].sort((a, b) => {
+        const order = {
+            "High": 1,
+            "Medium": 2,
+            "Low": 3
+        };
+        const rankA = order[a.potential_impact_rank || a.impact] || 4;
+        const rankB = order[b.potential_impact_rank || b.impact] || 4;
+        return rankA - rankB;
+    });
+    sortedFocusAreas.forEach((point, index) => {
+        const impact = point.potential_impact_rank || point.impact;
+        let borderColor = "border-indigo-400";
+        if (impact === "High") borderColor = "border-red-500";
+        else if (impact === "Medium") borderColor = "border-yellow-500";
+        else if (impact === "Low") borderColor = "border-blue-500";
+
+        const pointName = point.area_name || point.point_name;
+        const pointDesc = point.description || point.intervention;
+        const pointRationale = point.rationale;
+        const pointOutcome = point.expected_outcome;
+
+        focusHtml += `
+            <div class="prescription-card ${borderColor}">
+                 <h4 class="text-xl font-bold">${index + 1}. ${pointName}</h4>
+                 ${impact ? `<p class="text-xs font-semibold my-1 ${borderColor.replace('border-', 'text-')}">${impact}</p>` : ''}
+                 <p class="rationale mt-3"><strong>Description/Intervention:</strong> ${pointDesc}</p>
+                 ${pointRationale ? `<p class="text-sm text-white/80 mt-2 italic"><strong>Rationale:</strong> ${pointRationale}</p>` : ''}
+                 ${pointOutcome ? `<div class="p-3 bg-black/20 rounded mt-3 text-sm"><p><strong>Expected Outcome:</strong> ${pointOutcome}</p></div>` : ''}
+            </div>`;
+    });
+    focusHtml += `</div></div></div>`;
+    focusPanel.innerHTML = focusHtml;
+
+    // --- 5. Populate Learn System Thinking Panel (Unchanged) ---
     const learnPanel = dom.$("learnPanel");
-     learnPanel.innerHTML = `
+    learnPanel.innerHTML = `
     <div class="p-6 space-y-6 text-white/90">
         <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding System Thinking</h3>
-         
+        
         <div class="bg-black/20 p-4 rounded-lg">
             <h4 class="text-lg font-bold mb-2 text-indigo-300">What is System Thinking?</h4>
             <p class="text-sm text-white/80">System thinking is a holistic approach to analysis that focuses on how a system's constituent parts interrelate and how systems work over time and within the context of larger systems. It contrasts with traditional analysis, which studies systems by breaking them down into their separate elements.</p>
@@ -637,8 +835,7 @@ function renderSystemThinkingPage(container, data) {
                     <li><strong>Feedback Loops:</strong> Circular causal relationships that amplify (reinforcing) or stabilize (balancing) change. </li>
                     <li><strong>Stocks & Flows:</strong> Stocks are accumulations (like water in a tub); Flows are the rates that change stocks (like the faucet and drain).</li>
                     <li><strong>Delays:</strong> Time lags between actions and their effects, often causing oscillations or overshoots.</li>
-                    <li><strong>Non-linearity:</strong> Cause and effect are not always proportional; small changes can sometimes have large effects (leverage points).</li>
-                    <li><strong>Emergence:</strong> System behavior arises from the interactions of its parts and cannot always be predicted by looking at the parts in isolation.</li>
+                    <li><strong>Leverage Points:</strong> Places in a system where a small change can have a large effect.</li>
                 </ul>
             </div>
             <div class="bg-white/5 p-4 rounded-lg border border-white/10">
@@ -648,27 +845,22 @@ function renderSystemThinkingPage(container, data) {
                     <li><strong>Identify Root Causes:</strong> Move beyond addressing symptoms to find underlying structural issues.</li>
                     <li><strong>Find High-Leverage Interventions:</strong> Identify points where small efforts yield significant results.</li>
                     <li><strong>Anticipate Unintended Consequences:</strong> Recognize how changes might ripple through the system.</li>
-                    <li><strong>Understand Dynamic Behavior:</strong> Explain patterns of growth, decline, oscillation, or stability over time.</li>
-                    <li><strong>Foster Collaboration:</strong> Provides a shared language to discuss complex problems.</li>
                  </ul>
             </div>
         </div>
 
-         <details class="styled-details text-sm mt-4">
+         <details class="styled-details text-sm mt-4" open>
             <summary class="font-semibold">Common System Archetypes (Recurring Patterns)</summary>
             <div class="bg-black/20 p-4 rounded-b-lg space-y-2">
                 <p><strong>Limits to Growth:</strong> Growth eventually slows or stops due to a limiting factor (a balancing loop).</p>
                 <p><strong>Shifting the Burden:</strong> Using a short-term fix distracts from or undermines a fundamental long-term solution.</p>
                 <p><strong>Fixes that Fail:</strong> A solution creates unintended consequences elsewhere that worsen the original problem later.</p>
                 <p><strong>Tragedy of the Commons:</strong> Individuals overusing a shared resource deplete it for everyone.</p>
-                <p><strong>Success to the Successful:</strong> Winners get more resources, enabling them to win even more, while losers fall further behind.</p>
-                <p><strong>Escalation:</strong> Two parties react competitively, leading to an accelerating race none desires.</p>
-                 <p class="text-xs italic mt-2">Recognizing these patterns helps diagnose systemic issues quickly.</p>
             </div>
         </details>
+         <p class="text-xs text-center text-white/60 mt-4">This tool analyzes your text to identify elements, causal links, and key focus areas to help you understand the structure of your system.</p>
     </div>
     `;
-
 
     // --- Final Touches ---
     appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache result
@@ -676,25 +868,27 @@ function renderSystemThinkingPage(container, data) {
     // Tab switching logic
     tabNav.addEventListener("click", (e) => {
         if (e.target.tagName === "BUTTON") {
-            // Deactivate all
-            tabNav.querySelectorAll(".analysis-tab-btn").forEach(btn => btn.classList.remove("active"));
-            tabContent.querySelectorAll(".analysis-tab-panel").forEach(pnl => pnl.classList.remove("active"));
-
-            // Activate clicked
+            tabNav.querySelectorAll(".analysis-tab-btn").forEach((btn) => btn.classList.remove("active"));
+            tabContent.querySelectorAll(".analysis-tab-panel").forEach((pnl) => pnl.classList.remove("active"));
             e.target.classList.add("active");
             const targetPanelId = e.target.dataset.tab + "Panel";
             const targetPanel = dom.$(targetPanelId);
             if (targetPanel) {
                 targetPanel.classList.add("active");
-                // No Plotly charts expected in this version, so no resize needed
+                // Resize diagram if its tab is clicked
+                if (targetPanelId === "diagramPanel") {
+                    const svg = targetPanel.querySelector("svg");
+                    if (svg) {
+                        // Viz.js SVG should resize automatically
+                    }
+                }
             } else {
-                 console.warn("Target panel not found:", targetPanelId);
+                console.warn("Target panel not found:", targetPanelId);
             }
         }
     });
 
     dom.$("analysisActions").classList.remove("hidden"); // Show save buttons
-    // setLoading('generate', false); // Handled in the calling function
 }
 
 
@@ -702,14 +896,35 @@ function renderSystemThinkingPage(container, data) {
 function renderLeveragePointsPage(container, data) {
     container.innerHTML = ""; // Clear the loading indicator
 
-    // Add validation for new fields
-    if (!data || !data.elements || !data.feedback_loops || !data.summary || !data.leverage_points) {
+    // --- Validation for the flexible structure ---
+    if (!data || !data.summary || !data.elements || !data.feedback_loops || !data.leverage_points) {
         console.error("Incomplete data passed to renderLeveragePointsPage:", data);
         container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render Leverage Points results.</div>`;
         dom.$("analysisActions").classList.add("hidden");
         return;
     }
-    const { elements, feedback_loops, summary, leverage_points } = data;
+    
+    // --- NEW CHECK FOR UNANALYZABLE TEXT ---
+    // If the AI returns no elements AND no leverage points, it means the text was unanalyzable.
+    // Display the summary (which is now an error message) and stop.
+    if (data.elements.length === 0 && data.leverage_points.length === 0) {
+        console.warn("Data is unanalyzable. Displaying summary as error.");
+        container.innerHTML = `<div class="p-4 text-center text-yellow-300">
+                                 <h4 class="text-xl font-bold mb-3">Analysis Incomplete</h4>
+                                 <p class="text-white/80">${data.summary}</p>
+                                 <p class="text-sm text-white/70 mt-2">Please try again with text describing a business, a system problem, or a research plan.</p>
+                               </div>`;
+        dom.$("analysisActions").classList.add("hidden"); // Hide save buttons
+        return; // Stop rendering
+    }
+    // --- END NEW CHECK ---
+
+    const {
+        elements,
+        feedback_loops,
+        summary,
+        leverage_points
+    } = data;
 
 
     // --- Create Tab Navigation (Updated) ---
@@ -718,9 +933,7 @@ function renderLeveragePointsPage(container, data) {
     tabNav.innerHTML = `
         <button class="analysis-tab-btn active" data-tab="gist">📝 Gist & Elements</button>
         <button class="analysis-tab-btn" data-tab="loops">🔄 Feedback Loops</button>
-        <button class="analysis-tab-btn" data-tab="leverage">⚡ Leverage Points & Interventions</button> <!-- Renamed -->
-        <button class="analysis-tab-btn" data-tab="learn">🎓 Learn Leverage Points</button> <!-- New -->
-    `;
+        <button class="analysis-tab-btn" data-tab="leverage">⚡ Leverage Points & Interventions</button> <button class="analysis-tab-btn" data-tab="learn">🎓 Learn Leverage Points</button> `;
     container.appendChild(tabNav);
 
     // --- Create Tab Panels (Updated) ---
@@ -730,43 +943,58 @@ function renderLeveragePointsPage(container, data) {
         <div id="gistPanel" class="analysis-tab-panel active"></div>
         <div id="loopsPanel" class="analysis-tab-panel"></div>
         <div id="leveragePanel" class="analysis-tab-panel"></div>
-        <div id="learnPanel" class="analysis-tab-panel"></div> <!-- New -->
-    `;
+        <div id="learnPanel" class="analysis-tab-panel"></div> `;
 
     // --- 1. Populate Gist & Elements Panel (Reusing logic from System Thinking) ---
     const gistPanel = dom.$("gistPanel");
     let gistHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">System Overview</h3>`;
     gistHtml += `<blockquote class="p-4 italic border-l-4 border-gray-500 bg-black/20 text-white/90 mb-6 text-sm">"${summary}"</blockquote>`;
     gistHtml += `<h4 class="text-xl font-semibold mb-3">Key System Elements Identified</h4>`;
-     gistHtml += `<div class="overflow-x-auto">
+    gistHtml += `<div class="overflow-x-auto">
                     <table class="coeff-table styled-table text-sm">
                         <thead><tr><th>Element Name</th><th>Type</th><th>Description (Inferred Role)</th></tr></thead>
                         <tbody>`;
     elements.forEach(el => {
-         let description = "";
-         if (el.type === "Stock") description = "Accumulation over time";
-         else if (el.type === "Flow") description = "Rate of change affecting a Stock";
-         else if (el.type === "Variable") description = "Factor influencing Flows/Variables";
-         else if (el.type === "Parameter") description = "Constant or policy";
+        let description = "";
+        if (el.type === "Stock") description = "Accumulation over time";
+        else if (el.type === "Flow") description = "Rate of change affecting a Stock";
+        else if (el.type === "Variable") description = "Factor influencing Flows/Variables";
+        else if (el.type === "Parameter") description = "Constant or policy";
         gistHtml += `<tr><td class="font-semibold">${el.name}</td><td class="font-mono text-xs">${el.type}</td><td class="text-white/70">${description}</td></tr>`;
     });
-     gistHtml += `</tbody></table></div></div>`; // Close table div and p-4
+    gistHtml += `</tbody></table></div></div>`; // Close table div and p-4
     gistPanel.innerHTML = gistHtml;
 
     // --- 2. Populate Feedback Loops Panel (Reusing logic from System Thinking) ---
     const loopsPanel = dom.$("loopsPanel");
     let loopsHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">Identified Feedback Loops</h3><div class="space-y-6">`;
-    feedback_loops.forEach((loop) => {
-        const isReinforcing = loop.type.toLowerCase() === "reinforcing";
-        const loopIcon = isReinforcing ? "📈" : "⚖️";
-        const loopColor = isReinforcing ? "border-green-400" : "border-yellow-400";
-        loopsHtml += `
-            <div class="bg-black/20 p-4 rounded-lg border-l-4 ${loopColor}">
-                <h4 class="text-lg font-bold flex items-center gap-2">${loopIcon} ${loop.name} <span class="text-xs font-light text-white/60">(${loop.type})</span></h4>
-                <p class="text-sm text-white/80 my-3 italic"><strong>Causal Chain:</strong> ${loop.description}</p>
-                <div class="text-xs text-white/60"><strong>Key Elements Involved:</strong> ${loop.elements.join(", ")}</div>
-            </div>`;
-    });
+    
+    // --- START FIX ---
+    // Check if feedback_loops is an array and has items
+    if (feedback_loops && feedback_loops.length > 0) {
+        feedback_loops.forEach((loop) => {
+            // Safety checks for loop object and loop.type property
+            const loopType = (loop && loop.type && typeof loop.type === 'string') ? loop.type.toLowerCase() : 'unknown';
+            const isReinforcing = loopType === "reinforcing";
+            const loopIcon = isReinforcing ? "📈" : "⚖️";
+            const loopColor = isReinforcing ? "border-green-400" : "border-yellow-400";
+            const loopTypeName = loop.type || 'Type N/A';
+            const loopName = loop.name || loop.loop_name || 'Unnamed Loop';
+            const elementsList = Array.isArray(loop.elements) ? loop.elements.join(", ") : 'Elements not specified';
+
+            loopsHtml += `
+                <div class="bg-black/20 p-4 rounded-lg border-l-4 ${loopColor}">
+                    <h4 class="text-lg font-bold flex items-center gap-2">${loopIcon} ${loopName} <span class="text-xs font-light text-white/60">(${loopTypeName})</span></h4>
+                    <p class="text-sm text-white/80 my-3 italic"><strong>Causal Chain:</strong> ${loop.description || 'No description.'}</p>
+                    <div class="text-xs text-white/60"><strong>Key Elements Involved:</strong> ${elementsList}</div>
+                </div>`;
+        });
+    } else {
+        // This will now correctly trigger for NexaFlow-Capital.txt
+        loopsHtml += `<p class="text-center text-white/70 italic">No feedback loops were identified. This is expected for descriptive profiles.</p>`;
+    }
+    // --- END FIX ---
+
     loopsHtml += `</div></div>`;
     loopsPanel.innerHTML = loopsHtml;
 
@@ -777,7 +1005,11 @@ function renderLeveragePointsPage(container, data) {
         leverageHtml += `<p class="text-sm text-white/70 mb-6 italic">These are ranked intervention points where actions can significantly shift system behavior, ordered from potentially highest to lowest impact based on system principles.</p>`;
         leverageHtml += `<div class="space-y-6">`;
         // Sort points based on High > Medium > Low impact rank for rendering
-        const impactOrder = { "High": 1, "Medium": 2, "Low": 3 };
+        const impactOrder = {
+            "High": 1,
+            "Medium": 2,
+            "Low": 3
+        };
         const sortedLeveragePoints = [...leverage_points].sort((a, b) => {
             const rankA = impactOrder[a.potential_impact_rank?.split(" ")[0]] || 4; // Default to lowest if rank missing
             const rankB = impactOrder[b.potential_impact_rank?.split(" ")[0]] || 4;
@@ -785,10 +1017,10 @@ function renderLeveragePointsPage(container, data) {
         });
 
         sortedLeveragePoints.forEach((point, index) => {
-             let borderColor = "border-indigo-400"; // Default
-             if (point.potential_impact_rank?.startsWith("High")) borderColor = "border-red-500";
-             else if (point.potential_impact_rank?.startsWith("Medium")) borderColor = "border-yellow-500";
-             else if (point.potential_impact_rank?.startsWith("Low")) borderColor = "border-blue-500";
+            let borderColor = "border-indigo-400"; // Default
+            if (point.potential_impact_rank?.startsWith("High")) borderColor = "border-red-500";
+            else if (point.potential_impact_rank?.startsWith("Medium")) borderColor = "border-yellow-500";
+            else if (point.potential_impact_rank?.startsWith("Low")) borderColor = "border-blue-500";
 
             leverageHtml += `
                 <div class="prescription-card ${borderColor}">
@@ -812,7 +1044,7 @@ function renderLeveragePointsPage(container, data) {
 
     // --- 4. Populate Learn Leverage Points Panel (New) ---
     const learnPanel = dom.$("learnPanel");
-     learnPanel.innerHTML = `
+    learnPanel.innerHTML = `
     <div class="p-6 space-y-6 text-white/90">
         <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding Leverage Points</h3>
          
@@ -844,7 +1076,12 @@ function renderLeveragePointsPage(container, data) {
 
          <div class="bg-white/5 p-4 rounded-lg mt-6 border border-white/10">
             <h4 class="text-lg font-bold mb-2">How This Tool Applies It:</h4>
-            <p class="text-sm text-white/80">This tool analyzes the system description to identify key feedback loops. It then suggests interventions (Leverage Points) targeting specific elements, parameters, or connections within those loops. The 'Potential Impact Rank' attempts to align with Meadows' hierarchy, suggesting whether the intervention targets a relatively low (e.g., parameter change) or potentially higher (e.g., rule/goal change implied by context) point of leverage.</p>
+            <p class="text-sm text-white/80">This tool analyzes your text to see if it's a dynamic problem or a descriptive profile.
+            <br>
+            - If it's a <strong>problem</strong>, it finds loops and suggests interventions to *fix* them, ranking them by this hierarchy.
+            <br>
+            - If it's a <strong>profile</strong> (like NexaFlow), it identifies your core differentiators as high-leverage points to *amplify*.
+            </p>
         </div>
     </div>
     `;
@@ -867,7 +1104,7 @@ function renderLeveragePointsPage(container, data) {
             if (targetPanel) {
                 targetPanel.classList.add("active");
             } else {
-                 console.warn("Target panel not found:", targetPanelId);
+                console.warn("Target panel not found:", targetPanelId);
             }
         }
     });
@@ -913,15 +1150,37 @@ function renderArchetypeAnalysisPage(container, data) {
 function renderSystemGoalsPage(container, data) {
     container.innerHTML = ""; // Clear loading
 
-    // Add validation for new fields
-    if (!data || !data.system_goal || !data.key_loops || !data.strategic_initiatives || !data.key_loops.reinforcing_loop || !data.key_loops.balancing_loop) {
+    // --- Validation for new structure ---
+    if (!data || !data.system_goal || !data.strategic_initiatives) {
         console.error("Incomplete data passed to renderSystemGoalsPage:", data);
         container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render System Goals results.</div>`;
         dom.$("analysisActions").classList.add("hidden");
         return;
     }
 
+    // --- NEW CHECK FOR UNANALYZABLE TEXT ---
+    // If the AI returns no initiatives and the goal contains "analyz", it's an error.
+    if (data.strategic_initiatives.length === 0 && data.system_goal.toLowerCase().includes("analyz")) {
+        console.warn("Data is unanalyzable. Displaying summary as error.");
+        container.innerHTML = `<div class="p-4 text-center text-yellow-300">
+                                 <h4 class="text-xl font-bold mb-3">Analysis Incomplete</h4>
+                                 <p class="text-white/80">${data.system_goal}</p>
+                                 <p class="text-sm text-white/70 mt-2">Please try again with text describing a business, a system problem, or a research plan.</p>
+                               </div>`;
+        dom.$("analysisActions").classList.add("hidden"); // Hide save buttons
+        return; // Stop rendering
+    }
+    // --- END NEW CHECK ---
+
+
     const { system_goal, key_loops, strategic_initiatives } = data;
+    
+    // --- START FIX ---
+    // Check if key_loops and its properties exist before trying to access them
+    const hasLoops = key_loops && key_loops.reinforcing_loop && key_loops.balancing_loop;
+    const reinforcing_loop = hasLoops ? key_loops.reinforcing_loop : null;
+    const balancing_loop = hasLoops ? key_loops.balancing_loop : null;
+    // --- END FIX ---
 
 
     // --- Create Tab Navigation (Updated) ---
@@ -929,9 +1188,9 @@ function renderSystemGoalsPage(container, data) {
     tabNav.className = "flex flex-wrap border-b border-white/20 -mx-6 px-6";
     tabNav.innerHTML = `
         <button class="analysis-tab-btn active" data-tab="dashboard">📊 Dashboard</button>
-        <button class="analysis-tab-btn" data-tab="map">🗺️ Strategic Map</button>
-        <button class="analysis-tab-btn" data-tab="initiatives">🚀 Initiatives & KPIs</button> <!-- Renamed -->
-        <button class="analysis-tab-btn" data-tab="learn">🎓 Learn System Goals</button> <!-- New -->
+        ${hasLoops ? '<button class="analysis-tab-btn" data-tab="map">🗺️ Strategic Map</button>' : ''}
+        <button class="analysis-tab-btn" data-tab="initiatives">🚀 Initiatives & KPIs</button>
+        <button class="analysis-tab-btn" data-tab="learn">🎓 Learn System Goals</button>
     `;
     container.appendChild(tabNav);
 
@@ -940,9 +1199,9 @@ function renderSystemGoalsPage(container, data) {
     container.appendChild(tabContent);
     tabContent.innerHTML = `
         <div id="dashboardPanel" class="analysis-tab-panel active"></div>
-        <div id="mapPanel" class="analysis-tab-panel"></div>
+        ${hasLoops ? '<div id="mapPanel" class="analysis-tab-panel"></div>' : ''}
         <div id="initiativesPanel" class="analysis-tab-panel"></div>
-        <div id="learnPanel" class="analysis-tab-panel"></div> <!-- New -->
+        <div id="learnPanel" class="analysis-tab-panel"></div>
     `;
 
     // --- 1. Populate Dashboard Panel (Updated) ---
@@ -951,81 +1210,96 @@ function renderSystemGoalsPage(container, data) {
         <div class="p-6 rounded-lg bg-black/20 border border-white/10 text-center">
             <h3 class="text-xl font-bold mb-2 text-indigo-300">🎯 Overarching System Goal</h3>
             <p class="text-2xl italic text-white/90">${system_goal}</p>
-        </div>
-        <h3 class="text-2xl font-bold text-center">Key System Dynamics Affecting Goal</h3>
-        <div class="grid md:grid-cols-2 gap-8">
-            <div class="bg-black/20 p-4 rounded-lg border-l-4 border-green-400">
-                <h4 class="text-lg font-bold flex items-center gap-2">📈 ${key_loops.reinforcing_loop.name} <span class="text-xs font-light text-white/60">(Reinforcing)</span></h4>
-                <p class="text-sm text-white/80 my-3 italic">${key_loops.reinforcing_loop.description}</p>
-                <div class="text-xs text-white/60"><strong>Elements:</strong> ${key_loops.reinforcing_loop.elements.join(", ")}</div>
-            </div>
-            <div class="bg-black/20 p-4 rounded-lg border-l-4 border-yellow-400">
-                 <h4 class="text-lg font-bold flex items-center gap-2">⚖️ ${key_loops.balancing_loop.name} <span class="text-xs font-light text-white/60">(Balancing)</span></h4>
-                <p class="text-sm text-white/80 my-3 italic">${key_loops.balancing_loop.description}</p>
-                <div class="text-xs text-white/60"><strong>Elements:</strong> ${key_loops.balancing_loop.elements.join(", ")}</div>
-            </div>
-        </div>
-         <h3 class="text-2xl font-bold text-center mt-6">Strategic Initiatives Overview</h3>
+        </div>`;
+
+    // --- START FIX ---
+    // Only show the "Key System Dynamics" section if loops were actually found
+    if (hasLoops) {
+        dashboardHtml += `
+            <h3 class="text-2xl font-bold text-center">Key System Dynamics Affecting Goal</h3>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="bg-black/20 p-4 rounded-lg border-l-4 border-green-400">
+                    <h4 class="text-lg font-bold flex items-center gap-2">📈 ${reinforcing_loop.name} <span class="text-xs font-light text-white/60">(Reinforcing)</span></h4>
+                    <p class="text-sm text-white/80 my-3 italic">${reinforcing_loop.description}</p>
+                    <div class="text-xs text-white/60"><strong>Elements:</strong> ${reinforcing_loop.elements.join(", ")}</div>
+                </div>
+                <div class="bg-black/20 p-4 rounded-lg border-l-4 border-yellow-400">
+                     <h4 class="text-lg font-bold flex items-center gap-2">⚖️ ${balancing_loop.name} <span class="text-xs font-light text-white/60">(Balancing)</span></h4>
+                    <p class="text-sm text-white/80 my-3 italic">${balancing_loop.description}</p>
+                    <div class="text-xs text-white/60"><strong>Elements:</strong> ${balancing_loop.elements.join(", ")}</div>
+                </div>
+            </div>`;
+    } else {
+        // Show this if it's a descriptive profile (like NexaFlow)
+        dashboardHtml += `<p class="text-center text-white/70 italic">No dynamic feedback loops (problems) were identified; analysis is focused on amplifying core strengths.</p>`;
+    }
+    // --- END FIX ---
+
+    dashboardHtml += `<h3 class="text-2xl font-bold text-center mt-6">Strategic Initiatives Overview</h3>
          <div class="grid grid-cols-1 md:grid-cols-${Math.min(strategic_initiatives.length, 3)} gap-6">`; // Adjust columns
-            strategic_initiatives.forEach(init => {
-                dashboardHtml += `<div class="summary-stat-card text-left p-4">
+    strategic_initiatives.forEach(init => {
+        dashboardHtml += `<div class="summary-stat-card text-left p-4">
                                      <p class="font-bold text-lg text-white mb-2">${init.initiative_name}</p>
                                      <p class="text-xs text-indigo-300 italic mb-2">${init.rationale}</p>
                                      <p class="text-xs text-white/70">Objectives: ${init.objectives.length}</p>
                                   </div>`;
-            });
-         dashboardHtml += `</div>
+    });
+    dashboardHtml += `</div>
     </div>`; // Close p-4 space-y-8
     dashboardPanel.innerHTML = dashboardHtml;
 
 
-    // --- 2. Populate Strategic Map Panel (Reusing existing logic) ---
-    const mapPanel = dom.$("mapPanel");
-    let mapHtml = `<div class="strategy-map-container p-4">
-                <div class="p-4 rounded-lg bg-black/20 border border-white/10 text-center w-full max-w-lg">
-                    <h3 class="text-lg font-bold text-indigo-300">🎯 GOAL</h3>
-                    <p class="text-2xl italic text-white/90">${system_goal}</p>
-                </div>
-                <div class="vertical-connector"></div>
-                <div class="feedback-loops-grid">
-                    <div id="reinforcing-box" class="bg-black/20 p-4 rounded-lg border-2 border-green-400/50 text-center flex flex-col justify-between h-full">
-                        <h4 class="text-lg font-bold">📈 Growth Engine</h4>
-                        <p class="text-sm text-white/80 my-2">${key_loops.reinforcing_loop.name}<br><span class="text-xs italic">${key_loops.reinforcing_loop.description.substring(0,100)}...</span></p>
+    // --- 2. Populate Strategic Map Panel (Only if loops exist) ---
+    // --- START FIX ---
+    if (hasLoops) {
+        const mapPanel = dom.$("mapPanel");
+        let mapHtml = `<div class="strategy-map-container p-4">
+                    <div class="p-4 rounded-lg bg-black/20 border border-white/10 text-center w-full max-w-lg">
+                        <h3 class="text-lg font-bold text-indigo-300">🎯 GOAL</h3>
+                        <p class="text-2xl italic text-white/90">${system_goal}</p>
                     </div>
-                    <div id="balancing-box" class="bg-black/20 p-4 rounded-lg border-2 border-yellow-400/50 text-center flex flex-col justify-between h-full">
-                        <h4 class="text-lg font-bold">⚖️ Limiting Factor</h4>
-                        <p class="text-sm text-white/80 my-2">${key_loops.balancing_loop.name}<br><span class="text-xs italic">${key_loops.balancing_loop.description.substring(0,100)}...</span></p>
+                    <div class="vertical-connector"></div>
+                    <div class="feedback-loops-grid">
+                        <div id="reinforcing-box" class="bg-black/20 p-4 rounded-lg border-2 border-green-400/50 text-center flex flex-col justify-between h-full">
+                            <h4 class="text-lg font-bold">📈 Growth Engine</h4>
+                            <p class="text-sm text-white/80 my-2">${reinforcing_loop.name}<br><span class="text-xs italic">${reinforcing_loop.description.substring(0,100)}...</span></p>
+                        </div>
+                        <div id="balancing-box" class="bg-black/20 p-4 rounded-lg border-2 border-yellow-400/50 text-center flex flex-col justify-between h-full">
+                            <h4 class="text-lg font-bold">⚖️ Limiting Factor</h4>
+                            <p class="text-sm text-white/80 my-2">${balancing_loop.name}<br><span class="text-xs italic">${balancing_loop.description.substring(0,100)}...</span></p>
+                        </div>
                     </div>
-                </div>
-                <div class="lines-to-interventions">
-                    <h3 class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xl font-bold text-white z-10 bg-gray-900 px-4 py-2 rounded">Strategic Interventions</h3>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-${strategic_initiatives.length} gap-8 w-full max-w-4xl mt-4">`; // Use actual count
-
-    strategic_initiatives.forEach((initiative) => {
-        // Simple indicator logic based on rationale text
-        const strengthensReinforcing = initiative.rationale.toLowerCase().includes("strengthen") && initiative.rationale.toLowerCase().includes(key_loops.reinforcing_loop.name.split(':')[0]);
-        const weakensBalancing = (initiative.rationale.toLowerCase().includes("weaken") || initiative.rationale.toLowerCase().includes("address")) && initiative.rationale.toLowerCase().includes(key_loops.balancing_loop.name.split(':')[0]);
-
-        let indicatorHtml = "";
-        if (strengthensReinforcing && weakensBalancing) {
-            indicatorHtml = `<div class="initiative-target-indicator flex items-center justify-center gap-1"><span class="indicator-boost">▲</span><span class="indicator-mitigate">▼</span></div>`;
-        } else if (strengthensReinforcing) {
-            indicatorHtml = `<div class="initiative-target-indicator indicator-boost">▲</div>`;
-        } else if (weakensBalancing) {
-            indicatorHtml = `<div class="initiative-target-indicator indicator-mitigate">▼</div>`;
-        }
-
-        mapHtml += `<div class="relative pt-8">
-                    ${indicatorHtml}
-                    <div class="bg-black/20 p-4 rounded-lg h-full border border-white/10 flex items-center justify-center text-center">
-                        <h4 class="text-md font-bold text-white/90">${initiative.initiative_name}</h4>
+                    <div class="lines-to-interventions">
+                        <h3 class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xl font-bold text-white z-10 bg-gray-900 px-4 py-2 rounded">Strategic Interventions</h3>
                     </div>
-                </div>`;
-    });
+                    <div class="grid grid-cols-1 md:grid-cols-${strategic_initiatives.length} gap-8 w-full max-w-4xl mt-4">`; // Use actual count
 
-    mapHtml += `</div></div>`;
-    mapPanel.innerHTML = mapHtml;
+        strategic_initiatives.forEach((initiative) => {
+            // Simple indicator logic based on rationale text
+            const strengthensReinforcing = initiative.rationale.toLowerCase().includes("strengthen") && initiative.rationale.toLowerCase().includes(reinforcing_loop.name.split(':')[0]);
+            const weakensBalancing = (initiative.rationale.toLowerCase().includes("weaken") || initiative.rationale.toLowerCase().includes("address")) && initiative.rationale.toLowerCase().includes(balancing_loop.name.split(':')[0]);
+
+            let indicatorHtml = "";
+            if (strengthensReinforcing && weakensBalancing) {
+                indicatorHtml = `<div class="initiative-target-indicator flex items-center justify-center gap-1"><span class="indicator-boost">▲</span><span class="indicator-mitigate">▼</span></div>`;
+            } else if (strengthensReinforcing) {
+                indicatorHtml = `<div class="initiative-target-indicator indicator-boost">▲</div>`;
+            } else if (weakensBalancing) {
+                indicatorHtml = `<div class="initiative-target-indicator indicator-mitigate">▼</div>`;
+            }
+
+            mapHtml += `<div class="relative pt-8">
+                        ${indicatorHtml}
+                        <div class="bg-black/20 p-4 rounded-lg h-full border border-white/10 flex items-center justify-center text-center">
+                            <h4 class="text-md font-bold text-white/90">${initiative.initiative_name}</h4>
+                        </div>
+                    </div>`;
+        });
+
+        mapHtml += `</div></div>`;
+        mapPanel.innerHTML = mapHtml;
+    }
+    // --- END FIX ---
 
 
     // --- 3. Populate Initiatives & KPIs Panel (Updated) ---
@@ -1035,7 +1309,7 @@ function renderSystemGoalsPage(container, data) {
         initiativesHtml += `
             <div class="prescription-card border-l-4 border-blue-500">
                 <h3 class="text-2xl font-bold mb-2">Initiative ${index + 1}: ${initiative.initiative_name}</h3>
-                <p class="rationale"><strong>Systems Rationale:</strong> ${initiative.rationale}</p>
+                <p class="rationale"><strong>Rationale:</strong> ${initiative.rationale}</p>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 text-sm">
                     <div class="bg-black/20 p-3 rounded">
                         <h5 class="font-bold text-yellow-300 mb-2">Specific Objectives</h5>
@@ -1055,7 +1329,7 @@ function renderSystemGoalsPage(container, data) {
 
     // --- 4. Populate Learn System Goals Panel (New) ---
     const learnPanel = dom.$("learnPanel");
-     learnPanel.innerHTML = `
+    learnPanel.innerHTML = `
     <div class="p-6 space-y-6 text-white/90">
         <h3 class="text-2xl font-bold text-center mb-4">🎓 Setting Goals in a Systems Context</h3>
         
@@ -1123,9 +1397,9 @@ function renderSystemGoalsPage(container, data) {
             const targetPanel = dom.$(targetPanelId);
             if (targetPanel) {
                 targetPanel.classList.add("active");
-                 // No Plotly charts expected in this tool, so no resize needed
+                // No Plotly charts expected in this tool, so no resize needed
             } else {
-                 console.warn("Target panel not found:", targetPanelId);
+                console.warn("Target panel not found:", targetPanelId);
             }
         }
     });
@@ -1137,23 +1411,61 @@ function renderSystemGoalsPage(container, data) {
 
 
 function renderSystemObjectivesPage_ST(container, data) {
-    container.innerHTML = "";
-    const { main_objective, feedback_loops, goals, strategies_and_initiatives } = data;
-    if (!main_objective || !feedback_loops || !goals) {
-        container.innerHTML = `<div class="p-4 text-center text-red-400">Incomplete data received.</div>`;
+    container.innerHTML = ""; // Clear loading
+
+    // --- Validation for new structure ---
+    if (!data || !data.main_objective || !data.goals) {
+        console.error("Incomplete data passed to renderSystemObjectivesPage_ST:", data);
+        container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received.</div>`;
+        dom.$("analysisActions").classList.add("hidden");
         return;
     }
 
+    // --- NEW CHECK FOR UNANALYZABLE TEXT ---
+    // If the AI returns no goals and the objective contains "analyz", it's an error.
+    if (data.goals.length === 0 && data.main_objective.toLowerCase().includes("analyz")) {
+        console.warn("Data is unanalyzable. Displaying summary as error.");
+        container.innerHTML = `<div class="p-4 text-center text-yellow-300">
+                                    <h4 class="text-xl font-bold mb-3">Analysis Incomplete</h4>
+                                    <p class="text-white/80">${data.main_objective}</p>
+                                    <p class="text-sm text-white/70 mt-2">Please try again with text describing a business, a system problem, or a research plan.</p>
+                                </div>`;
+        dom.$("analysisActions").classList.add("hidden"); // Hide save buttons
+        return; // Stop rendering
+    }
+    // --- END NEW CHECK ---
+
+    // Destructure data. feedback_loops may be null.
+    const { main_objective, feedback_loops, goals } = data;
+
+    // --- START FIX ---
+    // Check if feedback_loops and its properties exist
+    const hasLoops = feedback_loops && feedback_loops.reinforcing_loop && feedback_loops.balancing_loop;
+    const reinforcing_loop = hasLoops ? feedback_loops.reinforcing_loop : null;
+    const balancing_loop = hasLoops ? feedback_loops.balancing_loop : null;
+    // --- END FIX ---
+
+
+    // --- Create Tab Navigation (Simplified) ---
     const tabNav = document.createElement("div");
     tabNav.className = "flex flex-wrap border-b border-white/20 -mx-6 px-6";
-    tabNav.innerHTML = `<button class="analysis-tab-btn active" data-tab="dashboard">📊 Strategic Dashboard</button><button class="analysis-tab-btn" data-tab="strategies">🗺️ Goals & Strategies</button><button class="analysis-tab-btn" data-tab="initiatives">🚀 Initiatives & KPIs</button>`;
+    tabNav.innerHTML = `
+        <button class="analysis-tab-btn active" data-tab="dashboard">📊 Strategic Dashboard</button>
+        ${hasLoops ? '<button class="analysis-tab-btn" data-tab="dynamics">🧠 System Dynamics</button>' : ''}
+        <button class="analysis-tab-btn" data-tab="learn">🎓 Learn OGSM</button>
+    `;
     container.appendChild(tabNav);
 
+    // --- Create Tab Panels (Simplified) ---
     const tabContent = document.createElement("div");
     container.appendChild(tabContent);
-    tabContent.innerHTML = `<div id="dashboardPanel" class="analysis-tab-panel active"></div><div id="strategiesPanel" class="analysis-tab-panel"></div><div id="initiativesPanel" class="analysis-tab-panel"></div>`;
+    tabContent.innerHTML = `
+        <div id="dashboardPanel" class="analysis-tab-panel active"></div>
+        ${hasLoops ? '<div id="dynamicsPanel" class="analysis-tab-panel"></div>' : ''}
+        <div id="learnPanel" class="analysis-tab-panel"></div>
+    `;
 
-    // --- 1. Dashboard Panel ---
+    // --- 1. Populate Dashboard Panel ---
     const dashboardPanel = dom.$("dashboardPanel");
     let dashboardHtml = `<div class="st-dashboard-container">
                 <div class="st-objective-card">
@@ -1164,42 +1476,84 @@ function renderSystemObjectivesPage_ST(container, data) {
                     <h3 class="text-2xl font-bold text-center mb-4">Key Goals</h3>
                     <div class="st-goals-grid">`;
     goals.forEach((goal) => {
-        dashboardHtml += `<div class="st-goal-card"><p class="text-lg font-bold">${goal}</p></div>`;
+        // Handle if 'goal' is a string (from new prompt) or an object (from old)
+        const goalName = (typeof goal === 'string') ? goal : goal.goal_name;
+        dashboardHtml += `<div class="st-goal-card"><p class="text-lg font-bold">${goalName}</p></div>`;
     });
-    dashboardHtml += `</div></div>
-                <div>
-                    <h3 class="text-2xl font-bold text-center mb-4">Influential System Dynamics</h3>
-                    <div class="st-loops-grid">
-                        <div class="bg-white/5 p-4 rounded-lg border-l-4 border-green-400"><h4 class="text-lg font-bold">📈 Reinforcing Loop</h4><p class="text-sm text-white/80 my-2">${feedback_loops.reinforcing_loop}</p></div>
-                        <div class="bg-white/5 p-4 rounded-lg border-l-4 border-yellow-400"><h4 class="text-lg font-bold">⚖️ Balancing Loop</h4><p class="text-sm text-white/80 my-2">${feedback_loops.balancing_loop}</p></div>
-                    </div>
-                </div>
-            </div>`;
+    dashboardHtml += `</div></div>`;
+    
+    // --- START FIX ---
+    // Only show "Influential System Dynamics" if loops were found
+    if (hasLoops) {
+        dashboardHtml += `
+                    <div>
+                        <h3 class="text-2xl font-bold text-center mb-4">Influential System Dynamics</h3>
+                        <div class="st-loops-grid">
+                            <div class="bg-white/5 p-4 rounded-lg border-l-4 border-green-400"><h4 class="text-lg font-bold">📈 Reinforcing Loop</h4><p class="text-sm text-white/80 my-2">${reinforcing_loop.description}</p></div>
+                            <div class="bg-white/5 p-4 rounded-lg border-l-4 border-yellow-400"><h4 class="text-lg font-bold">⚖️ Balancing Loop</h4><p class="text-sm text-white/80 my-2">${balancing_loop.description}</p></div>
+                        </div>
+                    </div>`;
+    } else {
+        // This will show for NexaFlow
+        dashboardHtml += `<p class="text-center text-white/70 italic">No dynamic feedback loops (problems) were identified; analysis is focused on amplifying core strengths.</p>`;
+    }
+    // --- END FIX ---
+
+    dashboardHtml += `</div>`;
     dashboardPanel.innerHTML = dashboardHtml;
 
-    // --- 2. Goals & Strategies Panel ---
-    const strategiesPanel = dom.$("strategiesPanel");
-    let strategiesHtml = `<div class="p-4 space-y-6">`;
-    strategies_and_initiatives.forEach((item) => {
-        strategiesHtml += `<div class="prescription-card">
-                    <p class="text-sm font-semibold text-indigo-300">GOAL</p>
-                    <h4 class="text-2xl font-bold mb-2">${item.goal}</h4>
-                    <p class="rationale"><strong>System-Aware Strategy:</strong> ${item.strategy}</p>
-                </div>`;
-    });
-    strategiesHtml += `</div>`;
-    strategiesPanel.innerHTML = strategiesHtml;
+    // --- 2. Populate System Dynamics Panel (Only if it exists) ---
+    if (hasLoops) {
+        const dynamicsPanel = dom.$("dynamicsPanel");
+        // This panel is simple, just repeats the loops from the dashboard
+        let dynamicsHtml = `<div class="p-4 space-y-6">
+            <h3 class="text-2xl font-bold text-center mb-4">Influential System Dynamics</h3>
+            <div class="bg-white/5 p-4 rounded-lg border-l-4 border-green-400">
+                <h4 class="text-lg font-bold">📈 Reinforcing Loop: ${reinforcing_loop.name}</h4>
+                <p class="text-sm text-white/80 my-2">${reinforcing_loop.description}</p>
+            </div>
+            <div class="bg-white/5 p-4 rounded-lg border-l-4 border-yellow-400">
+                <h4 class="text-lg font-bold">⚖️ Balancing Loop: ${balancing_loop.name}</h4>
+                <p class="text-sm text-white/80 my-2">${balancing_loop.description}</p>
+            </div>
+        </div>`;
+        dynamicsPanel.innerHTML = dynamicsHtml;
+    }
 
-    // --- 3. Initiatives & KPIs Panel ---
-    const initiativesPanel = dom.$("initiativesPanel");
-    let initiativesHtml = `<div class="p-4"><div class="overflow-x-auto"><table class="coeff-table"><thead><tr><th>Initiative</th><th>Related Goal</th><th>KPIs to Track</th></tr></thead><tbody>`;
-    strategies_and_initiatives.forEach((item) => {
-        item.initiatives.forEach((initiative) => {
-            initiativesHtml += `<tr><td>${initiative}</td><td>${item.goal}</td><td>${item.kpis.join(", ")}</td></tr>`;
-        });
-    });
-    initiativesHtml += `</tbody></table></div></div>`;
-    initiativesPanel.innerHTML = initiativesHtml;
+    // --- 3. Populate Learn Panel ---
+    const learnPanel = dom.$("learnPanel");
+    learnPanel.innerHTML = `
+        <div class="p-6 space-y-6 text-white/90">
+            <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding the OGSM Framework</h3>
+            <div class="bg-black/20 p-4 rounded-lg">
+                <h4 class="text-lg font-bold mb-2 text-indigo-300">What is OGSM?</h4>
+                <p class="text-sm text-white/80">OGSM (Objective, Goals, Strategies, Measures) is a strategic planning framework used to define what an organization wants to achieve and how it plans to get there, ensuring clear alignment from the highest-level objective down to specific metrics.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white/5 p-4 rounded-lg border border-white/10 space-y-4">
+                    <div>
+                        <h4 class="text-lg font-bold text-indigo-300">O - Objective</h4>
+                        <p class="text-sm">The single, overarching, ambitious, and qualitatively stated aim for the planning period (e.g., "Become the market leader"). It sets the direction.</p>
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-bold text-red-300">G - Goals</h4>
+                        <p class="text-sm">Specific, measurable (SMART), time-bound results that need to be achieved to reach the Objective (e.g., "Increase market share to 25% by EOY"). They define 'what' success looks like.</p>
+                    </div>
+                </div>
+                <div class="bg-white/5 p-4 rounded-lg border border-white/10 space-y-4">
+                        <div>
+                        <h4 class="text-lg font-bold text-yellow-300">S - Strategies</h4>
+                        <p class="text-sm">The choices and approaches ('how') that will be employed to achieve the Goals (e.g., "Expand into new geographic regions," "Launch innovative product line"). They describe the path.</p>
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-bold text-green-300">M - Measures</h4>
+                        <p class="text-sm">Specific metrics (KPIs) used to track the progress and success of the Strategies (e.g., "Number of new stores opened," "Revenue from new products"). They monitor performance.</p>
+                    </div>
+                </div>
+            </div>
+                <p class="text-xs text-center text-white/60 mt-4">This tool focuses on the **O (Objective)** and **G (Goals)**, deriving them from your system's context.</p>
+        </div>
+    `;
 
     appState.analysisCache[appState.currentTemplateId] = container.innerHTML;
     tabNav.addEventListener("click", (e) => {
@@ -1207,7 +1561,11 @@ function renderSystemObjectivesPage_ST(container, data) {
             tabNav.querySelectorAll(".analysis-tab-btn").forEach((btn) => btn.classList.remove("active"));
             tabContent.querySelectorAll(".analysis-tab-panel").forEach((pnl) => pnl.classList.remove("active"));
             e.target.classList.add("active");
-            dom.$(e.target.dataset.tab + "Panel").classList.add("active");
+            const targetPanelId = e.target.dataset.tab + "Panel";
+            const targetPanel = dom.$(targetPanelId);
+            if (targetPanel) {
+                targetPanel.classList.add("active");
+            }
         }
     });
     dom.$("analysisActions").classList.remove("hidden");

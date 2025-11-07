@@ -379,172 +379,162 @@ async function handleParetoFishboneAnalysis() {
 
 async function handleSystemThinkingAnalysis() {
     const analysisResultContainer = dom.$("analysisResult");
-    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white">Analyzing System Dynamics...</h3><p class="text-white/80 mb-2">Identifying elements, loops, and leverage points based on your description...</p></div>`; // Updated text
+    analysisResultContainer.innerHTML = `
+        <div class="text-center text-white/70 p-8">
+            <div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div>
+            <h3 class="text-xl font-semibold text-white mb-4">Analyzing System Context...</h3>
+            <p class="text-white/80 mb-2">Reading and interpreting your provided text...</p>
+        </div>`;
     setLoading("generate", true);
 
     // Define URL and Model
     const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
-    const MODEL_NAME = "llama3.1:latest"; // Consistent model
+    const MODEL_NAME = "llama3.1:latest";
+
+    let text = "";
+    let truncatedNote = "";
 
     try {
         // 1. Gather Inputs
         const useDoc = document.querySelector('input[name="inputType"]:checked').id === "docUpload";
-        let content = "";
         if (useDoc) {
             const file = dom.$("systemFile").files[0];
-            if (!file) throw new Error("Please select a document.");
-            content = await extractTextFromFile(file);
+            if (!file) throw new Error("Please select a document to upload.");
+            text = await extractTextFromFile(file);
         } else {
-            content = dom.$("systemContent").value.trim();
-            if (!content) throw new Error("Please describe the system.");
+            text = dom.$("systemContent").value.trim();
+            if (!text.trim()) throw new Error("Please describe the system.");
         }
 
         // Truncate if necessary
         const MAX_CONTEXT_LENGTH = 15000;
-        let truncatedNote = "";
-        if (content.length > MAX_CONTEXT_LENGTH) {
-            content = content.substring(0, MAX_CONTEXT_LENGTH);
+        if (text.length > MAX_CONTEXT_LENGTH) {
+            text = text.substring(0, MAX_CONTEXT_LENGTH);
             truncatedNote = `(Note: Analysis based on the first ${MAX_CONTEXT_LENGTH} characters.)`;
             console.warn(`System Thinking analysis context truncated.`);
         }
 
-        // 2. Construct ENHANCED Prompt
-        const prompt = `
-            You are an expert systems thinking analyst. Analyze the provided system description to identify its underlying structure, feedback loops, and potential leverage points based *only* on the provided text. ${truncatedNote}
+        // 2. --- STEP 2: Run the NEW, ROBUST Unified Prompt ---
+        analysisResultContainer.querySelector("p").textContent = "Running unified analysis...";
+        
+        // This new prompt has explicit if-then logic to check for research plans first.
+        const analysis_prompt = `
+            You are a master systems thinking analyst. Your task is to intelligently analyze the provided text and extract its systemic components.
+            Base ALL output EXCLUSIVELY on the provided text. Do not invent information. ${truncatedNote}
 
-            **USER'S SYSTEM DESCRIPTION:**
+            **USER'S TEXT:**
             \`\`\`
-            ${content}
+            ${text}
             \`\`\`
 
-            **DETAILED TASKS:**
-            1.  **Identify Elements (5-7 elements):** Extract key system elements mentioned or clearly implied. For each element:
-                * \`name\`: Concise name (2-4 words).
-                * \`type\`: Classify as "Stock" (accumulation), "Flow" (rate of change), "Variable" (influencing factor), or "Parameter" (constant/policy) based on context.
-            2.  **Identify Feedback Loops (1 Reinforcing, 1 Balancing):** Identify the *primary* reinforcing loop (driving growth/change) and the *primary* balancing loop (limiting/stabilizing) suggested by the text. For each loop:
-                * \`name\`: A descriptive name (e.g., "R1: Word of Mouth Growth", "B1: Service Capacity Limit").
-                * \`type\`: "Reinforcing" or "Balancing".
-                * \`description\`: Explain the causal chain step-by-step, explicitly mentioning how the elements interact (e.g., "Increased [Element A - Stock] leads to higher [Element B - Variable], which accelerates the [Element C - Flow], further increasing [Element A - Stock]").
-                * \`elements\`: List the names of the key elements involved in this specific loop.
-            3.  **System Behavior Summary:** Provide a concise \`summary\` explaining how the identified reinforcing and balancing loops interact to produce the overall behavior described or implied in the user's text.
-            4.  **Identify Leverage Points (2-3 points):** Pinpoint high-leverage points where interventions could significantly alter the system's behavior, based on the loop analysis. For each point:
-                * \`point_name\`: Name of the leverage point (often related to an element or connection).
-                * \`target_element\`: The specific element the intervention primarily affects.
-                * \`intervention\`: A concrete suggested action based on the context.
-                * \`expected_impact\`: Describe the intended effect on the feedback loops (e.g., "Strengthens R1 loop by increasing inflow X", "Weakens B1 loop by reducing constraint Y", "Alters goal of B1").
-            5.  **Self-Correction:** Before outputting JSON, rigorously check: Are all elements, loops, and leverage points derived *solely* from the text? Are element types correctly classified based on context? Are loop descriptions causally accurate and reference the identified elements? Does the summary explain the loop interplay? Are interventions linked to leverage points and expected impacts clearly stated in terms of loop effects? Is the JSON structure perfect? Fix all errors.
+            **DETAILED TASKS (Follow this order):**
 
-            **ABSOLUTE CONSTRAINTS:**
-            - **CONTEXT GROUNDING:** All output MUST be based *exclusively* on the provided SYSTEM DESCRIPTION. Do NOT invent elements, loops, or interventions not supported by the text.
-            - **SYSTEMS THINKING PRINCIPLES:** Apply concepts of stocks, flows, feedback loops, and leverage points correctly based on the context.
-            - **JSON FORMAT:** Adhere EXACTLY. Include ALL specified keys and sub-keys.
+            **Task 1: Determine Text Intent.**
+            First, read the text to determine its intent.
+            - Is it a **Research Plan** (contains "hypothesis", "H1:", "H2:", "constructs", "research study", "SEM analysis", "drivers of")?
+            - OR is it a **Dynamic System Problem** (contains "sales are falling", "growth stalled", "bottleneck", "we have a problem with...")?
+            - OR is it **Unanalyzable** (a poem, a random story, a shopping list, or text with no clear factors, services, or problems)?
 
-            **RETURN FORMAT:**
-            Provide ONLY a valid JSON object. **CRITICAL: Include ALL keys specified below.**
+            **Task 2: Generate JSON based on Intent (Ground all answers *strictly* in the text):**
+
+            **IF IT IS A RESEARCH PLAN (like the 'E-Commerce Customer Experience Research Study'):**
+                - You MUST return \`feedback_loops: []\`.
+                - You MUST return \`system_archetype: null\`.
+                - You MUST return \`leverage_points: null\`.
+                - You MUST populate \`elements\` with the constructs (e.g., "Service Quality", "Customer Satisfaction").
+                - You MUST populate \`causal_links\` from the hypotheses (e.g., "H1: Service Quality...").
+                - You MUST populate \`focus_areas\` from the "Research Objectives" or "Expected Business Impact" sections.
+            
+            **IF IT IS A DYNAMIC SYSTEM PROBLEM:**
+                - You MUST populate \`feedback_loops\` with any R/B loops you find.
+                - You MUST populate \`system_archetype\` (e.g., "Limits to Growth").
+                - You MUST populate \`leverage_points\` with interventions.
+                - You MUST return \`focus_areas: null\`.
+                - You MUST populate \`causal_links\` from the loops.
+            
+            **IF IT IS UNANALYZABLE:**
+            1.  **Elements (\`elements\`):** This MUST be an empty array [].
+            2.  **Feedback Loops (\`feedback_loops\`):** This MUST be an empty array [].
+            3.  **Summary (\`summary\`):** A clear explanation of why the text cannot be analyzed (e.g., "The provided text appears to be a [poem/story/etc.] and does not contain analyzable system components...").
+            4.  **Causal Links (\`causal_links\`):** This MUST be an empty array [].
+            5.  **System Archetype (\`system_archetype\`):** This MUST be null.
+            6.  **Leverage Points (\`leverage_points\`):** This MUST be null.
+            7.  **Focus Areas (\`focus_areas\`):** This MUST be null.
+
+            **Task 3: Extract Components (Strictly from text):**
+            1.  \`summary\`: A concise summary explaining *what the text is* and its main objective (or the error message if unanalyzable).
+            2.  \`elements\`: Extract 5-8 key elements/constructs (or [] if unanalyzable). For each:
+                * \`name\`: Concise name (e.g., "Service Quality").
+                * \`type\`: Classify as "Stock" (an accumulation, e.g., "Brand Trust") or "Variable" (a factor, e.g., "Service Quality").
+            3.  \`feedback_loops\`: (See Task 2).
+            4.  \`causal_links\`: List ALL 1-to-1 causal links *stated in the text* (or [] if unanalyzable). For each:
+                * \`from\`: Cause element.
+                * \`to\`: Effect element.
+                * \`polarity\`: "+" or "-".
+                * \`loop_name\`: Loop name (e.g., "R1") or "H" (for Hypothesis).
+                * \`description\`: The rationale/hypothesis from the text (e.g., "H1: ...").
+            5.  \`system_archetype\`: (See Task 2).
+            6.  \`leverage_points\`: (See Task 2).
+            7.  \`focus_areas\`: (See Task 2).
+
+            **RETURN FORMAT (Example for Unanalyzable Text):**
             {
-              "elements": [
-                {"name": "Customer Base", "type": "Stock"},
-                {"name": "New Customers Rate", "type": "Flow"},
-                {"name": "Service Quality", "type": "Variable"},
-                {"name": "Support Capacity", "type": "Stock"},
-                {"name": "Support Ticket Rate", "type": "Flow"},
-                {"name": "Company Policy X", "type": "Parameter"}
-              ],
-              "feedback_loops": [
-                {
-                  "name": "R1: Word of Mouth Growth",
-                  "type": "Reinforcing",
-                  "description": "A larger [Customer Base - Stock] leads to potentially higher [Service Quality - Variable] perceptions (if capacity holds), generating positive word-of-mouth which increases the [New Customers Rate - Flow], further growing the [Customer Base - Stock].",
-                  "elements": ["Customer Base", "Service Quality", "New Customers Rate"]
-                },
-                {
-                  "name": "B1: Support Capacity Limit",
-                  "type": "Balancing",
-                  "description": "A growing [Customer Base - Stock] increases the [Support Ticket Rate - Flow]. If this exceeds [Support Capacity - Stock], [Service Quality - Variable] declines, potentially reducing the [New Customers Rate - Flow] and slowing growth of the [Customer Base - Stock].",
-                  "elements": ["Customer Base", "Support Ticket Rate", "Support Capacity", "Service Quality", "New Customers Rate"]
-                }
-              ],
-              "summary": "The system shows potential for reinforcing growth (R1) driven by customer base and quality perception. However, this growth is likely limited by the balancing loop (B1) related to support capacity, which negatively impacts service quality when strained, thus counteracting the growth engine.",
-              "leverage_points": [
-                {
-                  "point_name": "Support Capacity Expansion",
-                  "target_element": "Support Capacity",
-                  "intervention": "Invest in hiring and training more support staff, or implement tools to increase efficiency, as suggested by the capacity limit bottleneck.",
-                  "expected_impact": "Weakens the B1 loop by increasing the threshold at which service quality degrades, allowing the R1 growth loop to operate more effectively for longer."
-                },
-                {
-                  "point_name": "Service Quality Monitoring",
-                  "target_element": "Service Quality",
-                  "intervention": "Implement real-time monitoring of service quality metrics (e.g., response time, CSAT) mentioned implicitly as important.",
-                  "expected_impact": "Provides faster feedback within the B1 loop, allowing quicker adjustments to capacity (part of the intervention for B1) before quality drops significantly, thus stabilizing R1."
-                },
-                 {
-                  "point_name": "Influence Policy X",
-                  "target_element": "Company Policy X",
-                  "intervention": "Re-evaluate 'Company Policy X' identified in the context to see if it inadvertently constrains growth or capacity.",
-                  "expected_impact": "Alters a system parameter, potentially weakening the B1 loop or modifying the goal/speed of the R1 loop depending on the policy's function."
-                }
-              ]
+                "summary": "The provided text could not be analyzed. It appears to be a shopping list and does not contain any system elements, problems, or research hypotheses.",
+                "elements": [],
+                "feedback_loops": [],
+                "causal_links": [],
+                "system_archetype": null,
+                "leverage_points": null,
+                "focus_areas": null
             }
         `;
 
-        // 3. Send Request to Ollama
-        console.log(`Sending ENHANCED System Thinking prompt to ${MODEL_NAME}...`);
-        const response = await fetch(OLLAMA_URL, {
+        // 3. Send the chosen analysis prompt
+        const analysis_response = await fetch(OLLAMA_URL, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ model: MODEL_NAME, prompt: prompt, stream: false, format: "json", options: { num_ctx: 32768 } })
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                model: MODEL_NAME,
+                prompt: analysis_prompt,
+                stream: false,
+                format: "json",
+                options: {
+                    num_ctx: 32768
+                }
+            })
         });
 
-        if (!response.ok) {
-            let errorBody = `API error ${response.status}`;
-            try { errorBody += `: ${await response.text()}`; } catch (e) {}
-            throw new Error(errorBody);
+        if (!analysis_response.ok) throw new Error(`AI Analysis Error: ${analysis_response.statusText}`);
+
+        const analysis_data = await analysis_response.json();
+        const finalParsedData = JSON.parse(analysis_data.response);
+
+        // 4. --- STEP 3: Render ---
+        analysisResultContainer.querySelector("p").textContent = "Step 3/3: Assembling analysis...";
+
+        // *** Validation for the final data (flexible) ***
+        if (!finalParsedData || !finalParsedData.summary || !finalParsedData.elements || !finalParsedData.causal_links ||
+            (finalParsedData.system_archetype === undefined && finalParsedData.focus_areas === undefined)
+        ) {
+            console.error("Validation Failed (Unified Handler): Final analysis data is missing key components.", finalParsedData);
+            throw new Error("AI response was incomplete. Missing summary, elements, or focus/leverage points.");
         }
 
-        const data = await response.json();
-        let parsedData;
-        console.log('Raw AI Response (System Thinking):', data.response); // Log raw response
-        try {
-            parsedData = JSON.parse(data.response);
-             // *** Refined Robust Validation ***
-             console.log('--- RAW AI JSON RESPONSE (Parsed - Enhanced System Thinking) ---');
-             console.log(JSON.stringify(parsedData, null, 2));
-             console.log('------------------------------------');
+        console.log("Successfully parsed unified analysis JSON:", finalParsedData);
 
-             if (!parsedData || typeof parsedData !== 'object' ||
-                 !Array.isArray(parsedData.elements) || parsedData.elements.length < 3 || // Expect a few elements
-                 !Array.isArray(parsedData.feedback_loops) || parsedData.feedback_loops.length < 1 || // Expect at least one loop
-                 !parsedData.summary || typeof parsedData.summary !== 'string' ||
-                 !Array.isArray(parsedData.leverage_points) || parsedData.leverage_points.length < 1 || // Expect at least one point
-                 // Check structure of first elements if they exist
-                 (parsedData.elements.length > 0 && (typeof parsedData.elements[0] !== 'object' || !parsedData.elements[0].hasOwnProperty('name') || !parsedData.elements[0].hasOwnProperty('type'))) ||
-                 (parsedData.feedback_loops.length > 0 && (typeof parsedData.feedback_loops[0] !== 'object' || !parsedData.feedback_loops[0].hasOwnProperty('name') || !parsedData.feedback_loops[0].hasOwnProperty('description') || !Array.isArray(parsedData.feedback_loops[0].elements))) ||
-                 (parsedData.leverage_points.length > 0 && (typeof parsedData.leverage_points[0] !== 'object' || !parsedData.leverage_points[0].hasOwnProperty('point_name') || !parsedData.leverage_points[0].hasOwnProperty('intervention') || !parsedData.leverage_points[0].hasOwnProperty('expected_impact')))
-                )
-             {
-                  console.error("Validation Failed (Enhanced System Thinking): Required fields missing or invalid structure.", parsedData);
-                  throw new Error(`AI response structure is incorrect or inconsistent (Enhanced System Thinking). Check elements, loops, summary, and leverage points. See console logs.`);
-             }
-             console.log(`Successfully parsed ENHANCED System Thinking JSON using ${MODEL_NAME}. Found ${parsedData.elements.length} elements.`);
-
-        } catch (e) {
-            console.error(`Failed to parse/validate ENHANCED System Thinking JSON using ${MODEL_NAME}:`, data?.response, e);
-            throw new Error(`Invalid JSON received or validation failed (Enhanced System Thinking): ${e.message}. See raw response in console.`);
-        }
-
-        // 4. Render Results
-        renderST.renderSystemThinkingPage(analysisResultContainer, parsedData);
+        // 5. Render Results
+        renderST.renderSystemThinkingPage(analysisResultContainer, finalParsedData); // Call the flexible renderer
 
     } catch (error) {
-        console.error(`Error in handleSystemThinkingAnalysis (Enhanced) using ${MODEL_NAME}:`, error);
+        console.error(`Error in handleSystemThinkingAnalysis (Unified v4):`, error);
         analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
         setLoading("generate", false);
     } finally {
-        // Ensure loading stops reliably
-         if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
+        if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
             setLoading("generate", false);
-         }
+        }
     }
 }
 
@@ -556,13 +546,13 @@ async function handleLeveragePointsAnalysis() {
         <div class="text-center text-white/70 p-8">
             <div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div>
             <h3 class="text-xl font-semibold text-white mb-4">Performing Full System Leverage Analysis</h3>
-            <p class="text-white/80 mb-2">Identifying elements, feedback loops, and high-impact intervention points...</p> <!-- Updated text -->
+            <p class="text-white/80 mb-2">Identifying elements, feedback loops, and high-impact intervention points...</p>
         </div>`;
     setLoading("generate", true);
 
     // Define URL and Model
     const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
-    const MODEL_NAME = "llama3.1:latest"; // Consistent model
+    const MODEL_NAME = "llama3.1:latest";
 
     try {
         // 1. Gather Inputs
@@ -588,86 +578,113 @@ async function handleLeveragePointsAnalysis() {
         }
 
 
-        // 2. Construct ENHANCED Prompt
+        // 2. --- NEW ENHANCED PROMPT (v3 with UNANALYZABLE path) ---
         const prompt = `
-            You are a master systems thinking analyst applying principles similar to Donella Meadows' leverage points hierarchy. Your task is to analyze the provided system description, identify its structure, and pinpoint high-impact leverage points based *only* on the provided text. ${truncatedNote}
+            You are a master systems thinking analyst. Your task is to analyze the provided text, determine its intent, and identify its key leverage points based *only* on the provided text. ${truncatedNote}
 
             **USER'S SYSTEM DESCRIPTION:**
             \`\`\`
             ${text}
             \`\`\`
 
-            **DETAILED TASKS:**
-            1.  **Identify Elements (5-7 elements):** Extract key system elements mentioned or clearly implied. For each element:
-                * \`name\`: Concise name (2-4 words).
-                * \`type\`: Classify as "Stock" (accumulation), "Flow" (rate of change), "Variable" (influencing factor), or "Parameter" (constant/policy) based on context.
-            2.  **Identify Feedback Loops (1 Reinforcing, 1 Balancing):** Identify the *primary* reinforcing loop (driving growth/change) and the *primary* balancing loop (limiting/stabilizing) suggested by the text. For each loop:
-                * \`name\`: A descriptive name (e.g., "R1: Market Growth Engine", "B1: Resource Constraint").
-                * \`type\`: "Reinforcing" or "Balancing".
-                * \`description\`: Explain the causal chain step-by-step, explicitly mentioning how the identified elements interact (e.g., "Increased [Element A - Stock] leads to higher [Element B - Variable], which accelerates the [Element C - Flow], further increasing [Element A - Stock]").
-                * \`elements\`: List the names of the key elements involved in this specific loop.
-            3.  **System Behavior Summary:** Provide a concise \`summary\` explaining how the identified reinforcing and balancing loops interact to produce the overall behavior described or implied in the user's text.
-            4.  **Identify Leverage Points (3-4 points, ranked):** Pinpoint high-leverage points where interventions could significantly alter the system's behavior, based *only* on the loop analysis and context. For each point:
-                * \`point_name\`: Name of the leverage point (e.g., "Adjusting [Parameter Name]", "Influencing [Variable Name]", "Changing Goal of [Balancing Loop Name]").
-                * \`potential_impact_rank\`: Rank the potential impact as "High", "Medium", or "Low" based on systems principles (e.g., changing parameters is often lower leverage than changing goals or loop structure). Provide a brief justification for the rank based on Meadows' concepts if applicable (e.g., "Lower leverage - Parameter Adjustment", "Higher leverage - Goal Change").
-                * \`target_element_or_loop\`: The specific element, connection, or loop the intervention primarily affects.
-                * \`intervention\`: A concrete suggested action based *only* on the context provided.
-                * \`rationale\`: Explain *why* this is a leverage point according to system structure (e.g., "This parameter influences the speed of R1", "This intervention changes the information flow in B1").
-                * \`expected_outcome\`: Describe the intended effect on the system's behavior and the identified loops (e.g., "Accelerate growth by strengthening R1", "Stabilize system by reducing oscillations in B1").
-            5.  **Self-Correction:** Before outputting JSON, rigorously check: Is everything derived *solely* from the text? Are element types correct? Are loop descriptions causally accurate? Does the summary explain loop interplay? Are leverage points ranked plausibly? Is the intervention rationale clear and linked to system structure/loops? Is the JSON structure perfect? Fix all errors.
+            **DETAILED TASKS (Follow this order):**
 
+            **Task 1: Determine Text Intent.**
+            First, read the text to determine its intent.
+            - Is it a **Dynamic System Problem** (contains "sales are falling", "growth stalled", "bottleneck", "we have a problem with...")?
+            - OR is it a **Descriptive Company Profile** (listing services, features, and differentiators, like "NexaFlow Capital...")?
+            - OR is it **Unanalyzable** (a poem, a random story, a shopping list, or text with no clear factors, services, or problems)?
+
+            **Task 2: Generate JSON based on Intent (Ground all answers *strictly* in the text):**
+
+            **IF IT IS A DYNAMIC SYSTEM PROBLEM:**
+            1.  **Elements (\`elements\`):** Extract 5-7 key elements (Stocks, Flows, Variables).
+            2.  **Feedback Loops (\`feedback_loops\`):** Identify the 1-2 primary Reinforcing and Balancing loops *described in the text*.
+            3.  **Summary (\`summary\`):** Summarize the dynamic problem caused by the loop interactions.
+            4.  **Leverage Points (\`leverage_points\`):** Identify 3-4 *interventions* to fix or influence the loops. Rank them by "High", "Medium", "Low" impact. For each:
+                * \`point_name\`: Name of the intervention (e.g., "Adjust Support Staffing").
+                * \`potential_impact_rank\`: "High", "Medium", or "Low".
+                * \`intervention\`: The specific action (e.g., "Increase budget parameter...").
+                * \`rationale\`: How it fixes the loop (e.g., "Weakens B1 constraint...").
+                * \`expected_outcome\`: The expected result (e.g., "Allow more growth...").
+
+            **IF IT IS A DESCRIPTIVE COMPANY PROFILE (like NexaFlow):**
+            1.  **Elements (\`elements\`):** Extract the 5-7 key services, features, or differentiators as "Variable" or "Stock" elements (e.g., "AI-driven investment advisory", "NexaScore AI engine").
+            2.  **Feedback Loops (\`feedback_loops\`):** This MUST be an empty array [].
+            3.  **Summary (\`summary\`):** A simple 1-sentence description of the company (e.g., "NexaFlow Capital is a FinTech...").
+            4.  **Leverage Points (\`leverage_points\`):** Identify the 3-4 most important **"Differentiators"** or **"Core Services"** listed. These are the leverage points.
+                * \`point_name\`: The name of the differentiator (e.g., "NexaScore AI engine").
+                * \`potential_impact_rank\`: "High" (for differentiators) or "Medium" (for core services).
+                * \`target_element_or_loop\`: The name of the element itself (e.g., "NexaScore AI engine").
+                * \`intervention\`: An action to *amplify* this strength (e.g., "Enhance and scale the NexaScore AI engine").
+                * \`rationale\`: Why this is a key strategic advantage (e.g., "This is a proprietary asset that provides a competitive edge...").
+                * \`expected_outcome\`: The business result of amplifying it (e.g., "Increase market share and solidify position...").
+            
+            **IF IT IS UNANALYZABLE:**
+            1.  **Elements (\`elements\`):** This MUST be an empty array [].
+            2.  **Feedback Loops (\`feedback_loops\`):** This MUST be an empty array [].
+            3.  **Summary (\`summary\`):** A clear explanation of why the text cannot be analyzed (e.g., "The provided text appears to be a [poem/story/etc.] and does not contain analyzable system components...").
+            4.  **Leverage Points (\`leverage_points\`):** This MUST be an empty array [].
+            
             **ABSOLUTE CONSTRAINTS:**
-            - **CONTEXT GROUNDING:** All output MUST be based *exclusively* on the provided SYSTEM DESCRIPTION. Do NOT invent information.
-            - **SYSTEMS PRINCIPLES:** Apply concepts correctly. Leverage point ranking should generally follow Meadows' hierarchy (changing goals > rules > information > parameters).
-            - **JSON FORMAT:** Adhere EXACTLY. Include ALL specified keys.
+            - STICK TO THE TEXT. Do NOT invent information.
+            - If the text is descriptive, DO NOT invent feedback loops.
+            - JSON format must be perfect.
 
-            **RETURN FORMAT:**
-            Provide ONLY a valid JSON object. **CRITICAL: Include ALL keys specified below.** Rank leverage points by potential impact (High first).
+            **RETURN FORMAT (Example for a Descriptive Profile):**
             {
-              "elements": [ /* ... */ ],
-              "feedback_loops": [ /* ... */ ],
-              "summary": "...",
-              "leverage_points": [ // Ranked High -> Low
+                "elements": [
+                {"name": "AI-driven investment advisory", "type": "Variable"},
+                {"name": "NexaScore AI engine", "type": "Variable"},
+                {"name": "Blockchain-audited trails", "type": "Variable"}
+                ],
+                "feedback_loops": [],
+                "summary": "NexaFlow Capital is a digital-first financial services company offering AI-driven investment advisory...",
+                "leverage_points": [
                 {
-                  "point_name": "Shift System Goal",
-                  "potential_impact_rank": "High - Goal Change", // Justification included
-                  "target_element_or_loop": "B1 Loop Goal",
-                  "intervention": "Redefine the success metric for support from 'ticket closure rate' to 'customer retention impact', as implied by churn issues.",
-                  "rationale": "Changing the goal of a balancing loop is high leverage; it fundamentally alters behavior by shifting focus from speed to quality.",
-                  "expected_outcome": "Shift focus towards actions that improve long-term retention (strengthening R1 indirectly) rather than just closing tickets quickly (weakening B1's negative impact)."
+                    "point_name": "Proprietary NexaScore AI engine",
+                    "potential_impact_rank": "High",
+                    "target_element_or_loop": "NexaScore AI engine",
+                    "intervention": "Enhance and scale the NexaScore AI engine",
+                    "rationale": "This is a key proprietary differentiator that provides a significant competitive advantage in real-time credit scoring.",
+                    "expected_outcome": "Solidify market leadership and attract more SME lending clients."
                 },
                 {
-                   "point_name": "Improve Information Flow",
-                   "potential_impact_rank": "Medium - Information Flow",
-                   "target_element_or_loop": "Service Quality -> New Customers Rate Link",
-                   "intervention": "Implement proactive communication about quality issues based on real-time monitoring.",
-                   "rationale": "Adding timely, accurate information flow allows the system to self-correct faster, dampening oscillations caused by delays in the B1 loop.",
-                   "expected_outcome": "Reduce negative word-of-mouth impact by managing expectations, thus stabilizing the R1 loop."
-                },
-                {
-                  "point_name": "Adjust Support Staffing Parameter",
-                  "potential_impact_rank": "Low - Parameter Adjustment",
-                  "target_element_or_loop": "Support Capacity",
-                  "intervention": "Increase the budget parameter for support staff hiring mentioned in the capacity constraint.",
-                  "rationale": "Adjusting parameters (like numbers, buffer sizes) is typically lower leverage but directly addresses the B1 constraint.",
-                  "expected_outcome": "Increase the threshold of the B1 loop, allowing more growth before quality degrades, weakening B1's limiting effect."
+                    "point_name": "Blockchain-audited transaction trails",
+                    "potential_impact_rank": "Medium",
+                    "target_element_or_loop": "Blockchain-audited trails",
+                    "intervention": "Market the transparency of blockchain-audited trails",
+                    "rationale": "This feature directly addresses the 'unprecedented transparency' value proposition.",
+                    "expected_outcome": "Increase trust and adoption of DeFi payment services."
                 }
-                // ... potentially one more ...
-              ]
+                ]
             }
         `;
+        // --- END OF NEW PROMPT ---
 
         // 3. Send Request to Ollama
-        console.log(`Sending ENHANCED Leverage Points prompt to ${MODEL_NAME}...`);
+        console.log(`Sending ENHANCED Leverage Points prompt (v3) to ${MODEL_NAME}...`);
         const response = await fetch(OLLAMA_URL, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ model: MODEL_NAME, prompt: prompt, stream: false, format: "json", options: { num_ctx: 32768 } })
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                model: MODEL_NAME,
+                prompt: prompt,
+                stream: false,
+                format: "json",
+                options: {
+                    num_ctx: 32768
+                }
+            })
         });
 
         if (!response.ok) {
             let errorBody = `API error ${response.status}`;
-            try { errorBody += `: ${await response.text()}`; } catch (e) {}
+            try {
+                errorBody += `: ${await response.text()}`;
+            } catch (e) {}
             throw new Error(errorBody);
         }
 
@@ -676,49 +693,49 @@ async function handleLeveragePointsAnalysis() {
         console.log('Raw AI Response (Leverage Points):', data.response); // Log raw response
         try {
             parsedData = JSON.parse(data.response);
-             // *** Refined Robust Validation ***
-             console.log('--- RAW AI JSON RESPONSE (Parsed - Enhanced Leverage Points) ---');
-             console.log(JSON.stringify(parsedData, null, 2));
-             console.log('------------------------------------');
+            // *** Refined Robust Validation ***
+            console.log('--- RAW AI JSON RESPONSE (Parsed - Enhanced Leverage Points v3) ---');
+            console.log(JSON.stringify(parsedData, null, 2));
+            console.log('------------------------------------');
 
-             if (!parsedData || typeof parsedData !== 'object' ||
-                 !Array.isArray(parsedData.elements) || parsedData.elements.length < 3 ||
-                 !Array.isArray(parsedData.feedback_loops) || parsedData.feedback_loops.length < 1 ||
-                 !parsedData.summary || typeof parsedData.summary !== 'string' ||
-                 !Array.isArray(parsedData.leverage_points) || parsedData.leverage_points.length < 1 ||
-                 // Check structure of first elements if they exist
-                 (parsedData.elements.length > 0 && (typeof parsedData.elements[0] !== 'object' || !parsedData.elements[0].hasOwnProperty('name') || !parsedData.elements[0].hasOwnProperty('type'))) ||
-                 (parsedData.feedback_loops.length > 0 && (typeof parsedData.feedback_loops[0] !== 'object' || !parsedData.feedback_loops[0].hasOwnProperty('name') || !parsedData.feedback_loops[0].hasOwnProperty('description') || !Array.isArray(parsedData.feedback_loops[0].elements))) ||
-                 (parsedData.leverage_points.length > 0 && (typeof parsedData.leverage_points[0] !== 'object' || !parsedData.leverage_points[0].hasOwnProperty('point_name') || !parsedData.leverage_points[0].hasOwnProperty('potential_impact_rank') || !parsedData.leverage_points[0].hasOwnProperty('intervention') || !parsedData.leverage_points[0].hasOwnProperty('rationale') || !parsedData.leverage_points[0].hasOwnProperty('expected_outcome')))
-                )
-             {
-                  console.error("Validation Failed (Enhanced Leverage Points): Required fields missing or invalid structure.", parsedData);
-                  throw new Error(`AI response structure is incorrect or inconsistent (Enhanced Leverage Points). Check elements, loops, summary, and leverage points structure. See console logs.`);
-             }
-             // Ensure leverage points are sorted High -> Low (simple check on first element if multiple)
-             if (parsedData.leverage_points.length > 1 && parsedData.leverage_points[0].potential_impact_rank?.startsWith('Low')) {
-                 console.warn("Leverage points may not be correctly sorted by impact rank.");
-             }
-
-             console.log(`Successfully parsed ENHANCED Leverage Points JSON using ${MODEL_NAME}. Found ${parsedData.leverage_points.length} leverage points.`);
+            if (!parsedData || typeof parsedData !== 'object' ||
+                !Array.isArray(parsedData.elements) ||
+                !Array.isArray(parsedData.feedback_loops) || // Must be an array, even if empty
+                !parsedData.summary || typeof parsedData.summary !== 'string' ||
+                !Array.isArray(parsedData.leverage_points) || // Must be an array, even if empty
+                
+                // Check for invalid state: must have leverage points IF elements exist
+                (parsedData.elements.length > 0 && parsedData.leverage_points.length < 1) ||
+                
+                // Check for valid state: must have NO leverage points IF elements are empty
+                (parsedData.elements.length === 0 && parsedData.leverage_points.length > 0)
+            ) {
+                // This logic handles the "Unanalyzable" case (elements: [], leverage_points: []) as VALID
+                // But flags a case where AI finds elements but fails to find leverage points.
+                if (parsedData.elements.length > 0 && parsedData.leverage_points.length < 1) {
+                        console.error("Validation Failed (Enhanced Leverage Points v3): AI found elements but no leverage points.", parsedData);
+                        throw new Error(`AI response structure is inconsistent. Found elements but no leverage points.`);
+                }
+            }
+            console.log(`Successfully parsed ENHANCED Leverage Points JSON (v3) using ${MODEL_NAME}. Found ${parsedData.leverage_points.length} leverage points.`);
 
         } catch (e) {
-            console.error(`Failed to parse/validate ENHANCED Leverage Points JSON using ${MODEL_NAME}:`, data?.response, e);
-            throw new Error(`Invalid JSON received or validation failed (Enhanced Leverage Points): ${e.message}. See raw response in console.`);
+            console.error(`Failed to parse/validate ENHANCED Leverage Points JSON (v3) using ${MODEL_NAME}:`, data?.response, e);
+            throw new Error(`Invalid JSON received or validation failed (Enhanced Leverage Points v3): ${e.message}. See raw response in console.`);
         }
 
         // 4. Render Results
         renderST.renderLeveragePointsPage(analysisResultContainer, parsedData);
 
     } catch (error) {
-        console.error(`Error in handleLeveragePointsAnalysis (Enhanced) using ${MODEL_NAME}:`, error);
+        console.error(`Error in handleLeveragePointsAnalysis (Enhanced v3) using ${MODEL_NAME}:`, error);
         analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
         setLoading("generate", false);
     } finally {
         // Ensure loading stops reliably
-         if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
+        if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
             setLoading("generate", false);
-         }
+        }
     }
 }
 
@@ -886,7 +903,7 @@ async function handleSystemGoalsAnalysis() {
         <div class="text-center text-white/70 p-8">
             <div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div>
             <h3 class="text-xl font-semibold text-white mb-4">Formulating System-Aware Goals & Initiatives</h3>
-            <p class="text-white/80 mb-2">Analyzing feedback loops to identify strategic interventions based on your input...</p> <!-- Updated text -->
+            <p class="text-white/80 mb-2">Analyzing your context to identify strategic interventions...</p>
         </div>`;
     setLoading("generate", true);
 
@@ -918,85 +935,105 @@ async function handleSystemGoalsAnalysis() {
             console.warn(`System Goals analysis context truncated.`);
         }
 
-        // 2. Construct ENHANCED Prompt
+        // 2. --- NEW ENHANCED PROMPT (v3 with UNANALYZABLE path) ---
         const prompt = `
-            You are a senior strategic consultant specializing in applying systems thinking to business goals. Based *only* on the provided system description and desired outcome, formulate a high-level system goal and develop strategic initiatives grounded in feedback loop analysis. ${truncatedNote}
+            You are a master strategic consultant. Your task is to analyze the provided text, determine its intent, and formulate a high-level goal and strategic initiatives based *only* on the provided text. ${truncatedNote}
 
-            **USER'S SYSTEM DESCRIPTION & GOAL CONTEXT:**
+            **USER'S SYSTEM DESCRIPTION / GOAL CONTEXT:**
             \`\`\`
             ${text}
             \`\`\`
 
-            **DETAILED TASKS:**
-            1.  **Define System Goal:** Refine the user's input into a single, concise, measurable \`system_goal\` (SMART goal if possible).
-            2.  **Identify Key Loops:** Based *only* on the text, identify the primary \`reinforcing_loop\` (driving towards the goal) and the primary \`balancing_loop\` (hindering or limiting the goal). For each loop:
-                * \`name\`: Descriptive name (e.g., "R1: Customer Growth Engine").
-                * \`description\`: Explain the causal chain step-by-step, explicitly mentioning elements from the text.
-                * \`elements\`: List key elements from the text involved in this loop.
-            3.  **Develop Strategic Initiatives (2-3 initiatives):** Create initiatives to achieve the goal by manipulating the identified loops. For each initiative:
-                * \`initiative_name\`: Clear, action-oriented name.
-                * \`rationale\`: Explain *specifically* how this initiative manipulates the loops (e.g., "Strengthens R1 by enhancing [Element X]", "Weakens B1 by addressing [Element Y constraint mentioned in text]"). Must be grounded in the text.
-                * \`objectives\`: List 2-3 specific, actionable objectives for this initiative based on the context.
-                * \`kpis\`: List 2-3 specific KPIs to track the success of this initiative, relevant to the objectives and context.
-            4.  **Self-Correction:** Rigorously check: Is the goal derived solely from input? Are loops and elements accurately extracted from text? Does initiative rationale *explicitly* reference loop manipulation based on text? Are objectives/KPIs context-specific? Is JSON structure perfect? Fix all errors.
+            **DETAILED TASKS (Follow this order):**
 
+            **Task 1: Determine Text Intent.**
+            First, read the text to determine its intent.
+            - Is it a **Dynamic System Problem** (contains "sales are falling", "growth stalled", "bottleneck", "we have a problem with...")?
+            - OR is it a **Descriptive Company Profile** (listing services, features, and differentiators, like "NexaFlow Capital...")?
+            - OR is it **Unanalyzable** (a poem, a random story, a shopping list, or text with no clear factors, services, or problems)?
+
+            **Task 2: Generate JSON based on Intent (Ground all answers *strictly* in the text):**
+
+            **IF IT IS A DYNAMIC SYSTEM PROBLEM:**
+            1.  **System Goal (\`system_goal\`):** Refine the user's input into a single, measurable SMART goal to *fix the problem*.
+            2.  **Key Loops (\`key_loops\`):** Identify the primary \`reinforcing_loop\` and \`balancing_loop\` *causing the problem*.
+            3.  **Strategic Initiatives (\`strategic_initiatives\`):** Develop 2-3 initiatives to achieve the goal by *manipulating the identified loops* (e.g., "Strengthen R1", "Weaken B1"). For each:
+                * \`initiative_name\`: Action-oriented name.
+                * \`rationale\`: How it fixes the loop, based on text.
+                * \`objectives\`: 2-3 specific sub-objectives.
+                * \`kpis\`: 2-3 KPIs to track success.
+
+            **IF IT IS A DESCRIPTIVE COMPANY PROFILE (like NexaFlow):**
+            1.  **System Goal (\`system_goal\`):** Define a high-level strategic goal based on the company's description (e.g., "Achieve market leadership by leveraging core differentiators").
+            2.  **Key Loops (\`key_loops\`):** This MUST be null or have empty loops, as no dynamic problem is described.
+            3.  **Strategic Initiatives (\`strategic_initiatives\`):** Identify the 2-3 most important **"Differentiators"** or **"Core Services"** as initiatives. For each:
+                * \`initiative_name\`: The name of the differentiator (e.g., "Amplify NexaScore AI Engine").
+                * \`rationale\`: Why this is a key strategic initiative to *amplify* to achieve the goal (e.g., "This proprietary asset is the core driver of competitive advantage...").
+                * \`objectives\`: 2-3 objectives for *amplifying* this strength (e.g., "Expand NexaScore into new verticals...").
+                * \`kpis\`: 2-3 KPIs to track this amplification (e.g., "New client acquisition rate...").
+
+            **IF IT IS UNANALYZABLE:**
+            1.  **System Goal (\`system_goal\`):** A clear explanation of why the text cannot be analyzed.
+            2.  **Key Loops (\`key_loops\`):** This MUST be null.
+            3.  **Strategic Initiatives (\`strategic_initiatives\`):** This MUST be an empty array [].
+            
             **ABSOLUTE CONSTRAINTS:**
-            - **CONTEXT GROUNDING:** All output MUST be based *exclusively* on the provided text. Do NOT invent information.
-            - **LOOP MANIPULATION RATIONALE:** Initiative rationale MUST explain how it targets the identified loops based on text evidence.
-            - **JSON FORMAT:** Adhere EXACTLY. Include ALL specified keys.
+            - STICK TO THE TEXT. Do NOT invent information.
+            - If the text is descriptive, DO NOT invent feedback loops.
+            - JSON format must be perfect.
 
-            **RETURN FORMAT:**
-            Provide ONLY a valid JSON object. **CRITICAL: Include ALL keys specified below.**
+            **RETURN FORMAT (Example for a Descriptive Profile):**
             {
-              "system_goal": "Increase the customer retention rate from X% to Y% within 18 months, based on the described churn problem.",
-              "key_loops": {
-                "reinforcing_loop": {
-                  "name": "R1: Customer Loyalty Loop",
-                  "description": "High product quality mentioned in text leads to greater customer satisfaction, driving positive word-of-mouth and repeat purchases, growing the loyal customer base.",
-                  "elements": ["Product Quality", "Customer Satisfaction", "Word-of-Mouth", "Repeat Purchases", "Loyal Customer Base"]
-                },
-                "balancing_loop": {
-                  "name": "B1: Support Strain Loop",
-                  "description": "As the customer base grows (mentioned implicitly), support ticket volume increases. Text implies support capacity is limited, causing service quality to drop, leading to frustration and churn, limiting growth.",
-                  "elements": ["Customer Base", "Support Tickets", "Support Capacity", "Service Quality", "Churn Rate"]
-                }
-              },
-              "strategic_initiatives": [
+                "system_goal": "Achieve market leadership in FinTech by leveraging proprietary AI and blockchain technology.",
+                "key_loops": null,
+                "strategic_initiatives": [
                 {
-                  "initiative_name": "Proactive Quality & Success",
-                  "rationale": "Strengthens the R1 'Loyalty Loop' by directly improving 'Product Quality' and 'Customer Satisfaction' mentioned as drivers, while weakening B1 by reducing the 'Support Tickets' flow arising from issues.",
-                  "objectives": [
-                    "Implement predictive analytics (based on described data) to identify at-risk customers with 90% accuracy.",
-                    "Reduce critical bug reports mentioned by 50% via improved QA.",
-                    "Launch targeted onboarding for features users struggle with (per text)."
-                  ],
-                  "kpis": ["Customer Retention Rate", "CSAT Score", "Support Ticket Volume"]
+                    "initiative_name": "Scale Proprietary NexaScore™ AI Engine",
+                    "rationale": "This is the core differentiator. Scaling it amplifies the company's competitive advantage in AI-based credit scoring.",
+                    "objectives": [
+                    "Integrate new alternative data sets into the NexaScore model.",
+                    "Market the NexaScore engine as a standalone B2B service.",
+                    "Reduce credit risk scoring time by 30%."
+                    ],
+                    "kpis": ["NexaScore accuracy rate", "New B2B client acquisition", "Scoring time (ms)"]
                 },
                 {
-                  "initiative_name": "Scale Support Infrastructure",
-                  "rationale": "Directly addresses the limiting factor ('Support Capacity') in the B1 'Support Strain Loop' identified from the text, allowing R1 to function more effectively.",
-                  "objectives": [
-                    "Decrease average support resolution time by 40% (addressing 'frustration' mentioned).",
-                    "Implement AI knowledge base (leveraging 'mentioned data') to deflect 25% common queries."
-                  ],
-                  "kpis": ["Average Resolution Time", "First Contact Resolution Rate", "Knowledge Base Usage"]
+                    "initiative_name": "Expand Cross-Border DeFi Payments",
+                    "rationale": "Leverages the unique blockchain-audited transparency to build trust and capture a larger share of the cross-border market.",
+                    "objectives": [
+                    "Form partnerships with 3 new stablecoin providers.",
+                    "Increase cross-border transaction volume by 50%."
+                    ],
+                    "kpis": ["Transaction Volume", "New Partnerships", "Customer Feedback on Transparency"]
                 }
-                // ... potentially one more ...
-              ]
+                ]
             }
         `;
+        // --- END OF NEW PROMPT ---
 
         // 3. Send Request to Ollama
-        console.log(`Sending ENHANCED System Goals prompt to ${MODEL_NAME}...`);
+        console.log(`Sending ENHANCED System Goals prompt (v3) to ${MODEL_NAME}...`);
         const response = await fetch(OLLAMA_URL, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ model: MODEL_NAME, prompt: prompt, stream: false, format: "json", options: { num_ctx: 32768 } })
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                model: MODEL_NAME,
+                prompt: prompt,
+                stream: false,
+                format: "json",
+                options: {
+                    num_ctx: 32768
+                }
+            })
         });
 
         if (!response.ok) {
             let errorBody = `API error ${response.status}`;
-            try { errorBody += `: ${await response.text()}`; } catch (e) {}
+            try {
+                errorBody += `: ${await response.text()}`;
+            } catch (e) {}
             throw new Error(errorBody);
         }
 
@@ -1005,50 +1042,47 @@ async function handleSystemGoalsAnalysis() {
         console.log('Raw AI Response (System Goals):', data.response); // Log raw response
         try {
             parsedData = JSON.parse(data.response);
-             // *** Refined Robust Validation ***
-             console.log('--- RAW AI JSON RESPONSE (Parsed - Enhanced System Goals) ---');
-             console.log(JSON.stringify(parsedData, null, 2));
-             console.log('------------------------------------');
+            // *** Refined Robust Validation ***
+            console.log('--- RAW AI JSON RESPONSE (Parsed - Enhanced System Goals v3) ---');
+            console.log(JSON.stringify(parsedData, null, 2));
+            console.log('------------------------------------');
 
             if (!parsedData || typeof parsedData !== 'object' ||
-                 !parsedData.system_goal || typeof parsedData.system_goal !== 'string' ||
-                 !parsedData.key_loops || typeof parsedData.key_loops !== 'object' ||
-                 !parsedData.key_loops.reinforcing_loop || typeof parsedData.key_loops.reinforcing_loop !== 'object' || !parsedData.key_loops.reinforcing_loop.name ||
-                 !parsedData.key_loops.balancing_loop || typeof parsedData.key_loops.balancing_loop !== 'object' || !parsedData.key_loops.balancing_loop.name ||
-                 !Array.isArray(parsedData.strategic_initiatives) || parsedData.strategic_initiatives.length < 1 || // Expect at least one initiative
-                 // Check structure of first initiative
-                 (parsedData.strategic_initiatives.length > 0 && (
-                     typeof parsedData.strategic_initiatives[0] !== 'object' ||
-                     !parsedData.strategic_initiatives[0].hasOwnProperty('initiative_name') ||
-                     !parsedData.strategic_initiatives[0].hasOwnProperty('rationale') ||
-                     !Array.isArray(parsedData.strategic_initiatives[0].objectives) ||
-                     !Array.isArray(parsedData.strategic_initiatives[0].kpis)
-                 ))
-               )
-            {
-                 console.error("Validation Failed (Enhanced System Goals): Required fields missing or invalid structure.", parsedData);
-                 throw new Error(`AI response structure is incorrect or inconsistent (Enhanced System Goals). Check goal, loops, and initiatives structure. See console logs.`);
+                !parsedData.system_goal || typeof parsedData.system_goal !== 'string' ||
+                !Array.isArray(parsedData.strategic_initiatives) || // Must be an array, even if empty
+                // key_loops can be null, so we don't need to check it
+                
+                // Check for invalid state: must have initiatives IF goal is not an error message
+                (!parsedData.system_goal.toLowerCase().includes("analyz") && parsedData.strategic_initiatives.length < 1) ||
+                
+                // Check for valid state: must have NO initiatives IF goal IS an error message
+                (parsedData.system_goal.toLowerCase().includes("analyz") && parsedData.strategic_initiatives.length > 0)
+            ) {
+                if (!parsedData.system_goal.toLowerCase().includes("analyz") && parsedData.strategic_initiatives.length < 1) {
+                        console.error("Validation Failed (Enhanced System Goals v3): AI found a valid goal but no initiatives.", parsedData);
+                        throw new Error(`AI response structure is inconsistent. Found a goal but no initiatives.`);
+                }
             }
-             console.log(`Successfully parsed ENHANCED System Goals JSON using ${MODEL_NAME}. Found ${parsedData.strategic_initiatives.length} initiatives.`);
+            console.log(`Successfully parsed ENHANCED System Goals JSON (v3) using ${MODEL_NAME}. Found ${parsedData.strategic_initiatives.length} initiatives.`);
 
 
         } catch (e) {
-            console.error(`Failed to parse/validate ENHANCED System Goals JSON using ${MODEL_NAME}:`, data?.response, e);
-            throw new Error(`Invalid JSON received or validation failed (Enhanced System Goals): ${e.message}. See raw response in console.`);
+            console.error(`Failed to parse/validate ENHANCED System Goals JSON (v3) using ${MODEL_NAME}:`, data?.response, e);
+            throw new Error(`Invalid JSON received or validation failed (Enhanced System Goals v3): ${e.message}. See raw response in console.`);
         }
 
         // 4. Render Results
         renderST.renderSystemGoalsPage(analysisResultContainer, parsedData); // Use the updated renderer
 
     } catch (error) {
-        console.error(`Error in handleSystemGoalsAnalysis (Enhanced) using ${MODEL_NAME}:`, error);
+        console.error(`Error in handleSystemGoalsAnalysis (Enhanced v3) using ${MODEL_NAME}:`, error);
         analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
         setLoading("generate", false);
     } finally {
         // Ensure loading stops reliably
-         if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
+        if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
             setLoading("generate", false);
-         }
+        }
     }
 }
 
@@ -1056,9 +1090,15 @@ async function handleSystemGoalsAnalysis() {
 
 async function handleSystemObjectivesAnalysis_ST() {
     const analysisResultContainer = dom.$("analysisResult");
-    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white mb-4">Analyzing System Dynamics...</h3><p class="text-white/80 mb-2">Formulating objectives based on feedback loops...</p></div>`;
+    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white mb-4">Analyzing System Dynamics...</h3><p class="text-white/80 mb-2">Formulating objectives based on your context...</p></div>`;
+    setLoading("generate", true); // Set loading state
+
+    // Define URL and Model
+    const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
+    const MODEL_NAME = "llama3.1:latest";
 
     try {
+        // 1. Gather Inputs
         const useDoc = dom.$("docUpload").checked;
         let text = "";
         if (useDoc) {
@@ -1066,84 +1106,164 @@ async function handleSystemObjectivesAnalysis_ST() {
             if (!file) throw new Error("Please select a document.");
             text = await extractTextFromFile(file);
         } else {
-            text = dom.$("systemObjContent").value;
+            text = dom.$("systemObjContent").value.trim();
             if (!text.trim()) throw new Error("Please describe your system and goal.");
         }
-        if (text.length > 15000) {
-            text = text.substring(0, 15000);
+
+        // Truncate if necessary
+        const MAX_CONTEXT_LENGTH = 15000;
+        let truncatedNote = "";
+        if (text.length > MAX_CONTEXT_LENGTH) {
+            text = text.substring(0, MAX_CONTEXT_LENGTH);
+            truncatedNote = `(Note: Analysis based on the first ${MAX_CONTEXT_LENGTH} characters.)`;
+            console.warn(`System Objectives analysis context truncated.`);
         }
 
+        // 2. --- NEW ENHANCED PROMPT (v3 with UNANALYZABLE path) ---
         const prompt = `
-                    You are a systems thinking strategist. A user has described a system and a desired outcome. Your task is to structure an OGSI (Objective, Goals, Strategies, Initiatives) plan that is explicitly based on the system's feedback loops.
+            You are a master strategic consultant. Your task is to analyze the provided text, determine its intent, and formulate a high-level Objective, 2-3 supporting Goals, and identify system dynamics *if they exist*. Base this *only* on the provided text. ${truncatedNote}
 
-                    **System Context:**
-                    ${text}
+            **USER'S SYSTEM DESCRIPTION / GOAL CONTEXT:**
+            \`\`\`
+            ${text}
+            \`\`\`
 
-                    **TASK:**
-                    Analyze the context and generate a complete OGSI plan.
+            **DETAILED TASKS (Follow this order):**
 
-                    1.  **main_objective**: Refine the user's input into a single, high-level, aspirational Objective.
-                    2.  **feedback_loops**: Identify the most critical 'reinforcing_loop' (growth engine) and 'balancing_loop' (limiting factor) that affect the objective.
-                    3.  **goals**: Define 2-3 specific, measurable Goals that contribute to the main objective.
-                    4.  **strategies_and_initiatives**: An array where each item links a Goal to a system-aware Strategy and concrete Initiatives. For each item:
-                        - "goal": The name of the goal it addresses.
-                        - "strategy": A specific strategy designed to either **amplify the reinforcing loop** or **weaken the balancing loop**. The rationale must be explicit about this.
-                        - "initiatives": An array of 2-3 specific action items to execute the strategy.
-                        - "kpis": A list of 2-3 KPIs to track the success of the initiatives.
+            **Task 1: Determine Text Intent.**
+            First, read the text to determine its intent.
+            - Is it a **Dynamic System Problem** (contains "sales are falling", "growth stalled", "bottleneck", "we have a problem with...")?
+            - OR is it a **Descriptive Company Profile** (listing services, features, and differentiators, like "NexaFlow Capital...")?
+            - OR is it **Unanalyzable** (a poem, a random story, a shopping list, or text with no clear factors, services, or problems)?
 
-                    Return ONLY a valid JSON object with this exact structure:
-                    {
-                        "main_objective": "Transform our platform from a simple tool into a highly engaging, self-reinforcing ecosystem.",
-                        "feedback_loops": {
-                        "reinforcing_loop": "The 'Network Effect Loop': More active users create more valuable content, which attracts more new users, further increasing activity and value.",
-                        "balancing_loop": "The 'New User Confusion Loop': A rapid influx of new users who don't understand the platform leads to low-quality contributions and clutters the experience for existing users, causing churn."
-                        },
-                        "goals": ["Increase Daily Active Users (DAU) by 50%", "Increase User-Generated Content by 100%"],
-                        "strategies_and_initiatives": [
-                        {
-                            "goal": "Increase Daily Active Users (DAU) by 50%",
-                            "strategy": "Amplify the 'Network Effect Loop' by making high-quality content more discoverable and rewarding its creators.",
-                            "initiatives": [
-                            "Develop a new content recommendation algorithm.",
-                            "Launch a 'Top Creator of the Week' feature with platform-wide visibility.",
-                            "Implement a user-friendly onboarding tutorial."
-                            ],
-                            "kpis": ["Daily Active Users", "Average Session Duration", "Content Share Rate"]
-                        },
-                        {
-                            "goal": "Increase User-Generated Content by 100%",
-                            "strategy": "Weaken the 'New User Confusion Loop' by improving the quality of first-time contributions and reducing friction for new creators.",
-                            "initiatives": [
-                            "Introduce content creation templates for new users.",
-                            "Create a mentorship program pairing new users with experienced 'superusers'.",
-                            "Gamify the content creation process with badges and rewards."
-                            ],
-                            "kpis": ["New Content Submissions per Day", "First-to-Second Post Conversion Rate", "User Retention Rate (30-day)"]
-                        }
-                        ]
-                    }
-                `;
+            **Task 2: Generate JSON based on Intent (Ground all answers *strictly* in the text):**
 
-        const response = await fetch("https://ollama.data2int.com/api/generate", {
+            **IF IT IS A DYNAMIC SYSTEM PROBLEM:**
+            1.  **Main Objective (\`main_objective\`):** Refine the user's input into a single, measurable SMART goal to *fix the problem*.
+            2.  **Feedback Loops (\`feedback_loops\`):** Identify the primary \`reinforcing_loop\` and \`balancing_loop\` *causing the problem*. Include "name", "description", and "elements".
+            3.  **Goals (\`goals\`):** Define 2-3 specific, measurable Goals that support the main objective by *addressing the loops*.
+
+            **IF IT IS A DESCRIPTIVE COMPANY PROFILE (like NexaFlow):**
+            1.  **Main Objective (\`main_objective\`):** Define a high-level strategic objective based on the company's description (e.g., "Achieve market leadership by leveraging core differentiators").
+            2.  **Feedback Loops (\`feedback_loops\`):** This MUST be null.
+            3.  **Goals (\`goals\`):** Identify 2-3 S.M.A.R.T. Goals based on *amplifying* the company's **"Differentiators"** or **"Core Services"**. (e.g., "Increase client acquisition for NexaScore AI Engine by 50%...").
+
+            **IF IT IS UNANALYZABLE:**
+            1.  **Main Objective (\`main_objective\`):** A clear explanation of why the text cannot be analyzed (e.g., "The provided text appears to be a poem...").
+            2.  **Feedback Loops (\`feedback_loops\`):** This MUST be null.
+            3.  **Goals (\`goals\`):** This MUST be an empty array [].
+            
+            **ABSOLUTE CONSTRAINTS:**
+            - STICK TO THE TEXT. Do NOT invent information.
+            - If the text is descriptive, DO NOT invent feedback loops or problems.
+            - JSON format must be perfect.
+
+            **RETURN FORMAT (Example for a Descriptive Profile):**
+            {
+                "main_objective": "Achieve market leadership as a digital-first FinTech by leveraging proprietary AI and blockchain solutions.",
+                "feedback_loops": null,
+                "goals": [
+                "Increase client acquisition for the NexaScore™ AI Engine by 40% within 12 months.",
+                "Expand Cross-Border DeFi Payment volume by 60% by forming 3 new stablecoin partnerships in 18 months.",
+                "Attract 5,000 new ESG-conscious investors to the Robo-Advisory platform by promoting built-in green finance metrics."
+                ],
+                "strategies_and_initiatives": null 
+            }
+        `;
+        // Note: The old prompt returned 'strategies_and_initiatives', which this tool doesn't use.
+        // The new prompt is simplified to only return what this tool *actually* renders: main_objective, feedback_loops, and goals.
+
+        // 3. Send Request to Ollama
+        console.log(`Sending ENHANCED System Objectives prompt (v3) to ${MODEL_NAME}...`);
+        const response = await fetch(OLLAMA_URL, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+                "Content-Type": "application/json"
+            },
             body: JSON.stringify({
-                model: "llama3.1:latest",
+                model: MODEL_NAME,
                 prompt: prompt,
                 stream: false,
                 format: "json",
-                options: { num_ctx: 32768 }
+                options: {
+                    num_ctx: 32768
+                }
             })
         });
-        if (!response.ok) throw new Error(`API error: ${response.status}`);
+
+        if (!response.ok) {
+            let errorBody = `API error ${response.status}`;
+            try {
+                errorBody += `: ${await response.text()}`;
+            } catch (e) {}
+            throw new Error(errorBody);
+        }
+
         const data = await response.json();
-        const parsedData = JSON.parse(data.response);
-        renderST.renderSystemObjectivesPage_ST(analysisResultContainer, parsedData);
+        let parsedData;
+        console.log('Raw AI Response (System Objectives):', data.response); // Log raw response
+        try {
+            parsedData = JSON.parse(data.response);
+            // *** START CORRECTED VALIDATION ***
+            console.log('--- RAW AI JSON RESPONSE (Parsed - Enhanced System Objectives v3) ---');
+            console.log(JSON.stringify(parsedData, null, 2));
+            console.log('------------------------------------');
+
+            if (!parsedData || typeof parsedData !== 'object' ||
+                !parsedData.main_objective || typeof parsedData.main_objective !== 'string') {
+                // Basic validation failed
+                console.error("Validation Failed (System Objectives v3): Basic structure missing (e.g., main_objective).", parsedData);
+                throw new Error(`AI response structure is missing 'main_objective'.`);
+            }
+
+            // Now, safely check for the 'goals' array
+            if (!Array.isArray(parsedData.goals)) {
+                console.error("Validation Failed (System Objectives v3): 'goals' is not an array.", parsedData);
+                throw new Error(`AI response structure is missing a 'goals' array.`);
+            }
+            
+            // Now we know 'goals' is an array, we can safely check its length
+            const isUnanalyzable = parsedData.main_objective.toLowerCase().includes("analyz");
+
+            if (isUnanalyzable && parsedData.goals.length > 0) {
+                // Invalid state: AI said it's unanalyzable but provided goals
+                console.error("Validation Failed (System Objectives v3): Unanalyzable but goals are present.", parsedData);
+                throw new Error(`AI response is inconsistent: 'Unanalyzable' summary but also provided goals.`);
+            }
+            
+            if (!isUnanalyzable && parsedData.goals.length < 1) {
+                // Invalid state: AI found a valid objective but no goals
+                console.error("Validation Failed (System Objectives v3): Valid objective but no goals found.", parsedData);
+                throw new Error(`AI response is inconsistent: Found a valid objective but provided no goals.`);
+            }
+            // --- END CORRECTED VALIDATION ---
+            
+            console.log(`Successfully parsed ENHANCED System Objectives JSON (v3) using ${MODEL_NAME}. Found ${parsedData.goals.length} goals.`);
+
+
+        } catch (e) {
+            console.error(`Failed to parse/validate ENHANCED System Objectives JSON (v3) using ${MODEL_NAME}:`, data?.response, e);
+            throw new Error(`Invalid JSON received or validation failed (Enhanced System Objectives v3): ${e.message}. See raw response in console.`);
+        }
+        
+        // Manually add `strategies_and_initiatives: null` if AI didn't, to prevent renderST.render error
+        if (!parsedData.hasOwnProperty('strategies_and_initiatives')) {
+            parsedData.strategies_and_initiatives = null; // Add this for compatibility with the old render function
+        }
+
+
+        // 4. Render Results
+        renderST.renderSystemObjectivesPage_ST(analysisResultContainer, parsedData); // Use the updated renderer
+
     } catch (error) {
-        console.error("Error during System Objectives analysis:", error);
-        analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">An error occurred: ${error.message}</div>`;
-    } finally {
+        console.error(`Error in handleSystemObjectivesAnalysis_ST (Enhanced v3) using ${MODEL_NAME}:`, error);
+        analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
         setLoading("generate", false);
+    } finally {
+        // Ensure loading stops reliably
+        if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
+            setLoading("generate", false);
+        }
     }
 }
 

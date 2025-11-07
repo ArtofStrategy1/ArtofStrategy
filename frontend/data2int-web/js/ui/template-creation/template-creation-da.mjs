@@ -3,7 +3,7 @@
 // =====================================================================================================
 import { appState } from "../../state/app-state.mjs";
 import { dom } from "../../utils/dom-utils.mjs";
-import { handleGenerate } from "../../analysis/handle-generate.mjs"
+import { handleGenerate } from "../../analysis/analysis-helpers.mjs"
 import { reattachActionListeners, reattachTabListeners } from "./template-creation.mjs";
 import { setupInputToggle } from "../../utils/ui-utils.mjs";
 import { extractTextFromFile, handleSaveAsDocx, handleSaveAsPdf } from "../../utils/file-utils.mjs";

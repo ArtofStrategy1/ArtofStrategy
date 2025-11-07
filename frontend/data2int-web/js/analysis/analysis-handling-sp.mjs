@@ -2,9 +2,246 @@
 // ===================        Strategic Planning Analysis Handling Functions        ====================
 // =====================================================================================================
 import { dom } from '../utils/dom-utils.mjs';
+import { appState } from '../state/app-state.mjs';
+import { appConfig } from '../config.mjs';
 import { setLoading } from '../utils/ui-utils.mjs';
 import { extractTextFromFile } from '../utils/file-utils.mjs';
+import { attemptMergeAndRender } from '../ui/analysis-rendering/analysis-rendering.mjs';
 import * as renderSP from '../ui/analysis-rendering/analysis-rendering-sp.mjs';
+import * as renderFA from '../ui/analysis-rendering/analysis-rendering-factor.mjs';
+
+/**
+ * HANDLER: Mission Vision (DEEP ANALYSIS v4 - with Goal Enrichment)
+ * - Calls n8n for a base result and Ollama for a deep, component-based analysis.
+ * - **NEW**: Stores `fullContext` globally for the WebSocket handler.
+ * - **NEW**: When merging, calls `enrichN8nGoal` for any unique n8n goal strings.
+ */
+async function handleMissionVisionAnalysis() {
+    const analysisResultContainer = dom.$("analysisResult");
+    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8">
+                                            <div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div>
+                                            <h3 class="text-xl font-semibold text-white mb-4">Running Deep Dual-Analysis...</h3>
+                                            <p id="analysisStatus" class="text-white/80 mb-2">Initializing n8n and Ollama requests...</p>
+                                            </div>`;
+    setLoading("generate", true);
+
+    // --- 1. Reset state and create a unique ID for this analysis ---
+    appState.pendingOllamaResult = null;
+    appState.pendingN8nResult = null;
+    appState.currentAnalysisMessageId = `analysis_${Date.now()}`;
+    console.log(`Starting analysis with ID: ${appState.currentAnalysisMessageId}`);
+
+    let text = ""; // Raw text for Ollama
+    const n8nFormData = new FormData(); // FormData for n8n
+
+    try {
+        // 2. Gather Inputs
+        const useDoc = dom.$("docUpload").checked;
+        
+        if (useDoc) {
+            const file = dom.$("companyDocumentsFile").files[0];
+            if (!file) throw new Error("Please select a document.");
+            text = await extractTextFromFile(file); 
+            n8nFormData.append("file", file, file.name); 
+        } else {
+            text = dom.$("missionVisionContent").value.trim();
+            if (!text.trim()) throw new Error("Please provide your company context.");
+            n8nFormData.append("missionVisionContent", text); // n8n key
+        }
+        
+        const companyName = dom.$("companyName").value.trim() || "The organization";
+        const location = dom.$("location").value.trim() || "unspecified location";
+        n8nFormData.append("customerName", companyName);
+        n8nFormData.append("location", location);
+        
+        let fullContext = `Company Name: ${companyName}\nLocation: ${location}\n\nCompany Context/Document Content:\n${text}`;
+        
+        // --- NEW: Store context globally for WebSocket handler ---
+        appState.currentAnalysisContext = fullContext; 
+
+        const { data: { session } } = await appConfig.supabase.auth.getSession();
+        if (!session) throw new Error("Please log in to generate analysis.");
+
+        // 3. Define and *call* the two fetch functions
+        
+        // --- Fetch 1: n8n Workflow (Triggers async response) ---
+        async function triggerN8N() {
+            const N8N_MISSION_URL = "https://n8n.data2int.com/webhook/mission-vision-v1";
+            console.log(`Sending data to n8n workflow at ${N8N_MISSION_URL}...`);
+            
+            const response = await fetch(N8N_MISSION_URL, {
+                method: "POST",
+                headers: { 'Authorization': `Bearer ${session.access_token}` },
+                body: n8nFormData
+            });
+
+            if (!response.ok) {
+                throw new Error(`n8n Trigger Error: ${response.status} - ${await response.text()}`);
+            }
+            const n8nJson = await response.json();
+            console.log("n8n workflow triggered, received response:", n8nJson);
+            if (n8nJson.status !== "success") {
+                    console.warn("n8n workflow did not return 'success'. Waiting for WebSocket anyway.");
+            }
+        }
+
+        // --- Fetch 2: Direct Ollama Call (Gets deep data) ---
+        async function fetchOllama() {
+            const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
+            const MODEL_NAME = "llama3.1:latest";
+            
+            let ollamaText = fullContext;
+            const MAX_CONTEXT_LENGTH = 15000;
+            let truncatedNote = "";
+            if (ollamaText.length > MAX_CONTEXT_LENGTH) {
+                ollamaText = ollamaText.substring(0, MAX_CONTEXT_LENGTH);
+                truncatedNote = `(Note: Analysis based on the first ${MAX_CONTEXT_LENGTH} characters.)`;
+            }
+
+            const prompt = `
+                You are a top-tier strategic consultant (e.g., McKinsey, BCG). Your task is to analyze the user's provided company context **based ONLY on the text itself** and generate a comprehensive strategic foundation. You must deconstruct the Mission, Vision, Values, and Goals into their core components and provide rich, actionable detail for each. ${truncatedNote}
+
+                **USER'S COMPANY CONTEXT:**
+                \`\`\`
+                ${ollamaText}
+                \`\`\`
+
+                **DETAILED TASKS (Ground all answers *strictly* in the text):**
+
+                1.  **Deconstruct Mission (\`mission\`):**
+                    * \`statement\`: Synthesize a single, powerful mission statement.
+                    * \`breakdown\`: An array of objects analyzing the mission's components:
+                        * \`component\`: "Purpose" (What we do)
+                        * \`analysis\`: "Analysis of what the company does, from the text..."
+                        * \`component\`: "Target Audience" (For whom)
+                        * \`analysis\`: "Analysis of the target customers, from the text..."
+                        * \`component\`: "Value Proposition" (What value we provide)
+                        * \`analysis\`: "Analysis of the core value delivered, from the text..."
+
+                2.  **Deconstruct Vision (\`vision\`):**
+                    * \`statement\`: Synthesize a single, inspirational vision statement.
+                    * \`breakdown\`: An array of objects analyzing the vision's components:
+                        * \`component\`: "Future State" (Where we are going)
+                        * \`analysis\`: "Analysis of the company's aspirational future, from the text..."
+                        * \`component\`: "Key Differentiator" (How we will win)
+                        * \`analysis\`: "Analysis of the future competitive advantage, from the text..."
+                        * \`component\`: "Impact" (The ultimate outcome)
+                        * \`analysis\`: "Analysis of the long-term impact on the industry/world, from the text..."
+
+                3.  **Analyze Core Values (\`values\`):**
+                    * Extract an array of 3-5 core values **from the text** (e.g., "Innovation," "Integrity").
+                    * For each, provide:
+                        * \`value\`: The value itself (e.g., "Innovation").
+                        * \`description\`: A 1-2 sentence explanation of *how* this value manifests **based on evidence in the text** (e.g., "This is shown by the company's heavy investment in R&D...").
+
+                4.  **Analyze Strategic Goals (\`goals\`):**
+                    * Extract an array of 3-5 high-level S.M.A.R.T. goals **from the text**.
+                    * For each, provide:
+                        * \`goal_name\`: The high-level goal (e.g., "Expand Market Share").
+                        * \`description\`: A 1-2 sentence explanation of *why* this goal is critical for achieving the Vision, **based on the text**.
+                        * \`key_initiatives\`: An array of 2-3 specific initiative strings **from the text** (e.g., "Launch product in European market", "Develop new pricing model").
+                        * \`kpis_to_track\`: An array of 2-3 specific KPI strings **from the text** (e.g., "Increase market share from 15% to 25%", "Achieve 500K EU active users").
+
+                **ABSOLUTE CONSTRAINTS:**
+                - **CONTEXT IS KING:** Base **ALL** output **EXCLUSIVELY** on the provided "USER'S COMPANY CONTEXT".
+                - **NO FABRICATION:** Do not invent values, goals, or aspirations not present or logically implied in the text.
+                - **FULL DETAIL:** You *must* provide the full, deep analysis for all four components, including the arrays of objects.
+                - **JSON FORMAT:** Adhere EXACTLY.
+
+                **RETURN FORMAT:**
+                Provide ONLY a valid JSON object.
+                {
+                    "mission": {
+                    "statement": "[Synthesized 1-sentence mission]",
+                    "breakdown": [
+                        { "component": "Purpose", "analysis": "[Analysis from text...]" },
+                        { "component": "Target Audience", "analysis": "[Analysis from text...]" },
+                        { "component": "Value Proposition", "analysis": "[Analysis from text...]" }
+                    ]
+                    },
+                    "vision": {
+                    "statement": "[Synthesized 1-sentence vision]",
+                    "breakdown": [
+                        { "component": "Future State", "analysis": "[Analysis from text...]" },
+                        { "component": "Key Differentiator", "analysis": "[Analysis from text...]" },
+                        { "component": "Impact", "analysis": "[Analysis from text...]" }
+                    ]
+                    },
+                    "values": [
+                    { "value": "Value 1 from text", "description": "How this is shown in the text..." },
+                    { "value": "Value 2 from text", "description": "How this is shown in the text..." }
+                    ],
+                    "goals": [
+                    { "goal_name": "Goal 1 from text", "description": "Why this supports the vision, based on text...", "key_initiatives": ["Initiative 1.1 from text", "Initiative 1.2 from text"], "kpis_to_track": ["KPI 1 from text", "KPI 2 from text"] },
+                    { "goal_name": "Goal 2 from text", "description": "Why this supports the vision, based on text...", "key_initiatives": ["Initiative 2.1 from text"], "kpis_to_track": ["KPI 3 from text"] }
+                    ]
+                }
+            `;
+
+            console.log(`Sending deep Mission/Vision prompt directly to ${MODEL_NAME}...`);
+            const response = await fetch(OLLAMA_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ model: MODEL_NAME, prompt: prompt, stream: false, format: "json", options: { num_ctx: 32768 } })
+            });
+
+            if (!response.ok) {
+                let errorBody = `API error ${response.status}`;
+                try { errorBody += `: ${await response.text()}`; } catch (e) {}
+                throw new Error(errorBody);
+            }
+            
+            const data = await response.json();
+            const ollamaJson = JSON.parse(data.response);
+            // Deep validation
+            if (!ollamaJson.mission || !ollamaJson.mission.statement || !Array.isArray(ollamaJson.mission.breakdown) ||
+                !ollamaJson.vision || !ollamaJson.vision.statement || !Array.isArray(ollamaJson.vision.breakdown) ||
+                !Array.isArray(ollamaJson.values) || !Array.isArray(ollamaJson.goals)) {
+                    throw new Error("Direct Ollama call returned an invalid or incomplete JSON structure.");
+            }
+            console.log("Received and validated deep data from direct Ollama.");
+            
+            appState.pendingOllamaResult = ollamaJson; // Store the result
+            attemptMergeAndRender(); // Check if n8n is already done
+        }
+        
+        // 4. Trigger both functions.
+        triggerN8N().catch(async (err) => {
+            console.error("n8n Trigger Failed:", err.message);
+            // If n8n fails to even *trigger*, we can't wait for it.
+            // Manually "fulfill" its part with empty data.
+            appState.pendingN8nResult = { mission: "", vision: "", values: [], goals: [] };
+            attemptMergeAndRender(); // Check if Ollama is done
+        });
+        
+        fetchOllama().catch(async (err) => {
+            console.error("Ollama Call Failed:", err.message);
+            
+            // --- MODIFIED FALLBACK ---
+            // If Ollama fails, we MUST still wait for n8n
+            console.log("Ollama failed. Waiting for n8n data as fallback...");
+            // We'll set a "failed" placeholder for Ollama
+            appState.pendingOllamaResult = {
+                mission: { statement: "Deep analysis failed.", breakdown: [] },
+                vision: { statement: "Deep analysis failed.", breakdown: [] },
+                values: [],
+                goals: []
+            };
+            
+            // If n8n is already done, this will trigger the merge
+            // If n8n is not done, the WebSocket handler will trigger it
+            attemptMergeAndRender(); 
+        });
+
+    } catch (error) {
+        console.error(`Error in handleMissionVisionAnalysis (Setup):`, error);
+        analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
+        setLoading("generate", false);
+        appState.currentAnalysisContext = null; // Clean up context
+    }
+}
+
+
 
 async function handleFactorAnalysis() {
     const analysisResultContainer = dom.$("analysisResult");
@@ -44,6 +281,7 @@ async function handleFactorAnalysis() {
         }
 
         // 2. Construct NEW COMPREHENSIVE Prompt
+        // This prompt now includes the "Facts, Deductions, Conclusions, Summary" structure
         const prompt = `
             You are a meticulous senior strategic analyst. Your task is to perform an exhaustive and deeply detailed factor analysis based **ONLY** on the provided business text. You must find **EVERY SINGLE** relevant factor. ${truncatedNote}
 
@@ -60,14 +298,16 @@ async function handleFactorAnalysis() {
                 * \`category\`: The business function it relates to (e.g., "Marketing", "Operations", "Financial", "PESTEL - Technology").
                 * \`description\`: A 1-2 sentence description summarizing the factor **using wording found in or directly inferred from the text**.
                 * \`impact_score\`: A plausible impact score (integer 1-10, where 10 is highest impact) based **only** on its significance as suggested **by the text**.
-                * \`deep_analysis\`: A detailed paragraph (3-5 sentences) explaining the full **strategic implication** of this factor. Why does it *really* matter? What does it enable or block? What is the root cause or long-term effect **based on the text**?
-                * \`actionable_recommendation\`: One specific, concrete action. For S/O: "How to leverage/capitalize." For W/T: "How to mitigate/address." **This must be based on the text**.
-                * \`relevant_kpis\`: 1-2 specific KPIs **from the text** (or logically derived) to track this factor's impact.
+                * \`analysis\`: A nested object containing the deep analysis:
+                    * \`facts\`: A list of 3-5 specific, relevant factual statements about this factor **based *only* on the text**.
+                    * \`deductions\`: A list of 3-4 logical inferences drawn **from the facts above**.
+                    * \`conclusions\`: A list of 2-3 strategic implications. Each **MUST** include: Impact (High/Medium/Low), Urgency (Critical/Important/Monitor), and Stance (Leverage/Improve/Mitigate/Monitor).
+                    * \`summary\`: A concise 2-3 sentence summary of this factor's strategic significance.
 
             **ABSOLUTE CONSTRAINTS:**
             - **BE EXHAUSTIVE:** Do not stop at 4-6 factors. Find all of them.
             - **CONTEXT IS KING:** Base **ALL** output **EXCLUSIVELY** on the provided text. **DO NOT** invent factors, analysis, or recommendations not supported by the text.
-            - **DEEP ANALYSIS IS MANDATORY:** The \`deep_analysis\` and \`actionable_recommendation\` fields are the most critical part of this task for **EVERY** factor.
+            - **DEEP ANALYSIS IS MANDATORY:** The \`analysis\` object with its 4 parts is the most critical part of this task for **EVERY** factor.
             - **JSON FORMAT:** Adhere EXACTLY to the nested structure.
 
             **RETURN FORMAT:**
@@ -75,21 +315,44 @@ async function handleFactorAnalysis() {
             {
                 "internal_factors": {
                 "strengths": [
-                    {"factor": "...", "category": "...", "description": "...", "impact_score": 9, "deep_analysis": "...", "actionable_recommendation": "...", "relevant_kpis": ["..."]},
+                    {
+                    "factor": "...", "category": "...", "description": "...", "impact_score": 9, 
+                    "analysis": {
+                        "facts": ["Fact 1...", "Fact 2..."],
+                        "deductions": ["Deduction 1...", "Deduction 2..."],
+                        "conclusions": ["- Impact: High...", "- Urgency: Critical...", "- Stance: Leverage..."],
+                        "summary": "..."
+                    }
+                    }
                     // ... *all* other strengths ...
                 ],
                 "weaknesses": [
-                    {"factor": "...", "category": "...", "description": "...", "impact_score": 7, "deep_analysis": "...", "actionable_recommendation": "...", "relevant_kpis": ["..."]},
+                    {
+                    "factor": "...", "category": "...", "description": "...", "impact_score": 7, 
+                    "analysis": {
+                        "facts": ["..."], "deductions": ["..."], "conclusions": ["- Impact: ..."], "summary": "..."
+                    }
+                    }
                     // ... *all* other weaknesses ...
                 ]
                 },
                 "external_factors": {
                 "opportunities": [
-                    {"factor": "...", "category": "...", "description": "...", "impact_score": 8, "deep_analysis": "...", "actionable_recommendation": "...", "relevant_kpis": ["..."]},
+                    {
+                    "factor": "...", "category": "...", "description": "...", "impact_score": 8, 
+                    "analysis": {
+                        "facts": ["..."], "deductions": ["..."], "conclusions": ["- Impact: ..."], "summary": "..."
+                    }
+                    }
                     // ... *all* other opportunities ...
                 ],
                 "threats": [
-                    {"factor": "...", "category": "...", "description": "...", "impact_score": 6, "deep_analysis": "...", "actionable_recommendation": "...", "relevant_kpis": ["..."]},
+                    {
+                    "factor": "...", "category": "...", "description": "...", "impact_score": 6, 
+                    "analysis": {
+                        "facts": ["..."], "deductions": ["..."], "conclusions": ["- Impact: ..."], "summary": "..."
+                    }
+                    }
                     // ... *all* other threats ...
                 ]
                 }
@@ -97,7 +360,7 @@ async function handleFactorAnalysis() {
         `;
 
         // 3. Call Ollama API
-        console.log(`Sending DEEP Factor Analysis prompt to ${MODEL_NAME}...`);
+        console.log(`Sending DEEP Factor Analysis prompt (v2) to ${MODEL_NAME}...`);
         const response = await fetch(OLLAMA_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -122,29 +385,30 @@ async function handleFactorAnalysis() {
                 !Array.isArray(parsedData.internal_factors.strengths) || !Array.isArray(parsedData.internal_factors.weaknesses) ||
                 !parsedData.external_factors || typeof parsedData.external_factors !== 'object' ||
                 !Array.isArray(parsedData.external_factors.opportunities) || !Array.isArray(parsedData.external_factors.threats) ||
-                // Check for the NEW DEEP ANALYSIS fields in the first factor (if it exists)
+                // Check for the NEW DEEP ANALYSIS object in the first factor (if it exists)
                 (parsedData.internal_factors.strengths.length > 0 && (
                     typeof parsedData.internal_factors.strengths[0] !== 'object' || 
-                    !parsedData.internal_factors.strengths[0].hasOwnProperty('deep_analysis') ||
-                    !parsedData.internal_factors.strengths[0].hasOwnProperty('actionable_recommendation')
+                    !parsedData.internal_factors.strengths[0].hasOwnProperty('analysis') ||
+                    typeof parsedData.internal_factors.strengths[0].analysis !== 'object' ||
+                    !parsedData.internal_factors.strengths[0].analysis.hasOwnProperty('facts')
                 ))
                 )
             {
-                console.error("Validation Failed (DEEP Factor Analysis): Required fields or new deep_analysis structure missing.", parsedData);
-                throw new Error(`AI response structure is incorrect. Missing internal/external factors or the required 'deep_analysis' fields. See console logs.`);
+                console.error("Validation Failed (DEEP Factor Analysis v2): Required fields or new 'analysis' object structure missing.", parsedData);
+                throw new Error(`AI response structure is incorrect. Missing internal/external factors or the required 'analysis' object. See console logs.`);
             }
-            console.log(`Successfully parsed DEEP Factor Analysis JSON using ${MODEL_NAME}.`);
+            console.log(`Successfully parsed DEEP Factor Analysis JSON (v2) using ${MODEL_NAME}.`);
 
         } catch (e) {
-            console.error(`Failed to parse/validate DEEP Factor Analysis JSON using ${MODEL_NAME}:`, data?.response, e);
-            throw new Error(`Invalid JSON received or validation failed (DEEP Factor Analysis): ${e.message}. See raw response in console.`);
+            console.error(`Failed to parse/validate DEEP Factor Analysis JSON (v2) using ${MODEL_NAME}:`, data?.response, e);
+            throw new Error(`Invalid JSON received or validation failed (DEEP Factor Analysis v2): ${e.message}. See raw response in console.`);
         }
 
-        // 4. Render Results (NO Pareto processing)
-        renderSP.renderFactorAnalysisPage(analysisResultContainer, parsedData); // Pass the full, rich data
+        // 4. Render Results
+        renderFA.renderFactorAnalysisPage(analysisResultContainer, parsedData); // Pass the full, rich data
 
     } catch (error) {
-        console.error(`Error in handleFactorAnalysis (DEEP) using ${MODEL_NAME}:`, error);
+        console.error(`Error in handleFactorAnalysis (DEEP v2) using ${MODEL_NAME}:`, error);
         analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
         setLoading("generate", false);
     } finally {
@@ -452,7 +716,12 @@ async function handleSwotTowsAnalysis() {
 }
 
 
-
+/**
+ * HANDLER: Goals & Strategic Initiatives (Strategic Planning)
+ * - NEW: Re-engineered to use a comprehensive OGSM prompt.
+ * - Forces AI to deconstruct user text into Objective, Goals, Strategies, and Measures.
+ * - Ensures high accuracy by grounding every component in the provided text.
+ */
 async function handleGoalsAndInitiativesAnalysis_SP() {
     const analysisResultContainer = dom.$("analysisResult");
     analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white mb-4">Building OGSM Framework...</h3><p class="text-white/80 mb-2">Cascading your objective into actionable strategies based *only* on your provided text...</p></div>`; // Updated text
@@ -612,14 +881,202 @@ async function handleGoalsAndInitiativesAnalysis_SP() {
 
 
 
+/**
+ * HANDLER: Objectives (DEEP ANALYSIS v4 - True Async)
+ * - Triggers both the deep Ollama call and the n8n workflow.
+ * - Relies on `handleWebSocketMessage` to catch the n8n data.
+ * - Relies on `attemptMergeAndRender` to combine the results.
+ */
+async function handleObjectivesAnalysis() {
+    const analysisResultContainer = dom.$("analysisResult");
+    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8">
+                                            <div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div>
+                                            <h3 class="text-xl font-semibold text-white mb-4">Running Dual S.M.A.R.T. Analysis...</h3>
+                                            <p id="analysisStatus" class="text-white/80 mb-2">Initializing n8n and Ollama requests...</p>
+                                            </div>`;
+    setLoading("generate", true);
+
+    // --- 1. Reset state and create a unique ID for this analysis ---
+    appState.pendingOllamaResult = null;
+    appState.pendingN8nResult = null;
+    appState.currentAnalysisMessageId = `analysis_${Date.now()}`;
+    appState.currentAnalysisContext = null; // Clear context at the start
+    console.log(`Starting analysis with ID: ${appState.currentAnalysisMessageId}`);
+
+    let text = ""; // Raw text
+    const n8nFormData = new FormData(); // FormData for n8n
+
+    try {
+        // 2. Gather Inputs
+        const useDoc = dom.$("docUpload").checked;
+        if (useDoc) {
+            const file = dom.$("companyDocumentsFile").files[0];
+            if (!file) throw new Error("Please select a document.");
+            text = await extractTextFromFile(file);
+            n8nFormData.append("file", file, file.name); // For n8n
+        } else {
+            text = dom.$("objectivesContent").value.trim();
+            if (!text.trim()) throw new Error("Please provide your high-level goal or context.");
+            n8nFormData.append("objectivesContent", text); // For n8n
+        }
+        
+        const companyName = dom.$("companyName").value.trim() || "The organization";
+        const location = dom.$("location").value.trim() || "unspecified location";
+        
+        // Add other fields for n8n
+        n8nFormData.append("customerName", companyName);
+        n8nFormData.append("location", location);
+        // We don't need to send messageId if n8n doesn't support it for this workflow
+
+        // Create full context for Ollama
+        let fullContext = `Company: ${companyName}\nLocation: ${location}\n\nContext:\n${text}`;
+        
+        // --- Store context globally for WebSocket handler ---
+        appState.currentAnalysisContext = fullContext; 
+
+        const { data: { session } } = await appConfig.supabase.auth.getSession();
+        if (!session) throw new Error("Please log in to generate analysis.");
+
+        // 3. Define and *call* the two fetch functions
+
+        // --- Fetch 1: n8n Workflow (Triggers async response) ---
+        async function triggerN8N_Objectives() {
+            const N8N_OBJECTIVES_URL = "https://n8n.data2int.com/webhook/objectives-v1";
+            console.log(`Sending data to n8n workflow at ${N8N_OBJECTIVES_URL}...`);
+            
+            const response = await fetch(N8N_OBJECTIVES_URL, {
+                method: "POST",
+                headers: { 'Authorization': `Bearer ${session.access_token}` },
+                body: n8nFormData
+            });
+
+            if (!response.ok) {
+                throw new Error(`n8n Trigger Error: ${response.status} - ${await response.text()}`);
+            }
+            const n8nJson = await response.json();
+            console.log("n8n workflow triggered, received response:", n8nJson);
+            // We just trigger it, we don't store the result. We wait for the WebSocket.
+        }
+
+        // --- Fetch 2: Direct Ollama Call (Gets deep S.M.A.R.T. data) ---
+        async function fetchOllama_Objectives() {
+            const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
+            const MODEL_NAME = "llama3.1:latest";
+            
+            let ollamaText = fullContext;
+            const MAX_CONTEXT_LENGTH = 15000;
+            if (ollamaText.length > MAX_CONTEXT_LENGTH) {
+                console.warn(`Ollama text truncated to ${MAX_CONTEXT_LENGTH} chars.`);
+                ollamaText = ollamaText.substring(0, MAX_CONTEXT_LENGTH);
+            }
+
+            const prompt = `
+                You are an expert strategic planner. Analyze the user's provided goal/context **based ONLY on the text itself** and formulate a set of 3-5 detailed S.M.A.R.T. objectives.
+
+                **USER'S GOAL / CONTEXT:**
+                \`\`\`
+                ${ollamaText}
+                \`\`\`
+
+                **DETAILED TASKS:**
+                1.  **Refine Main Goal:** Provide a concise, 1-sentence summary of the user's primary goal (\`main_goal\`) **based ONLY on the text**.
+                2.  **Formulate S.M.A.R.T. Objectives:** Create an array of 3-5 \`smart_objectives\`. For EACH objective, provide the following **strictly derived from the user's text**:
+                    * \`objective_name\`: A clear, concise name for the objective.
+                    * \`smart_breakdown\`: A nested object detailing each component:
+                        * \`specific\`: What exactly will be achieved? (Be very specific, using details from the text).
+                        * \`measurable\`: How will success be measured? (Identify the key metric mentioned or implied in the text).
+                        * \`achievable\`: Why is this achievable? (Reference resources, strengths, or context from the text).
+                        * \`relevant\`: Why is this relevant to the \`main_goal\`? (Link it directly to the user's context).
+                        * \`time_bound\`: What is the timeframe? (Infer a realistic timeframe, e.g., "within 6 months", "by EOY", based on the text's scope).
+                    * \`key_actions\`: A list of 2-3 high-level action items **from the text** needed to start this objective.
+                    * \`potential_risks\`: A list of 1-2 potential risks **from the text** that could endanger this specific objective.
+                3.  **Self-Correction:** Rigorously check: Is the main goal from text? Is EVERY detail of the SMART breakdown (S, M, A, R, T), key actions, and risks **strictly derived ONLY from the user's text**? Is the JSON perfect? Fix errors.
+
+                **ABSOLUTE CONSTRAINTS:**
+                - **CONTEXT IS KING:** Base **ALL** output **EXCLUSIVELY** on the provided "USER'S GOAL / CONTEXT". **DO NOT** invent information.
+                - **JSON FORMAT:** Adhere EXACTLY.
+
+                **RETURN FORMAT:**
+                Provide ONLY a valid JSON object.
+                {
+                    "main_goal": "[Refined main goal summary ONLY from user text]",
+                    "smart_objectives": [
+                    {
+                        "objective_name": "[Objective 1 Name ONLY from text]",
+                        "smart_breakdown": {
+                        "specific": "[Specific goal detail ONLY from text...]",
+                        "measurable": "[Metric/KPI ONLY from text...]",
+                        "achievable": "[Reason it's achievable ONLY from text...]",
+                        "relevant": "[Relevance to main goal ONLY from text...]",
+                        "time_bound": "[Timeframe inferred ONLY from text...]"
+                        },
+                        "key_actions": ["[Action 1 ONLY from text]", "[Action 2 ONLY from text]"],
+                        "potential_risks": ["[Risk 1 ONLY from text]"]
+                    }
+                    ]
+                }
+            `;
+
+            console.log(`Sending S.M.A.R.T. Objectives prompt directly to ${MODEL_NAME}...`);
+            const response = await fetch(OLLAMA_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ model: MODEL_NAME, prompt: prompt, stream: false, format: "json", options: { num_ctx: 32768 } })
+            });
+
+            if (!response.ok) {
+                let errorBody = `API error ${response.status}`;
+                try { errorBody += `: ${await response.text()}`; } catch (e) {}
+                throw new Error(errorBody);
+            }
+            
+            const data = await response.json();
+            const ollamaJson = JSON.parse(data.response); // Ollama returns JSON *inside* a string
+            if (!ollamaJson.main_goal || !ollamaJson.smart_objectives) {
+                    throw new Error("Direct Ollama call returned an invalid JSON structure.");
+            }
+            console.log("Received data from direct Ollama.");
+            
+            appState.pendingOllamaResult = ollamaJson; // Store the result
+            attemptMergeAndRender(); // Check if n8n is already done
+        }
+        
+        // 4. Trigger both functions.
+        triggerN8N_Objectives().catch(err => {
+            console.error("n8n Trigger Failed:", err.message);
+            appState.pendingN8nResult = []; // Fulfill n8n with an empty array on failure
+            attemptMergeAndRender(); // Check if Ollama is done
+        });
+        
+        fetchOllama_Objectives().catch(err => {
+            console.error("Ollama Call Failed:", err.message);
+            
+            appState.pendingOllamaResult = {
+                main_goal: "Deep analysis failed.",
+                smart_objectives: []
+            };
+            
+            attemptMergeAndRender(); 
+        });
+
+    } catch (error) {
+        console.error(`Error in handleObjectivesAnalysis (Setup):`, error);
+        analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
+        setLoading("generate", false);
+        appState.currentAnalysisContext = null; // Clean up context
+    }
+}
+
+
+
 async function handleActionPlansAnalysis_AP() {
     const analysisResultContainer = dom.$("analysisResult");
-    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white mb-4">Generating Detailed Action Plan...</h3><p class="text-white/80 mb-2">Breaking down your objective into actionable tasks based *only* on your text...</p></div>`; // Updated text
+    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white mb-4">Generating Detailed Action Plan...</h3><p class="text-white/80 mb-2">Breaking down your context into actionable tasks...</p></div>`;
     setLoading("generate", true);
 
     // Define URL and Model
     const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
-    const MODEL_NAME = "llama3.1:latest"; // Consistent model
+    const MODEL_NAME = "llama3.1:latest";
 
     try {
         // 1. Gather Inputs
@@ -644,74 +1101,109 @@ async function handleActionPlansAnalysis_AP() {
             console.warn(`Action Plan analysis context truncated.`);
         }
 
-        // 2. Construct ENHANCED Prompt
+        // 2. --- NEW ENHANCED PROMPT (v3 with UNANALYZABLE path) ---
         const prompt = `
-            You are an expert project manager. Analyze the user's objective description based **ONLY** on the provided text and break it down into a detailed, sequential action plan. ${truncatedNote}
+            You are an expert project manager. Your task is to analyze the provided text, determine its intent, and formulate a high-level project plan with 5-7 sequential action items. Base this *only* on the provided text. ${truncatedNote}
 
-            **USER'S OBJECTIVE / PROJECT DESCRIPTION:**
+            **USER'S TEXT:**
             \`\`\`
             ${text}
             \`\`\`
 
-            **DETAILED TASKS:**
-            1.  **Define Project Name:** Create a concise \`project_name\` derived **only from the text**.
-            2.  **Develop Action Items (5-7 sequential items):** Create an array of \`action_items\`. For each item, derive the following **strictly from the user's text**:
-                * \`task_name\`: Clear, actionable name (under 10 words).
-                * \`description\`: Detailed explanation (2-3 sentences) of what needs to be done, **using specifics from the text**.
-                * \`owner\`: Department, team, or role responsible, **as mentioned or implied in the text**.
-                * \`timeline\`: Specific, sequential timeframe (e.g., "Weeks 1-2", "Month 2", "Q3") **suggested by the text's scope or explicit mentions**.
-                * \`priority\`: Task's priority ("High", "Medium", "Low") **inferred from its importance described in the text**.
-                * \`resources_needed\`: List key resources (e.g., Budget, Personnel, Technology, Data) **mentioned or clearly implied as necessary in the text**. If none implied, use ["Standard Operating Resources"].
-                * \`key_dependency\`: (Optional) Name of another task from this plan that this task **clearly depends on according to the text**. If none, use null.
-                * \`kpis_to_track\`: List 1-2 specific metrics **derived ONLY from the text** to measure the successful completion *of this specific task*.
-            3.  **Self-Correction:** Rigorously check: Is project name derived from text? Are action items sequential and logical based on text? Is EVERY detail (name, description, owner, timeline, priority, resources, dependency, KPIs) **strictly derived ONLY from the user's text**? Is the JSON perfect? Fix errors.
+            **DETAILED TASKS (Follow this order):**
 
+            **Task 1: Determine Text Intent.**
+            First, read the text to determine its intent.
+            - Is it a **Dynamic System Problem** (contains "sales are falling", "growth stalled", "bottleneck", "we have a problem with...")?
+            - OR is it a **Descriptive Company Profile / Strategic Plan** (listing services, differentiators, and goals, like "NexaFlow Capital" or "AquaGlow Skincare")?
+            - OR is it **Unanalyzable** (a poem, a random story, a shopping list, or text with no clear factors, services, or problems)?
+
+            **Task 2: Generate JSON based on Intent (Ground all answers *strictly* in the text):**
+
+            **IF IT IS A DYNAMIC SYSTEM PROBLEM:**
+            1.  **Project Name (\`project_name\`):** Define a name for the plan (e.g., "Resolving [The Problem]").
+            2.  **Action Items (\`action_items\`):** Generate 5-7 sequential action items to *fix* the problem, based on the text. For each:
+                * \`task_name\`: Actionable name (e.g., "Audit Control Loops").
+                * \`description\`: What needs to be done, from text.
+                * \`owner\`: Team/role from text.
+                * \`timeline\`: Sequential timeline (e.g., "Week 1-2").
+                * \`priority\`: "High", "Medium", "Low" based on text.
+                * \`resources_needed\`: Resources mentioned in text.
+                * \`key_dependency\`: Previous task name (or null).
+                * \`kpis_to_track\`: 1-2 metrics for *this task*.
+
+            **IF IT IS A DESCRIPTIVE COMPANY PROFILE (like NexaFlow or AquaGlow):**
+            1.  **Project Name (\`project_name\`):** Define a name for the plan (e.g., "Strategic Plan for [Company Name]").
+            2.  **Action Items (\`action_items\`):** Generate 5-7 sequential action items based on the **"Core Services"**, **"Differentiators"**, or **"Proposed Solutions"** listed in the text.
+                * \`task_name\`: The service or differentiator to be amplified (e.g., "Scale NexaScore AI Engine", "Launch Retail-Ready Packaging").
+                * \`description\`: What this initiative involves, from text.
+                * \`owner\`: Team/role from text (e.g., "Product Development Team").
+                * \`timeline\`: Sequential timeline (e.g., "Phase 1").
+                * \`priority\`: "High", "Medium", "Low" based on text.
+                * \`resources_needed\`: Resources mentioned in text.
+                * \`key_dependency\`: Previous task name (or null).
+                * \`kpis_to_track\`: 1-2 metrics for *this task* (e.g., "NexaScore accuracy rate", "Retailer sell-through rate").
+
+            **IF IT IS UNANALYZABLE:**
+            1.  **Project Name (\`project_name\`):** A clear explanation of why the text cannot be analyzed (e.g., "The provided text appears to be a poem...").
+            2.  **Action Items (\`action_items\`):** This MUST be an empty array [].
+            
             **ABSOLUTE CONSTRAINTS:**
-            - **CONTEXT IS KING:** Base **ALL** output **EXCLUSIVELY** on the provided "USER'S OBJECTIVE / PROJECT DESCRIPTION". **DO NOT** invent tasks, roles, timelines, resources, dependencies, or KPIs. If the text lacks detail for a field (e.g., resources), infer reasonably or state appropriately (like "Standard Operating Resources").
-            - **NO GENERIC EXAMPLES:** Replace **ALL** placeholder text in the RETURN FORMAT structure below with content generated **strictly from the user's input text**.
-            - **JSON FORMAT:** Adhere EXACTLY.
+            - STICK TO THE TEXT. Do NOT invent information.
+            - JSON format must be perfect.
 
-            **RETURN FORMAT:**
-            Provide ONLY a valid JSON object. Replace ALL bracketed placeholders strictly based on the user's input text.
+            **RETURN FORMAT (Example for a Descriptive Profile):**
             {
-              "project_name": "[Project Name derived ONLY from user text]",
-              "action_items": [ // 5-7 items derived ONLY from text
+                "project_name": "Strategic Plan for NexaFlow Capital",
+                "action_items": [
                 {
-                  "task_name": "[Task 1 Name ONLY from text]",
-                  "description": "[Detailed description ONLY from text...]",
-                  "owner": "[Owner ONLY from text]",
-                  "timeline": "[Timeline inferred ONLY from text scope]",
-                  "priority": "[High/Medium/Low based ONLY on text]",
-                  "resources_needed": ["[Resource 1 ONLY from text]", "[Resource 2 ONLY from text]"],
-                  "key_dependency": null, // or "[Task Name ONLY from text]" if applicable
-                  "kpis_to_track": ["[KPI for Task 1 ONLY from text]"]
+                    "task_name": "Scale NexaScore™ AI Engine",
+                    "description": "Expand the proprietary AI engine for real-time creditworthiness evaluation to new markets or data sources.",
+                    "owner": "AI/Data Science Team",
+                    "timeline": "Phase 1 (Months 1-6)",
+                    "priority": "High",
+                    "resources_needed": ["AI Talent", "Cloud Infrastructure", "New Data Partnerships"],
+                    "key_dependency": null,
+                    "kpis_to_track": ["NexaScore accuracy rate", "New client acquisition"]
                 },
                 {
-                  "task_name": "[Task 2 Name ONLY from text]",
-                  "description": "[Detailed description ONLY from text...]",
-                  "owner": "[Owner ONLY from text]",
-                  "timeline": "[Timeline inferred ONLY from text scope]",
-                  "priority": "[High/Medium/Low based ONLY on text]",
-                  "resources_needed": ["[Resource 3 ONLY from text]"],
-                  "key_dependency": "[Task 1 Name ONLY from text]", // Example dependency
-                  "kpis_to_track": ["[KPI for Task 2 ONLY from text 1]", "[KPI for Task 2 ONLY from text 2]"]
+                    "task_name": "Enhance DeFi Payments Platform",
+                    "description": "Build on the existing cross-border DeFi payments service, focusing on stablecoin integrations and transparency.",
+                    "owner": "Blockchain Team",
+                    "timeline": "Phase 2 (Months 4-12)",
+                    "priority": "Medium",
+                    "resources_needed": ["Smart Contract Auditors", "Stablecoin Partnerships"],
+                    "key_dependency": "Scale NexaScore™ AI Engine",
+                    "kpis_to_track": ["Transaction Volume", "Settlement Time"]
                 }
-                // ... 3-5 more items derived ONLY from text ...
-              ]
+                ]
             }
         `;
+        // --- END OF NEW PROMPT ---
 
         // 3. Send Request to Ollama
-        console.log(`Sending ENHANCED Action Plan prompt to ${MODEL_NAME}...`);
+        console.log(`Sending ENHANCED Action Plan prompt (v3) to ${MODEL_NAME}...`);
         const response = await fetch(OLLAMA_URL, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ model: MODEL_NAME, prompt: prompt, stream: false, format: "json", options: { num_ctx: 32768 } })
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                model: MODEL_NAME,
+                prompt: prompt,
+                stream: false,
+                format: "json",
+                options: {
+                    num_ctx: 32768
+                }
+            })
         });
 
         if (!response.ok) {
             let errorBody = `API error ${response.status}`;
-            try { errorBody += `: ${await response.text()}`; } catch (e) {}
+            try {
+                errorBody += `: ${await response.text()}`;
+            } catch (e) {}
             throw new Error(errorBody);
         }
 
@@ -720,63 +1212,68 @@ async function handleActionPlansAnalysis_AP() {
         console.log('Raw AI Response (Action Plan - SP):', data.response); // Log raw response
         try {
             parsedData = JSON.parse(data.response);
-             // *** Refined Robust Validation ***
-             console.log('--- RAW AI JSON RESPONSE (Parsed - Enhanced Action Plan SP) ---');
-             console.log(JSON.stringify(parsedData, null, 2));
-             console.log('------------------------------------');
+            // *** Refined Robust Validation ***
+            console.log('--- RAW AI JSON RESPONSE (Parsed - Enhanced Action Plan SP v3) ---');
+            console.log(JSON.stringify(parsedData, null, 2));
+            console.log('------------------------------------');
 
-             if (!parsedData || typeof parsedData !== 'object' ||
-                 !parsedData.project_name || typeof parsedData.project_name !== 'string' || parsedData.project_name.includes("[") ||
-                 !Array.isArray(parsedData.action_items) || parsedData.action_items.length < 3 || // Expect at least a few actions
-                 // Check structure and placeholders in first action item
-                  (parsedData.action_items.length > 0 && (
-                      typeof parsedData.action_items[0] !== 'object' ||
-                      !parsedData.action_items[0].hasOwnProperty('task_name') || parsedData.action_items[0].task_name.includes("[") ||
-                      !parsedData.action_items[0].hasOwnProperty('description') || parsedData.action_items[0].description.includes("[") ||
-                      !parsedData.action_items[0].hasOwnProperty('owner') || // Allow owner to be missing if not in text
-                      !parsedData.action_items[0].hasOwnProperty('timeline') || parsedData.action_items[0].timeline.includes("[") ||
-                      !parsedData.action_items[0].hasOwnProperty('priority') || !['High', 'Medium', 'Low'].includes(parsedData.action_items[0].priority) ||
-                      !Array.isArray(parsedData.action_items[0].resources_needed) ||
-                      !parsedData.action_items[0].hasOwnProperty('key_dependency') || // Allow null
-                      !Array.isArray(parsedData.action_items[0].kpis_to_track)
-                  ))
-                )
-             {
-                  console.error("Validation Failed (Enhanced Action Plan SP): Required fields missing, invalid structure, or placeholders detected.", parsedData);
-                  throw new Error(`AI response structure is incorrect, inconsistent, or contains placeholders (Enhanced Action Plan SP). Check project name and action items structure/content carefully. See console logs.`);
-             }
-             console.log(`Successfully parsed ENHANCED Action Plan (SP) JSON using ${MODEL_NAME}. Found ${parsedData.action_items.length} action items.`);
+            if (!parsedData || typeof parsedData !== 'object' ||
+                !parsedData.project_name || typeof parsedData.project_name !== 'string' ||
+                !Array.isArray(parsedData.action_items) || // Must be an array, even if empty
+
+                // Check for invalid state: must have actions IF project_name is not an error message
+                (!parsedData.project_name.toLowerCase().includes("analyz") && parsedData.action_items.length < 1) ||
+
+                // Check for valid state: must have NO actions IF project_name IS an error message
+                (parsedData.project_name.toLowerCase().includes("analyz") && parsedData.action_items.length > 0)
+            ) {
+                if (!parsedData.project_name.toLowerCase().includes("analyz") && parsedData.action_items.length < 1) {
+                    console.error("Validation Failed (Enhanced Action Plan SP v3): AI found a valid project but no actions.", parsedData);
+                    throw new Error(`AI response structure is inconsistent. Found a project but no action items.`);
+                }
+            }
+            console.log(`Successfully parsed ENHANCED Action Plan (SP) JSON (v3) using ${MODEL_NAME}. Found ${parsedData.action_items.length} action items.`);
 
         } catch (e) {
-            console.error(`Failed to parse/validate ENHANCED Action Plan (SP) JSON using ${MODEL_NAME}:`, data?.response, e);
-            throw new Error(`Invalid JSON received or validation failed (Enhanced Action Plan SP): ${e.message}. See raw response in console.`);
+            console.error(`Failed to parse/validate ENHANCED Action Plan (SP) JSON (v3) using ${MODEL_NAME}:`, data?.response, e);
+            throw new Error(`Invalid JSON received or validation failed (Enhanced Action Plan SP v3): ${e.message}. See raw response in console.`);
         }
 
         // 4. Render Results
         renderSP.renderActionPlansPage_AP(analysisResultContainer, parsedData); // Use the updated renderer
 
     } catch (error) {
-        console.error(`Error in handleActionPlansAnalysis_AP (Enhanced) using ${MODEL_NAME}:`, error);
+        console.error(`Error in handleActionPlansAnalysis_AP (Enhanced v3) using ${MODEL_NAME}:`, error);
         analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
         setLoading("generate", false);
     } finally {
         // Ensure loading stops reliably
-         if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
+        if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
             setLoading("generate", false);
-         }
+        }
     }
 }
 
 
 
+/**
+ * HANDLER: KPI & Critical Events (Strategic Planning)
+ * - NEW: Re-engineered to act as a "Research Plan Analyst".
+ * - Prompt is now specifically trained to parse the user's research plan.
+ * - It identifies constructs (e.g., "Service Quality")
+ * and extracts their bulleted indicators (e.g., "Website responsiveness") as the KPIs,
+ * and groups them under their parent construct.
+ * - It finds the measurement scale (e.g., "7-point Likert scales").
+ * - It extracts critical events from the research plan itself.
+ */
 async function handleKpiAnalysis_KE() {
     const analysisResultContainer = dom.$("analysisResult");
-    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white mb-4">Defining Performance Metrics & Milestones...</h3><p class="text-white/80 mb-2">Identifying key indicators and critical events based *only* on your text...</p></div>`; // Updated text
+    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white mb-4">Analyzing Research Plan...</h3><p class="text-white/80 mb-2">Extracting specific indicators, scales, and milestones from your text...</p></div>`;
     setLoading("generate", true);
 
     // Define URL and Model
     const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
-    const MODEL_NAME = "llama3.1:latest"; // Consistent model
+    const MODEL_NAME = "llama3.1:latest";
 
     try {
         // 1. Gather Inputs
@@ -800,65 +1297,72 @@ async function handleKpiAnalysis_KE() {
             console.warn(`KPI & Events analysis context truncated.`);
         }
 
-        // 2. Construct ENHANCED Prompt
+        // 2. Construct NEW, HIGH-ACCURACY Prompt
         const prompt = `
-            You are a performance management and strategy execution expert. Analyze the user's goal/project description based **ONLY** on the provided text. Develop a framework of Key Performance Indicators (KPIs) and critical events derived **strictly** from that text. ${truncatedNote}
+        You are a meticulous research analyst and strategic consultant. Your task is to analyze the provided business context **ONLY** and extract its core components into a structured JSON.
 
-            **USER'S GOAL / PROJECT DESCRIPTION:**
-            \`\`\`
-            ${text}
-            \`\`\`
+        **USER'S BUSINESS CONTEXT:**
+        \`\`\`
+        ${text}
+        \`\`\`
 
-            **DETAILED TASKS:**
-            1.  **Refine Goal:** Provide a refined, single-sentence summary of the user's primary goal (\`main_goal\`) **based ONLY on the text**.
-            2.  **Define KPIs (4-6 KPIs):** Create an array of \`kpis\`. For each KPI, derive the following **strictly from the user's text**:
-                * \`name\`: The name of the KPI **mentioned or logically implied**.
-                * \`description\`: A brief explanation of what it measures **in this context**.
-                * \`formula\`: How the KPI is calculated (e.g., "(Repeat Customers / Total Customers) * 100") **based on terms in the text**. If not explicitly calculable, describe conceptually (e.g., "Survey score on 7-point scale").
-                * \`target\`: A specific, measurable target **mentioned or clearly implied in the text**. If none, state "Target Not Specified in Text".
-                * \`type\`: Category (e.g., "Leading", "Lagging", "Financial", "Customer", "Operational") **inferred ONLY from the KPI's role described or implied in the text**.
-            3.  **Define Critical Events (3-5 events):** Create an array of major project milestones (\`critical_events\`). For each event, derive the following **strictly from the user's text**:
-                * \`event_name\`: Name of the milestone **mentioned or logically implied**.
-                * \`description\`: What signifies completion **based on the text**.
-                * \`timeline\`: Target timeframe **inferred ONLY from text scope or mentions**.
-                * \`importance\`: Assess importance ("High" or "Medium") **based on text**.
-            4.  **Performance Summary:** Write a brief \`performance_summary\` (2-3 sentences) linking the key KPIs and critical events back to achieving the main goal, **using ONLY information derived from the text**.
-            5.  **Self-Correction:** Rigorously check: Is the goal derived solely from text? Is EVERY detail of KPIs and Events (name, desc, formula, target, type, timeline, importance) **strictly derived ONLY from the user's text**? Is the summary accurate based on text? Is JSON perfect? Fix errors.
+        **DETAILED TASKS (Ground all answers *strictly* in the text):**
+        1.  **Extract Goal:** Identify the \`main_goal\` of the research/project (e.g., "to understand the key drivers of customer satisfaction...").
+        2.  **Extract KPI Groups:**
+            * First, identify the main constructs/problems (e.g., "SERVICE QUALITY", "Unstable Control Feedback Loops").
+            * Then, for each construct, extract its *specific bulleted indicators* as the KPIs (e.g., "Website responsiveness", "Temperature regulation accuracy").
+            * Create an array of \`kpi_groups\`. For each group:
+                * \`construct_name\`: The parent construct (e.g., "Service Quality", "Unstable Control Feedback Loops").
+                * \`kpis\`: An array of KPI objects. For each KPI:
+                    * \`name\`: The specific indicator (e.g., "Website responsiveness", "Temperature regulation accuracy").
+                    // --- CHANGED ---
+                    * \`formula\`: A plausible, specific measurement scale or formula for this KPI (e.g., "Page Load Time (ms)", "Avg. Deviation from Setpoint (°C)", "Latency (ms)", "% of accurate calibrations", "Uptime %"). **If the text mentions a specific scale (like '1-7 scale'), use that. Otherwise, YOU MUST GENERATE a logical one.**
+                    // --- END CHANGED ---
+                    * \`type\`: Infer the category (e.g., "Operational", "Customer", "Financial").
+        3.  **Extract Critical Events:** Identify key project milestones **from the text** (e.g., conducting the survey, developing the roadmap). Create an array of \`critical_events\`. For each event:
+            * \`event_name\`: Name of the milestone (e.g., "Conduct Customer Survey").
+            * \`description\`: What signifies completion (e.g., "Survey of 500 customers completed").
+            * \`timeline\`: Timeframe (e.g., "Within 6 months", "3-year").
+            * \`importance\`: Assess importance ("High" or "Medium").
+        4.  **Extract Summary:** Extract the \`performance_summary\` or "Expected Business Impact" section.
 
-            **ABSOLUTE CONSTRAINTS:**
-            - **CONTEXT IS KING:** Base **ALL** output **EXCLUSIVELY** on the provided "USER'S GOAL / PROJECT DESCRIPTION". **DO NOT** invent KPIs, events, targets, formulas, timelines, or summaries. If information isn't in the text, state that appropriately (e.g., in the target field).
-            - **NO GENERIC EXAMPLES:** Replace **ALL** placeholder text in the RETURN FORMAT structure below with content generated **strictly from the user's input text**.
-            - **JSON FORMAT:** Adhere EXACTLY.
+        **ABSOLUTE CONSTRAINTS:**
+        - **USE INDICATORS AS KPIs:** The KPIs *must* be the sub-items (e.g., "Product durability"), NOT the main constructs (e.g., "PRODUCT QUALITY").
+        - **STICK TO THE TEXT:** Do NOT invent KPIs, scales, or events not present in the text, *unless* you are generating a formula as instructed.
 
-            **RETURN FORMAT:**
-            Provide ONLY a valid JSON object. Replace ALL bracketed placeholders strictly based on the user's input text.
+        **RETURN FORMAT:**
+        Provide ONLY a valid JSON object.
+        {
+            "main_goal": "[Goal extracted from text, e.g., 'To address severe challenges related to multiple dynamic systems...']",
+            "kpi_groups": [
             {
-              "main_goal": "[Refined goal statement ONLY from user text]",
-              "kpis": [ // 4-6 KPIs derived ONLY from text
-                {
-                  "name": "[KPI Name ONLY from text]",
-                  "description": "[Description ONLY based on text context]",
-                  "formula": "[Formula or calculation method ONLY from text]",
-                  "target": "[Target ONLY from text or 'Target Not Specified in Text']",
-                  "type": "[Leading/Lagging/Financial/etc. inferred ONLY from text]"
-                },
-                //...
-              ],
-              "critical_events": [ // 3-5 events derived ONLY from text
-                {
-                  "event_name": "[Event Name ONLY from text]",
-                  "description": "[Completion criteria ONLY from text]",
-                  "timeline": "[Timeline inferred ONLY from text]",
-                  "importance": "[High/Medium based ONLY on text]"
-                },
-                //...
-              ],
-              "performance_summary": "[2-3 sentence summary linking KPIs/Events to goal, using ONLY text-derived info]"
+                // --- CHANGED ---
+                "construct_name": "Unstable Control Feedback Loops",
+                "kpis": [
+                {"name": "Automated control systems stability", "formula": "Oscillation Frequency (Hz) or Uptime %", "type": "Operational"},
+                {"name": "Temperature regulation accuracy", "formula": "Avg. Deviation from Setpoint (°C)", "type": "Operational"}
+                ]
+            },
+            {
+                "construct_name": "Cross-System Latency",
+                "kpis": [
+                {"name": "IoT sensor data synchronization", "formula": "Max Data Lag (seconds)", "type": "Data"},
+                {"name": "Communication latency", "formula": "Latency (ms)", "type": "Data"}
+                ]
+                // --- END CHANGED ---
             }
-        `;
+            // ... *all* other constructs and their indicators found in the text ...
+            ],
+            "critical_events": [
+            {"event_name": "Conduct Comprehensive System Audit", "description": "Identify all conflicting dynamic interactions", "timeline": "Within 6 Months", "importance": "High"},
+            {"event_name": "Rebuild Data Integration Pipelines", "description": "Implement asynchronous event-driven architecture", "timeline": "Within 9 Months", "importance": "High"}
+            ],
+            "performance_summary": "[Summary of expected business impact, extracted from text...]"
+        }
+    `;
 
         // 3. Send Request to Ollama
-        console.log(`Sending ENHANCED KPI & Events prompt to ${MODEL_NAME}...`);
+        console.log(`Sending RESEARCH-FOCUSED KPI prompt (v-fix) to ${MODEL_NAME}...`);
         const response = await fetch(OLLAMA_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -873,57 +1377,50 @@ async function handleKpiAnalysis_KE() {
 
         const data = await response.json();
         let parsedData;
-        console.log('Raw AI Response (KPI & Events - SP):', data.response); // Log raw response
+        console.log('Raw AI Response (KPI & Events - v-fix):', data.response);
         try {
             parsedData = JSON.parse(data.response);
-             // *** Refined Robust Validation ***
-             console.log('--- RAW AI JSON RESPONSE (Parsed - Enhanced KPI & Events SP) ---');
-             console.log(JSON.stringify(parsedData, null, 2));
-             console.log('------------------------------------');
+                // *** Validation for the new GROUPED structure ***
+                console.log('--- RAW AI JSON RESPONSE (Parsed - v-fix) ---');
+                console.log(JSON.stringify(parsedData, null, 2));
+                console.log('------------------------------------');
 
-             if (!parsedData || typeof parsedData !== 'object' ||
-                 !parsedData.main_goal || typeof parsedData.main_goal !== 'string' || parsedData.main_goal.includes("[") ||
-                 !Array.isArray(parsedData.kpis) || parsedData.kpis.length < 2 || // Expect a few KPIs
-                 !Array.isArray(parsedData.critical_events) || parsedData.critical_events.length < 1 || // Expect at least one event
-                 !parsedData.performance_summary || typeof parsedData.performance_summary !== 'string' || parsedData.performance_summary.includes("[") ||
-                 // Check structure of first KPI
-                 (parsedData.kpis.length > 0 && (
-                     typeof parsedData.kpis[0] !== 'object' ||
-                     !parsedData.kpis[0].hasOwnProperty('name') || parsedData.kpis[0].name.includes("[") ||
-                     !parsedData.kpis[0].hasOwnProperty('description') || parsedData.kpis[0].description.includes("[") ||
-                     !parsedData.kpis[0].hasOwnProperty('formula') || // Allow formula to be complex string
-                     !parsedData.kpis[0].hasOwnProperty('target') || // Allow specific string for missing target
-                     !parsedData.kpis[0].hasOwnProperty('type') || parsedData.kpis[0].type.includes("[")
-                 )) ||
-                  // Check structure of first Event
-                  (parsedData.critical_events.length > 0 && (
-                      typeof parsedData.critical_events[0] !== 'object' ||
-                      !parsedData.critical_events[0].hasOwnProperty('event_name') || parsedData.critical_events[0].event_name.includes("[") ||
-                      !parsedData.critical_events[0].hasOwnProperty('description') || parsedData.critical_events[0].description.includes("[") ||
-                      !parsedData.critical_events[0].hasOwnProperty('timeline') || parsedData.critical_events[0].timeline.includes("[") ||
-                      !parsedData.critical_events[0].hasOwnProperty('importance') || !['High', 'Medium'].includes(parsedData.critical_events[0].importance)
-                  ))
+                if (!parsedData || !parsedData.main_goal || !Array.isArray(parsedData.kpi_groups) || parsedData.kpi_groups.length < 1 ||
+                    !Array.isArray(parsedData.critical_events) ||
+                    !parsedData.performance_summary ||
+                    // Check the *first group* and its *first KPI* for correct structure
+                    !parsedData.kpi_groups[0].construct_name ||
+                    !Array.isArray(parsedData.kpi_groups[0].kpis) ||
+                    parsedData.kpi_groups[0].kpis.length < 1 ||
+                    !parsedData.kpi_groups[0].kpis[0].name ||
+                    !parsedData.kpi_groups[0].kpis[0].formula // Check that formula is no longer "None"
                 )
-             {
-                  console.error("Validation Failed (Enhanced KPI & Events SP): Required fields missing, invalid structure, or placeholders detected.", parsedData);
-                  throw new Error(`AI response structure is incorrect, inconsistent, or contains placeholders (Enhanced KPI & Events SP). Check all fields carefully. See console logs.`);
-             }
-             console.log(`Successfully parsed ENHANCED KPI & Events (SP) JSON using ${MODEL_NAME}. Found ${parsedData.kpis.length} KPIs.`);
+                {
+                    // --- CHANGED ---
+                    // Check if the formula is "None", which is the problem we're fixing
+                    if (parsedData.kpi_groups[0].kpis[0].formula.toLowerCase() === "none") {
+                        console.error("Validation Failed (v-fix): AI returned 'None' for formula despite new prompt.", parsedData);
+                        throw new Error(`AI failed to generate a formula and returned 'None'. This may be a model context issue.`);
+                    }
+                    // --- END CHANGED ---
+                    console.error("Validation Failed (v-fix): AI returned an invalid `kpi_groups` structure or had missing fields.", parsedData);
+                    throw new Error(`AI response structure is incorrect. It may have failed to group KPIs. Check console.`);
+                }
+                console.log(`Successfully parsed (v-fix) KPI JSON using ${MODEL_NAME}. Found ${parsedData.kpi_groups.length} KPI groups.`);
 
         } catch (e) {
-            console.error(`Failed to parse/validate ENHANCED KPI & Events (SP) JSON using ${MODEL_NAME}:`, data?.response, e);
-            throw new Error(`Invalid JSON received or validation failed (Enhanced KPI & Events SP): ${e.message}. See raw response in console.`);
+            console.error(`Failed to parse/validate (v-fix) KPI JSON using ${MODEL_NAME}:`, data?.response, e);
+            throw new Error(`Invalid JSON received or validation failed (v-fix): ${e.message}. See raw response in console.`);
         }
 
         // 4. Render Results
-        renderSP.renderKpiPage_KE(analysisResultContainer, parsedData); // Use the updated renderer
+        renderSP.renderKpiPage_KE(analysisResultContainer, parsedData); // Call the NEW renderer
 
     } catch (error) {
-        console.error(`Error in handleKpiAnalysis_KE (Enhanced) using ${MODEL_NAME}:`, error);
+        console.error(`Error in handleKpiAnalysis_KE (v-fix) using ${MODEL_NAME}:`, error);
         analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
         setLoading("generate", false);
     } finally {
-        // Ensure loading stops reliably
          if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
             setLoading("generate", false);
          }
@@ -1099,47 +1596,12 @@ async function handleMiscAnalysis_MSC() {
     }
 }
 
-
-
-// Keep applyParetoAnalysisJS as it's used to process AI output
-function applyParetoAnalysisJS(factors) {
-    if (!factors || factors.length === 0) return [];
-
-    // Ensure impact_score is numeric before sorting
-    const validFactors = factors.filter(f => typeof f.impact_score === 'number' && !isNaN(f.impact_score));
-    if (validFactors.length === 0) {
-        console.warn("No factors with valid numeric impact scores found for Pareto analysis.");
-        // Return original factors with default priority/rank if scores were bad
-        return factors.map((f, i) => ({ ...f, cumulative_percentage: 0, priority: "Low", rank: i + 1 }));
-    }
-
-
-    const sorted_factors = [...validFactors].sort((a, b) => b.impact_score - a.impact_score);
-    const total_impact = sorted_factors.reduce((sum, f) => sum + f.impact_score, 0);
-
-    if (total_impact === 0) {
-        // Handle case where all scores are 0
-        return sorted_factors.map((f, i) => ({ ...f, cumulative_percentage: 0, priority: "Low", rank: i + 1 }));
-    }
-
-    let cumulative_impact = 0;
-    return sorted_factors.map((factor, i) => {
-        cumulative_impact += factor.impact_score;
-        const cumulative_percentage = (cumulative_impact / total_impact) * 100;
-        return {
-            ...factor,
-            cumulative_percentage: parseFloat(cumulative_percentage.toFixed(1)),
-            priority: cumulative_percentage <= 80 ? "High" : "Low",
-            rank: i + 1
-        };
-    });
-}
-
-
 export {
+    handleMissionVisionAnalysis,
     handleFactorAnalysis,
     handleSwotTowsAnalysis,
     handleGoalsAndInitiativesAnalysis_SP,
+    handleObjectivesAnalysis,
     handleActionPlansAnalysis_AP,
     handleKpiAnalysis_KE,
     handleMiscAnalysis_MSC

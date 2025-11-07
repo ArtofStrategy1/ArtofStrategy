@@ -210,6 +210,295 @@ function renderNovelGoalsPage_NS(container, data) {
 
 
 
+/**
+ * Renders the "HEFTY" multi-tabbed results page for the All Framework tool.
+ */
+function renderAllFrameworkPage(container, data) {
+    container.innerHTML = ""; // Clear loading
+    const { synthesis, blue_ocean, design_thinking, reframing, thinking_hats, creative_dissonance, ladder_of_inference } = data;
+
+    // --- Create Tab Navigation (8 Tabs) ---
+    const tabNav = document.createElement("div");
+    tabNav.className = "flex flex-wrap border-b border-white/20 -mx-6 px-6";
+    tabNav.innerHTML = `
+        <button class="analysis-tab-btn active" data-tab="dashboard">📊 Strategic Synthesis</button>
+        <button class="analysis-tab-btn" data-tab="blueOcean">🌊 Blue Ocean (ERRC)</button>
+        <button class="analysis-tab-btn" data-tab="designThinking">🎨 Design Thinking</button>
+        <button class="analysis-tab-btn" data-tab="reframing">🖼️ Reframing</button>
+        <button class="analysis-tab-btn" data-tab="thinkingHats">🎩 Six Thinking Hats</button>
+        <button class="analysis-tab-btn" data-tab="dissonance">⚡ Creative Dissonance</button>
+        <button class="analysis-tab-btn" data-tab="ladder">🪜 Ladder of Inference</button>
+        <button class="analysis-tab-btn" data-tab="learn">🎓 Learn Frameworks</button>
+    `;
+    container.appendChild(tabNav);
+
+    // --- Create Tab Panels (8 Panels) ---
+    const tabContent = document.createElement("div");
+    container.appendChild(tabContent);
+    tabContent.innerHTML = `
+        <div id="dashboardPanel" class="analysis-tab-panel active"></div>
+        <div id="blueOceanPanel" class="analysis-tab-panel"></div>
+        <div id="designThinkingPanel" class="analysis-tab-panel"></div>
+        <div id="reframingPanel" class="analysis-tab-panel"></div>
+        <div id="thinkingHatsPanel" class="analysis-tab-panel"></div>
+        <div id="dissonancePanel" class="analysis-tab-panel"></div>
+        <div id="ladderPanel" class="analysis-tab-panel"></div>
+        <div id="learnPanel" class="analysis-tab-panel"></div>
+    `;
+
+    // --- 1. Populate Dashboard (Synthesis) Panel ---
+    const dashboardPanel = dom.$("dashboardPanel");
+    dashboardPanel.innerHTML = `
+        <div class="p-4 space-y-6">
+            <h3 class="text-2xl font-bold mb-4 text-center">Strategic Synthesis</h3>
+            <div class="p-6 rounded-lg bg-black/20 border border-white/10">
+                <h4 class="text-xl font-bold mb-2 text-indigo-300">Strategic Narrative</h4>
+                <p class="text-white/90 italic">${synthesis.strategic_narrative}</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-black/20 p-4 rounded-lg">
+                    <h4 class="text-lg font-bold mb-3 text-yellow-300">Top Cross-Framework Insights</h4>
+                    <ul class="list-disc list-inside space-y-2 text-sm text-white/80">
+                        ${(synthesis.top_insights || []).map(i => `<li>${i}</li>`).join('')}
+                    </ul>
+                </div>
+                <div class="bg-black/20 p-4 rounded-lg">
+                    <h4 class="text-lg font-bold mb-3 text-red-300">Primary Leverage Point</h4>
+                    <p class="text-sm text-white/80">${synthesis.primary_leverage_point}</p>
+                </div>
+            </div>
+            <div class="p-6 rounded-lg bg-black/20 border border-white/10">
+                <h4 class="text-xl font-bold mb-3 text-green-300">Priority First Actions</h4>
+                <ol class="list-decimal list-inside space-y-2 text-white/90">
+                    ${(synthesis.priority_actions || []).map(a => `<li>${a}</li>`).join('')}
+                </ol>
+            </div>
+        </div>`;
+
+    // --- 2. Populate Blue Ocean (ERRC) Panel ---
+    const blueOceanPanel = dom.$("blueOceanPanel");
+    blueOceanPanel.innerHTML = `
+        <div class="p-4">
+            <h3 class="text-2xl font-bold mb-6 text-center">🌊 Blue Ocean (ERRC Grid)</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-red-900/30 p-4 rounded-lg border border-red-500/50">
+                    <h4 class="text-xl font-bold text-red-300 mb-2">❌ Eliminate</h4>
+                    <ul class="list-disc list-inside text-sm text-white/80 space-y-1">
+                        ${(blue_ocean.eliminate || []).map(i => `<li>${i}</li>`).join('')}
+                    </ul>
+                </div>
+                <div class="bg-yellow-900/30 p-4 rounded-lg border border-yellow-500/50">
+                    <h4 class="text-xl font-bold text-yellow-300 mb-2">➖ Reduce</h4>
+                    <ul class="list-disc list-inside text-sm text-white/80 space-y-1">
+                        ${(blue_ocean.reduce || []).map(i => `<li>${i}</li>`).join('')}
+                    </ul>
+                </div>
+                <div class="bg-blue-900/30 p-4 rounded-lg border border-blue-500/50">
+                    <h4 class="text-xl font-bold text-blue-300 mb-2">➕ Raise</h4>
+                    <ul class="list-disc list-inside text-sm text-white/80 space-y-1">
+                        ${(blue_ocean.raise || []).map(i => `<li>${i}</li>`).join('')}
+                    </ul>
+                </div>
+                <div class="bg-green-900/30 p-4 rounded-lg border border-green-500/50">
+                    <h4 class="text-xl font-bold text-green-300 mb-2">✨ Create</h4>
+                    <ul class="list-disc list-inside text-sm text-white/80 space-y-1">
+                        ${(blue_ocean.create || []).map(i => `<li>${i}</li>`).join('')}
+                    </ul>
+                </div>
+            </div>
+        </div>`;
+
+    // --- 3. Populate Design Thinking Panel ---
+    const designThinkingPanel = dom.$("designThinkingPanel");
+    designThinkingPanel.innerHTML = `
+        <div class="p-4 space-y-6">
+            <h3 class="text-2xl font-bold mb-4 text-center">🎨 Design Thinking Process</h3>
+            <div class="bg-white/5 p-4 rounded-lg border-l-4 border-blue-400">
+                <h4 class="text-lg font-bold text-blue-300">1. Empathize</h4>
+                <p class="text-sm text-white/80 italic">${design_thinking.empathize || 'N/A'}</p>
+            </div>
+            <div class="bg-white/5 p-4 rounded-lg border-l-4 border-indigo-400">
+                <h4 class="text-lg font-bold text-indigo-300">2. Define</h4>
+                <p class="text-sm text-white/80 italic">${design_thinking.define || 'N/A'}</p>
+            </div>
+            <div class="bg-white/5 p-4 rounded-lg border-l-4 border-purple-400">
+                <h4 class="text-lg font-bold text-purple-300">3. Ideate</h4>
+                <p class="text-sm text-white/80 italic">${design_thinking.ideate || 'N/A'}</p>
+            </div>
+            <div class="bg-white/5 p-4 rounded-lg border-l-4 border-yellow-400">
+                <h4 class="text-lg font-bold text-yellow-300">4. Prototype</h4>
+                <p class="text-sm text-white/80 italic">${design_thinking.prototype || 'N/A'}</p>
+            </div>
+            <div class="bg-white/5 p-4 rounded-lg border-l-4 border-green-400">
+                <h4 class="text-lg font-bold text-green-300">5. Test</h4>
+                <p class="text-sm text-white/80 italic">${design_thinking.test || 'N/A'}</p>
+            </div>
+        </div>`;
+
+    // --- 4. Populate Reframing Panel ---
+    const reframingPanel = dom.$("reframingPanel");
+    let reframingHtml = `<div class="p-4 space-y-6"><h3 class="text-2xl font-bold mb-4 text-center">🖼️ Reframing Assumptions</h3>`;
+    (reframing.reframes || []).forEach((r, index) => {
+        reframingHtml += `
+            <div class="insight-card border-l-4 border-yellow-400">
+                <h4 class="text-lg font-bold mb-2">Assumption ${index + 1}:</h4>
+                <p class="text-white/90 italic mb-3">"${r.assumption || 'N/A'}"</p>
+                <h5 class="text-md font-bold text-green-300 mb-2">Alternative Reframes:</h5>
+                <ul class="list-disc list-inside text-sm text-white/80 space-y-1">
+                    ${(r.alternatives || []).map(a => `<li>${a}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+    });
+    reframingHtml += `</div>`;
+    reframingPanel.innerHTML = reframingHtml;
+    
+    // --- 5. Populate Thinking Hats Panel ---
+    const thinkingHatsPanel = dom.$("thinkingHatsPanel");
+    thinkingHatsPanel.innerHTML = `
+        <div class="p-4">
+            <h3 class="text-2xl font-bold mb-6 text-center">🎩 Six Thinking Hats</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-white/5 p-4 rounded-lg border-t-4 border-white"><h4 class="font-bold text-lg mb-2">⚪ White Hat (Facts)</h4><p class="text-sm text-white/80">${thinking_hats.white_hat || 'N/A'}</p></div>
+                <div class="bg-red-900/30 p-4 rounded-lg border-t-4 border-red-500"><h4 class="font-bold text-lg mb-2 text-red-300">🔴 Red Hat (Feelings)</h4><p class="text-sm text-white/80">${thinking_hats.red_hat || 'N/A'}</p></div>
+                <div class="bg-gray-800/30 p-4 rounded-lg border-t-4 border-gray-400"><h4 class="font-bold text-lg mb-2 text-gray-300">⚫ Black Hat (Cautions)</h4><p class="text-sm text-white/80">${thinking_hats.black_hat || 'N/A'}</p></div>
+                <div class="bg-yellow-900/30 p-4 rounded-lg border-t-4 border-yellow-500"><h4 class="font-bold text-lg mb-2 text-yellow-300">🟡 Yellow Hat (Benefits)</h4><p class="text-sm text-white/80">${thinking_hats.yellow_hat || 'N/A'}</p></div>
+                <div class="bg-green-900/30 p-4 rounded-lg border-t-4 border-green-500"><h4 class="font-bold text-lg mb-2 text-green-300">🟢 Green Hat (Creativity)</h4><p class="text-sm text-white/80">${thinking_hats.green_hat || 'N/A'}</p></div>
+                <div class="bg-blue-900/30 p-4 rounded-lg border-t-4 border-blue-500"><h4 class="font-bold text-lg mb-2 text-blue-300">🔵 Blue Hat (Process)</h4><p class="text-sm text-white/80">${thinking_hats.blue_hat || 'N/A'}</p></div>
+            </div>
+        </div>`;
+
+    // --- 6. Populate Creative Dissonance Panel ---
+    const dissonancePanel = dom.$("dissonancePanel");
+    dissonancePanel.innerHTML = `
+        <div class="p-4">
+            <h3 class="text-2xl font-bold text-center mb-6">⚡ Creative Dissonance</h3>
+            <div class="dissonance-map-container">
+                <div class="dissonance-pole">
+                    <h4 class="text-xl font-bold mb-3 text-red-300">📉 Current Reality</h4>
+                    <p class="text-white/80 text-sm">${creative_dissonance.current_reality || 'N/A'}</p>
+                </div>
+                <div class="dissonance-gap">
+                    <div class="text-center mb-4">
+                        <span class="text-4xl">⚡</span>
+                        <h4 class="text-lg font-bold text-yellow-300">Structural Tension</h4>
+                        <p class="text-xs text-white/70">(Key Gaps)</p>
+                    </div>
+                    ${(creative_dissonance.tension_points || []).map(dp => `<div class="dissonance-point text-xs">${dp}</div>`).join("")}
+                </div>
+                <div class="dissonance-pole">
+                    <h4 class="text-xl font-bold mb-3 text-green-300">🚀 Future Vision</h4>
+                    <p class="text-white/80 text-sm">${creative_dissonance.future_vision || 'N/A'}</p>
+                </div>
+            </div>
+        </div>`;
+
+    // --- 7. Populate Ladder of Inference Panel ---
+    const ladderPanel = dom.$("ladderPanel");
+    const d = ladder_of_inference.deconstruction || {};
+    ladderPanel.innerHTML = `
+        <div class="p-4">
+            <h3 class="text-2xl font-bold text-center mb-6">🪜 Ladder of Inference (Deconstruction)</h3>
+            <div class="ladder-container">
+                <div class="ladder-rung"><h4>Action / Belief</h4><p>${ladder_of_inference.belief_or_action || 'N/A'}</p></div>
+                <div class="ladder-arrow">›</div>
+                <div class="ladder-rung"><h4>Assumptions</h4><p>${d.assumptions || 'N/A'}</p></div>
+                <div class="ladder-arrow">›</div>
+                <div class="ladder-rung"><h4>Interpretations</h4><p>${d.interpretations || 'N/A'}</p></div>
+                <div class="ladder-arrow">›</div>
+                <div class="ladder-rung"><h4>Selected Observations</h4><p>${d.observations || 'N/A'}</p></div>
+                <div class="ladder-arrow">›</div>
+                <div class="ladder-rung"><h4>Pool of Reality</h4><p>(The full context provided)</p></div>
+            </div>
+        </div>`;
+    
+    // --- 8. Populate Learn Frameworks Panel ---
+    const learnPanel = dom.$("learnPanel");
+    learnPanel.innerHTML = `
+    <div class="p-6 space-y-6 text-white/90">
+        <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding Novel Frameworks</h3>
+        <p class="text-sm text-white/80 text-center italic">These frameworks are designed to break conventional thinking and generate new strategic options.</p>
+        <details class="styled-details" open>
+            <summary>🌊 Blue Ocean Strategy (ERRC)</summary>
+            <div class="bg-black/20 p-4 rounded-b-lg text-sm space-y-2">
+                <p>Focuses on creating uncontested market space. The ERRC grid challenges industry assumptions:</p>
+                <ul class="list-disc list-inside ml-4">
+                    <li><strong>Eliminate:</strong> Which factors that the industry takes for granted should be eliminated?</li>
+                    <li><strong>Reduce:</strong> Which factors should be reduced well below the industry standard?</li>
+                    <li><strong>Raise:</strong> Which factors should be raised well above the industry standard?</li>
+                    <li><strong>Create:</strong> Which factors should be created that the industry has never offered?</li>
+                </ul>
+            </div>
+        </details>
+        <details class="styled-details">
+            <summary>🎨 Design Thinking</summary>
+            <div class="bg-black/20 p-4 rounded-b-lg text-sm space-y-2">
+                <p>A human-centered approach to innovation. It moves through 5 stages:</p>
+                <ul class="list-decimal list-inside ml-4">
+                    <li><strong>Empathize:</strong> Understand the user's needs, motivations, and pain points.</li>
+                    <li><strong>Define:</strong> Clearly articulate the core user problem you are trying to solve.</li>
+                    <li><strong>Ideate:</strong> Brainstorm a wide range of creative solutions.</li>
+                    <li><strong>Prototype:</strong> Build low-cost, simplified versions of the solution to test.</li>
+                    <li><strong>Test:</strong> Gather user feedback on prototypes and refine the solution.</li>
+                </ul>
+            </div>
+        </details>
+        <details class="styled-details">
+            <summary>🖼️ Reframing Thinking</summary>
+            <div class="bg-black/20 p-4 rounded-b-lg text-sm space-y-2">
+                <p>The process of challenging and changing the core assumptions or perspectives that define a problem. By changing the "frame," you can unlock entirely new solutions.</p>
+            </div>
+        </details>
+        <details class="styled-details">
+            <summary>🎩 Six Thinking Hats</summary>
+            <div class="bg-black/20 p-4 rounded-b-lg text-sm space-y-2">
+                <p>A tool for parallel thinking that separates analysis into six distinct modes:</p>
+                <ul class="list-disc list-inside ml-4">
+                    <li><strong>White:</strong> Facts, data, information.</li>
+                    <li><strong>Red:</strong> Emotions, feelings, intuition.</li>
+                    <li><strong>Black:</strong> Cautions, risks, weaknesses (the "devil's advocate").</li>
+                    <li><strong>Yellow:</strong> Benefits, positives, optimism.</li>
+                    <li><strong>Green:</strong> Creativity, new ideas, alternatives.</li>
+                    <li><strong>Blue:</strong> Process, agenda, summary (the "facilitator").</li>
+                </ul>
+            </div>
+        </details>
+        <details class="styled-details">
+            <summary>⚡ Creative Dissonance</summary>
+            <div class="bg-black/20 p-4 rounded-b-lg text-sm space-y-2">
+                <p>Also known as Structural Tension. It posits that energy for change is created by holding two things in mind: a clear vision of the **Future Vision** and an honest assessment of **Current Reality**. The "gap" between the two creates tension that naturally seeks resolution, pulling reality up towards the vision.</p>
+            </div>
+        </details>
+        <details class="styled-details">
+            <summary>🪜 Ladder of Inference</summary>
+            <div class="bg-black/20 p-4 rounded-b-lg text-sm space-y-2">
+                <p>A model of the mental steps we take (often unconsciously) to get from an observation to a decision or action. By deconstructing this ladder (Action -> Beliefs -> Conclusions -> Assumptions -> Interpretations -> Selected Data -> Observations), we can find where our logic may be flawed and rebuild a more constructive path.</p>
+            </div>
+        </details>
+    </div>
+    `;
+
+    // --- Final Touches ---
+    appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache result
+    tabNav.addEventListener("click", (e) => {
+        if (e.target.tagName === "BUTTON") {
+            tabNav.querySelectorAll(".analysis-tab-btn").forEach((btn) => btn.classList.remove("active"));
+            tabContent.querySelectorAll(".analysis-tab-panel").forEach((pnl) => pnl.classList.remove("active"));
+            e.target.classList.add("active");
+            const targetPanelId = e.target.dataset.tab + "Panel";
+            const targetPanel = dom.$(targetPanelId);
+            if (targetPanel) {
+                targetPanel.classList.add("active");
+            } else {
+                    console.warn("Target panel not found:", targetPanelId);
+            }
+        }
+    });
+    dom.$("analysisActions").classList.remove("hidden");
+}
+
+
+
 function renderCreativeDissonancePage_NS(container, data) {
     container.innerHTML = ""; // Clear loading state
     // Add original inputs back for display if they were stored
@@ -839,7 +1128,8 @@ function renderThinkingSystemPage_NS(container, data) {
 
 export {
     renderNovelGoalsPage_NS,
+    renderAllFrameworkPage,
     renderCreativeDissonancePage_NS,
     renderLivingSystemPage_NS,
-    renderThinkingSystemPage_NS
+    renderThinkingSystemPage_NS,
 }
