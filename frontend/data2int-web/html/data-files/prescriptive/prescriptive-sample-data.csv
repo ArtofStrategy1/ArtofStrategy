@@ -1,0 +1,207 @@
+campaign_id,campaign_name,channel,campaign_type,target_audience,region,start_date,end_date,budget,spend,impressions,clicks,conversions,revenue,ctr,cpc,cpa,conversion_rate,roas
+CAMP_001,Email Newsletter - Gen Z,Email,Brand Awareness,18-24,North America,2024-01-15,2024-02-15,5000,4850,45000,900,36,2880,2.00,5.39,134.72,4.00,0.59
+CAMP_002,Google Search - Millennials,Google Ads,Lead Generation,25-34,Europe,2024-01-20,2024-03-20,15000,14750,120000,1800,90,13500,1.50,8.19,163.89,5.00,0.92
+CAMP_003,Facebook Retargeting - Gen X,Facebook Ads,Retargeting,35-44,North America,2024-01-25,2024-02-25,8000,7920,85000,1275,102,15300,1.50,6.21,77.65,8.00,1.93
+CAMP_004,Instagram Stories - Gen Z,Instagram Ads,Engagement,18-24,Asia Pacific,2024-02-01,2024-03-01,6000,5940,75000,750,30,3600,1.00,7.92,198.00,4.00,0.61
+CAMP_005,LinkedIn B2B - Professionals,LinkedIn Ads,Lead Generation,35-44,North America,2024-02-05,2024-04-05,20000,19800,60000,1200,84,16800,2.00,16.50,235.71,7.00,0.85
+CAMP_006,YouTube Pre-Roll - Millennials,YouTube Ads,Brand Awareness,25-34,Europe,2024-02-10,2024-03-10,12000,11880,200000,2000,80,9600,1.00,5.94,148.50,4.00,0.81
+CAMP_007,Display Banner - Gen X,Display Ads,Conversion,35-44,Asia Pacific,2024-02-15,2024-04-15,10000,9900,150000,1050,63,11340,0.70,9.43,157.14,6.00,1.15
+CAMP_008,TikTok Dance Challenge - Gen Z,TikTok Ads,Engagement,18-24,North America,2024-02-20,2024-03-20,7000,6930,100000,2000,60,7200,2.00,3.47,115.50,3.00,1.04
+CAMP_009,SEO Content - All Ages,SEO,Lead Generation,25-54,Global,2024-03-01,2024-06-01,3000,2970,25000,500,45,8100,2.00,5.94,66.00,9.00,2.73
+CAMP_010,Content Marketing - Professionals,Content Marketing,Brand Awareness,35-54,North America,2024-03-05,2024-05-05,4000,3960,30000,600,42,7560,2.00,6.60,94.29,7.00,1.91
+CAMP_011,Google Display - Seniors,Display Ads,Conversion,55-64,Europe,2024-03-10,2024-04-10,8500,8415,110000,770,54,9720,0.70,10.93,155.83,7.00,1.16
+CAMP_012,Facebook Video - Millennials,Facebook Ads,Brand Awareness,25-34,Latin America,2024-03-15,2024-04-15,9000,8910,95000,1425,71,10650,1.50,6.25,125.49,5.00,1.20
+CAMP_013,Email Segmented - Gen X,Email,Lead Generation,35-44,North America,2024-03-20,2024-04-20,4500,4455,40000,1200,96,14400,3.00,3.71,46.41,8.00,3.23
+CAMP_014,Instagram Influencer - Gen Z,Instagram Ads,Engagement,18-24,Asia Pacific,2024-03-25,2024-04-25,11000,10890,80000,1600,64,7680,2.00,6.81,170.16,4.00,0.71
+CAMP_015,LinkedIn Sponsored - Executives,LinkedIn Ads,Lead Generation,45-54,North America,2024-04-01,2024-06-01,25000,24750,50000,1000,70,21000,2.00,24.75,353.57,7.00,0.85
+CAMP_016,YouTube Shorts - Gen Z,YouTube Ads,Engagement,18-24,Europe,2024-04-05,2024-05-05,8000,7920,180000,1800,54,6480,1.00,4.40,146.67,3.00,0.82
+CAMP_017,Google Shopping - All Ages,Google Ads,Conversion,25-54,Global,2024-04-10,2024-05-10,18000,17820,140000,2100,147,22050,1.50,8.49,121.22,7.00,1.24
+CAMP_018,Facebook Carousel - Millennials,Facebook Ads,Conversion,25-34,North America,2024-04-15,2024-06-15,10000,9900,90000,1350,108,16200,1.50,7.33,91.67,8.00,1.64
+CAMP_019,Display Programmatic - Gen X,Display Ads,Retargeting,35-44,Europe,2024-04-20,2024-05-20,12000,11880,160000,1120,78,14040,0.70,10.61,152.31,7.00,1.18
+CAMP_020,TikTok Hashtag - Gen Z,TikTok Ads,Brand Awareness,18-24,Asia Pacific,2024-04-25,2024-05-25,6500,6435,120000,2400,72,8640,2.00,2.68,89.38,3.00,1.34
+CAMP_021,Email Automation - Millennials,Email,Retargeting,25-34,North America,2024-05-01,2024-06-01,3500,3465,35000,1050,84,12600,3.00,3.30,41.25,8.00,3.64
+CAMP_022,Instagram Reels - Gen Z,Instagram Ads,Engagement,18-24,Latin America,2024-05-05,2024-06-05,7500,7425,85000,1700,68,8160,2.00,4.37,109.19,4.00,1.10
+CAMP_023,LinkedIn Article - Professionals,LinkedIn Ads,Brand Awareness,35-54,Europe,2024-05-10,2024-07-10,15000,14850,45000,900,54,16200,2.00,16.50,275.00,6.00,1.09
+CAMP_024,YouTube Long-form - Gen X,YouTube Ads,Lead Generation,35-44,North America,2024-05-15,2024-07-15,14000,13860,170000,1700,85,12750,1.00,8.15,163.06,5.00,0.92
+CAMP_025,Google Local - Small Business,Google Ads,Conversion,25-54,North America,2024-05-20,2024-06-20,5000,4950,60000,1200,84,16800,2.00,4.13,58.93,7.00,3.39
+CAMP_026,Facebook Groups - Seniors,Facebook Ads,Engagement,55-64,North America,2024-05-25,2024-06-25,6000,5940,50000,1000,60,9000,2.00,5.94,99.00,6.00,1.52
+CAMP_027,Display Mobile - Millennials,Display Ads,Conversion,25-34,Asia Pacific,2024-06-01,2024-07-01,9000,8910,130000,910,64,11520,0.70,9.79,139.22,7.00,1.29
+CAMP_028,TikTok Live - Gen Z,TikTok Ads,Engagement,18-24,Europe,2024-06-05,2024-07-05,8500,8415,110000,2200,66,7920,2.00,3.83,127.50,3.00,0.94
+CAMP_029,SEO Local - Small Business,SEO,Lead Generation,35-54,North America,2024-06-10,2024-09-10,2500,2475,20000,400,36,6480,2.00,6.19,68.75,9.00,2.62
+CAMP_030,Content Video - Gen X,Content Marketing,Brand Awareness,35-44,Europe,2024-06-15,2024-08-15,5500,5445,40000,800,56,10080,2.00,6.81,97.23,7.00,1.85
+CAMP_031,Google Smart - Automated,Google Ads,Conversion,25-54,Global,2024-06-20,2024-07-20,16000,15840,120000,1800,126,18900,1.50,8.80,125.71,7.00,1.19
+CAMP_032,Instagram Shopping - Millennials,Instagram Ads,Conversion,25-34,North America,2024-06-25,2024-08-25,11000,10890,75000,1500,120,18000,2.00,7.26,90.75,8.00,1.65
+CAMP_033,LinkedIn Events - Professionals,LinkedIn Ads,Lead Generation,35-54,Europe,2024-07-01,2024-08-01,18000,17820,40000,800,56,16800,2.00,22.28,318.21,7.00,0.94
+CAMP_034,YouTube Music - Gen Z,YouTube Ads,Brand Awareness,18-24,Asia Pacific,2024-07-05,2024-08-05,9500,9405,190000,1900,57,6840,1.00,4.95,164.91,3.00,0.73
+CAMP_035,Facebook Marketplace - Gen X,Facebook Ads,Conversion,35-44,North America,2024-07-10,2024-09-10,8000,7920,70000,1050,84,15120,1.50,7.54,94.29,8.00,1.91
+CAMP_036,Display Video - All Ages,Display Ads,Brand Awareness,25-54,Global,2024-07-15,2024-08-15,13000,12870,180000,1260,76,12160,0.70,10.21,169.34,6.00,0.94
+CAMP_037,TikTok Shop - Millennials,TikTok Ads,Conversion,25-34,Europe,2024-07-20,2024-08-20,7000,6930,95000,1900,95,14250,2.00,3.65,72.95,5.00,2.06
+CAMP_038,Email Welcome - New Users,Email,Engagement,18-54,Global,2024-07-25,2024-08-25,2000,1980,25000,750,60,9000,3.00,2.64,33.00,8.00,4.55
+CAMP_039,Instagram Stories - Seniors,Instagram Ads,Awareness,55-64,North America,2024-08-01,2024-09-01,5000,4950,60000,600,24,2880,1.00,8.25,206.25,4.00,0.58
+CAMP_040,LinkedIn Newsletter - Industry,LinkedIn Ads,Lead Generation,35-54,North America,2024-08-05,2024-10-05,22000,21780,35000,700,49,14700,2.00,31.11,444.49,7.00,0.68
+CAMP_041,YouTube Community - Gen X,YouTube Ads,Engagement,35-44,Europe,2024-08-10,2024-09-10,10000,9900,160000,1600,64,7680,1.00,6.19,154.69,4.00,0.78
+CAMP_042,Google Performance Max - Auto,Google Ads,Conversion,25-54,Global,2024-08-15,2024-09-15,20000,19800,150000,2250,158,23700,1.50,8.80,125.32,7.00,1.20
+CAMP_043,Facebook Live - Millennials,Facebook Ads,Engagement,25-34,Asia Pacific,2024-08-20,2024-09-20,6500,6435,80000,1600,64,7680,2.00,4.02,100.55,4.00,1.19
+CAMP_044,Display Rich Media - Gen Z,Display Ads,Brand Awareness,18-24,North America,2024-08-25,2024-09-25,8500,8415,140000,980,39,4680,0.70,8.59,215.77,4.00,0.56
+CAMP_045,TikTok Spark - Creators,TikTok Ads,Engagement,18-34,Europe,2024-09-01,2024-10-01,9000,8910,125000,2500,75,9000,2.00,3.56,118.80,3.00,1.01
+CAMP_046,SEO Technical - B2B,SEO,Lead Generation,35-54,North America,2024-09-05,2024-12-05,4000,3960,30000,600,54,9720,2.00,6.60,73.33,9.00,2.45
+CAMP_047,Content Podcast - Professionals,Content Marketing,Brand Awareness,35-54,Global,2024-09-10,2024-11-10,6000,5940,50000,1000,70,12600,2.00,5.94,84.86,7.00,2.12
+CAMP_048,Google App - Mobile First,Google Ads,Conversion,18-34,Asia Pacific,2024-09-15,2024-10-15,12000,11880,100000,1500,105,15750,1.50,7.92,113.14,7.00,1.33
+CAMP_049,Instagram IGTV - Millennials,Instagram Ads,Brand Awareness,25-34,Latin America,2024-09-20,2024-10-20,7500,7425,90000,1800,54,6480,2.00,4.13,137.50,3.00,0.87
+CAMP_050,LinkedIn Pulse - Thought Leadership,LinkedIn Ads,Brand Awareness,35-54,North America,2024-09-25,2024-11-25,16000,15840,30000,600,42,12600,2.00,26.40,377.14,7.00,0.80
+CAMP_051,YouTube Premiere - Gen X,YouTube Ads,Lead Generation,35-44,Europe,2024-10-01,2024-11-01,11000,10890,170000,1700,85,12750,1.00,6.41,128.12,5.00,1.17
+CAMP_052,Facebook Instant - Mobile,Facebook Ads,Conversion,25-44,Global,2024-10-05,2024-11-05,9500,9405,85000,1275,102,15300,1.50,7.37,92.21,8.00,1.63
+CAMP_053,Display Native - Content Sites,Display Ads,Engagement,25-54,North America,2024-10-10,2024-11-10,10500,10395,120000,840,59,10030,0.70,12.38,176.19,7.00,0.97
+CAMP_054,TikTok For Business - SMB,TikTok Ads,Lead Generation,35-54,North America,2024-10-15,2024-11-15,5500,5445,70000,1400,70,10500,2.00,3.89,77.79,5.00,1.93
+CAMP_055,Email Segmentation - VIP,Email,Retargeting,35-54,Global,2024-01-08,2024-02-08,3000,2970,30000,900,72,10800,3.00,3.30,41.25,8.00,3.64
+CAMP_056,Instagram Live Shopping - Gen Z,Instagram Ads,Conversion,18-24,North America,2024-01-12,2024-02-12,8500,8415,70000,1400,84,12600,2.00,6.01,100.18,6.00,1.50
+CAMP_057,LinkedIn Lead Gen Forms - B2B,LinkedIn Ads,Lead Generation,35-54,Europe,2024-01-18,2024-03-18,19000,18810,38000,760,53,15900,2.00,24.75,354.91,7.00,0.85
+CAMP_058,YouTube Bumper - Quick Message,YouTube Ads,Brand Awareness,18-34,Asia Pacific,2024-01-22,2024-02-22,6000,5940,200000,2000,60,7200,1.00,2.97,99.00,3.00,1.21
+CAMP_059,Google Discovery - Visual,Google Ads,Engagement,25-44,North America,2024-01-28,2024-02-28,13000,12870,110000,1650,99,14850,1.50,7.80,130.00,6.00,1.15
+CAMP_060,Facebook Stories - Interactive,Facebook Ads,Engagement,18-34,Europe,2024-02-02,2024-03-02,7000,6930,95000,1900,57,6840,2.00,3.65,121.58,3.00,0.99
+CAMP_061,Display Retargeting - E-commerce,Display Ads,Retargeting,25-54,Global,2024-02-08,2024-03-08,11500,11385,130000,910,73,13140,0.70,12.51,155.96,8.00,1.15
+CAMP_062,TikTok Brand Takeover - Premium,TikTok Ads,Brand Awareness,18-24,North America,2024-02-12,2024-03-12,15000,14850,150000,3000,90,10800,2.00,4.95,165.00,3.00,0.73
+CAMP_063,SEO Content Hub - Authority,SEO,Brand Awareness,35-54,North America,2024-02-18,2024-05-18,3500,3465,40000,800,56,10080,2.00,4.33,61.88,7.00,2.91
+CAMP_064,Content Webinar - Lead Gen,Content Marketing,Lead Generation,35-54,Global,2024-02-22,2024-04-22,4500,4455,35000,700,63,11340,2.00,6.36,70.71,9.00,2.55
+CAMP_065,Google Local Services - SMB,Google Ads,Lead Generation,35-54,North America,2024-02-28,2024-03-28,4000,3960,50000,1000,70,14000,2.00,3.96,56.57,7.00,3.54
+CAMP_066,Instagram Explore - Discovery,Instagram Ads,Brand Awareness,18-34,Asia Pacific,2024-03-02,2024-04-02,8000,7920,100000,2000,60,7200,2.00,3.96,132.00,3.00,0.91
+CAMP_067,LinkedIn Video Ads - Professional,LinkedIn Ads,Brand Awareness,35-54,Europe,2024-03-08,2024-04-08,17000,16830,32000,640,45,13500,2.00,26.30,374.00,7.00,0.80
+CAMP_068,YouTube Live Stream - Events,YouTube Ads,Engagement,25-44,North America,2024-03-12,2024-04-12,9500,9405,180000,1800,54,6480,1.00,5.23,174.17,3.00,0.69
+CAMP_069,Facebook Gaming - Gen Z,Facebook Ads,Engagement,18-24,Global,2024-03-18,2024-04-18,6500,6435,80000,1600,48,5760,2.00,4.02,134.06,3.00,0.89
+CAMP_070,Display Audio - Streaming,Display Ads,Brand Awareness,25-44,North America,2024-03-22,2024-04-22,10000,9900,160000,1120,45,6750,0.70,8.84,220.00,4.00,0.68
+CAMP_071,TikTok TopView - Premium,TikTok Ads,Brand Awareness,18-24,Europe,2024-03-28,2024-04-28,12000,11880,140000,2800,84,10080,2.00,4.24,141.43,3.00,0.85
+CAMP_072,Email Drip Campaign - Nurture,Email,Lead Generation,35-54,North America,2024-04-02,2024-06-02,2500,2475,25000,750,68,12240,3.00,3.30,36.40,9.07,4.95
+CAMP_073,Instagram Carousel - Product,Instagram Ads,Conversion,25-34,Asia Pacific,2024-04-08,2024-05-08,9000,8910,75000,1500,120,18000,2.00,5.94,74.25,8.00,2.02
+CAMP_074,LinkedIn Carousel - B2B,LinkedIn Ads,Lead Generation,35-54,North America,2024-04-12,2024-06-12,21000,20790,42000,840,59,17700,2.00,24.75,352.37,7.02,0.85
+CAMP_075,YouTube Channel - Organic,YouTube Ads,Brand Awareness,18-54,Global,2024-04-18,2024-07-18,5000,4950,220000,2200,66,7920,1.00,2.25,75.00,3.00,1.60
+CAMP_076,Google Shopping Showcase - Visual,Google Ads,Conversion,25-54,North America,2024-04-22,2024-05-22,14000,13860,120000,1800,126,18900,1.50,7.70,110.00,7.00,1.36
+CAMP_077,Facebook Event Promotion - Local,Facebook Ads,Engagement,25-54,North America,2024-04-28,2024-05-28,5500,5445,60000,1200,72,10800,2.00,4.54,75.63,6.00,1.98
+CAMP_078,Display Connected TV - Streaming,Display Ads,Brand Awareness,25-54,North America,2024-05-02,2024-06-02,15000,14850,200000,1400,56,8400,0.70,10.61,265.18,4.00,0.57
+CAMP_079,TikTok Branded Effects - Interactive,TikTok Ads,Engagement,18-24,Asia Pacific,2024-05-08,2024-06-08,8000,7920,110000,2200,66,7920,2.00,3.60,120.00,3.00,1.00
+CAMP_080,SEO Voice Search - Optimization,SEO,Lead Generation,25-54,Global,2024-05-12,2024-08-12,3000,2970,35000,700,63,11340,2.00,4.24,47.14,9.00,3.82
+CAMP_081,Content Interactive - Engagement,Content Marketing,Engagement,25-44,North America,2024-05-18,2024-07-18,5000,4950,45000,900,63,11340,2.00,5.50,78.57,7.00,2.29
+CAMP_082,Google Smart Shopping - Automated,Google Ads,Conversion,25-54,Global,2024-05-22,2024-06-22,17000,16830,130000,1950,137,20550,1.50,8.63,122.85,7.03,1.22
+CAMP_083,Instagram Guide - Educational,Instagram Ads,Brand Awareness,25-44,Europe,2024-05-28,2024-06-28,6500,6435,80000,1600,48,5760,2.00,4.02,134.06,3.00,0.89
+CAMP_084,LinkedIn Document Ads - B2B,LinkedIn Ads,Lead Generation,35-54,North America,2024-06-02,2024-08-02,18500,18315,37000,740,52,15600,2.00,24.75,352.21,7.03,0.85
+CAMP_085,YouTube Shorts Remix - Viral,YouTube Ads,Engagement,18-24,Global,2024-06-08,2024-07-08,7000,6930,200000,2000,60,7200,1.00,3.47,115.50,3.00,1.04
+CAMP_086,Facebook Shop - Social Commerce,Facebook Ads,Conversion,25-44,North America,2024-06-12,2024-07-12,10500,10395,90000,1350,108,16200,1.50,7.70,96.25,8.00,1.56
+CAMP_087,Display Programmatic Audio - Podcast,Display Ads,Brand Awareness,25-54,North America,2024-06-18,2024-07-18,12000,11880,180000,1260,50,7500,0.70,9.43,237.60,3.97,0.63
+CAMP_088,TikTok Duet Challenge - Social,TikTok Ads,Engagement,18-24,Europe,2024-06-22,2024-07-22,6000,5940,100000,2000,60,7200,2.00,2.97,99.00,3.00,1.21
+CAMP_089,Email A/B Testing - Optimization,Email,Conversion,25-54,Global,2024-06-28,2024-07-28,2000,1980,20000,600,54,8100,3.00,3.30,36.67,9.00,4.09
+CAMP_090,Instagram Quiz - Interactive,Instagram Ads,Engagement,18-34,Asia Pacific,2024-07-02,2024-08-02,7500,7425,85000,1700,51,6120,2.00,4.37,145.59,3.00,0.82
+CAMP_091,LinkedIn Conversation Ads - Messaging,LinkedIn Ads,Lead Generation,35-54,Europe,2024-07-08,2024-09-08,16000,15840,32000,640,45,13500,2.00,24.75,352.00,7.03,0.85
+CAMP_092,YouTube Product Placement - Integration,YouTube Ads,Brand Awareness,25-44,North America,2024-07-12,2024-08-12,13000,12870,190000,1900,57,6840,1.00,6.77,225.79,3.00,0.53
+CAMP_093,Google Hotel Ads - Travel,Google Ads,Conversion,35-54,Global,2024-07-18,2024-08-18,11000,10890,80000,1200,84,16800,1.50,9.08,129.64,7.00,1.54
+CAMP_094,Facebook Instant Experience - Mobile,Facebook Ads,Engagement,18-34,North America,2024-07-22,2024-08-22,8000,7920,75000,1500,60,9000,2.00,5.28,132.00,4.00,1.14
+CAMP_095,Display Digital Out-of-Home - Location,Display Ads,Brand Awareness,25-54,North America,2024-07-28,2024-08-28,14000,13860,250000,1750,70,10500,0.70,7.92,198.00,4.00,0.76
+CAMP_096,TikTok Music Marketing - Artists,TikTok Ads,Brand Awareness,18-24,Global,2024-08-02,2024-09-02,9000,8910,130000,2600,78,9360,2.00,3.43,114.23,3.00,1.05
+CAMP_097,SEO Featured Snippets - Position Zero,SEO,Brand Awareness,25-54,North America,2024-08-08,2024-11-08,2500,2475,30000,600,42,7560,2.00,4.13,58.93,7.00,3.05
+CAMP_098,Content Newsletter - Weekly,Content Marketing,Lead Generation,35-54,Global,2024-08-12,2024-10-12,3500,3465,40000,800,72,12960,2.00,4.33,48.13,9.00,3.74
+CAMP_099,Google Responsive Display - Adaptive,Google Ads,Brand Awareness,18-54,Global,2024-08-18,2024-09-18,15000,14850,200000,2000,80,12000,1.00,7.43,185.63,4.00,0.81
+CAMP_100,Instagram Boomerang - Creative,Instagram Ads,Engagement,18-24,North America,2024-08-22,2024-09-22,6000,5940,70000,1400,42,5040,2.00,4.24,141.43,3.00,0.85
+CAMP_101,LinkedIn Single Image - Professional,LinkedIn Ads,Brand Awareness,35-54,Europe,2024-08-28,2024-10-28,14000,13860,28000,560,39,11700,2.00,24.75,355.38,6.96,0.84
+CAMP_102,YouTube Action Campaign - CTA,YouTube Ads,Conversion,25-44,Asia Pacific,2024-09-02,2024-10-02,12000,11880,160000,1600,112,16800,1.00,7.43,106.07,7.00,1.41
+CAMP_103,Facebook Collection - Product Catalog,Facebook Ads,Conversion,25-44,North America,2024-09-08,2024-10-08,9500,9405,80000,1200,96,14400,1.50,7.84,97.97,8.00,1.53
+CAMP_104,Display Rich Media Video - Interactive,Display Ads,Engagement,18-44,Global,2024-09-12,2024-10-12,11000,10890,150000,1050,63,10710,0.70,10.37,172.86,6.00,0.98
+CAMP_105,TikTok Gaming - Esports,TikTok Ads,Engagement,18-24,North America,2024-09-18,2024-10-18,7500,7425,105000,2100,63,7560,2.00,3.54,117.86,3.00,1.02
+CAMP_106,Email Lifecycle - Customer Journey,Email,Retargeting,25-54,Global,2024-09-22,2024-11-22,3000,2970,30000,900,81,12150,3.00,3.30,36.67,9.00,4.09
+CAMP_107,Instagram Poll - User Generated,Instagram Ads,Engagement,18-34,Europe,2024-09-28,2024-10-28,6500,6435,75000,1500,45,5400,2.00,4.29,143.00,3.00,0.84
+CAMP_108,LinkedIn Message Ads - Direct,LinkedIn Ads,Lead Generation,35-54,North America,2024-10-02,2024-12-02,20000,19800,40000,800,56,16800,2.00,24.75,353.57,7.00,0.85
+CAMP_109,YouTube Community Post - Organic,YouTube Ads,Engagement,25-44,Asia Pacific,2024-10-08,2024-11-08,4000,3960,100000,1000,30,3600,1.00,3.96,132.00,3.00,0.91
+CAMP_110,Google Video Action - Conversion,Google Ads,Conversion,25-54,North America,2024-10-12,2024-11-12,16000,15840,140000,2100,147,22050,1.50,7.54,107.76,7.00,1.39
+CAMP_111,Facebook Watch - Video Content,Facebook Ads,Brand Awareness,25-44,Global,2024-10-18,2024-11-18,8500,8415,120000,1800,54,6480,1.50,4.68,155.83,3.00,0.77
+CAMP_112,Display Contextual - Content Match,Display Ads,Conversion,25-54,Europe,2024-10-22,2024-11-22,10000,9900,110000,770,54,9720,0.70,12.86,183.33,7.01,0.98
+CAMP_113,TikTok Brand Mission - Purpose,TikTok Ads,Brand Awareness,18-34,Global,2024-10-28,2024-11-28,8000,7920,115000,2300,69,8280,2.00,3.44,114.78,3.00,1.05
+CAMP_114,SEO Entity Optimization - Knowledge,SEO,Brand Awareness,35-54,North America,2024-11-02,2025-02-02,3500,3465,35000,700,49,8820,2.00,4.95,70.71,7.00,2.55
+CAMP_115,Content AR Experience - Immersive,Content Marketing,Engagement,18-34,North America,2024-11-08,2024-12-08,6000,5940,50000,1000,60,10800,2.00,5.94,99.00,6.00,1.82
+CAMP_116,Google App Install - Mobile,Google Ads,Conversion,18-34,Asia Pacific,2024-01-05,2024-02-05,9000,8910,90000,1350,95,14250,1.50,6.60,93.79,7.04,1.60
+CAMP_117,Instagram Story Highlights - Permanent,Instagram Ads,Brand Awareness,25-44,North America,2024-01-11,2024-02-11,5500,5445,65000,1300,39,4680,2.00,4.19,139.62,3.00,0.86
+CAMP_118,LinkedIn Company Page - Organic,LinkedIn Ads,Brand Awareness,35-54,Europe,2024-01-17,2024-03-17,12000,11880,24000,480,34,10200,2.00,24.75,349.41,7.08,0.86
+CAMP_119,YouTube Playlist - Content Series,YouTube Ads,Engagement,25-44,Global,2024-01-23,2024-02-23,7000,6930,170000,1700,51,6120,1.00,4.08,135.88,3.00,0.88
+CAMP_120,Facebook Page Likes - Organic Growth,Facebook Ads,Engagement,18-54,North America,2024-01-29,2024-02-29,4000,3960,50000,1000,40,6000,2.00,3.96,99.00,4.00,1.52
+CAMP_121,Display Geofencing - Location Based,Display Ads,Conversion,25-54,North America,2024-02-04,2024-03-04,8500,8415,95000,665,47,8460,0.70,12.65,179.04,7.07,1.01
+CAMP_122,TikTok Creator Fund - Partnership,TikTok Ads,Brand Awareness,18-24,Europe,2024-02-14,2024-03-14,10000,9900,120000,2400,72,8640,2.00,4.13,137.50,3.00,0.87
+CAMP_123,Email Preference Center - Customization,Email,Engagement,25-54,Global,2024-02-24,2024-03-24,1500,1485,15000,450,41,6150,3.00,3.30,36.22,9.11,4.14
+CAMP_124,Instagram TV Series - Long Form,Instagram Ads,Brand Awareness,25-34,Asia Pacific,2024-03-01,2024-04-01,8000,7920,85000,1700,51,6120,2.00,4.66,155.29,3.00,0.77
+CAMP_125,LinkedIn Thought Leadership - Authority,LinkedIn Ads,Brand Awareness,35-54,North America,2024-03-11,2024-05-11,18000,17820,36000,720,50,15000,2.00,24.75,356.40,6.94,0.84
+CAMP_126,YouTube Thumbnail Testing - CTR,YouTube Ads,Engagement,18-44,Global,2024-03-21,2024-04-21,6000,5940,180000,1800,54,6480,1.00,3.30,110.00,3.00,1.09
+CAMP_127,Google Hotel Price Ads - Travel,Google Ads,Conversion,35-54,Global,2024-03-31,2024-04-30,13000,12870,100000,1500,105,21000,1.50,8.58,122.57,7.00,1.63
+CAMP_128,Facebook Lead Ads - Form Fill,Facebook Ads,Lead Generation,25-54,North America,2024-04-06,2024-05-06,7500,7425,70000,1050,84,12600,1.50,7.07,88.39,8.00,1.70
+CAMP_129,Display Weather Targeting - Context,Display Ads,Conversion,25-44,North America,2024-04-16,2024-05-16,9000,8910,120000,840,59,10030,0.70,10.61,151.02,7.02,1.13
+CAMP_130,TikTok Effect House - Custom AR,TikTok Ads,Engagement,18-24,Asia Pacific,2024-04-26,2024-05-26,7000,6930,95000,1900,57,6840,2.00,3.65,121.58,3.00,0.99
+CAMP_131,SEO Image Optimization - Visual Search,SEO,Lead Generation,25-54,North America,2024-05-06,2024-08-06,2800,2772,32000,640,58,10440,2.00,4.33,47.79,9.06,3.77
+CAMP_132,Content Virtual Event - Live Stream,Content Marketing,Lead Generation,35-54,Global,2024-05-16,2024-06-16,5500,5445,45000,900,81,14580,2.00,6.05,67.22,9.00,2.68
+CAMP_133,Google Showcase Shopping - Premium,Google Ads,Conversion,25-54,Europe,2024-05-26,2024-06-26,15000,14850,115000,1725,121,18150,1.50,8.61,122.73,7.01,1.22
+CAMP_134,Instagram Creator Bonus - Incentive,Instagram Ads,Engagement,18-34,North America,2024-06-01,2024-07-01,6500,6435,80000,1600,48,5760,2.00,4.02,134.06,3.00,0.89
+CAMP_135,LinkedIn Sales Navigator - B2B Tool,LinkedIn Ads,Lead Generation,35-54,North America,2024-06-11,2024-08-11,22000,21780,44000,880,62,18600,2.00,24.75,351.29,7.05,0.85
+CAMP_136,YouTube Shorts Fund - Creator Support,YouTube Ads,Engagement,18-24,Global,2024-06-21,2024-07-21,5000,4950,200000,2000,60,7200,1.00,2.48,82.50,3.00,1.45
+CAMP_137,Facebook Dynamic Product Ads - Retargeting,Facebook Ads,Retargeting,25-44,Global,2024-07-01,2024-08-01,11000,10890,95000,1425,114,17100,1.50,7.64,95.53,8.00,1.57
+CAMP_138,Display Programmatic TV - Connected,Display Ads,Brand Awareness,25-54,North America,2024-07-11,2024-08-11,16000,15840,220000,1540,62,9300,0.70,10.29,255.48,4.03,0.59
+CAMP_139,TikTok Pulse - Premium Inventory,TikTok Ads,Brand Awareness,18-34,Europe,2024-07-21,2024-08-21,12000,11880,135000,2700,81,9720,2.00,4.40,146.67,3.00,0.82
+CAMP_140,Email Behavioral Triggers - Automation,Email,Conversion,25-54,Global,2024-07-31,2024-08-31,2200,2178,22000,660,59,8850,3.00,3.30,36.92,8.94,4.06
+CAMP_141,Instagram Branded Content - Partnership,Instagram Ads,Brand Awareness,18-34,Asia Pacific,2024-08-06,2024-09-06,9000,8910,90000,1800,54,6480,2.00,4.95,165.00,3.00,0.73
+CAMP_142,LinkedIn Recruiter - HR Tool,LinkedIn Ads,Lead Generation,35-54,North America,2024-08-16,2024-10-16,19000,18810,38000,760,53,15900,2.00,24.75,354.91,6.97,0.85
+CAMP_143,YouTube Channel Memberships - Subscription,YouTube Ads,Engagement,25-44,Global,2024-08-26,2024-09-26,8000,7920,160000,1600,48,5760,1.00,4.95,165.00,3.00,0.73
+CAMP_144,Google Universal App - Cross Platform,Google Ads,Conversion,18-54,Global,2024-09-01,2024-10-01,18000,17820,150000,2250,158,23700,1.50,7.92,112.78,7.02,1.33
+CAMP_145,Facebook Reels Play Bonus - Creator Fund,Facebook Ads,Engagement,18-24,North America,2024-09-11,2024-10-11,6000,5940,75000,1500,45,5400,2.00,3.96,132.00,3.00,0.91
+CAMP_146,Display Audio Streaming - Podcast,Display Ads,Brand Awareness,25-54,North America,2024-09-21,2024-10-21,13000,12870,190000,1330,53,7950,0.70,9.68,242.83,3.98,0.62
+CAMP_147,TikTok Shop Affiliate - Commission,TikTok Ads,Conversion,25-34,Europe,2024-10-01,2024-11-01,8500,8415,100000,2000,100,15000,2.00,4.21,84.15,5.00,1.78
+CAMP_148,SEO Core Web Vitals - Performance,SEO,Lead Generation,25-54,Global,2024-10-11,2025-01-11,3200,3168,38000,760,68,12240,2.00,4.17,46.59,8.95,3.86
+CAMP_149,Content Podcast Sponsorship - Audio,Content Marketing,Brand Awareness,35-54,North America,2024-10-21,2024-12-21,7000,6930,60000,1200,84,15120,2.00,5.78,82.50,7.00,2.18
+CAMP_150,Google Travel Partner - Tourism,Google Ads,Conversion,35-54,Global,2024-10-31,2024-11-30,14000,13860,110000,1650,116,23200,1.50,8.40,119.48,7.03,1.67
+CAMP_151,Instagram Shop Tags - Product Discovery,Instagram Ads,Conversion,25-44,North America,2024-01-03,2024-02-03,9500,9405,80000,1600,128,19200,2.00,5.88,73.48,8.00,2.04
+CAMP_152,LinkedIn Learning - Educational,LinkedIn Ads,Brand Awareness,35-54,Europe,2024-01-13,2024-03-13,15000,14850,30000,600,42,12600,2.00,24.75,353.57,7.00,0.85
+CAMP_153,YouTube Music Video - Entertainment,YouTube Ads,Brand Awareness,18-34,Asia Pacific,2024-01-23,2024-02-23,10000,9900,210000,2100,63,7560,1.00,4.71,157.14,3.00,0.76
+CAMP_154,Facebook Campus - University,Facebook Ads,Engagement,18-24,North America,2024-02-02,2024-03-02,5000,4950,55000,1100,44,6600,2.00,4.50,112.50,4.00,1.33
+CAMP_155,Display In-Game - Gaming Platform,Display Ads,Engagement,18-34,Global,2024-02-12,2024-03-12,11000,10890,140000,980,59,10030,0.70,11.11,184.58,6.02,0.92
+CAMP_156,TikTok Branded Mission - Social Good,TikTok Ads,Brand Awareness,18-34,Europe,2024-02-22,2024-03-22,9000,8910,125000,2500,75,9000,2.00,3.56,118.80,3.00,1.01
+CAMP_157,Email Sunset Campaign - Re-engagement,Email,Retargeting,25-54,Global,2024-03-04,2024-04-04,1800,1782,18000,540,49,7350,3.00,3.30,36.37,9.07,4.12
+CAMP_158,Instagram Music - Audio Content,Instagram Ads,Engagement,18-34,North America,2024-03-14,2024-04-14,7500,7425,85000,1700,51,6120,2.00,4.37,145.59,3.00,0.82
+CAMP_159,LinkedIn Audience Network - Extended,LinkedIn Ads,Brand Awareness,35-54,North America,2024-03-24,2024-05-24,16000,15840,32000,640,45,13500,2.00,24.75,352.00,7.03,0.85
+CAMP_160,YouTube Premium - Ad-Free Experience,YouTube Ads,Brand Awareness,25-44,Global,2024-04-03,2024-05-03,12000,11880,180000,1800,54,6480,1.00,6.60,220.00,3.00,0.55
+CAMP_161,Google Analytics Intelligence - Insights,Google Ads,Lead Generation,35-54,North America,2024-04-13,2024-06-13,8000,7920,75000,1125,79,15800,1.50,7.04,100.25,7.02,1.99
+CAMP_162,Facebook Creator Studio - Content Tools,Facebook Ads,Engagement,25-44,Asia Pacific,2024-04-23,2024-05-23,6500,6435,70000,1400,56,8400,2.00,4.60,114.91,4.00,1.31
+CAMP_163,Display Wearable - Smartwatch,Display Ads,Brand Awareness,25-44,North America,2024-05-03,2024-06-03,8000,7920,100000,700,28,4200,0.70,11.31,282.86,4.00,0.53
+CAMP_164,TikTok Creator Marketplace - Influencer,TikTok Ads,Brand Awareness,18-24,Global,2024-05-13,2024-06-13,13000,12870,140000,2800,84,10080,2.00,4.60,153.21,3.00,0.78
+CAMP_165,SEO Mobile-First - Indexing,SEO,Lead Generation,25-54,North America,2024-05-23,2024-08-23,3500,3465,40000,800,72,12960,2.00,4.33,48.13,9.00,3.74
+CAMP_166,Content Interactive Quiz - Engagement,Content Marketing,Lead Generation,25-44,Global,2024-06-02,2024-08-02,4500,4455,50000,1000,90,16200,2.00,4.46,49.50,9.00,3.64
+CAMP_167,Google Merchant Promotions - E-commerce,Google Ads,Conversion,25-54,Europe,2024-06-12,2024-07-12,16000,15840,125000,1875,131,19650,1.50,8.45,120.92,6.99,1.24
+CAMP_168,Instagram Live Badge - Monetization,Instagram Ads,Engagement,18-34,North America,2024-06-22,2024-07-22,5500,5445,65000,1300,39,4680,2.00,4.19,139.62,3.00,0.86
+CAMP_169,LinkedIn Live - Video Streaming,LinkedIn Ads,Brand Awareness,35-54,Europe,2024-07-02,2024-08-02,14000,13860,28000,560,39,11700,2.00,24.75,355.38,6.96,0.84
+CAMP_170,YouTube Shorts Shelf - Discovery,YouTube Ads,Engagement,18-24,Asia Pacific,2024-07-12,2024-08-12,6000,5940,200000,2000,60,7200,1.00,2.97,99.00,3.00,1.21
+CAMP_171,Facebook Horizon - VR Platform,Facebook Ads,Engagement,18-34,North America,2024-07-22,2024-08-22,10000,9900,90000,1800,54,6480,2.00,5.50,183.33,3.00,0.65
+CAMP_172,Display Smart TV - Connected Device,Display Ads,Brand Awareness,35-54,North America,2024-08-01,2024-09-01,15000,14850,200000,1400,56,8400,0.70,10.61,265.18,4.00,0.57
+CAMP_173,TikTok Live Gifts - Creator Support,TikTok Ads,Engagement,18-24,Europe,2024-08-11,2024-09-11,7000,6930,105000,2100,63,7560,2.00,3.30,110.00,3.00,1.09
+CAMP_174,Email Progressive Profiling - Data Collection,Email,Lead Generation,25-54,Global,2024-08-21,2024-10-21,2500,2475,25000,750,68,12240,3.00,3.30,36.40,9.07,4.95
+CAMP_175,Instagram Ads Manager - Campaign Tool,Instagram Ads,Conversion,25-44,North America,2024-08-31,2024-10-31,9000,8910,75000,1500,120,18000,2.00,5.94,74.25,8.00,2.02
+CAMP_176,LinkedIn Campaign Manager - Ad Platform,LinkedIn Ads,Lead Generation,35-54,North America,2024-09-06,2024-11-06,20000,19800,40000,800,56,16800,2.00,24.75,353.57,7.00,0.85
+CAMP_177,YouTube Studio - Creator Dashboard,YouTube Ads,Brand Awareness,25-44,Global,2024-09-16,2024-10-16,8000,7920,170000,1700,51,6120,1.00,4.66,155.29,3.00,0.77
+CAMP_178,Google Ads Scripts - Automation,Google Ads,Conversion,35-54,North America,2024-09-26,2024-10-26,14000,13860,105000,1575,110,16500,1.50,8.80,126.00,6.98,1.19
+CAMP_179,Facebook Business Suite - Management,Facebook Ads,Engagement,25-54,Global,2024-10-06,2024-11-06,7000,6930,75000,1500,60,9000,2.00,4.62,115.50,4.00,1.30
+CAMP_180,Display Retail Media - E-commerce,Display Ads,Conversion,25-54,North America,2024-10-16,2024-11-16,12000,11880,130000,910,73,13140,0.70,13.05,162.74,8.02,1.11
+CAMP_181,TikTok Ads Manager - Campaign Platform,TikTok Ads,Brand Awareness,18-34,Asia Pacific,2024-10-26,2024-11-26,8500,8415,115000,2300,69,8280,2.00,3.66,121.96,3.00,0.98
+CAMP_182,SEO Schema Markup - Rich Results,SEO,Brand Awareness,25-54,Global,2024-11-01,2025-02-01,3000,2970,35000,700,49,8820,2.00,4.24,60.61,7.00,2.97
+CAMP_183,Content Augmented Reality - AR Experience,Content Marketing,Engagement,18-34,North America,2024-11-11,2024-12-11,7000,6930,60000,1200,72,12960,2.00,5.78,96.25,6.00,1.87
+CAMP_184,Google Tag Manager - Tracking,Google Ads,Lead Generation,35-54,North America,2024-01-07,2024-03-07,6000,5940,70000,1050,74,14800,1.50,5.66,80.27,7.05,2.49
+CAMP_185,Instagram Creator Fund - Monetization,Instagram Ads,Engagement,18-24,Europe,2024-01-17,2024-02-17,6000,5940,70000,1400,42,5040,2.00,4.24,141.43,3.00,0.85
+CAMP_186,LinkedIn Creator Accelerator - Program,LinkedIn Ads,Brand Awareness,35-54,North America,2024-01-27,2024-03-27,17000,16830,34000,680,48,14400,2.00,24.75,350.63,7.06,0.86
+CAMP_187,YouTube Shorts Beta - Early Access,YouTube Ads,Engagement,18-24,Asia Pacific,2024-02-06,2024-03-06,5500,5445,190000,1900,57,6840,1.00,2.87,95.53,3.00,1.26
+CAMP_188,Facebook Creator Bonus - Incentive Program,Facebook Ads,Engagement,18-34,North America,2024-02-16,2024-03-16,7500,7425,80000,1600,48,5760,2.00,4.64,154.69,3.00,0.78
+CAMP_189,Display Location Intelligence - Geographic,Display Ads,Conversion,25-54,North America,2024-02-26,2024-03-26,10000,9900,115000,805,56,10080,0.70,12.30,176.79,6.96,1.02
+CAMP_190,TikTok For Business Hub - Resource Center,TikTok Ads,Brand Awareness,25-54,Global,2024-03-07,2024-04-07,8000,7920,110000,2200,66,7920,2.00,3.60,120.00,3.00,1.00
+CAMP_191,Email Marketing Cloud - Platform,Email,Lead Generation,25-54,Global,2024-03-17,2024-05-17,3500,3465,35000,1050,95,17100,3.00,3.30,36.47,9.05,4.93
+CAMP_192,Instagram Business Tools - Analytics,Instagram Ads,Brand Awareness,25-44,North America,2024-03-27,2024-04-27,6500,6435,75000,1500,45,5400,2.00,4.29,143.00,3.00,0.84
+CAMP_193,LinkedIn Sales Solutions - B2B Sales,LinkedIn Ads,Lead Generation,35-54,Europe,2024-04-07,2024-06-07,21000,20790,42000,840,59,17700,2.00,24.75,352.37,7.02,0.85
+CAMP_194,YouTube Analytics - Performance Data,YouTube Ads,Brand Awareness,25-44,Global,2024-04-17,2024-05-17,7000,6930,180000,1800,54,6480,1.00,3.85,128.33,3.00,0.93
+CAMP_195,Google Optimize - A/B Testing,Google Ads,Conversion,25-54,North America,2024-04-27,2024-05-27,12000,11880,100000,1500,105,15750,1.50,7.92,113.14,7.00,1.33
+CAMP_196,Facebook Analytics - Insights Platform,Facebook Ads,Lead Generation,25-54,Global,2024-05-07,2024-06-07,8000,7920,80000,1200,84,12600,1.50,6.60,94.29,7.00,1.59
+CAMP_197,Display Cross-Device - Multi-Screen,Display Ads,Brand Awareness,18-54,Global,2024-05-17,2024-06-17,13000,12870,170000,1190,48,7200,0.70,10.82,268.13,4.03,0.56
+CAMP_198,TikTok Creative Center - Ad Tools,TikTok Ads,Engagement,18-34,North America,2024-05-27,2024-06-27,7500,7425,105000,2100,63,7560,2.00,3.54,117.86,3.00,1.02
+CAMP_199,SEO International - Global Optimization,SEO,Lead Generation,25-54,Global,2024-06-06,2024-09-06,4000,3960,45000,900,81,14580,2.00,4.40,48.89,9.00,3.68
+CAMP_200,Content Personalization - Dynamic,Content Marketing,Conversion,25-54,North America,2024-06-16,2024-08-16,5000,4950,55000,1100,88,15400,2.00,4.50,56.25,8.00,3.11
+CAMP_201,Google Data Studio - Reporting,Google Ads,Brand Awareness,35-54,Global,2024-06-26,2024-07-26,9000,8910,95000,1425,57,8550,1.50,6.25,156.32,4.00,0.96
+CAMP_202,Instagram Reels Remix - User Content,Instagram Ads,Engagement,18-24,Europe,2024-07-06,2024-08-06,6000,5940,85000,1700,51,6120,2.00,3.49,116.47,3.00,1.03
+CAMP_203,LinkedIn Elevate - Employee Advocacy,LinkedIn Ads,Brand Awareness,35-54,North America,2024-07-16,2024-09-16,15000,14850,30000,600,42,12600,2.00,24.75,353.57,7.00,0.85
+CAMP_204,YouTube Brand Connect - Influencer,YouTube Ads,Brand Awareness,18-34,Asia Pacific,2024-07-26,2024-08-26,11000,10890,200000,2000,60,7200,1.00,5.45,181.50,3.00,0.66
+CAMP_205,Facebook Audience Insights - Research,Facebook Ads,Lead Generation,25-54,North America,2024-08-05,2024-09-05,7000,6930,70000,1050,74,11100,1.50,6.60,93.65,7.05,1.60
+CAMP_206,Display Viewability - Ad Quality,Display Ads,Brand Awareness,25-54,Global,2024-08-15,2024-09-15,11000,10890,150000,1050,42,6300,0.70,10.37,259.29,4.00,0.58
