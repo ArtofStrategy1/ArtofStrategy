@@ -14,6 +14,7 @@ scipy==1.16.2                   # Scientific computing library for statistical f
 scikit-learn==1.5.0             # Machine learning library for regression, classification, and preprocessing
 statsmodels>=0.14.0             # Advanced statistical modeling for regression diagnostics and hypothesis testing
 semopy==2.3.11                  # Structural Equation Modeling library for SEM analysis module
+plspm>=0.5.0                    # PLS-SEM analysis
 
 # === FILE PROCESSING ===
 openpyxl>=3.0.0                 # Read/write Excel files (.xlsx format) for data import/export

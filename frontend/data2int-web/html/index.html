@@ -5807,76 +5807,593 @@ Feb 1, "$52,000", "$5.2k", "15,500 visitors"
     }
 
     function createPlsLayout_DA(template) {
-        const contentContainer = $("templateDetailContent");
-        contentContainer.className = "grid lg:grid-cols-1 gap-12";
-        contentContainer.innerHTML = `
-                    <div class="lg:col-span-1">
-                         <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
-                         <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">${template.description}</p>
-                        <div class="glass-container max-w-2xl mx-auto w-full p-6 space-y-4">
-                             <h3 class="text-xl font-bold mb-4 text-white">PLS-SEM Model Setup</h3>
-                            <div class="space-y-4">
-                                <div>
-                                    <label for="plsMeasurementModel" class="block text-sm font-medium text-gray-200 mb-2">Measurement Model</label>
-                                    <textarea id="plsMeasurementModel" class="input-field h-32" placeholder="Define latent variables and their indicators. Example:\nBrandImage = BI1, BI2, BI3\nLoyalty = LOY1, LOY2, LOY3"></textarea>
-                                </div>
-                                <div>
-                                    <label for="plsStructuralModel" class="block text-sm font-medium text-gray-200 mb-2">Structural Model (Paths)</label>
-                                    <textarea id="plsStructuralModel" class="input-field h-24" placeholder="Define hypothesized paths between latent variables. Example:\nBrandImage -> Loyalty"></textarea>
-                                </div>
-                                <div>
-                                    <label for="plsFile" class="block text-sm font-medium text-gray-200 mb-2">Upload Data File (.csv)</label>
-                                    <div class="input-file-wrapper">
-                                        <label for="plsFile" id="plsFileLabel" class="input-file-btn">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
-                                            <span class="file-name">Select .csv file...</span>
-                                        </label>
-                                        <input type="file" id="plsFile" class="input-file" accept=".csv">
-                                    </div>
-                                </div>
-                            </div>
-                            <button id="generateBtn" class="btn btn-primary w-full text-lg py-3 mt-4">
-                                <span id="generateBtnText">📊 Run PLS-SEM Analysis</span>
-                                <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
-                            </button>
-                            <div class="text-center mt-4">
-	                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
-                            </div>
+    const contentContainer = $("templateDetailContent");
+    contentContainer.className = "grid lg:grid-cols-1 gap-12"; // Single column layout
+
+    // --- HTML Structure (Unchanged) ---
+    contentContainer.innerHTML = `
+        <div class="lg:col-span-1">
+            <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
+            <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">${template.description}</p>
+
+        <div class="max-w-2xl mx-auto w-full">
+            <div class="glass-container p-6 space-y-6">
+                
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-xl font-bold text-white">Analysis Configuration</h3>
+                    <div class="flex items-center space-x-2">
+                        <button type="button" id="plsConfigExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
+                        <a href="data-files/pls/pls-sample-data.csv" download="PLS_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>
+                    </div>
+                </div>
+
+                <div id="plsConfigExamples" class="hidden mb-4 p-3 bg-black/20 border border-white/15 rounded-lg">
+                    <div class="text-xs font-medium text-white/90 mb-2">📋 Configuration Examples</div>
+                    <div class="space-y-2 text-xs">
+                        <div id="exampleContent" class="text-white/80">Loading example...</div>
+                    </div>
+                </div>
+
+                    <div class="input-radio-group">
+                        <input type="radio" name="plsInputType" id="plsInputFileToggle" class="input-radio" checked>
+                        <label for="plsInputFileToggle" class="input-radio-label">File Upload</label>
+                        <input type="radio" name="plsInputType" id="plsInputTextToggle" class="input-radio">
+                        <label for="plsInputTextToggle" class="input-radio-label">Paste Text</label>
+                    </div>
+
+                    <div id="plsFileUploadArea">
+                        <label for="plsFile" class="block text-sm font-medium text-gray-200 mb-2">Data File (.csv, .xlsx)</label>
+                        <div class="input-file-wrapper">
+                            <label for="plsFile" id="plsFileLabel" class="input-file-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                                <span class="file-name">Select data file...</span>
+                            </label>
+                            <input type="file" id="plsFile" class="input-file" accept=".csv,.xlsx">
                         </div>
-                        <div class="mt-12">
-                             <h2 class="text-3xl font-bold mb-4 text-center">PLS-SEM Results</h2>
-                             <div id="analysisResult" class="glass-container min-h-[500px] overflow-x-auto"></div>
-                             <div id="analysisActions" class="text-center mt-4 space-x-2 hidden">
-                                <button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>
-                                <button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
+                        <div id="plsFileError" class="text-red-400 text-sm mt-2"></div>
+                    </div>
+
+                    <div id="plsTextInputArea" class="hidden">
+                        <label for="plsDataText" class="block text-sm font-medium text-gray-200 mb-2">Paste CSV Data</label>
+                        <textarea id="plsDataText" class="input-field h-48" placeholder="Date,Var1,Var2...\n2023-01-01,10,20..."></textarea>
+                        <div id="plsTextError" class="text-red-400 text-sm mt-2"></div>
+                    </div>
+
+                    <div id="plsDataPreview" class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-200">Data Preview (First 5 Rows)</label>
+                        <div class="overflow-x-auto rounded-lg border border-white/20">
+                            <table class="min-w-full text-left text-sm text-white/90" id="plsPreviewTable">
+                                <tbody>
+                                    <tr>
+                                        <td class="p-4 text-center text-white/60" colspan="100%">Upload or paste data to see a preview.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="plsModelTemplate" class="block text-sm font-medium text-gray-200 mb-2">Model Template</label>
+                        <select id="plsModelTemplate" class="input-field" disabled>
+                            <option value="">-- Upload or paste data first --</option>
+                        </select>
+                    </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label for="plsMeasurementSyntax" class="block text-sm font-medium text-gray-200">Measurement Model Syntax</label>
+                        <button type="button" id="plsMeasurementExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
+                    </div>
+                    <div id="plsMeasurementExamples" class="hidden mb-2 p-3 bg-black/20 border border-white/15 rounded-lg">
+                        <div class="text-xs font-medium text-white/90 mb-2">📊 Measurement Model Examples</div>
+                        <div class="space-y-2 text-xs">
+                            <div>
+                                <div class="text-white/80 mb-1">Basic Factor Structure:</div>
+                                <div class="bg-black/30 p-2 rounded font-mono text-white/90 relative">
+                                    Quality =~ qual1 + qual2 + qual3 + qual4<br>Loyalty =~ loy1 + loy2 + loy3
+                                </div>
+                            </div>
+                            <div>
+                                <div class="text-white/80 mb-1">With Fixed Loadings (if needed):</div>
+                                <div class="bg-black/30 p-2 rounded font-mono text-white/90 relative">
+                                    Performance =~ 1*perf1 + perf2 + perf3<br>Satisfaction =~ 1*sat1 + sat2 + sat3
+                                </div>
                             </div>
                         </div>
                     </div>
-                `;
-        // --- THIS IS THE FIX ---
-        setupInputToggle("plsFile", "plsFileLabel", null, null);
+                    <textarea id="plsMeasurementSyntax" class="input-field h-32" placeholder="e.g., Factor1 =~ varA + varB\nFactor2 =~ varC + varD..."></textarea>
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label for="plsStructuralSyntax" class="block text-sm font-medium text-gray-200">Structural Model Syntax</label>
+                        <button type="button" id="plsStructuralExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
+                    </div>
+                    <div id="plsStructuralExamples" class="hidden mb-2 p-3 bg-black/20 border border-white/15 rounded-lg">
+                        <div class="text-xs font-medium text-white/90 mb-2">🔗 Structural Model Examples</div>
+                        <div class="space-y-2 text-xs">
+                            <div>
+                                <div class="text-white/80 mb-1">Simple Regression:</div>
+                                <div class="bg-black/30 p-2 rounded font-mono text-white/90 relative">
+                                    Loyalty ~ Quality + Satisfaction
+                                </div>
+                            </div>
+                            <div>
+                                <div class="text-white/80 mb-1">Mediation Model:</div>
+                                <div class="bg-black/30 p-2 rounded font-mono text-white/90 relative">
+                                    Loyalty ~ c*Quality + b*Satisfaction<br>Satisfaction ~ a*Quality<br><br>indirect := a*b<br>total := c + (a*b)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <textarea id="plsStructuralSyntax" class="input-field h-32" placeholder="e.g., Factor1 ~ Factor2\nObservedVar ~ Factor1..."></textarea>
+                </div>
+
+                    <button id="generateBtn" class="btn btn-primary w-full text-lg py-3">
+                        <span id="generateBtnText">📊 Run PLS-SEM Analysis</span>
+                        <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
+                    </button>
+                    <div class="text-center mt-4">
+                            <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-12">
+                <h2 class="text-3xl font-bold mb-4 text-center">Analysis Results</h2>
+                <div id="analysisResult" class="glass-container min-h-[300px] overflow-x-auto"> {/* Results will be injected here */} </div>
+                <div id="analysisActions" class="text-center mt-4 space-x-2 hidden">
+                    <button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>
+                    <button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
+                </div>
+            </div>
+        </div>`;
+
+    // --- Attach Core Event Listeners ---
+    $("generateBtn").addEventListener("click", handleGenerate); 
+    reattachActionListeners(); 
+
+    // --- Add Example Toggle Event Listeners ---
+    $("plsConfigExamplesBtn").addEventListener("click", function() {
+        const exampleDiv = $("plsConfigExamples");
+        const isHidden = exampleDiv.classList.contains("hidden");
+        
+        if (isHidden) {
+            // Display hardcoded example content immediately
+            const exampleContent = $("exampleContent");
+            const exampleText = `qual1,qual2,qual3,sat1,sat2,loy1,loy2
+5,6,5,4,5,5,6
+7,7,6,6,7,7,6
+4,5,4,3,4,4,4
+6,6,7,5,6,6,7
+5,4,5,4,4,5,5`;
+
+            exampleContent.innerHTML = `
+                <div class="bg-black/30 p-2 rounded font-mono text-white/90 text-xs whitespace-pre-wrap">${exampleText}</div>
+                <div class="text-white/60 text-xs mt-2 space-y-1">
+                    <div class="font-medium text-white/80">PLS-SEM Data Requirements:</div>
+                    <div>• <strong>Clean column names:</strong> No spaces or symbols (use underscores)</div>
+                    <div>• <strong>Numeric data only:</strong> All measurement variables must be numbers</div>
+                    <div>• <strong>Sample size:</strong> PLS is flexible, but 100+ rows is recommended for stability</div>
+                    <div>• <strong>No missing values:</strong> Ensure data is complete</div>
+                </div>
+            `;
+        }
+        
+        exampleDiv.classList.toggle("hidden");
+        this.textContent = isHidden ? "Hide Examples" : "View Examples";
+    });
+
+    $("plsMeasurementExamplesBtn").addEventListener("click", function() {
+        const exampleDiv = $("plsMeasurementExamples");
+        const isHidden = exampleDiv.classList.contains("hidden");
+        exampleDiv.classList.toggle("hidden");
+        this.textContent = isHidden ? "Hide Examples" : "View Examples";
+    });
+
+    $("plsStructuralExamplesBtn").addEventListener("click", function() {
+        const exampleDiv = $("plsStructuralExamples");
+        const isHidden = exampleDiv.classList.contains("hidden");
+        exampleDiv.classList.toggle("hidden");
+        this.textContent = isHidden ? "Hide Examples" : "View Examples";
+    });
+
+        // --- Restore Cached Results (if any) ---
+        if (analysisCache[currentTemplateId]) {
+            $("analysisResult").innerHTML = analysisCache[currentTemplateId];
+            $("analysisActions").classList.remove("hidden");
+            reattachTabListeners($("analysisResult")); 
+        } else {
+            $("analysisResult").innerHTML = '<div class="text-white/60 p-8 text-center">Your generated analysis will appear here.</div>';
+            $("analysisActions").classList.add("hidden");
+        }
+
+        // --- Get References to PLS-Specific DOM Elements ---
+        const fileInput = $("plsFile");
+        const textInput = $("plsDataText");
+        const measurementSyntaxBox = $("plsMeasurementSyntax");
+        const structuralSyntaxBox = $("plsStructuralSyntax");
+        const fileError = $("plsFileError");
+        const textError = $("plsTextError");
+        const fileToggle = $("plsInputFileToggle");
+        const textToggle = $("plsInputTextToggle");
+        const fileArea = $("plsFileUploadArea");
+        const textArea = $("plsTextInputArea");
+        const dataPreviewContainer = $("plsDataPreview");
+        const previewTable = $("plsPreviewTable");
+        const modelTemplateSelect = $("plsModelTemplate");
+        let fullHeaders = []; 
+
+        // --- PLS Helper Functions (Copied & Renamed from SEM) ---
+
+        const getHeadersFromText = (text) => {
+            if (!text || typeof text !== 'string' || !text.trim()) throw new Error("Input text is empty.");
+            const firstLine = text.split(/[\r\n]+/)[0];
+            if (!firstLine || !firstLine.trim()) throw new Error("First line (header) is empty.");
+
+            let headers = firstLine.split(',').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+            if (headers.length <= 1) headers = firstLine.split(';').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+            if (headers.length <= 1) headers = firstLine.split('\t').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+            if (headers.length === 0) throw new Error("Could not parse headers (tried comma, semicolon, tab).");
+            return headers;
+        };
+
+        const showDataPreview = (csvText) => {
+            try {
+                const lines = csvText.split(/[\r\n]+/).filter(Boolean); 
+                const rows = lines.slice(0, 6); 
+                
+                if (rows.length < 2) { 
+                    previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Data file is empty or has no data rows.</td></tr></tbody>';
+                    dataPreviewContainer.classList.remove("hidden"); 
+                    return; 
+                }
+
+                const headers = getHeadersFromText(rows[0]);
+                let tableHTML = '<thead class="bg-white/10 text-xs uppercase"><tr>';
+                headers.forEach(h => { tableHTML += `<th scope="col" class="px-4 py-2">${h}</th>`; });
+                tableHTML += '</tr></thead><tbody>';
+
+                rows.slice(1).forEach((line, rowIndex) => {
+                    let cells = line.split(',');
+                    if (cells.length !== headers.length) cells = line.split(';');
+                    if (cells.length !== headers.length) cells = line.split('\t');
+
+                    tableHTML += `<tr class="border-t border-white/10 ${rowIndex % 2 === 0 ? 'bg-white/5' : ''}">`;
+                    headers.forEach((_, cellIndex) => {
+                        tableHTML += `<td class="px-4 py-2">${cells[cellIndex] === undefined ? '' : cells[cellIndex]}</td>`;
+                    });
+                    tableHTML += '</tr>';
+                });
+                tableHTML += '</tbody>';
+                previewTable.innerHTML = tableHTML;
+                dataPreviewContainer.classList.remove("hidden"); // Ensure it's visible
+            } catch (e) {
+                console.error("Error showing data preview:", e);
+                previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-red-400" colspan="100%">Error reading data preview.</td></tr></tbody>';
+                dataPreviewContainer.classList.remove("hidden"); // Ensure it's visible
+            }
+        };
+
+    /**
+     * This function is no longer used by the "auto-suggest" but
+     * is kept in case you want to add a "Recommended for Sample" button back.
+     */
+    const generateRecommendedSyntax = () => {
+        const fullSyntax = `
+# Measurement Model (Sample)
+Quality =~ qual1 + qual2 + qual3 + qual4
+Satisfaction =~ sat1 + sat2 + sat3
+Loyalty =~ loy1 + loy2 + loy3
+
+# Structural Model (Sample)
+Satisfaction ~ Quality
+Loyalty ~ Quality + Satisfaction`;
+        populateSyntaxBoxes(fullSyntax);
+    };
+
+    /**
+     * --- *** THIS IS THE NEW, SMARTER "Auto-Suggest" FUNCTION *** ---
+     * It groups variables by prefix (e.g., "qual1", "qual2" -> "qual")
+     * and builds a valid model.
+     */
+    const generateSyntax = () => {
+        if (fullHeaders.length === 0) { 
+            alert("Data headers not found for auto-suggestion."); 
+            return; 
+        }
+        const excludePatterns = ['id', 'date', 'time', 'timestamp', 'index', 'row'];
+        const analyticalHeaders = fullHeaders.filter(h => 
+            !excludePatterns.some(pattern => h.toLowerCase().includes(pattern))
+        );
+        
+        // --- NEW SMARTER LOGIC ---
+        const groupedFactors = new Map();
+        // This regex finds the non-numeric prefix of a variable name.
+        const prefixRegex = /^([a-zA-Z_]+)/; // Matches leading letters/underscores
+
+        analyticalHeaders.forEach(header => {
+            const match = header.match(prefixRegex);
+            if (match) {
+                const prefix = match[1]; // e.g., "qual"
+                if (!groupedFactors.has(prefix)) {
+                    groupedFactors.set(prefix, []);
+                }
+                groupedFactors.get(prefix).push(header);
+            }
+        });
+
+        // Filter out groups with fewer than 2 indicators (good practice)
+        const validFactors = new Map();
+        for (const [prefix, indicators] of groupedFactors.entries()) {
+            // Only create a factor if it has 2 or more indicators
+            if (indicators.length > 1) { 
+                // Capitalize the prefix for the Factor name (e.g., "qual" -> "Quality")
+                const factorName = prefix.charAt(0).toUpperCase() + prefix.slice(1);
+                validFactors.set(factorName, indicators);
+            }
+        }
+
+        if (validFactors.size < 2) {
+            populateSyntaxBoxes(`# Could not auto-group headers by prefix.\n# Need at least 2 groups with 2+ items each.\n# Available: ${analyticalHeaders.join(', ')}`);
+            return;
+        }
+
+        let measurementPart = `# Auto-suggested model based on column prefixes\n`;
+        const factorNames = [];
+        for (const [factorName, indicators] of validFactors.entries()) {
+            measurementPart += `${factorName} =~ ${indicators.join(' + ')}\n`;
+            factorNames.push(factorName);
+        }
+
+        let structuralPart = `# Auto-suggested structural paths (chain model)\n`;
+        if (factorNames.length === 2) {
+            // Simple regression if only two factors
+            structuralPart += `${factorNames[1]} ~ ${factorNames[0]}`;
+        } else {
+            // Create a "chain" model: F2~F1, F3~F2, etc.
+            for (let i = 1; i < factorNames.length; i++) {
+                structuralPart += `${factorNames[i]} ~ ${factorNames[i-1]}\n`;
+            }
+            // Add a direct path from F1 to F-Last for a simple mediation check
+            if (factorNames.length > 2) {
+                 structuralPart += `${factorNames[factorNames.length-1]} ~ ${factorNames[0]}\n`;
+            }
+        }
+        
+        let fullSyntax = measurementPart.trim() + '\n\n' + structuralPart.trim();
+        populateSyntaxBoxes(fullSyntax);
+        // --- END NEW SMARTER LOGIC ---
+    };
+
+    /**
+     * This helper populates the syntax boxes. (Unchanged)
+     */
+    const populateSyntaxBoxes = (fullSyntax) => {
+        // Find where the structural model starts (first line with ~ but not =~)
+        const lines = fullSyntax.split('\n');
+        let structuralStartIndex = -1;
+        
+        for(let i=0; i < lines.length; i++) {
+            const trimmedLine = lines[i].trim();
+            if (trimmedLine.includes('~') && !trimmedLine.includes('=~')) {
+                structuralStartIndex = i;
+                break;
+            }
+        }
+
+        let measurement = [];
+        let structural = [];
+
+        if (structuralStartIndex === -1) {
+            // No structural model found, assume all is measurement
+            measurement = lines;
+        } else {
+            measurement = lines.slice(0, structuralStartIndex);
+            structural = lines.slice(structuralStartIndex);
+        }
+        
+        // Remove comments for the final text boxes
+        const filterComments = (arr) => arr.filter(line => !line.trim().startsWith('#')).join('\n').trim();
+
+        measurementSyntaxBox.value = filterComments(measurement);
+        structuralSyntaxBox.value = filterComments(structural);
+        
+        measurementSyntaxBox.placeholder = measurementSyntaxBox.value ? measurementSyntaxBox.placeholder : "e.g., F1 =~ x1+x2";
+        structuralSyntaxBox.placeholder = structuralSyntaxBox.value ? structuralSyntaxBox.placeholder : "e.g., F1 ~ F2";
+    };
+
+    /**
+     * --- *** THIS IS THE UPDATED FUNCTION *** ---
+     * Renamed "Auto-Suggest (2-Factor Model)" to "Auto-Suggest (Group by Prefix)"
+     */
+    const updateModelTemplates = (headers) => {
+        fullHeaders = headers;
+        modelTemplateSelect.innerHTML = '';
+        modelTemplateSelect.add(new Option("Select a model template...", ""));
+        modelTemplateSelect.add(new Option("Custom Syntax (Type below)", "custom"));
+        modelTemplateSelect.add(new Option("Auto-Suggest (Group by Prefix)", "autosuggest")); // <-- Text Updated
+        // The "Recommended" option has been removed
+        modelTemplateSelect.disabled = false;
+    };
+
+        /**
+         * --- *** THIS IS THE UPDATED FUNCTION *** ---
+         * Now defaults to "autosuggest"
+         */
+        const processDataInput = async (isFileInput) => {
+            let textContent = null;
+            let originalHeaders = [];
+            const errorEl = isFileInput === null ? null : (isFileInput ? fileError : textError);
+            const inputEl = isFileInput === null ? null : (isFileInput ? fileInput : textInput);
+
+            if (fileError) fileError.textContent = "";
+            if (textError) textError.textContent = "";
+
+            modelTemplateSelect.disabled = true;
+            modelTemplateSelect.innerHTML = '<option value="">-- Processing data... --</option>';
+            previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Processing data...</td></tr></tbody>';
+            dataPreviewContainer.classList.remove("hidden"); // Make sure it's visible
+            
+            measurementSyntaxBox.value = ""; 
+            structuralSyntaxBox.value = "";
+            measurementSyntaxBox.placeholder = "Upload or paste data to see model templates...";
+            structuralSyntaxBox.placeholder = "";
+
+            if (isFileInput === null) {
+                modelTemplateSelect.innerHTML = '<option value="">-- Upload or paste data first --</option>';
+                previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Upload or paste data to see a preview.</td></tr></tbody>';
+                return;
+            }
+
+            try {
+                if (isFileInput) {
+                    const file = inputEl.files[0];
+                    if (!file) {
+                        modelTemplateSelect.innerHTML = '<option value="">-- Upload or paste data first --</option>';
+                        previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Upload or paste data to see a preview.</td></tr></tbody>';
+                        return;
+                    }
+                    textContent = await extractTextFromFile(file);
+                } else {
+                    textContent = textInput.value;
+                    if (!textContent.trim()) {
+                        modelTemplateSelect.innerHTML = '<option value="">-- Upload or paste data first --</option>';
+                        previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Upload or paste data to see a preview.</td></tr></tbody>';
+                        return;
+                    }
+                }
+
+            originalHeaders = getHeadersFromText(textContent);
+
+            const lines = textContent.split(/[\r\n]+/).filter(Boolean);
+            const dataRows = lines.slice(1); 
+            
+            if (dataRows.length < 10) {
+                if (errorEl) errorEl.textContent = "Warning: Very small dataset. Need at least 10 rows for reliable analysis.";
+            }
+            
+            let numericColumnsCount = 0;
+            if (dataRows.length > 0) {
+                 const firstRow = dataRows[0].split(/[,;\t]/);
+                firstRow.forEach((cell, index) => {
+                    // Check if cell is numeric.
+                    if (!isNaN(parseFloat(cell)) && isFinite(cell)) {
+                        numericColumnsCount++;
+                    }
+                });
+            }
+            
+            let nonDateHeaders = originalHeaders.filter(h => !h.toLowerCase().includes('date') && !h.toLowerCase().includes('id'));
+            if (nonDateHeaders.length > 0 && numericColumnsCount < nonDateHeaders.length) {
+                 if (errorEl) errorEl.textContent = "Warning: Some columns appear non-numeric. PLS-SEM requires numeric data for all indicators.";
+            }
+
+                showDataPreview(textContent);
+                updateModelTemplates(originalHeaders); // This now only has 2 options
+
+            if (dataRows.length >= 10 && numericColumnsCount >= 3) {
+                // --- THIS IS THE CHANGE ---
+                // Always default to "autosuggest" now
+                modelTemplateSelect.value = "autosuggest";
+                // --- END CHANGE ---
+                modelTemplateSelect.dispatchEvent(new Event('change'));
+            }
+
+            } catch (err) {
+                console.error("Input processing failed:", err);
+                if (errorEl) errorEl.textContent = `Error: ${err.message}.`;
+                modelTemplateSelect.disabled = true;
+                modelTemplateSelect.innerHTML = '<option value="">-- Error reading data --</option>';
+                previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-red-400" colspan="100%">Error reading data preview.</td></tr></tbody>';
+                dataPreviewContainer.classList.remove("hidden");
+                measurementSyntaxBox.placeholder = "Error reading input data.";
+                structuralSyntaxBox.placeholder = "";
+            }
+        };
+
+        // --- Attach Input Event Listeners (Copied & Renamed from SEM) ---
+
+        fileToggle.addEventListener("change", () => {
+            fileArea.classList.remove("hidden");
+            textArea.classList.add("hidden");
+            processDataInput(fileInput.files.length > 0 ? true : null); 
+        });
+        textToggle.addEventListener("change", () => {
+            fileArea.classList.add("hidden");
+            textArea.classList.remove("hidden");
+            processDataInput(textInput.value.trim() ? false : null); 
+        });
+
+        if (fileInput) {
+            fileInput.addEventListener("change", () => {
+                const label = $("plsFileLabel");
+                const fileNameSpan = label.querySelector(".file-name");
+                if (fileInput.files.length > 0) {
+                    fileNameSpan.textContent = fileInput.files[0].name;
+                    label.classList.add("has-file");
+                    processDataInput(true); 
+                } else { 
+                    fileNameSpan.textContent = "Select data file...";
+                    label.classList.remove("has-file");
+                    processDataInput(null); 
+                }
+            });
+        }
+
+        if (textInput) {
+            textInput.addEventListener("blur", () => { 
+                if (!textArea.classList.contains("hidden")) {
+                    processDataInput(textInput.value.trim() ? false : null);
+                }
+            });
+        }
+
+       /**
+         * --- *** THIS IS THE UPDATED LISTENER *** ---
+         * This listener now only handles custom and autosuggest.
+         */
+        if (modelTemplateSelect) {
+            modelTemplateSelect.addEventListener("change", async () => { 
+                const selected = modelTemplateSelect.value;
+                measurementSyntaxBox.value = ""; 
+                structuralSyntaxBox.value = "";
+
+                switch (selected) {
+                    case "custom":
+                        measurementSyntaxBox.placeholder = "Type measurement model syntax here...";
+                        structuralSyntaxBox.placeholder = "Type structural model syntax here...";
+                        measurementSyntaxBox.focus(); 
+                        break;
+                    case "autosuggest":
+                        measurementSyntaxBox.placeholder = "Auto-suggesting generic model...";
+                        structuralSyntaxBox.placeholder = "Auto-suggesting generic model...";
+                        generateSyntax(); // Calls the DYNAMIC auto-suggest
+                        measurementSyntaxBox.placeholder = measurementSyntaxBox.value ? "Review auto-suggested syntax." : "Could not auto-suggest.";
+                        structuralSyntaxBox.placeholder = structuralSyntaxBox.value ? "Review auto-suggested syntax." : "";
+                        break;
+                    // --- "recommended" case has been removed ---
+                    default:
+                        measurementSyntaxBox.placeholder = "Select a model template or type syntax...";
+                        structuralSyntaxBox.placeholder = "";
+                }
+            });
+        }
 
         // Attach listener for the feedback link
-                const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
-                if (feedbackLink) {
-                    feedbackLink.addEventListener("click", (e) => {
-                        e.preventDefault();
-                        
-                        // This just calls the navigateTo function.
-                        // It relies on your main `MapsTo` function to be
-                        // the *simplified one* (without memory logic)
-                        // and your `submitFeedbackPageBtn` listener
-                        // to be the *simplified one* (that just goes home).
-                        if (typeof navigateTo === 'function') {
-                            navigateTo('feedback');
-                        } else {
-                            console.error("navigateTo function is not defined.");
-                        }
-                    });
+        const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+        if (feedbackLink) {
+            feedbackLink.addEventListener("click", (e) => {
+                e.preventDefault();
+                if (typeof navigateTo === 'function') {
+                    navigateTo('feedback');
                 } else {
-                    console.warn("Feedback link not found inside createPlsLayout_DA");
+                    console.error("navigateTo function is not defined.");
                 }
-                // --- END FIX ---
+            });
+        } else {
+            console.warn("Feedback link not found in createPlsLayout_DA");
+        }
     }
 
     function createDescriptiveLayout_DA(template) {
@@ -24674,495 +25191,1005 @@ function buildDotString(elements, causal_links, feedback_loops) {
             return dot;
         }
 
-    async function handlePlsAnalysis_DA() {
-    const analysisResultContainer = $("analysisResult");
-    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div></div><div></div><div></div> </div><h3 class="text-xl font-semibold text-white mb-4">Running Comprehensive PLS-SEM...</h3><p class="text-white/80 mb-2">Estimating paths, evaluating model fit, and generating insights...</p></div>`;
-    setLoading("generate", true);
-
-    // Define URL and Model
-    const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
-    // *** CHOOSE MODEL: qwen or llama ***
-    const MODEL_NAME = "qwen3:30b-a3b"; // Qwen might be better for structured analysis
-    // const MODEL_NAME = "llama3.1:latest"; // Alternative
+    /**
+ * Handles the PLS-SEM analysis request to the backend.
+ * Reads from the advanced UI (file/text toggle, syntax boxes).
+ */
+async function handlePlsAnalysis_DA() {
+    const analysisResultContainer = $("analysisResult"); // Get the results container element
+    // Display loading indicator
+    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div><h3 class="text-xl font-semibold text-white">Running PLS-SEM Analysis...</h3><p class="text-white/80 mb-2">Please wait while the model is estimated.</p></div>`;
+    setLoading("generate", true); // Assumes setLoading function exists
 
     try {
-        // 1. Gather Inputs
-        const measurementModel = $("plsMeasurementModel").value.trim();
-        const structuralModel = $("plsStructuralModel").value.trim();
-        const file = $("plsFile").files[0];
+        // --- 1. Get Inputs from UI (using 'pls' IDs) ---
+        const measurementSyntax = $("plsMeasurementSyntax").value.trim();
+        const structuralSyntax = $("plsStructuralSyntax").value.trim();
+        const dataFile = $("plsFile").files[0]; // Get the selected file object
+        const dataText = $("plsDataText").value.trim(); // Get pasted text
+        const isUsingFile = $("plsInputFileToggle").checked; // Check which input type is selected
 
-        if (!measurementModel || !structuralModel || !file) {
-            throw new Error("❌ Please define the Measurement Model, Structural Model, and upload a CSV data file.");
-        }
+        let fileToSend = null;
+        let dataContentToSend = null; 
 
-        const fileContent = await extractTextFromFile(file);
-
-        // Truncate if necessary
-        const MAX_DATA_LENGTH = 15000; // Keep reasonable for analysis
-        let truncatedNote = "";
-        let dataSnippet = fileContent;
-        if (fileContent.length > MAX_DATA_LENGTH) {
-            dataSnippet = fileContent.substring(0, MAX_DATA_LENGTH);
-            truncatedNote = `(Note: Analysis based on the first ${MAX_DATA_LENGTH} characters of the data file.)`;
-            console.warn(`PLS-SEM analysis data truncated.`);
-        }
-
-        // 2. Construct Enhanced Prompt
-        const prompt = `
-            You are an expert data scientist specializing in Partial Least Squares Structural Equation Modeling (PLS-SEM). Analyze the user's defined model and data snippet with high accuracy and provide detailed, actionable interpretations.
-
-            **ANALYSIS INPUTS:**
-            * **Measurement Model (Syntax):** \`${measurementModel}\`
-            * **Structural Model (Syntax):** \`${structuralModel}\`
-            * **Data Snippet:** ${truncatedNote}\n\`\`\`csv\n${dataSnippet}\n\`\`\`
-
-            **DETAILED TASKS:**
-            1.  **Model Evaluation (R-squared):** Calculate R-squared values for all endogenous (dependent) latent variables. For each:
-                * Provide: Variable Name, R-squared Value.
-                * **Interpretation:** Explain *precisely* what percentage of the variance in that variable is explained by its predictors within the model. Assess the explanatory power (e.g., >0.75 substantial, >0.5 moderate, >0.25 weak based on context, adjust if needed).
-
-            2.  **Path Coefficients Analysis:** Estimate and analyze the structural paths. For *each* path:
-                * Provide: Path (e.g., "ConstructA -> ConstructB"), Coefficient (β) value, T-Statistic, P-value.
-                * **Interpretation:** Explain the practical meaning of the coefficient (e.g., "A one-unit increase in ConstructA is associated with a [β] unit [increase/decrease] in ConstructB, holding other paths constant.").
-                * **Significance:** State clearly whether the path is statistically significant (typically p < 0.05) and its implication (we are confident this relationship exists in the data).
-
-            3.  **Reliability & Validity Assessment:** Calculate key metrics for *each* latent construct defined in the measurement model.
-                * Provide: Construct Name, Cronbach's Alpha, Composite Reliability (CR), Average Variance Extracted (AVE).
-                * **Assessment:** For each metric, state whether it meets common thresholds (Cronbach's Alpha > 0.7, CR > 0.7, AVE > 0.5) and interpret the result (e.g., "AVE of [value] indicates [good/poor] convergent validity, meaning the indicators measure the construct well/poorly.").
-
-            4.  **Business Recommendations (3-4 recommendations):** Based *only* on the **significant path coefficients** and the likely business context implied by the construct names:
-                * **\`recommendation\`:** A clear, actionable title.
-                * **\`insight_link\`:** State which specific significant path(s) drive this recommendation.
-                * **\`action_items\`:** List 2-3 concrete steps a business could take based on this finding.
-                * **\`kpis_to_track\`:** List 2-3 KPIs to measure the success of the implemented action, related to the constructs involved.
-
-            5.  **Self-Correction:** Before outputting JSON, meticulously check: Are R² interpretations correct? Are path coefficient p-values interpreted correctly? Do reliability/validity assessments correctly compare against thresholds? Are recommendations directly linked ONLY to significant paths? Fix all errors.
-
-            **ABSOLUTE CONSTRAINTS:**
-            - **DATA GROUNDING:** All results (coefficients, R², metrics) and interpretations MUST derive *solely* from the analysis of the provided data snippet and model structure. No fabrication.
-            - **STATISTICAL ACCURACY:** Interpretations of R², p-values, and reliability/validity metrics must be statistically sound and use standard thresholds.
-            - **ACTIONABILITY & LINKAGE:** Recommendations must be practical and clearly linked back to specific, significant path results.
-            - **JSON FORMAT:** Adhere EXACTLY. Include all specified keys and sub-keys.
-
-            **RETURN FORMAT:**
-            Provide ONLY a valid JSON object. **CRITICAL: Include ALL keys specified below.**
-            {
-              "model_evaluation": { // R-squared results
-                "r_squared_values": [ // Array for each endogenous variable
-                  { "variable": "EndogenousVar1", "r_squared": 0.0 }
-                ],
-                "interpretation": "Overall interpretation of model's explanatory power..." // Generated
-              },
-              "path_coefficients": [ // Array for each structural path
-                {
-                  "path": "ConstructA -> ConstructB", "coefficient": 0.0, "t_statistic": 0.0, "p_value": 0.0,
-                  "interpretation": "Practical meaning and significance...", "significant": true/false // Added boolean flag
-                } // ... for all paths ...
-              ],
-              "reliability_validity": [ // Array for each construct
-                {
-                  "construct": "ConstructA", "cronbachs_alpha": 0.0, "composite_reliability": 0.0, "ave": 0.0,
-                  "assessment": "Assessment vs. thresholds (e.g., Good internal consistency (Alpha > 0.7)... Convergent validity met (AVE > 0.5)..." // Generated assessment
-                } // ... for all constructs ...
-              ],
-              // "visual_data" might be hard for LLM, can omit if unreliable, or simplify
-              // "visual_data": { "nodes": [ { "id": "<construct_name>" } ] }, // Simplified - just node names
-              "business_recommendations": [ // 3-4 recommendations
-                {
-                  "recommendation": "Action Title",
-                  "insight_link": "Driven by significant path [Path Name]...",
-                  "action_items": ["Step 1...", "Step 2..."],
-                  "kpis_to_track": ["KPI related to ConstructA...", "KPI related to ConstructB..."]
-                } // ...
-              ]
+        // --- 2. Validate Inputs & Prepare Data Source ---
+        if (isUsingFile) {
+            if (!dataFile) {
+                throw new Error("Please upload a data file (.csv or .xlsx).");
             }
-        `;
+            fileToSend = dataFile;
+        } else {
+            if (!dataText) {
+                throw new Error("Please paste your CSV data into the text area.");
+            }
+            dataContentToSend = dataText; 
+        }
 
-        // 3. Send Request to Ollama
-        console.log(`Sending ENHANCED PLS-SEM prompt to ${MODEL_NAME}...`);
-        const response = await fetch(OLLAMA_URL, {
+        // Validate that at least one syntax part is provided
+        if (!measurementSyntax && !structuralSyntax) {
+            throw new Error("Please provide Measurement Model Syntax and/or Structural Model Syntax.");
+        }
+
+        // --- 3. Prepare FormData for Backend ---
+        const formData = new FormData();
+        formData.append("analysis_type", "pls"); // Identify the analysis type
+
+        // Send SYNTAX parts SEPARATELY
+        formData.append("measurement_syntax", measurementSyntax);
+        formData.append("structural_syntax", structuralSyntax);
+
+        // Append the data source (either the file or the text content)
+        if (fileToSend) {
+            // If sending a file
+            formData.append("data_file", fileToSend, fileToSend.name);
+        } else if (dataContentToSend) {
+            // If sending raw text content
+             formData.append("data_text", dataContentToSend);
+        } else {
+            throw new Error("No data source (file or text) could be prepared.");
+        }
+
+
+        // --- 4. Send Request to Backend API ---
+        // *** This now points to your PLS endpoint ***
+        const API_URL = "https://analysis.data2int.com/api/pls"; 
+
+        const response = await fetch(API_URL, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ model: MODEL_NAME, prompt: prompt, stream: false, format: "json", options: { num_ctx: 32768 } }) // Increased context
+            body: formData,
+            // headers: { 'Authorization': `Bearer ${your_auth_token}` } // Add if needed
         });
 
+        // --- 5. Handle Backend Response ---
         if (!response.ok) {
-            let errorBody = `API error ${response.status}`;
-            try { errorBody += `: ${await response.text()}`; } catch (e) {}
-            throw new Error(errorBody);
+            // Attempt to get detailed error message from backend
+            let errorDetail = `API request failed (${response.status})`;
+            try {
+                const errorJson = await response.json(); // Assumes backend sends JSON errors
+                errorDetail += `: ${errorJson.detail || JSON.stringify(errorJson)}`; // Use specific 'detail' field
+            } catch (e) {
+                // If response is not JSON, use the raw text
+                try {
+                    errorDetail += `: ${await response.text()}`;
+                } catch (readErr) {}
+            }
+            throw new Error(errorDetail); // Throw error to be caught below
         }
 
-        const data = await response.json();
-        let parsedData;
-        try {
-            parsedData = JSON.parse(data.response);
-             // *** Robust Validation ***
-             console.log('--- RAW AI JSON RESPONSE (Parsed - Enhanced PLS-SEM) ---');
-             console.log(JSON.stringify(parsedData, null, 2));
-             console.log('------------------------------------');
+        // If response is OK (2xx status)
+        const parsedData = await response.json(); // Expecting JSON response with results
 
-             if (!parsedData ||
-                 !parsedData.model_evaluation || typeof parsedData.model_evaluation !== 'object' || !parsedData.model_evaluation.hasOwnProperty('r_squared_values') || !Array.isArray(parsedData.model_evaluation.r_squared_values) ||
-                 !parsedData.path_coefficients || !Array.isArray(parsedData.path_coefficients) || parsedData.path_coefficients.length === 0 ||
-                 (parsedData.path_coefficients.length > 0 && (typeof parsedData.path_coefficients[0] !== 'object' || !parsedData.path_coefficients[0].hasOwnProperty('p_value'))) ||
-                 !parsedData.reliability_validity || !Array.isArray(parsedData.reliability_validity) || parsedData.reliability_validity.length === 0 ||
-                 (parsedData.reliability_validity.length > 0 && (typeof parsedData.reliability_validity[0] !== 'object' || !parsedData.reliability_validity[0].hasOwnProperty('cronbachs_alpha'))) ||
-                 !parsedData.business_recommendations || !Array.isArray(parsedData.business_recommendations) || parsedData.business_recommendations.length < 2 || // Expect >= 2 recommendations
-                 (parsedData.business_recommendations.length > 0 && (typeof parsedData.business_recommendations[0] !== 'object' || !parsedData.business_recommendations[0].hasOwnProperty('insight_link')))
-                 // visual_data is optional
-                )
-             {
-                  console.error("Validation Failed (PLS-SEM): Required fields missing or invalid structure/count.", parsedData);
-                  throw new Error(`AI response structure is incorrect. Missing/invalid fields (model_evaluation, path_coefficients, reliability_validity, or business_recommendations [>=2]). Check console.`);
-             }
-             console.log(`Successfully parsed ENHANCED PLS-SEM JSON using ${MODEL_NAME}. Found ${parsedData.path_coefficients.length} paths, ${parsedData.reliability_validity.length} constructs, ${parsedData.business_recommendations.length} recommendations.`);
-
-        } catch (e) {
-            console.error(`Failed to parse/validate ENHANCED PLS-SEM JSON using ${MODEL_NAME}:`, data?.response, e);
-            throw new Error(`Invalid JSON received or required fields missing in AI response: ${e.message}. Check console logs.`);
-        }
-
-        // Add user inputs to parsedData for rendering the diagram accurately
-        parsedData.userInput = { measurementModel, structuralModel };
-
-
-        // 4. Render Results
+        // Render the results using the PLS-specific rendering function
         renderPlsPage_DA(analysisResultContainer, parsedData);
 
-    } catch (error) {
-        console.error(`Error in handlePlsAnalysis_DA (Enhanced) using ${MODEL_NAME}:`, error);
-        analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
-        setLoading("generate", false);
+    } catch (error) { // Catch errors from input validation, fetch, or response handling
+        console.error("Error during PLS-SEM analysis:", error);
+        // Display the error message in the results container
+        analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400"><strong>Error:</strong> ${error.message}</div>`;
     } finally {
-        // Ensure loading stops
-         if ($("generateSpinner") && !$("generateSpinner").classList.contains("hidden")) {
-            setLoading("generate", false);
-         }
+        // Ensure loading indicator is turned off regardless of success or failure
+        setLoading("generate", false);
     }
 }
 
-
+/**
+ * RENDERER: PLS-SEM (v7 - 3-Tab Focused Version)
+ * - Renders a 3-tab interface: "Path Model", "Measurement Model Assessment", "Learn PLS-SEM".
+ * - Calls a new helper `renderPlsMeasurementTab` to populate the new tab.
+ * - This version implements the user's "Critical Priority 9/10" request.
+ */
 function renderPlsPage_DA(container, data) {
     container.innerHTML = ""; // Clear loading
 
-    // Basic Validation
-    if (!data || !data.model_evaluation || !data.path_coefficients || !data.reliability_validity || !data.business_recommendations || !data.userInput) {
-        console.error("Incomplete data passed to renderPlsPage_DA:", data);
-        container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render results.</div>`;
+    // --- Enhanced Validation (still important) ---
+    if (!data || !data.model_evaluation || !data.path_coefficients || !data.reliability_validity || !data.business_recommendations || !data.userInput ||
+        !data.discriminant_validity_htmt || !data.discriminant_validity_fornell_larcker) {
+        console.error("Incomplete data passed to renderPlsPage_DA (v7):", data);
+        container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. The backend is missing required fields like 'discriminant_validity_htmt' or 'model_evaluation'.</div>`;
         $("analysisActions").classList.add("hidden");
         return;
     }
 
-    const { model_evaluation, path_coefficients, reliability_validity, business_recommendations, userInput } = data;
-    // Extract constructs from reliability data for diagram rendering
+    const {
+        model_evaluation,
+        path_coefficients,
+        reliability_validity,
+        business_recommendations,
+        userInput,
+        discriminant_validity_htmt,
+        discriminant_validity_fornell_larcker,
+        path_diagram // This is an HTML string with an <img> tag
+    } = data;
     const constructNames = reliability_validity.map(c => c.construct);
 
-
+    // --- 3-Tab Navigation ---
     const tabNav = document.createElement("div");
     tabNav.className = "flex flex-wrap border-b border-white/20 -mx-6 px-6";
-    // Added Learn PLS-SEM tab
     tabNav.innerHTML = `
         <button class="analysis-tab-btn active" data-tab="diagram">🧬 Path Model</button>
-        <button class="analysis-tab-btn" data-tab="paths">📈 Path Analysis</button>
-        <button class="analysis-tab-btn" data-tab="reliability">✅ Model Fit & Reliability</button>
-        <button class="analysis-tab-btn" data-tab="rec">💡 Recommendations</button>
+        <button class="analysis-tab-btn" data-tab="measurement">🔬 Measurement Model</button>
+        <button class="analysis-tab-btn" data-tab="structural">📊 Structural Results</button>
+        <button class="analysis-tab-btn" data-tab="diagnostics">🔍 Model Diagnostics</button>
         <button class="analysis-tab-btn" data-tab="learn">🎓 Learn PLS-SEM</button>
     `;
     container.appendChild(tabNav);
 
+    // --- 3-Tab Panels ---
     const tabContent = document.createElement("div");
     container.appendChild(tabContent);
-    // Added learnPanel
     tabContent.innerHTML = `
         <div id="diagramPanel" class="analysis-tab-panel active"></div>
-        <div id="pathsPanel" class="analysis-tab-panel"></div>
-        <div id="reliabilityPanel" class="analysis-tab-panel"></div>
-        <div id="recPanel" class="analysis-tab-panel"></div>
+        <div id="measurementPanel" class="analysis-tab-panel"></div>
+        <div id="structuralPanel" class="analysis-tab-panel"></div>
+        <div id="diagnosticsPanel" class="analysis-tab-panel"></div>
         <div id="learnPanel" class="analysis-tab-panel"></div>
     `;
 
-    // --- 1. Populate Path Diagram Panel (Improved Rendering) ---
+    // --- 1. Populate Path Diagram Panel ---
     const diagramPanel = $("diagramPanel");
-    if (constructNames && constructNames.length > 0 && path_coefficients) {
-        try {
-            // Basic logic to determine exogenous/endogenous based on paths
-            const sources = new Set(path_coefficients.map(p => p.path?.split(" -> ")[0]).filter(Boolean));
-            const targets = new Set(path_coefficients.map(p => p.path?.split(" -> ")[1]).filter(Boolean));
-
-            const exogenous = constructNames.filter(id => sources.has(id) && !targets.has(id));
-            const endogenous = constructNames.filter(id => targets.has(id)); // Simplified: anything targeted is endogenous/mediating
-             // Attempt to place mediators in the middle if possible
-             const mediators = endogenous.filter(id => sources.has(id));
-             const finalOutcomes = endogenous.filter(id => !sources.has(id));
-
-
-            let diagramHtml = `<div class="path-flow-container">`;
-
-             // Column 1: Exogenous
-             diagramHtml += `<div class="path-column"><div class="path-column-title">Predictors (Exogenous)</div>`;
-             if (exogenous.length > 0) {
-                 diagramHtml += exogenous.map(id => `<div class="path-node-card"><h4>${id}</h4></div>`).join("");
-             } else {
-                 diagramHtml += `<p class="text-white/60 text-sm italic">(None identified)</p>`;
-             }
-             diagramHtml += `</div>`;
-
-
-             // Column 2: Mediators (if any)
-             if (mediators.length > 0) {
-                 diagramHtml += `<div class="path-column"><div class="path-column-title">Mediators</div>`;
-                 diagramHtml += mediators.map(id => {
-                     const influences = path_coefficients.filter(p => p.path?.endsWith(` -> ${id}`));
-                     return `<div class="path-node-card"><h4>${id}</h4><div class="path-influence-list text-xs">Influenced by:<br>${influences.map(inf => {
-                         const isSig = inf.significant ?? ((inf.p_value ?? 1) < 0.05);
-                         const coeff = (inf.coefficient ?? 0).toFixed(3);
-                         return `<span class="path-influence ${isSig ? "significant" : ""}"><strong>${inf.path?.split(" -> ")[0] ?? "N/A"}</strong> (${coeff})${isSig ? "***" : ""}</span>`;
-                     }).join("<br>")}</div></div>`;
-                 }).join("");
-                 diagramHtml += `</div>`;
-             }
-
-             // Column 3: Final Outcomes
-             diagramHtml += `<div class="path-column"><div class="path-column-title">Outcomes (Endogenous)</div>`;
-              if (finalOutcomes.length > 0) {
-                 diagramHtml += finalOutcomes.map(id => {
-                     const influences = path_coefficients.filter(p => p.path?.endsWith(` -> ${id}`));
-                     return `<div class="path-node-card"><h4>${id}</h4><div class="path-influence-list text-xs">Influenced by:<br>${influences.map(inf => {
-                         const isSig = inf.significant ?? ((inf.p_value ?? 1) < 0.05);
-                         const coeff = (inf.coefficient ?? 0).toFixed(3);
-                         return `<span class="path-influence ${isSig ? "significant" : ""}"><strong>${inf.path?.split(" -> ")[0] ?? "N/A"}</strong> (${coeff})${isSig ? "***" : ""}</span>`;
-                     }).join("<br>")}</div></div>`;
-                 }).join("");
-              } else if (mediators.length === 0 && exogenous.length > 0) {
-                 // If no mediators AND no final outcomes, show exogenous ones here again for simple models
-                 diagramHtml += exogenous.map(id => {
-                     const influences = path_coefficients.filter(p => p.path?.endsWith(` -> ${id}`));
-                      if (influences.length > 0) { // Only show if it IS actually an outcome in a simple A->B model
-                         return `<div class="path-node-card"><h4>${id}</h4><div class="path-influence-list text-xs">Influenced by:<br>${influences.map(inf => {
-                             const isSig = inf.significant ?? ((inf.p_value ?? 1) < 0.05);
-                             const coeff = (inf.coefficient ?? 0).toFixed(3);
-                             return `<span class="path-influence ${isSig ? "significant" : ""}"><strong>${inf.path?.split(" -> ")[0] ?? "N/A"}</strong> (${coeff})${isSig ? "***" : ""}</span>`;
-                         }).join("<br>")}</div></div>`;
-                      }
-                      return '';
-                 }).join("");
-             } else {
-                 diagramHtml += `<p class="text-white/60 text-sm italic">(None identified as final outcomes)</p>`;
-             }
-            diagramHtml += `</div></div>`; // Close column and container
-            diagramHtml += `<p class="text-xs text-white/60 text-center mt-4">*** Indicates statistical significance (p < 0.05)</p>`;
-            diagramPanel.innerHTML = diagramHtml;
-
-        } catch (e) {
-            console.error("Error rendering PLS diagram:", e);
-            diagramPanel.innerHTML = `<div class="p-4 text-center text-red-400">Path model could not be rendered due to an error.</div>`;
-        }
-
-    } else {
-        diagramPanel.innerHTML = `<div class="p-4 text-center text-white/60">Path model data is insufficient for rendering.</div>`;
-    }
-
-
-    // --- 2. Populate Path Analysis Panel (Added significance boolean) ---
-    const pathsPanel = $("pathsPanel");
-    if (path_coefficients && path_coefficients.length > 0) {
-        let pathsHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">Structural Model - Path Coefficients</h3><div class="overflow-x-auto"><table class="coeff-table styled-table text-sm"><thead><tr><th>Path</th><th>Coefficient (β)</th><th>T-Statistic</th><th>P-value</th><th>Significant?</th></tr></thead><tbody>`;
-        path_coefficients.forEach((p) => {
-            // Use AI's significance flag if present, otherwise calculate
-            const isSignificant = p.significant ?? ((p.p_value != null) && p.p_value < 0.05);
-            pathsHtml += `
-                <tr class="${isSignificant ? "text-green-300" : "text-white/70"}">
-                    <td class="font-semibold">${p.path || "N/A"}</td>
-                    <td>${(p.coefficient ?? 0).toFixed(3)}</td>
-                    <td>${(p.t_statistic ?? 0).toFixed(2)}</td>
-                    <td>${(p.p_value ?? 1).toFixed(3)}</td>
-                    <td class="font-bold">${isSignificant ? "Yes***" : "No"}</td>
-                </tr>`;
-        });
-        pathsHtml += `</tbody></table><p class="text-xs text-white/60 mt-2">*** Significant at p < 0.05</p></div><div class="mt-6 space-y-4">`;
-        pathsHtml += `<h4 class="text-xl font-bold mb-2">Interpretation of Paths:</h4>`
-        path_coefficients.forEach((p) => {
-             const isSignificant = p.significant ?? ((p.p_value != null) && p.p_value < 0.05);
-             const borderColor = isSignificant ? "border-green-400" : "border-gray-500";
-            pathsHtml += `<div class="bg-white/5 p-3 rounded-lg border-l-4 ${borderColor}">
-                            <p class="font-bold">${p.path || "N/A"}</p>
-                            <p class="text-sm text-white/80 italic">${p.interpretation || "No interpretation provided."}</p>
-                        </div>`;
-        });
-        pathsHtml += `</div></div>`;
-        pathsPanel.innerHTML = pathsHtml;
-    } else {
-        pathsPanel.innerHTML = `<div class="p-4 text-center text-white/60">Path coefficient data is not available.</div>`;
-    }
-
-    // --- 3. Populate Reliability Panel (Added assessment text) ---
-    const reliabilityPanel = $("reliabilityPanel");
-    if (reliability_validity && reliability_validity.length > 0 && model_evaluation) {
-        let reliabilityHtml = `<div class="p-4">
-            <h3 class="text-2xl font-bold mb-4">Model Fit & Reliability Assessment</h3>
-            <div class="bg-black/20 p-4 rounded-lg mb-6">
-                <h4 class="text-lg font-bold mb-2 text-indigo-300">Overall Model Explanatory Power (R²)</h4>`;
-         if (model_evaluation.r_squared_values && model_evaluation.r_squared_values.length > 0) {
-             model_evaluation.r_squared_values.forEach(rsq => {
-                 reliabilityHtml += `<p class="text-sm text-white/80"><strong>${rsq.variable}:</strong> ${rsq.r_squared?.toFixed(3) ?? 'N/A'}</p>`;
-             });
-         } else {
-             reliabilityHtml += `<p class="text-sm text-white/70 italic">R-squared values not available.</p>`;
-         }
-         reliabilityHtml += `<p class="text-sm text-white/80 italic mt-3">${model_evaluation.interpretation || "Overall interpretation unavailable."}</p>
-            </div>
-
-            <h4 class="text-xl font-bold mb-3">Construct Reliability & Validity Metrics</h4>
-            <div class="overflow-x-auto">
-                <table class="coeff-table styled-table text-sm">
-                    <thead><tr>
-                        <th>Construct</th>
-                        <th title="Internal Consistency Reliability">Cronbach's Alpha (>0.7)</th>
-                        <th title="Internal Consistency Reliability">Composite Reliability (CR >0.7)</th>
-                        <th title="Convergent Validity">Avg. Variance Extracted (AVE >0.5)</th>
-                    </tr></thead>
-                    <tbody>`;
-        reliability_validity.forEach((r) => {
-             const alphaOk = (r.cronbachs_alpha ?? 0) >= 0.7;
-             const crOk = (r.composite_reliability ?? 0) >= 0.7;
-             const aveOk = (r.ave ?? 0) >= 0.5;
-            reliabilityHtml += `
-                <tr>
-                    <td class="font-semibold">${r.construct || "N/A"}</td>
-                    <td class="${alphaOk ? 'text-green-300' : 'text-red-300'}">${(r.cronbachs_alpha ?? 0).toFixed(3)} ${alphaOk ? '✓' : '✗'}</td>
-                    <td class="${crOk ? 'text-green-300' : 'text-red-300'}">${(r.composite_reliability ?? 0).toFixed(3)} ${crOk ? '✓' : '✗'}</td>
-                    <td class="${aveOk ? 'text-green-300' : 'text-red-300'}">${(r.ave ?? 0).toFixed(3)} ${aveOk ? '✓' : '✗'}</td>
-                </tr>`;
-        });
-        reliabilityHtml += `</tbody></table>
-            <p class="text-xs text-white/60 mt-2">✓ Meets common threshold, ✗ Below common threshold.</p>
-            </div>
-            <div class="mt-6 space-y-4">`;
-         reliabilityHtml += `<h4 class="text-xl font-bold mb-2">Assessment Details:</h4>`
-         reliability_validity.forEach(r => {
-             reliabilityHtml += `<div class="bg-white/5 p-3 rounded-lg border-l-4 ${ (r.cronbachs_alpha >= 0.7 && r.composite_reliability >= 0.7 && r.ave >= 0.5) ? 'border-green-400' : 'border-yellow-400' }">
-                                     <p class="font-bold">${r.construct}</p>
-                                     <p class="text-sm text-white/80 italic">${r.assessment || "Assessment not provided."}</p>
-                                 </div>`;
-         });
-         reliabilityHtml += `</div></div>`;
-        reliabilityPanel.innerHTML = reliabilityHtml;
-    } else {
-        reliabilityPanel.innerHTML = `<div class="p-4 text-center text-white/60">Model reliability and fit data is not available.</div>`;
-    }
-
-    // --- 4. Populate Recommendations Panel (Added insight link) ---
-    const recPanel = $("recPanel");
-    if (business_recommendations && business_recommendations.length > 0) {
-        let recHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">💡 Actionable Recommendations</h3><div class="space-y-6">`;
-        business_recommendations.forEach((rec, index) => {
-            recHtml += `<div class="prescription-card">
-                        <h4 class="text-xl font-bold">${index + 1}. ${rec.recommendation || "N/A"}</h4>
-                        <p class="rationale"><strong>Driven By:</strong> ${rec.insight_link || "N/A"}</p>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 text-sm">
-                            <div class="bg-black/20 p-3 rounded">
-                                <h5 class="font-bold text-indigo-300 mb-2">Action Items</h5>
-                                <ul class="list-disc list-inside space-y-1 text-white/90">${(rec.action_items || []).map(a => `<li>${a}</li>`).join("")}</ul>
-                            </div>
-                            <div class="bg-black/20 p-3 rounded">
-                                <h5 class="font-bold text-indigo-300 mb-2">KPIs to Track</h5>
-                                <p class="text-white/90 text-xs">${(rec.kpis_to_track || []).join(", ")}</p>
-                            </div>
-                        </div>
-                    </div>`;
-        });
-        recHtml += `</div></div>`;
-        recPanel.innerHTML = recHtml;
-    } else {
-        recPanel.innerHTML = `<div class="p-4 text-center text-white/60 italic">No specific business recommendations generated based on the significant paths.</div>`;
-    }
-
-    // --- 5. Populate Learn PLS-SEM Tab ---
-    const learnPanel = $("learnPanel");
-    learnPanel.innerHTML = `
-    <div class="p-6 space-y-6 text-white/90">
-        <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding PLS-SEM</h3>
+    if (data.diagram_available && data.path_diagram) {
+        diagramPanel.innerHTML = data.path_diagram;
+        console.log("✅ Rendering backend-generated PNG diagram.");
         
-        <div class="bg-black/20 p-4 rounded-lg">
-            <h4 class="text-lg font-bold mb-2 text-indigo-300">What is PLS-SEM?</h4>
-            <p class="text-sm text-white/80">Partial Least Squares Structural Equation Modeling (PLS-SEM) is a statistical method used to analyze complex relationships between observed (indicator) and unobserved (latent) variables.</p>
-            <p class="text-sm text-white/80 mt-2">It's particularly useful for:</p>
-            <ul class="list-disc list-inside space-y-1 text-sm text-white/80 mt-1 pl-4">
-                <li><strong>Prediction-oriented research:</strong> When the goal is to predict key target constructs.</li>
-                <li><strong>Complex models:</strong> Handling many constructs and indicators.</li>
-                <li><strong>Non-normal data:</strong> It doesn't require data to be normally distributed like traditional SEM (CB-SEM).</li>
-                <li><strong>Smaller sample sizes:</strong> Can often work with smaller datasets than CB-SEM.</li>
-                <li><strong>Formative constructs:</strong> When indicators are assumed to *cause* the latent variable (less common, but PLS handles it).</li>
-            </ul>
-        </div>
+        // Add error handling just in case
+        setTimeout(() => {
+            const imgElement = diagramPanel.querySelector('img');
+            if (imgElement) {
+                imgElement.addEventListener('error', (e) => {
+                    console.warn('PNG diagram image failed to load:', e);
+                    diagramPanel.innerHTML = `
+                        <div class="p-4 text-center text-yellow-400">
+                            <p>⚠️ Diagram image failed to load.</p>
+                            <p class="text-xs text-white/60">The backend data may be corrupted.</p>
+                        </div>`;
+                });
+            } else if (!diagramPanel.innerHTML.includes("img")) {
+                 console.warn("Diagram content loaded, but no <img> tag was found.");
+                 diagramPanel.innerHTML = `
+                        <div class="p-4 text-center text-yellow-400">
+                            <p>⚠️ Diagram content loaded, but no <img> tag was found.</p>
+                            <p class="text-xs text-white/60">Backend may not have returned a valid image.</p>
+                        </div>`;
+            }
+        }, 500); 
+    } else {
+        console.log("⚠️ Graphviz diagram not available (diagram_available=false or path_diagram=null).");
+        diagramPanel.innerHTML = `<div class="p-4 text-center text-white/60">Path diagram data is not available. The backend did not provide a graph.</div>`;
+    }
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-white/5 p-4 rounded-lg border border-white/10">
-                <h4 class="text-lg font-bold mb-2">Key Components:</h4>
-                <ul class="list-disc list-inside space-y-1 text-sm">
-                    <li><strong>Measurement Model:</strong> Links latent variables (constructs) to their observable indicators (like survey items). Assesses reliability and validity.</li>
-                    <li><strong>Structural Model:</strong> Defines the hypothesized relationships (paths) *between* the latent variables.</li>
-                    <li><strong>Latent Variables:</strong> Unobserved concepts (e.g., Brand Image, Loyalty).</li>
-                    <li><strong>Indicators:</strong> Observed variables that measure the latent concepts.</li>
-                    <li><strong>Path Coefficients (β):</strong> Strength and direction of relationships between latent variables.</li>
-                    <li><strong>R-squared (R²):</strong> Percentage of variance in an endogenous (dependent) construct explained by its predictors.</li>
+    // --- 2. Populate NEW Measurement Model Panel ---
+    const measurementPanel = $("measurementPanel");
+    // Call the new helper function
+    measurementPanel.innerHTML = renderPlsMeasurementTab(
+        reliability_validity,
+        discriminant_validity_htmt,
+        discriminant_validity_fornell_larcker,
+        data.outer_loadings_json // This will be undefined, but we pass it anyway
+    );
+
+    // --- 3. Populate NEW Structural Results Panel ---
+    const structuralPanel = $("structuralPanel");
+    structuralPanel.innerHTML = renderPlsStructuralTab(
+        data.path_coefficients,
+        data.model_evaluation,
+        data.userInput,
+        data.bootstrap_results
+    );
+
+    // --- 4. Populate NEW Model Diagnostics Panel ---
+    const diagnosticsPanel = $("diagnosticsPanel");
+    diagnosticsPanel.innerHTML = renderPlsDiagnosticsTab(
+        data.data_summary,
+        data.model_evaluation,
+        data.reliability_validity,
+        data.path_coefficients,
+        data.bootstrap_results
+    );
+
+    // --- 5. Populate Learn PLS-SEM Tab (Enhanced Version) ---
+const learnPanel = $("learnPanel");
+learnPanel.innerHTML = `
+<div class="p-6 space-y-6 text-white/90">
+    <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding PLS-SEM</h3>
+    
+    <!-- When to Use PLS-SEM vs Alternatives -->
+    <div class="bg-black/20 p-4 rounded-lg border border-blue-500/30">
+        <h4 class="text-lg font-bold mb-3 text-blue-300">🤔 When to Use PLS-SEM vs. Alternatives</h4>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-green-900/20 p-3 rounded border border-green-500/30">
+                <h5 class="font-bold text-green-300 mb-2">✅ Use PLS-SEM When:</h5>
+                <ul class="text-sm space-y-1">
+                    <li>• <strong>Exploratory research:</strong> Testing new theories or relationships</li>
+                    <li>• <strong>Complex models:</strong> Many constructs (5+) and indicators (20+)</li>
+                    <li>• <strong>Prediction focus:</strong> Goal is predicting key outcomes</li>
+                    <li>• <strong>Small samples:</strong> Less than 200 observations</li>
+                    <li>• <strong>Non-normal data:</strong> Skewed or non-parametric distributions</li>
+                    <li>• <strong>Formative measures:</strong> Indicators cause the construct</li>
                 </ul>
             </div>
-            <div class="bg-white/5 p-4 rounded-lg border border-white/10">
-                <h4 class="text-lg font-bold mb-2">Interpreting Key Metrics:</h4>
-                 <p class="text-sm mb-2"><strong>Reliability & Validity:</strong></p>
-                 <ul class="list-[circle] list-inside pl-4 text-xs mb-3">
-                    <li><strong>Cronbach's Alpha / CR (>0.7):</strong> Internal consistency - do indicators for a construct measure the *same* thing reliably?</li>
-                    <li><strong>AVE (>0.5):</strong> Convergent validity - does the construct explain more than half the variance of its indicators?</li>
-                    <li><em>(Discriminant Validity - Not shown here, checks if constructs are distinct. Often HTMT < 0.9)</em></li>
-                 </ul>
-                 <p class="text-sm mb-2"><strong>Structural Model:</strong></p>
-                  <ul class="list-[circle] list-inside pl-4 text-xs mb-3">
-                    <li><strong>Path Coefficients (β):</strong> Size indicates strength. Sign indicates direction (+/-).</li>
-                    <li><strong>P-values (<0.05):</strong> Indicates statistical significance of the path (relationship likely exists).</li>
-                    <li><strong>R-squared:</strong> Explanatory power for dependent constructs (e.g., 0.6 means 60% explained).</li>
-                 </ul>
+            
+            <div class="bg-red-900/20 p-3 rounded border border-red-500/30">
+                <h5 class="font-bold text-red-300 mb-2">❌ Use CB-SEM Instead When:</h5>
+                <ul class="text-sm space-y-1">
+                    <li>• <strong>Theory testing:</strong> Confirming well-established models</li>
+                    <li>• <strong>Model comparison:</strong> Testing competing theoretical models</li>
+                    <li>• <strong>Global fit focus:</strong> Need overall model fit indices</li>
+                    <li>• <strong>Large samples:</strong> 300+ observations available</li>
+                    <li>• <strong>Normal data:</strong> Multivariate normality assumptions met</li>
+                    <li>• <strong>Simple models:</strong> Few constructs, well-established measures</li>
+                </ul>
             </div>
         </div>
-
-        <details class="styled-details text-sm">
-            <summary class="font-semibold">PLS-SEM vs. CB-SEM (Traditional SEM)</summary>
-            <div class="bg-black/20 p-4 rounded-b-lg space-y-3">
-                <p><strong>PLS-SEM:</strong> Variance-based, prediction-focused, fewer assumptions (good for exploration, non-normal data, complex models).</p>
-                <p><strong>CB-SEM (e.g., LISREL, AMOS):</strong> Covariance-based, theory-testing focused, requires normal data and larger samples (good for confirming established theories).</p>
-                <p>Choose PLS-SEM when your primary goal is prediction, your theory is less developed, or your data doesn't meet CB-SEM assumptions.</p>
+        
+        <div class="mt-4 p-3 bg-yellow-900/20 rounded border border-yellow-500/30">
+            <h5 class="font-bold text-yellow-300 mb-2">⚡ Other Alternatives:</h5>
+            <div class="text-sm grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div><strong>Multiple Regression:</strong> Single outcome, linear relationships</div>
+                <div><strong>Factor Analysis:</strong> Just measurement model validation</div>
+                <div><strong>Path Analysis:</strong> Observed variables only, no latents</div>
+                <div><strong>Machine Learning:</strong> Pure prediction, no theory testing</div>
             </div>
-        </details>
+        </div>
     </div>
-    `;
+    
+    <!-- Practical Model Specification Tips -->
+    <div class="bg-black/20 p-4 rounded-lg border border-purple-500/30">
+        <h4 class="text-lg font-bold mb-3 text-purple-300">🛠️ Practical Model Specification Tips</h4>
+        
+        <div class="space-y-4">
+            <div class="bg-white/5 p-3 rounded">
+                <h5 class="font-semibold text-white mb-2">📋 Measurement Model Best Practices:</h5>
+                <ul class="text-sm space-y-1 text-white/80">
+                    <li>• <strong>3+ indicators per construct:</strong> Minimum for identification</li>
+                    <li>• <strong>Avoid single-item measures:</strong> Unless unavoidable (e.g., age)</li>
+                    <li>• <strong>Similar response scales:</strong> Mix of Likert scales can cause issues</li>
+                    <li>• <strong>Clear wording:</strong> Avoid double-barreled or complex items</li>
+                    <li>• <strong>Balanced scales:</strong> Include both positive and negative items when possible</li>
+                </ul>
+            </div>
+            
+            <div class="bg-white/5 p-3 rounded">
+                <h5 class="font-semibold text-white mb-2">🏗️ Structural Model Design:</h5>
+                <ul class="text-sm space-y-1 text-white/80">
+                    <li>• <strong>Theoretical justification:</strong> Every path should have literature support</li>
+                    <li>• <strong>Avoid kitchen sink models:</strong> Include only theoretically relevant constructs</li>
+                    <li>• <strong>Consider mediation:</strong> Test indirect effects when theoretically meaningful</li>
+                    <li>• <strong>Control variables:</strong> Include demographic or contextual controls</li>
+                    <li>• <strong>Alternative models:</strong> Test competing theoretical explanations</li>
+                </ul>
+            </div>
+            
+            <div class="bg-white/5 p-3 rounded">
+                <h5 class="font-semibold text-white mb-2">⚠️ Common Specification Errors:</h5>
+                <ul class="text-sm space-y-1 text-white/80">
+                    <li>• <strong>Reflective vs. Formative confusion:</strong> Most constructs are reflective</li>
+                    <li>• <strong>Multicollinearity:</strong> Highly correlated predictors (r > 0.9)</li>
+                    <li>• <strong>Missing pathways:</strong> Omitting theoretically important relationships</li>
+                    <li>• <strong>Cross-loadings:</strong> Indicators loading on multiple constructs</li>
+                    <li>• <strong>Endogeneity:</strong> Ignoring reverse causation possibilities</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Enhanced Interpretation Guide -->
+    <div class="bg-black/20 p-4 rounded-lg border border-green-500/30">
+        <h4 class="text-lg font-bold mb-3 text-green-300">📊 Practical Interpretation Guidelines</h4>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="space-y-3">
+                <div>
+                    <h5 class="font-semibold mb-2">Effect Sizes (Cohen's Guidelines)</h5>
+                    <div class="text-sm space-y-1 text-white/80">
+                        <div><strong>Path Coefficients (β):</strong></div>
+                        <div class="ml-4">• Small: |0.10| - |0.29|</div>
+                        <div class="ml-4">• Medium: |0.30| - |0.49|</div> 
+                        <div class="ml-4">• Large: |0.50|+</div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h5 class="font-semibold mb-2">R² Interpretation</h5>
+                    <div class="text-sm space-y-1 text-white/80">
+                        <div>• <strong>0.75+:</strong> Substantial (excellent)</div>
+                        <div>• <strong>0.50-0.74:</strong> Moderate (good)</div>
+                        <div>• <strong>0.25-0.49:</strong> Weak (acceptable)</div>
+                        <div>• <strong>&lt;0.25:</strong> Very weak (concerning)</div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h5 class="font-semibold mb-2">Statistical Significance</h5>
+                    <div class="text-sm space-y-1 text-white/80">
+                        <div>• <strong>p &lt; 0.001:</strong> *** (highly significant)</div>
+                        <div>• <strong>p &lt; 0.01:</strong> ** (very significant)</div>
+                        <div>• <strong>p &lt; 0.05:</strong> * (significant)</div>
+                        <div>• <strong>p ≥ 0.05:</strong> Not significant</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="space-y-3">
+                <div>
+                    <h5 class="font-semibold mb-2">Reporting Best Practices</h5>
+                    <ul class="text-sm space-y-1 text-white/80">
+                        <li>• Report both β and p-values for all paths</li>
+                        <li>• Include confidence intervals when available</li>
+                        <li>• Discuss practical vs. statistical significance</li>
+                        <li>• Address alternative explanations</li>
+                        <li>• Acknowledge model limitations</li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h5 class="font-semibold mb-2">Sample Size Guidelines</h5>
+                    <div class="text-sm space-y-1 text-white/80">
+                        <div><strong>Minimum rules:</strong></div>
+                        <div class="ml-4">• 5-10 cases per indicator</div>
+                        <div class="ml-4">• 10 times largest # of indicators</div>
+                        <div class="ml-4">• Absolute minimum: 50 cases</div>
+                        <div class="ml-4">• Recommended: 100+ cases</div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h5 class="font-semibold mb-2">Validation Strategies</h5>
+                    <ul class="text-sm space-y-1 text-white/80">
+                        <li>• Split-sample validation (if N > 200)</li>
+                        <li>• Cross-industry replication</li>
+                        <li>• Temporal stability testing</li>
+                        <li>• Alternative model comparison</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- What is PLS-SEM (Condensed) -->
+    <div class="bg-white/5 p-4 rounded-lg border border-white/10">
+        <h4 class="text-lg font-bold mb-2 text-indigo-300">What is PLS-SEM?</h4>
+        <p class="text-sm text-white/80">Partial Least Squares Structural Equation Modeling (PLS-SEM) is a statistical method for testing complex cause-and-effect relationships between observed and latent variables. Unlike traditional regression, it can handle multiple dependent variables, indirect effects, and measurement error simultaneously.</p>
+    </div>
+    
+    <details class="styled-details text-sm">
+        <summary class="font-semibold cursor-pointer hover:text-blue-300">📚 Additional Resources & Further Reading</summary>
+        <div class="bg-black/20 p-4 rounded-b-lg space-y-2 text-white/80">
+            <div><strong>Key Books:</strong></div>
+            <ul class="ml-4 space-y-1 text-sm">
+                <li>• Hair et al. (2021) - A Primer on Partial Least Squares SEM (4th ed.)</li>
+                <li>• Sarstedt & Ringle (2020) - Partial Least Squares SEM using SmartPLS</li>
+                <li>• Henseler et al. (2016) - Handbook of PLS-SEM</li>
+            </ul>
+            <div class="mt-3"><strong>Software Alternatives:</strong></div>
+            <ul class="ml-4 space-y-1 text-sm">
+                <li>• SmartPLS (Commercial, user-friendly GUI)</li>
+                <li>• R packages: semPLS, plspm, SEMinR</li>
+                <li>• Python: plspm, scikit-learn PLS</li>
+            </ul>
+        </div>
+    </details>
+</div>
+`;
 
-    // --- Final Touches ---
-    analysisCache[currentTemplateId] = container.innerHTML; // Cache result
-
-    // Tab switching logic
+    // --- Tab Switching Logic ---
     tabNav.addEventListener("click", (e) => {
         if (e.target.tagName === "BUTTON") {
-            // Deactivate all
             tabNav.querySelectorAll(".analysis-tab-btn").forEach(btn => btn.classList.remove("active"));
             tabContent.querySelectorAll(".analysis-tab-panel").forEach(pnl => pnl.classList.remove("active"));
-
-            // Activate clicked
             e.target.classList.add("active");
             const targetPanelId = e.target.dataset.tab + "Panel";
             const targetPanel = $(targetPanelId);
             if (targetPanel) {
                 targetPanel.classList.add("active");
-                // No charts to resize in this specific PLS render function currently
             } else {
-                 console.warn("Target panel not found:", targetPanelId);
+                console.warn("Target panel not found:", targetPanelId);
             }
         }
     });
 
+    // --- Final Setup ---
+    analysisCache[currentTemplateId] = container.innerHTML; // Cache result
     $("analysisActions").classList.remove("hidden"); // Show save buttons
-    // setLoading('generate', false); // Handled in the calling function
 }
 
+/**
+ * --- UPDATED HELPER FUNCTION (v2) ---
+ * Renders the new "Measurement Model Assessment" tab content.
+ * - FIX: Now reads `data.outer_loadings_json` to build the Factor Loadings table.
+ * @param {object} reliability_validity - Data for the reliability table.
+ * @param {object} htmt_data - Data for the HTMT matrix.
+ * @param {object} fornell_larcker_data - Data for the Fornell-Larcker matrix.
+ * @param {object} outer_loadings_data - The new JSON-friendly object.
+ * @returns {string} HTML string for the tab
+ */
+function renderPlsMeasurementTab(reliability_validity, htmt_data, fornell_larcker_data, outer_loadings_data) {
+    let html = `<div class="p-4 space-y-8">`;
+    let reliabilityHtml = "";
+    let validityHtml = "";
+    let loadingsHtml = "";
+
+    // --- 1. Reliability Section (Unchanged) ---
+    if (reliability_validity && reliability_validity.length > 0) {
+        reliabilityHtml = `
+            <h3 class="text-2xl font-bold mb-3">Construct Reliability & Convergent Validity</h3>
+            <div class="overflow-x-auto">
+                <table class="coeff-table styled-table text-sm">
+                    <thead>
+                        <tr>
+                            <th>Construct</th>
+                            <th title="Internal Consistency Reliability">Cronbach's Alpha (>0.7)</th>
+                            <th title="Internal Consistency Reliability">Composite Reliability (CR >0.7)</th>
+                            <th title="Convergent Validity">Avg. Variance Extracted (AVE >0.5)</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+        reliability_validity.forEach((r) => {
+            const alphaOk = (r.cronbachs_alpha ?? 0) >= 0.7;
+            const crOk = (r.composite_reliability ?? 0) >= 0.7;
+            const aveOk = (r.ave ?? 0) >= 0.5;
+            const crClass = crOk ? 'text-green-300' : 'text-red-300 font-bold'; // Highlight bad CR
+            
+            reliabilityHtml += `
+                <tr>
+                    <td class="font-semibold">${r.construct || "N/A"}</td>
+                    <td class="${alphaOk ? 'text-green-300' : 'text-red-300'}">${(r.cronbachs_alpha ?? 0).toFixed(3)} ${alphaOk ? '✓' : '✗'}</td>
+                    <td class="${crClass}">${(r.composite_reliability ?? 0).toFixed(3)} ${crOk ? '✓' : '✗'}</td>
+                    <td class="${aveOk ? 'text-green-300' : 'text-red-300'}">${(r.ave ?? 0).toFixed(3)} ${aveOk ? '✓' : '✗'}</td>
+                </tr>`;
+        });
+        reliabilityHtml += `</tbody></table>
+            <p class="text-xs text-white/60 mt-2">✓ Meets common threshold, ✗ Below common threshold.</p>
+        </div>`;
+    } else {
+        reliabilityHtml = `<p class="text-white/60">Reliability data is not available.</p>`;
+    }
+
+    // --- 2. Factor Loadings Section (NOW READS JSON) ---
+    loadingsHtml = `<h3 class="text-2xl font-bold mb-3 mt-8">Factor Loadings (Outer Model)</h3>`;
+    if (outer_loadings_data && outer_loadings_data.headers && outer_loadings_data.rows) {
+        loadingsHtml += `<p class="text-sm text-white/70 mb-4 italic">Shows how strongly each indicator (item) loads onto its construct. Loadings **> 0.7** are ideal. Loadings **< 0.4** (red) should be considered for removal.</p>`;
+        loadingsHtml += `<div class="overflow-x-auto">
+                        <table class="coeff-table styled-table text-sm">
+                        <thead><tr><th>Indicator</th>`;
+        
+        const headers = outer_loadings_data.headers;
+        headers.forEach(h => { loadingsHtml += `<th>${h}</th>`; });
+        loadingsHtml += `</tr></thead><tbody>`;
+
+        outer_loadings_data.rows.forEach(row => {
+            loadingsHtml += `<tr><td class="font-semibold">${row.indicator}</td>`;
+            headers.forEach(h => {
+                const val = row[h];
+                let cellHtml = 'N/A';
+                if (val !== null && val !== undefined) {
+                    const valNum = parseFloat(val);
+                    // Highlight significant loadings (> 0.7) in green
+                    // Highlight weak loadings (< 0.4) in red
+                    const valClass = valNum >= 0.7 ? 'text-green-300 font-bold' : (valNum < 0.4 ? 'text-red-400' : 'text-white/80');
+                    cellHtml = `<span class="${valClass}">${val.toFixed(3)}</span>`;
+                }
+                loadingsHtml += `<td>${cellHtml}</td>`;
+            });
+            loadingsHtml += `</tr>`;
+        });
+        loadingsHtml += `</tbody></table></div>`;
+    } else {
+        // This message will show if the backend modification wasn't made
+        loadingsHtml += `
+            <div class="p-4 bg-yellow-900/20 border border-yellow-500/30 rounded-lg">
+                <h4 class="text-lg font-bold text-yellow-300">Data Not Available on Frontend</h4>
+                <p class="text-sm text-white/80 mt-2">Factor loadings were not received from the backend. This requires a small modification to <code>pls_analysis.py</code> in the <code>perform_pls_sem</code> function to pass the 'outer_loadings_df' to the frontend as a JSON object.</p>
+            </div>
+        `;
+    }
+
+    // --- 3. HTMT Section (Unchanged) ---
+    validityHtml += `<div>
+        <h3 class="text-2xl font-bold mb-2 mt-8">Discriminant Validity - HTMT Ratio</h3>
+        <p class="text-sm text-white/70 mb-4 italic">Checks if constructs are distinct. Values **below 0.90** (or 0.85) indicate good discriminant validity.</p>
+        <div class="overflow-x-auto">
+            <table class="coeff-table styled-table text-sm">`;
+    if (htmt_data && htmt_data.headers && htmt_data.rows) {
+        validityHtml += `<thead><tr><th></th>`; // Empty top-left cell
+        htmt_data.headers.forEach(h => { validityHtml += `<th>${h}</th>`; });
+        validityHtml += `</tr></thead><tbody>`;
+        // In the HTMT section of renderPlsMeasurementTab
+        htmt_data.rows.forEach(row => {
+            validityHtml += `<tr><td class="font-semibold">${row.construct}</td>`;
+            htmt_data.headers.forEach(h => {
+                const val = row[h];
+                if (val === null || val === undefined || row.construct === h) {
+                    // Empty cell for diagonal or missing values
+                    validityHtml += `<td class="bg-black/20 text-center">—</td>`; 
+                } else {
+                    const isBad = val >= 0.90;
+                    validityHtml += `<td class="${isBad ? 'text-red-300 font-bold' : 'text-green-300'}">${val.toFixed(3)} ${isBad ? '✗' : '✓'}</td>`;
+                }
+                });
+            validityHtml += `</tr>`;
+        });
+        validityHtml += `</tbody>`;
+    } else {
+        validityHtml += `<tbody><tr><td class="text-center text-white/60 italic p-4">HTMT data not available.</td></tr></tbody>`;
+    }
+    validityHtml += `</table></div></div>`;
+
+    // --- 4. Fornell-Larcker Section (Unchanged) ---
+    validityHtml += `<div class="mt-8">
+        <h3 class="text-2xl font-bold mb-2">Discriminant Validity - Fornell-Larcker Criterion</h3>
+        <p class="text-sm text-white/70 mb-4 italic">The **diagonal value (bolded)** in each column should be the **highest** value in that column.</p>
+        <div class="overflow-x-auto">
+            <table class="coeff-table styled-table text-sm">`;
+    if (fornell_larcker_data && fornell_larcker_data.headers && fornell_larcker_data.rows) {
+        validityHtml += `<thead><tr><th></th>`; // Empty top-left cell
+        fornell_larcker_data.headers.forEach(h => { validityHtml += `<th>${h}</th>`; });
+        validityHtml += `</tr></thead><tbody>`;
+
+        fornell_larcker_data.rows.forEach(row => {
+            validityHtml += `<tr><td class="font-semibold">${row.construct}</td>`;
+            for (const h of fornell_larcker_data.headers) {
+                const val = row[h];
+                if (val === null || val === undefined) {
+                    validityHtml += `<td class="bg-black/20"></td>`; // Empty cells
+                } else {
+                    const isDiagonal = row.construct === h;
+                    let isHighest = true;
+                    if (isDiagonal) {
+                        for (const r of fornell_larcker_data.rows) {
+                            if (r.construct !== h && r[h] > val) {
+                                isHighest = false;
+                                break;
+                            }
+                        }
+                    }
+                    const valStr = val.toFixed(3);
+                    if (isDiagonal) {
+                        validityHtml += `<td class="${isHighest ? 'text-green-300' : 'text-red-300'} font-bold">${valStr} ${isHighest ? '✓' : '✗'}</td>`;
+                    } else {
+                        validityHtml += `<td class="text-white/70">${valStr}</td>`;
+                    }
+                }
+            }
+            validityHtml += `</tr>`;
+        });
+        validityHtml += `</tbody>`;
+    } else {
+        validityHtml += `<tbody><tr><td class="text-center text-white/60 italic p-4">Fornell-Larcker data not available.</td></tr></tbody>`;
+    }
+    validityHtml += `</table></div></div>`;
+    
+    // Assemble the tab
+    html += reliabilityHtml + loadingsHtml + validityHtml;
+    html += `</div>`; // Close p-4
+    return html;
+}
+
+/**
+ * Renders the Structural Model Results tab content
+ * @param {array} path_coefficients - Path results with coefficients and significance
+ * @param {object} model_evaluation - R-squared values and model fit
+ * @param {object} userInput - Original model syntax for hypothesis mapping
+ * @param {object} bootstrap_results - Bootstrap info for confidence intervals
+ * @returns {string} HTML string for the structural results tab
+ */
+function renderPlsStructuralTab(path_coefficients, model_evaluation, userInput, bootstrap_results) {
+    let html = `<div class="p-4 space-y-6">`;
+    
+    // Header
+    html += `<h3 class="text-2xl font-bold text-center mb-4">📊 Structural Model Results</h3>`;
+    
+    // --- 1. Path Coefficients Table with Effect Sizes ---
+    html += `<div class="bg-white/5 p-4 rounded-lg border border-white/10">
+        <h4 class="text-lg font-bold mb-3 text-blue-300">🛤️ Path Coefficients & Effect Sizes</h4>
+        
+        <div class="overflow-x-auto">
+            <table class="coeff-table styled-table text-sm">
+                <thead>
+                    <tr>
+                        <th>Structural Path</th>
+                        <th>Path Coefficient (β)</th>
+                        <th>Effect Size</th>
+                        <th>t-Statistic</th>
+                        <th>p-Value</th>
+                        <th>Significance</th>
+                        <th>95% CI</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+    
+    if (path_coefficients && path_coefficients.length > 0) {
+        path_coefficients.forEach(path => {
+            const coeff = path.coefficient || 0;
+            const absCoeff = Math.abs(coeff);
+            
+            // Cohen's guidelines for effect sizes
+            let effectSize, effectColor;
+            if (absCoeff >= 0.5) {
+                effectSize = "Large";
+                effectColor = "text-green-300 font-bold";
+            } else if (absCoeff >= 0.3) {
+                effectSize = "Medium";
+                effectColor = "text-yellow-300 font-semibold";
+            } else if (absCoeff >= 0.1) {
+                effectSize = "Small";
+                effectColor = "text-orange-300";
+            } else {
+                effectSize = "Negligible";
+                effectColor = "text-red-300";
+            }
+            
+            const isSignificant = path.significant === true;
+            const pValue = path.p_value;
+            const tStat = path.t_statistic;
+            
+            // Significance stars
+            let sigStars = "";
+            if (pValue !== null && pValue < 0.001) sigStars = "***";
+            else if (pValue !== null && pValue < 0.01) sigStars = "**";
+            else if (pValue !== null && pValue < 0.05) sigStars = "*";
+            
+            // Confidence interval (approximate)
+            let ciText = "N/A";
+            if (bootstrap_results?.available && tStat !== null) {
+                const margin = 1.96 * Math.abs(coeff / tStat); // Rough approximation
+                const lowerCI = coeff - margin;
+                const upperCI = coeff + margin;
+                ciText = `[${lowerCI.toFixed(3)}, ${upperCI.toFixed(3)}]`;
+            }
+            
+            html += `
+                <tr>
+                    <td class="font-semibold">${path.path}</td>
+                    <td class="text-center font-bold ${coeff >= 0 ? 'text-green-300' : 'text-red-300'}">${coeff.toFixed(3)}${sigStars}</td>
+                    <td class="text-center ${effectColor}">${effectSize}</td>
+                    <td class="text-center">${tStat !== null ? tStat.toFixed(3) : 'N/A'}</td>
+                    <td class="text-center">${pValue !== null ? pValue.toFixed(3) : 'N/A'}</td>
+                    <td class="text-center ${isSignificant ? 'text-green-300 font-bold' : 'text-red-300'}">${isSignificant ? '✓ Yes' : '✗ No'}</td>
+                    <td class="text-center text-xs">${ciText}</td>
+                </tr>`;
+        });
+    } else {
+        html += `<tr><td colspan="7" class="text-center text-white/60 italic">No path coefficients available</td></tr>`;
+    }
+    
+    html += `</tbody></table></div>
+        
+        <div class="mt-3 text-xs text-white/60">
+            <p><strong>Effect Size Guidelines:</strong> Small (0.1+), Medium (0.3+), Large (0.5+) | 
+            <strong>Significance:</strong> * p < 0.05, ** p < 0.01, *** p < 0.001</p>
+        </div>
+    </div>`;
+    
+    // --- 2. R-Squared Values for Endogenous Constructs ---
+    html += `<div class="bg-white/5 p-4 rounded-lg border border-white/10">
+        <h4 class="text-lg font-bold mb-3 text-green-300">📈 Explained Variance (R²)</h4>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
+    
+    if (model_evaluation?.r_squared_values) {
+        model_evaluation.r_squared_values.forEach(rsq => {
+            if (rsq.r_squared > 0) { // Only show endogenous constructs
+                const percentage = (rsq.r_squared * 100).toFixed(1);
+                let strength, color;
+                
+                if (rsq.r_squared >= 0.75) {
+                    strength = "Substantial";
+                    color = "text-green-300";
+                } else if (rsq.r_squared >= 0.50) {
+                    strength = "Moderate";
+                    color = "text-yellow-300";
+                } else if (rsq.r_squared >= 0.25) {
+                    strength = "Weak";
+                    color = "text-orange-300";
+                } else {
+                    strength = "Very Weak";
+                    color = "text-red-300";
+                }
+                
+                html += `<div class="bg-black/20 p-4 rounded-lg">
+                    <div class="text-lg font-bold">${rsq.variable}</div>
+                    <div class="text-2xl font-bold ${color}">${percentage}%</div>
+                    <div class="text-sm text-white/70">${strength} explanatory power</div>
+                    <div class="text-xs text-white/60 mt-1">R² = ${rsq.r_squared.toFixed(3)}</div>
+                </div>`;
+            }
+        });
+    }
+    
+    html += `</div></div>`;
+    
+    // --- 3. Hypothesis Testing Summary ---
+    html += `<div class="bg-white/5 p-4 rounded-lg border border-white/10">
+        <h4 class="text-lg font-bold mb-3 text-purple-300">🧪 Hypothesis Testing Summary</h4>
+        
+        <div class="space-y-3">`;
+    
+    if (path_coefficients && path_coefficients.length > 0) {
+        let supportedCount = 0;
+        
+        path_coefficients.forEach((path, index) => {
+            const isSignificant = path.significant === true;
+            const coeff = path.coefficient || 0;
+            const absCoeff = Math.abs(coeff);
+            
+            // Consider hypothesis supported if significant AND meaningful effect size
+            const meaningfulEffect = absCoeff >= 0.1;
+            const supported = isSignificant && meaningfulEffect;
+            
+            if (supported) supportedCount++;
+            
+            html += `<div class="flex justify-between items-center p-3 rounded-lg ${supported ? 'bg-green-900/20 border border-green-500/30' : 'bg-red-900/20 border border-red-500/30'}">
+                <div>
+                    <div class="font-semibold">H${index + 1}: ${path.path}</div>
+                    <div class="text-sm text-white/70">Expected ${coeff >= 0 ? 'positive' : 'negative'} relationship</div>
+                </div>
+                <div class="text-right">
+                    <div class="${supported ? 'text-green-300 font-bold' : 'text-red-300'} text-lg">
+                        ${supported ? '✓ SUPPORTED' : '✗ NOT SUPPORTED'}
+                    </div>
+                    <div class="text-xs text-white/60">
+                        β = ${coeff.toFixed(3)}, p = ${path.p_value !== null ? path.p_value.toFixed(3) : 'N/A'}
+                    </div>
+                </div>
+            </div>`;
+        });
+        
+        // Summary stats
+        const supportRate = ((supportedCount / path_coefficients.length) * 100).toFixed(0);
+        html += `<div class="mt-4 p-3 bg-blue-900/20 border border-blue-500/30 rounded-lg text-center">
+            <div class="text-lg font-bold">${supportedCount}/${path_coefficients.length} hypotheses supported (${supportRate}%)</div>
+            <div class="text-sm text-white/70">Based on statistical significance (p < 0.05) and meaningful effect size (|β| ≥ 0.1)</div>
+        </div>`;
+    }
+    
+    html += `</div></div>`;
+    
+    // --- 4. Interpretation & Implications ---
+    html += `<div class="bg-white/5 p-4 rounded-lg border border-white/10">
+        <h4 class="text-lg font-bold mb-3 text-yellow-300">💡 Key Findings & Implications</h4>
+        
+        <div class="space-y-4">`;
+    
+    if (path_coefficients && path_coefficients.length > 0) {
+        // Find strongest relationship
+        const strongestPath = path_coefficients.reduce((prev, current) => 
+            Math.abs(current.coefficient || 0) > Math.abs(prev.coefficient || 0) ? current : prev
+        );
+        
+        html += `<div class="p-3 bg-blue-900/20 rounded">
+            <h5 class="font-semibold text-blue-300">🏆 Strongest Relationship</h5>
+            <p class="text-white/80">${strongestPath.path} (β = ${(strongestPath.coefficient || 0).toFixed(3)}) 
+            shows the strongest ${strongestPath.coefficient >= 0 ? 'positive' : 'negative'} effect in your model.</p>
+        </div>`;
+        
+        // Count significant paths
+        const significantPaths = path_coefficients.filter(p => p.significant === true);
+        if (significantPaths.length > 0) {
+            html += `<div class="p-3 bg-green-900/20 rounded">
+                <h5 class="font-semibold text-green-300">✓ Confirmed Relationships</h5>
+                <p class="text-white/80">Your model confirms ${significantPaths.length} significant relationship${significantPaths.length > 1 ? 's' : ''}, 
+                providing empirical support for these theoretical connections.</p>
+            </div>`;
+        }
+    }
+    
+    html += `<div class="p-3 bg-amber-900/20 rounded">
+        <h5 class="font-semibold text-amber-300">📊 Model Performance</h5>
+        <p class="text-white/80">Your structural model explains varying levels of variance in the endogenous constructs. 
+        Consider the practical significance of these relationships in addition to statistical significance.</p>
+    </div>`;
+    
+    html += `</div></div>`;
+    
+    html += `</div>`; // Close main container
+    return html;
+}
+
+/**
+ * Renders the Model Diagnostics tab content
+ * @param {object} data_summary - Data quality and cleaning info
+ * @param {object} model_evaluation - R-squared and fit indices
+ * @param {array} reliability_validity - Construct reliability data
+ * @param {array} path_coefficients - Path results with significance
+ * @param {object} bootstrap_data - Bootstrap results if available
+ * @returns {string} HTML string for the diagnostics tab
+ */
+function renderPlsDiagnosticsTab(data_summary, model_evaluation, reliability_validity, path_coefficients, bootstrap_data) {
+    let html = `<div class="p-4 space-y-6">`;
+    
+    // Header
+    html += `<h3 class="text-2xl font-bold text-center mb-4">🔍 Model Diagnostics</h3>`;
+    
+    // --- 1. Data Quality Check ---
+    html += `<div class="bg-white/5 p-4 rounded-lg border border-white/10">
+        <h4 class="text-lg font-bold mb-3 text-blue-300">📊 Data Quality Assessment</h4>`;
+    
+    if (data_summary) {
+        const dataLoss = data_summary.total_rows - data_summary.analysis_rows;
+        const dataLossPercent = (dataLoss / data_summary.total_rows * 100).toFixed(1);
+        
+        html += `<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div class="bg-black/20 p-3 rounded">
+                <div class="text-sm text-white/70">Original Rows</div>
+                <div class="text-xl font-bold">${data_summary.total_rows}</div>
+            </div>
+            <div class="bg-black/20 p-3 rounded">
+                <div class="text-sm text-white/70">Analysis Rows</div>
+                <div class="text-xl font-bold ${dataLoss > 0 ? 'text-yellow-300' : 'text-green-300'}">${data_summary.analysis_rows}</div>
+            </div>
+            <div class="bg-black/20 p-3 rounded">
+                <div class="text-sm text-white/70">Data Loss</div>
+                <div class="text-xl font-bold ${dataLossPercent > 10 ? 'text-red-300' : dataLossPercent > 5 ? 'text-yellow-300' : 'text-green-300'}">${dataLossPercent}%</div>
+            </div>
+        </div>`;
+        
+        // Sample size adequacy
+        const minSample = Math.max(50, data_summary.variables?.length * 5 || 50);
+        const sampleAdequate = data_summary.analysis_rows >= minSample;
+        
+        html += `<div class="p-3 rounded ${sampleAdequate ? 'bg-green-900/20 border border-green-500/30' : 'bg-red-900/20 border border-red-500/30'}">
+            <div class="font-semibold ${sampleAdequate ? 'text-green-300' : 'text-red-300'}">
+                Sample Size: ${sampleAdequate ? '✓ Adequate' : '⚠ May be insufficient'}
+            </div>
+            <div class="text-sm text-white/80">
+                Current: ${data_summary.analysis_rows} | Recommended minimum: ${minSample}
+            </div>
+        </div>`;
+    }
+    
+    html += `</div>`;
+    
+    // --- 2. Model Fit Summary ---
+    html += `<div class="bg-white/5 p-4 rounded-lg border border-white/10">
+        <h4 class="text-lg font-bold mb-3 text-green-300">🎯 Model Fit Summary</h4>`;
+    
+    if (model_evaluation?.r_squared_values) {
+        html += `<div class="grid grid-cols-1 md:grid-cols-${model_evaluation.r_squared_values.length} gap-4 mb-4">`;
+        
+        model_evaluation.r_squared_values.forEach(rsq => {
+            const strength = rsq.r_squared >= 0.75 ? 'Strong' : rsq.r_squared >= 0.50 ? 'Moderate' : rsq.r_squared >= 0.25 ? 'Weak' : 'Very Weak';
+            const color = rsq.r_squared >= 0.50 ? 'text-green-300' : rsq.r_squared >= 0.25 ? 'text-yellow-300' : 'text-red-300';
+            
+            html += `<div class="bg-black/20 p-3 rounded">
+                <div class="text-sm text-white/70">${rsq.variable} R²</div>
+                <div class="text-xl font-bold ${color}">${(rsq.r_squared * 100).toFixed(1)}%</div>
+                <div class="text-xs text-white/60">${strength}</div>
+            </div>`;
+        });
+        
+        html += `</div>`;
+    }
+    
+    // Reliability summary
+    if (reliability_validity?.length) {
+        const avgAlpha = (reliability_validity.reduce((sum, r) => sum + (r.cronbachs_alpha || 0), 0) / reliability_validity.length).toFixed(3);
+        const avgCR = (reliability_validity.reduce((sum, r) => sum + (r.composite_reliability || 0), 0) / reliability_validity.length).toFixed(3);
+        const avgAVE = (reliability_validity.reduce((sum, r) => sum + (r.ave || 0), 0) / reliability_validity.length).toFixed(3);
+        
+        html += `<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-black/20 p-3 rounded">
+                <div class="text-sm text-white/70">Avg. Cronbach's α</div>
+                <div class="text-lg font-bold ${avgAlpha >= 0.7 ? 'text-green-300' : 'text-red-300'}">${avgAlpha}</div>
+            </div>
+            <div class="bg-black/20 p-3 rounded">
+                <div class="text-sm text-white/70">Avg. Composite Reliability</div>
+                <div class="text-lg font-bold ${avgCR >= 0.7 ? 'text-green-300' : 'text-red-300'}">${avgCR}</div>
+            </div>
+            <div class="bg-black/20 p-3 rounded">
+                <div class="text-sm text-white/70">Avg. AVE</div>
+                <div class="text-lg font-bold ${avgAVE >= 0.5 ? 'text-green-300' : 'text-red-300'}">${avgAVE}</div>
+            </div>
+        </div>`;
+    }
+    
+    html += `</div>`;
+    
+    // --- 3. Path Significance Summary ---
+    html += `<div class="bg-white/5 p-4 rounded-lg border border-white/10">
+        <h4 class="text-lg font-bold mb-3 text-purple-300">🛤️ Path Significance Summary</h4>`;
+    
+    if (path_coefficients?.length) {
+        const significantPaths = path_coefficients.filter(p => p.significant === true).length;
+        const totalPaths = path_coefficients.length;
+        const significanceRate = ((significantPaths / totalPaths) * 100).toFixed(0);
+        
+        html += `<div class="mb-4">
+            <div class="text-lg font-semibold">
+                ${significantPaths}/${totalPaths} paths significant (${significanceRate}%)
+            </div>
+            <div class="w-full bg-gray-700 rounded-full h-2 mt-2">
+                <div class="bg-green-500 h-2 rounded-full transition-all duration-300" style="width: ${significanceRate}%"></div>
+            </div>
+        </div>`;
+        
+        html += `<div class="space-y-2">`;
+        path_coefficients.forEach(path => {
+            const isSignificant = path.significant === true;
+            const icon = isSignificant ? '✓' : '✗';
+            const color = isSignificant ? 'text-green-300' : 'text-red-300';
+            
+            html += `<div class="flex justify-between items-center p-2 bg-black/20 rounded">
+                <span class="font-medium">${path.path}</span>
+                <div class="flex items-center gap-2">
+                    <span class="text-white/80">β = ${(path.coefficient || 0).toFixed(3)}</span>
+                    ${path.p_value !== null ? `<span class="text-xs text-white/60">p = ${path.p_value.toFixed(3)}</span>` : ''}
+                    <span class="${color} font-bold">${icon}</span>
+                </div>
+            </div>`;
+        });
+        html += `</div>`;
+    }
+    
+    html += `</div>`;
+    
+    // --- 4. Interpretation Guide ---
+    html += `<div class="bg-white/5 p-4 rounded-lg border border-white/10">
+        <h4 class="text-lg font-bold mb-3 text-yellow-300">📚 Interpretation Guide</h4>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <h5 class="font-semibold mb-2">R² (Explained Variance)</h5>
+                <ul class="text-sm space-y-1 text-white/80">
+                    <li>• <strong>0.75+:</strong> Substantial</li>
+                    <li>• <strong>0.50-0.74:</strong> Moderate</li>
+                    <li>• <strong>0.25-0.49:</strong> Weak</li>
+                    <li>• <strong>&lt;0.25:</strong> Very weak</li>
+                </ul>
+            </div>
+            
+            <div>
+                <h5 class="font-semibold mb-2">Reliability Thresholds</h5>
+                <ul class="text-sm space-y-1 text-white/80">
+                    <li>• <strong>Cronbach's α:</strong> &gt;0.7</li>
+                    <li>• <strong>Composite Reliability:</strong> &gt;0.7</li>
+                    <li>• <strong>AVE:</strong> &gt;0.5</li>
+                    <li>• <strong>Factor Loadings:</strong> &gt;0.7 ideal</li>
+                </ul>
+            </div>
+            
+            <div>
+                <h5 class="font-semibold mb-2">Discriminant Validity</h5>
+                <ul class="text-sm space-y-1 text-white/80">
+                    <li>• <strong>HTMT:</strong> &lt;0.90 (liberal) or &lt;0.85 (conservative)</li>
+                    <li>• <strong>Fornell-Larcker:</strong> √AVE &gt; correlations</li>
+                </ul>
+            </div>
+            
+            <div>
+                <h5 class="font-semibold mb-2">Sample Size</h5>
+                <ul class="text-sm space-y-1 text-white/80">
+                    <li>• <strong>Minimum:</strong> 5-10 cases per indicator</li>
+                    <li>• <strong>Recommended:</strong> 100+ cases</li>
+                    <li>• <strong>Complex models:</strong> 200+ cases</li>
+                </ul>
+            </div>
+        </div>
+    </div>`;
+    
+    html += `</div>`; // Close main container
+    return html;
+}
 
     function renderDescriptivePage_DA(container, data) {
         container.innerHTML = ""; // Clear loading state

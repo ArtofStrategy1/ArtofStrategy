@@ -1,0 +1,49 @@
+# --- Add this logging setup ---
+import logging
+import sys
+import os
+import datetime
+
+# Get the directory where the script is located
+try:
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+except NameError:
+    script_dir = os.getcwd() # Fallback for environments where __file__ is not defined
+
+# --- NEW SECTION ---
+# 1. Define the relative path to your debug logs folder
+relative_log_dir = "debug_logs/pls"
+
+# 2. Create the full, absolute path by joining the script dir with the relative path
+log_directory = os.path.join(script_dir, relative_log_dir)
+
+# 3. Create the directory if it doesn't already exist
+try:
+    os.makedirs(log_directory, exist_ok=True)
+except OSError as e:
+    # If creation fails, log to console and fall back to the script's directory
+    print(f"CRITICAL: Could not create log directory '{log_directory}'. Error: {e}")
+    log_directory = script_dir
+
+# 4. Set the final log file path to be *inside* that directory
+# --- MODIFICATION: Added timestamp to log file name ---
+now = datetime.datetime.now()
+timestamp = now.strftime("%Y%m%d_%H%M%S")
+log_filename = f"debug_log_pls_{timestamp}.txt"
+log_file_path = os.path.join(log_directory, log_filename)
+# --- END MODIFICATION ---
+
+
+# This part is your original code, but it now uses the new 'log_file_path'
+logging.basicConfig(
+    level=print,  # Capture all messages from DEBUG level and up
+    format="%(asctime)s [%(levelname)s] - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    handlers=[
+        logging.FileHandler(log_file_path, mode='w'), # 'w' to overwrite file on each run
+        logging.StreamHandler(sys.stdout)    # Writes logs to the console
+    ]
+)
+
+logging.info("Logging initialized. Writing to console and %s", log_file_path)
+# --- End Logging Setup ---

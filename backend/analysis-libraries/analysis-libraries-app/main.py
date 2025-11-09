@@ -15,7 +15,7 @@ from analysis_modules import predictive_analysis
 from analysis_modules import dematel_analysis
 from analysis_modules import descriptive_analysis
 from analysis_modules import visualization_analysis
-
+from analysis_modules import pls_analysis
 # --- Import save functions ---
 # Assuming these exist and work as intended
 # from save_modules import save_pdf, save_docx
@@ -78,6 +78,47 @@ async def safe_close_file(file: Optional[UploadFile]):
             print(f"Warning: Could not close file {file.filename}. Error: {close_err}")
 
 # --- Analysis Endpoints ---
+
+@app.post("/api/pls")
+async def run_pls_analysis(
+    data_file: Optional[UploadFile] = File(None),
+    data_text: Optional[str] = Form(None),
+    measurement_syntax: Optional[str] = Form(None),
+    structural_syntax: Optional[str] = Form(None)
+):
+    """Runs PLS-SEM (Partial Least Squares Structural Equation Modeling) analysis."""
+    try:
+        # 1. Get data (uses your existing helper)
+        data_payload, input_filename, is_file_upload = get_data_payload(data_file, data_text)
+
+        # 2. Validate PLS-SEM-specific parameters (copied from SEM)
+        if not measurement_syntax and not structural_syntax:
+            raise HTTPException(status_code=400, detail="PLS-SEM requires at least Measurement Syntax or Structural Syntax.")
+
+        # 3. Run analysis
+        print(f"Routing to PLS-SEM Analysis...")
+        
+        # This now calls the new 'perform_pls_sem' function 
+        # which we will create in 'pls_analysis.py'
+        results = await pls_analysis.perform_pls_sem( 
+            data_payload=data_payload,
+            is_file_upload=is_file_upload,
+            input_filename=input_filename,
+            measurement_syntax=measurement_syntax or "",
+            structural_syntax=structural_syntax or ""
+        )
+        return JSONResponse(content=results)
+
+    except HTTPException as http_exc:
+        print(f"HTTP Exception in PLS-SEM: {http_exc.status_code} - {http_exc.detail}")
+        raise http_exc
+    except Exception as e:
+        print(f"Error during PLS-SEM analysis: {type(e).__name__} - {e}")
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"An internal server error occurred: {str(e)}")
+    finally:
+        # Ensure uploaded file stream is closed (copied from SEM)
+        await safe_close_file(data_file)
 
 @app.post("/api/sem")
 async def run_sem_analysis(
