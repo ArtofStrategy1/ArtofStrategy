@@ -6721,11 +6721,24 @@ B,Bad,3,Items,$12000</div>
                          <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
                          <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">${template.description}</p>
                         <div class="glass-container max-w-2xl mx-auto w-full p-6 space-y-4">
-                             <h3 class="text-xl font-bold mb-4 text-white">Analysis Setup</h3>
+                         
+                             <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-xl font-bold text-white">Prescriptive Setup</h3>
+                                <div class="flex items-center space-x-2">
+                                    <button type="button" id="prescriptiveExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
+                                    <a href="data-files/prescriptive/prescriptive-sample-doc.txt" download="Prescriptive_Sample_Context.txt" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .txt</a>
+                                    <a href="data-files/prescriptive/prescriptive-sample-data.csv" download="Prescriptive_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>
+                                </div>
+                            </div>
+
+                            <div id="prescriptiveExamples" class="hidden mb-4 p-3 bg-black/20 border border-white/15 rounded-lg">
+                                <div id="prescriptiveExampleContent" class="text-white/80">Loading example...</div>
+                            </div>
+                            
                             <div class="space-y-4">
                                 <div>
-                                    <label for="prescriptiveGoal" class="block text-sm font-medium text-gray-200 mb-2">Business Goal</label>
-                                    <textarea id="prescriptiveGoal" class="input-field h-24" placeholder="Describe the business outcome you want to achieve. Example: 'Increase customer retention by 15% in the next quarter.'"></textarea>
+                                    <label for="prescriptiveGoal" class="block text-sm font-medium text-gray-200 mb-2">What is your business goal? (This is your context)</label>
+                                    <textarea id="prescriptiveGoal" class="input-field h-24" placeholder="Be specific. For example: 'Increase customer retention by 15% in the next quarter.' or 'Reduce operational costs in the logistics department by 10%.'"></textarea>
                                 </div>
                                 <div>
                                     <label for="prescriptiveFile" class="block text-sm font-medium text-gray-200 mb-2">Upload Data File (.csv)</label>
@@ -6739,7 +6752,7 @@ B,Bad,3,Items,$12000</div>
                                 </div>
                             </div>
                             <button id="generateBtn" class="btn btn-primary w-full text-lg py-3 mt-4">
-                                <span id="generateBtnText"> prescribe Actions</span>
+                                <span id="generateBtnText">💡 Generate Prescriptions</span>
                                 <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                             </button>
                             <div class="text-center mt-4">
@@ -6756,7 +6769,59 @@ B,Bad,3,Items,$12000</div>
                         </div>
                     </div>
                 `;
+        
+        // This helper function is fine and doesn't need changes
         setupInputToggle("prescriptiveFile", "prescriptiveFileLabel", null, null);
+
+        // --- NEW: Add listener for the examples button ---
+        const examplesBtn = $("prescriptiveExamplesBtn");
+        const examplesDiv = $("prescriptiveExamples");
+        const exampleContentEl = $("prescriptiveExampleContent");
+
+        if (examplesBtn && examplesDiv && exampleContentEl) {
+            examplesBtn.addEventListener("click", () => {
+                const isHidden = examplesDiv.classList.toggle("hidden");
+                examplesBtn.textContent = isHidden ? "View Examples" : "Hide Examples";
+
+                if (!isHidden && exampleContentEl.textContent === "Loading example...") {
+                    // Populate with relevant prescriptive example
+                    exampleContentEl.innerHTML = `
+                        <div class="mb-4">
+                            <div class="flex items-center mb-2">
+                                <span class="text-green-400 mr-2">✅</span>
+                                <span class="text-sm font-medium text-green-400">GOOD EXAMPLE</span>
+                                <span class="text-xs text-white/60 ml-2">(Results in specific, data-driven actions)</span>
+                            </div>
+                            <div class="bg-green-900/20 border border-green-500/30 rounded p-3">
+                                <div class="text-xs text-white/90 mb-2"><strong>Business Goal (Context):</strong></div>
+                                <div class="text-xs text-white/80 mb-3">
+                                    "We need to reduce customer churn by 10% this quarter."
+                                </div>
+                                <div class="text-xs text-white/90 mb-2"><strong>CSV Data (Snippet):</strong></div>
+                                <div class="bg-black/30 p-2 rounded font-mono text-xs text-white/90">
+CustomerID,Tenure_Months,Support_Tickets,Used_Feature_X,Churned<br>
+1001,24,1,Yes,No<br>
+1002,3,8,No,Yes<br>
+1003,36,2,Yes,No<br>
+1004,6,5,No,Yes
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="border-t border-white/20 pt-3">
+                            <div class="text-xs font-medium text-white/90 mb-2">💡 How to Get the Best Results:</div>
+                            <div class="text-xs text-white/80 space-y-1">
+                                <div>• <strong>Have a clear goal.</strong> "Reduce churn" is better than "Analyze customers".</div>
+                                <div>• <strong>Include an outcome column.</strong> The data should have the variable you want to affect (e.g., 'Churned', 'Sales', 'Cost').</div>
+                                <div>• <strong>Include driver columns.</strong> The data needs factors you can control or influence (e.g., 'Support_Tickets', 'Used_Feature_X').</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+        }
+        // --- END NEW LISTENER ---
+
 
         // Attach listener for the feedback link
                 const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
@@ -6765,9 +6830,9 @@ B,Bad,3,Items,$12000</div>
                         e.preventDefault();
                         
                         // This just calls the navigateTo function.
-                        // It relies on your main `MapsTo` function to be
+                        // It relies on your main \`MapsTo\` function to be
                         // the *simplified one* (without memory logic)
-                        // and your `submitFeedbackPageBtn` listener
+                        // and your \`submitFeedbackPageBtn\` listener
                         // to be the *simplified one* (that just goes home).
                         if (typeof navigateTo === 'function') {
                             navigateTo('feedback');
@@ -6780,7 +6845,7 @@ B,Bad,3,Items,$12000</div>
                 }
                 // --- END FIX ---
     }
-
+    
     /**
      * --- UPDATED (V15 - Final Fix) ---
      * Creates the layout for the Visualization tool.
