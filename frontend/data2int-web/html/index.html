@@ -5352,20 +5352,33 @@ async function handleContactSubmit() {
                                 <div id="regressionExampleContent" class="text-white/80">Loading example...</div>
                             </div>
 
-                            <div class="space-y-4">
+                             <div class="space-y-4">
                                 
                                 <div>
-                                    <label for="regressionContextFile" class="block text-sm font-medium text-gray-200 mb-2">Company Document (Optional)</label>
+                                    <label class="block text-sm font-medium text-gray-200 mb-2">Company Context (Optional)</label>
+                                    <div class="input-radio-group">
+                                        <input type="radio" name="inputType" id="textInput" class="input-radio" checked>
+                                        <label for="textInput" class="input-radio-label">Text Input</label>
+                                        <input type="radio" name="inputType" id="docUpload" class="input-radio">
+                                        <label for="docUpload" class="input-radio-label">Document Upload</label>
+                                    </div>
+                                </div>
+
+                                <div id="regressionContextTextArea">
+                                    <label for="regressionContextText" class="block text-sm font-medium text-gray-200 mb-2">Paste Context Here</label>
+                                    <textarea id="regressionContextText" class="input-field h-32" placeholder="Paste your company context, business plan, or problem description here..."></textarea>
+                                </div>
+                                
+                                <div id="regressionContextFileArea" class="hidden">
+                                    <label for="regressionContextFile" class="block text-sm font-medium text-gray-200 mb-2">Company Document (.txt, .docx)</label>
                                     <div class="input-file-wrapper">
                                         <label for="regressionContextFile" id="regressionContextFileLabel" class="input-file-btn">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi 
- bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
                                             <span class="file-name">Select context document...</span>
                                         </label>
                                         <input type="file" id="regressionContextFile" class="input-file" accept=".txt,.docx">
+                                    </div>
                                 </div>
-                                </div>
-                                
                                 <div>
                                     <label for="regressionFile" class="block text-sm font-medium text-gray-200 mb-2" title="Must be a .csv file. All columns for analysis must be numeric. Ensure no spaces in headers (e.g., use 'Marketing_Spend').">
                                         Upload Data File (.csv)
@@ -5422,15 +5435,14 @@ async function handleContactSubmit() {
                             <div class="text-center mt-4">
 	                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
                             </div>
-                 
-        </div>
+                        </div>
+                        
                         <div class="mt-12">
                              <h2 class="text-3xl font-bold mb-4 text-center">Regression Results</h2>
                              <div id="analysisResult" class="glass-container min-h-[500px] overflow-x-auto"></div>
                              <div id="analysisActions" class="text-center mt-4 space-x-2 hidden">
                                 <button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>
-                                
-  <button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
+                                <button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
                             </div>
                         </div>
                     </div>
@@ -5491,11 +5503,6 @@ async function handleContactSubmit() {
             }
         };
 
-        /**
-         * --- MODIFIED HELPER FUNCTION ---
-         * Populates variable selectors and adds event listeners
-         * to prevent Y/X conflicts and check data ratios.
-         */
         const updateRegressionVariables = (headers) => {
             const dependentSelect = $("dependentVar");
             const independentContainer = $("independentVarsContainer");
@@ -5514,7 +5521,7 @@ async function handleContactSubmit() {
                 dependentSelect.add(option);
 
                 const checkboxHtml = `
-                    <label class="flex items-center space-x-2 text-sm text-white/90 p-1.5 rounded hover:bg-white/10">
+                     <label class="flex items-center space-x-2 text-sm text-white/90 p-1.5 rounded hover:bg-white/10">
                         <input type="checkbox" class="method-checkbox independent-var-checkbox" value="${header}">
                         <span>${header}</span>
                     </label>`;
@@ -5532,7 +5539,6 @@ async function handleContactSubmit() {
 
             const allCheckboxes = independentContainer.querySelectorAll('.independent-var-checkbox');
 
-            // --- NEW: Function to sync checkbox states ---
             const syncCheckboxes = () => {
                 const selectedDependent = dependentSelect.value;
                 errorEl.textContent = ""; // Clear any previous errors on change
@@ -5545,11 +5551,9 @@ async function handleContactSubmit() {
                         cb.disabled = false;
                     }
                 });
-                // Trigger a change event on the container to re-run ratio check
                 independentContainer.dispatchEvent(new Event('change'));
             };
             
-            // --- Initial Checkbox State ---
             const initialSelectedDependent = dependentSelect.value;
             allCheckboxes.forEach(cb => {
                 if (cb.value === initialSelectedDependent) {
@@ -5561,33 +5565,24 @@ async function handleContactSubmit() {
                     cb.checked = false; 
                 }
             });
-            // --- End Initial State ---
 
-
-            // --- Add Event Listeners ---
-            
-            // 1. When Dependent var changes, disable/uncheck matching independent var
-            dependentSelect.removeEventListener('change', syncCheckboxes); // Avoid duplicates
+            dependentSelect.removeEventListener('change', syncCheckboxes); 
             dependentSelect.addEventListener('change', syncCheckboxes);
 
-            // 2. When Independent var is checked, check ratio
-            independentContainer.removeEventListener('change', handleIndepChange); // Avoid duplicates
+            independentContainer.removeEventListener('change', handleIndepChange); 
             independentContainer.addEventListener('change', handleIndepChange);
             
             function handleIndepChange(e) {
-                // Only run if a checkbox was clicked (or event was dispatched)
                 if (e.target.matches('.independent-var-checkbox') || e.type === 'change') {
                     
-                    // Clear the general data warning (from file upload)
                     const warningEl = $("regressionDataWarning");
                     if (warningEl) warningEl.textContent = "";
 
-                    // Check ratio and show warning *in the error field*
                     const numFeatures = independentContainer.querySelectorAll('.independent-var-checkbox:checked').length;
                     const numObservations = currentRegressionRowCount;
                     
                     if (numFeatures === 0) {
-                        errorEl.textContent = ""; // Clear errors if no features selected
+                        errorEl.textContent = ""; 
                         return;
                     }
 
@@ -5595,27 +5590,22 @@ async function handleContactSubmit() {
 
                     if (numObservations >= 30 && ratio < 10) {
                          errorEl.textContent = `Warning: Data ratio is low (${ratio.toFixed(1)}-to-1). A 10-to-1 ratio (or ${numFeatures * 10} rows) is recommended.`;
-                         errorEl.className = "text-yellow-400 text-sm mt-2"; // Make it a yellow warning
+                         errorEl.className = "text-yellow-400 text-sm mt-2"; 
                     } else if (numObservations < 30) {
-                         // This warning is already shown by processDataInput, but good to have
                          errorEl.textContent = `Warning: Insufficient data (${numObservations} rows). 30+ recommended.`;
                          errorEl.className = "text-yellow-400 text-sm mt-2";
                     } else {
-                         errorEl.textContent = ""; // Clear if ratio is fine
-                         errorEl.className = "text-red-400 text-sm mt-2"; // Reset class
+                         errorEl.textContent = ""; 
+                         errorEl.className = "text-red-400 text-sm mt-2"; 
                     }
                 }
             }
             
             dependentSelect.disabled = false;
-            // Trigger initial ratio check
             independentContainer.dispatchEvent(new Event('change'));
         };
 
 
-        /**
-         * Processes the uploaded regression data file.
-         */
         const processDataInput_Regression = async (file) => {
             const errorEl = $("regressionFileError");
             const warningEl = $("regressionDataWarning"); 
@@ -5634,7 +5624,7 @@ async function handleContactSubmit() {
             previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Processing data...</td></tr></tbody>';
             previewContainer.classList.remove("hidden");
 
-            currentRegressionRowCount = 0; // Reset row count
+            currentRegressionRowCount = 0; 
             
             if (!file) {
                  dependentSelect.innerHTML = '<option value="">-- Upload data file --</option>';
@@ -5651,25 +5641,21 @@ async function handleContactSubmit() {
                 
                 currentRegressionRowCount = lines.length - 1; 
 
-                // --- MODIFIED WARNING LOGIC ---
                 if (currentRegressionRowCount < 10) { 
-                    // Use errorEl for critical file read errors/warnings
                     errorEl.textContent = "Warning: Small dataset (<10 rows). Regression will be unreliable.";
-                    errorEl.className = "text-yellow-400 text-sm mt-2"; // Make it yellow
+                    errorEl.className = "text-yellow-400 text-sm mt-2"; 
                 } 
                 else if (currentRegressionRowCount < 30) {
-                    // Use warningEl for non-blocking data warnings
                     if (warningEl) warningEl.textContent = `Warning: Insufficient data (${currentRegressionRowCount} rows). A minimum of 30 rows is recommended.`;
                 }
-                // --- END MODIFIED LOGIC ---
 
                 showDataPreview(textContent, 'regressionPreviewTable', 'regressionDataPreview');
-                updateRegressionVariables(originalHeaders); // This will trigger the initial ratio check
+                updateRegressionVariables(originalHeaders); 
 
             } catch (err) {
                 console.error("Regression input processing failed:", err);
                 errorEl.textContent = `Error: ${err.message}.`;
-                errorEl.className = "text-red-400 text-sm mt-2"; // Make it red
+                errorEl.className = "text-red-400 text-sm mt-2"; 
                 if (warningEl) warningEl.textContent = "";
                 dependentSelect.disabled = true;
                 dependentSelect.innerHTML = '<option value="">-- Error reading data --</option>';
@@ -5691,12 +5677,11 @@ async function handleContactSubmit() {
                 examplesBtn.textContent = isHidden ? "View Examples" : "Hide Examples";
 
                 if (!isHidden && exampleContentEl.textContent === "Loading example...") {
-                    // Populate with relevant regression example
                     exampleContentEl.innerHTML = `
                         <div class="text-xs font-medium text-white/90 mb-2">📋 How to Use Regression Analysis</div>
                         <div class="space-y-2 text-xs">
                             <div class="mb-4">
-                                <div class="flex items-center mb-2">
+                                 <div class="flex items-center mb-2">
                                     <span class="text-green-400 mr-2">✅</span>
                                     <span class="text-sm font-medium text-green-400">GOOD EXAMPLE</span>
                                     <span class="text-xs text-white/60 ml-2">(Results in clear, significant findings)</span>
@@ -5720,7 +5705,7 @@ Date,Sales,Marketing_Spend,Website_Traffic,Customer_Service_Calls<br>
                             <div class="mb-4">
                                 <div class="flex items-center mb-2">
                                     <span class="text-red-400 mr-2">❌</span>
-                                    <span class="text-sm font-medium text-red-400">BAD EXAMPLE</span>
+                                     <span class="text-sm font-medium text-red-400">BAD EXAMPLE</span>
                                     <span class="text-xs text-white/60 ml-2">(Results in errors or unreliable findings)</span>
                                 </div>
                                 <div class="bg-red-900/20 border border-red-500/30 rounded p-3">
@@ -5729,7 +5714,7 @@ Date,Sales,Marketing_Spend,Website_Traffic,Customer_Service_Calls<br>
 Date,Sales,Marketing,Traffic<br>
 Jan 1, "$50,000", "$5k", "15,000 visitors"<br>
 Feb 1, "$52,000", "$5.2k", "15,500 visitors"
-                                    </div>
+                                     </div>
                                     <div class="text-xs text-white/90 mt-3 mb-1"><strong>Issues:</strong></div>
                                     <div class="text-xs text-red-300 font-medium space-y-1">
                                         <div>• <strong>Non-Numeric Data:</strong> 'Sales' and 'Marketing' columns contain '$' and 'k', which will cause errors. Data must be numbers only (e.g., 50000, 5000).</div>
@@ -5770,23 +5755,10 @@ Feb 1, "$52,000", "$5.2k", "15,500 visitors"
             });
         }
         
-        const attachListener = (inputId, labelId) => {
-            const fileInput = $(inputId);
-            if (fileInput) {
-                fileInput.addEventListener("change", (e) => {
-                    const label = $(labelId);
-                    const fileNameSpan = label.querySelector(".file-name");
-                    if (e.target.files.length > 0) {
-                        fileNameSpan.textContent = e.target.files[0].name;
-                        label.classList.add("has-file");
-                    } else {
-                        fileNameSpan.textContent = "Select a file...";
-                        label.classList.remove("has-file");
-                    }
-                });
-            }
-        };
-        attachListener("regressionContextFile", "regressionContextFileLabel");
+        // --- MODIFICATION START ---
+        // Call setupInputToggle for the new context inputs
+        setupInputToggle("regressionContextFile", "regressionContextFileLabel", "regressionContextTextArea", "regressionContextFileArea");
+        // --- MODIFICATION END ---
 
         $("generateBtn").addEventListener("click", handleGenerate);
         reattachActionListeners();
@@ -6423,7 +6395,23 @@ Loyalty ~ Quality + Satisfaction`;
                             </div>
 
                             <div class="space-y-4">
+                                
                                 <div>
+                                    <label class="block text-sm font-medium text-gray-200 mb-2">Company Context</label>
+                                    <div class="input-radio-group">
+                                        <input type="radio" name="inputType" id="textInput" class="input-radio" checked>
+                                        <label for="textInput" class="input-radio-label">Text Input</label>
+                                        <input type="radio" name="inputType" id="docUpload" class="input-radio">
+                                        <label for="docUpload" class="input-radio-label">Document Upload</label>
+                                    </div>
+                                </div>
+
+                                <div id="descriptiveContextTextArea">
+                                    <label for="descriptiveContextText" class="block text-sm font-medium text-gray-200 mb-2">Paste Context Here</label>
+                                    <textarea id="descriptiveContextText" class="input-field h-32" placeholder="Paste your company context, business plan, or problem description here..."></textarea>
+                                </div>
+
+                                <div id="descriptiveContextFileArea" class="hidden">
                                     <label for="descriptiveContextFile" class="block text-sm font-medium text-gray-200 mb-2">Company Document (.txt, .docx)</label>
                                     <div class="input-file-wrapper">
                                         <label for="descriptiveContextFile" id="descriptiveContextFileLabel" class="input-file-btn">
@@ -6440,7 +6428,7 @@ Loyalty ~ Quality + Satisfaction`;
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
                                             <span class="file-name">Select .csv data file...</span>
                                         </label>
-                                        <input type="file" id="descriptiveFile" class="input-file" accept=".csv">
+                                         <input type="file" id="descriptiveFile" class="input-file" accept=".csv">
                                     </div>
                                     <div id="descriptiveFileError" class="text-red-400 text-sm mt-2"></div>
                                 </div>
@@ -6476,7 +6464,7 @@ Loyalty ~ Quality + Satisfaction`;
                             </div>
                         </div>
                     </div>
-                `;
+                 `;
 
         // --- All Helper Functions are LOCAL to this function ---
 
@@ -6583,7 +6571,17 @@ Loyalty ~ Quality + Satisfaction`;
                 });
             }
         };
-        attachListener("descriptiveContextFile", "descriptiveContextFileLabel");
+        
+        // === MODIFICATION START ===
+        // Call setupInputToggle for the new radio buttons
+        // This handles the show/hide logic AND the "descriptiveContextFile" listener
+        setupInputToggle("descriptiveContextFile", "descriptiveContextFileLabel", "descriptiveContextTextArea", "descriptiveContextFileArea");
+        
+        // We no longer need the manual attachListener for descriptiveContextFile
+        // attachListener("descriptiveContextFile", "descriptiveContextFileLabel");
+        
+        // === MODIFICATION END ===
+
 
         // === NEW: Event listener for the descriptive data file ===
         const descriptiveFileInput = $("descriptiveFile");
@@ -6615,15 +6613,15 @@ Loyalty ~ Quality + Satisfaction`;
 
                 if (!isHidden && exampleContentEl.textContent === "Loading example...") {
                     exampleContentEl.innerHTML = `
-                        <div class="mb-4">
+                         <div class="mb-4">
                             <div class="flex items-center mb-2">
                                 <span class="text-green-400 mr-2">✅</span>
                                 <span class="text-sm font-medium text-green-400">GOOD EXAMPLE</span>
                                 <span class="text-xs text-white/60 ml-2">(Results in comprehensive statistical insights with clear patterns)</span>
                             </div>
                             <div class="bg-green-900/20 border border-green-500/30 rounded p-3 mb-3">
-                                <div class="text-xs text-white/90 mb-2"><strong>Company Document:</strong></div>
-                                <div class="text-xs text-white/80 mb-3">
+                                <div class="text-xs text-white/90 mb-2"><strong>Company Context (Text Input or .txt):</strong></div>
+                                 <div class="text-xs text-white/80 mb-3">
                                     "TechFlow Solutions seeks to understand performance drivers affecting customer satisfaction and revenue growth. 
                                     Key areas of focus: regional performance variations, employee productivity trends, and customer retention patterns. 
                                     Strategic priority: identify underperforming segments and optimization opportunities."
@@ -6636,59 +6634,17 @@ Q2_2023,13.8,295,4.1,132,North
 Q3_2023,15.2,310,4.5,140,South
 Q4_2023,16.9,325,4.8,145,West</div>
                             </div>
-                        </div>
-                        <div class="mb-4">
-                            <div class="flex items-center mb-2">
-                                <span class="text-red-400 mr-2">❌</span>
-                                <span class="text-sm font-medium text-red-400">BAD EXAMPLE</span>
-                                <span class="text-xs text-white/60 ml-2">(Results in limited insights and unclear patterns)</span>
-                            </div>
-                            <div class="bg-red-900/20 border border-red-500/30 rounded p-3">
-                                <div class="text-xs text-white/80 mb-3">
-                                    "Our company has some data and wants analysis. Please look at everything and tell us what's important."
-                                </div>
-                                <div class="bg-black/30 p-2 rounded font-mono text-xs text-white/90">
-Data1,Data2,Info,Stuff,$Revenue
-A,Good,5,Things,$15000
-B,Bad,3,Items,$12000</div>
-                            </div>
-                        </div>
+                         </div>
+                        
                         <div class="border-t border-white/20 pt-3">
-                            <div class="text-xs font-medium text-white/90 mb-2">📝 Key Differences Between Good & Bad Input:</div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                                <div>
-                                    <div class="text-green-400 font-medium mb-1">✅ Good Practices:</div>
-                                    <div class="text-white/80 space-y-1">
-                                        <div>• Clear business context and objectives</div>
-                                        <div>• Specific questions or focus areas</div>
-                                        <div>• Consistent column naming</div>
-                                        <div>• Clean numeric data (no symbols)</div>
-                                        <div>• Meaningful time periods</div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="text-red-400 font-medium mb-1">❌ Bad Practices:</div>
-                                    <div class="text-white/80 space-y-1">
-                                        <div>• Vague or missing context</div>
-                                        <div>• Generic column names</div>
-                                        <div>• Mixed data formats</div>
-                                        <div>• Currency symbols in numbers</div>
-                                        <div>• Inconsistent categorization</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="border-t border-white/20 pt-3 mt-3">
                             <div class="text-xs font-medium text-white/90 mb-2">💡 How to Use This Tool:</div>
                             <div class="text-xs text-white/80 space-y-1">
-                                <div>• <strong>Write naturally:</strong> Describe your situation in plain English</div>
-                                <div>• <strong>Be specific:</strong> Mention what you want to understand or improve</div>
-                                <div>• <strong>Clean your data:</strong> Use consistent formatting and clear column headers</div>
-                                <div>• <strong>Include context:</strong> Help the AI understand your business goals</div>
-                                <div>• <strong>Show relationships:</strong> The document explains what the numbers mean</div>
+                                <div>• <strong>Provide Context:</strong> Use the text input or file upload to describe your business goals or what you're looking for.</div>
+                                <div>• <strong>Provide Data:</strong> Upload the raw .csv file you want to analyze.</div>
+                                <div>• <strong>AI Links Both:</strong> The AI will analyze the CSV data *and* use your context to provide relevant business insights.</div>
                             </div>
                         </div>
-                    `;
+                     `;
                 }
             });
         }
@@ -6712,140 +6668,199 @@ B,Bad,3,Items,$12000</div>
             console.warn("Feedback link not found inside createDescriptiveLayout_DA");
         }
     }
-    
+
     function createPrescriptiveLayout_DA(template) {
-        const contentContainer = $("templateDetailContent");
-        contentContainer.className = "grid lg:grid-cols-1 gap-12";
-        contentContainer.innerHTML = `
-                    <div class="lg:col-span-1">
-                         <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
-                         <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">${template.description}</p>
-                        <div class="glass-container max-w-2xl mx-auto w-full p-6 space-y-4">
-                         
-                             <div class="flex items-center justify-between mb-2">
-                                <h3 class="text-xl font-bold text-white">Prescriptive Setup</h3>
-                                <div class="flex items-center space-x-2">
-                                    <button type="button" id="prescriptiveExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
-                                    <a href="data-files/prescriptive/prescriptive-sample-doc.txt" download="Prescriptive_Sample_Context.txt" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .txt</a>
-                                    <a href="data-files/prescriptive/prescriptive-sample-data.csv" download="Prescriptive_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>
+    const contentContainer = $("templateDetailContent");
+    contentContainer.className = "grid lg:grid-cols-1 gap-12";
+    contentContainer.innerHTML = `
+                <div class="lg:col-span-1">
+                     <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
+                     <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">${template.description}</p>
+                    <div class="glass-container max-w-2xl mx-auto w-full p-6 space-y-4">
+                     
+                         <div class="flex items-center justify-between mb-2">
+                            <h3 class="text-xl font-bold text-white">Prescriptive Setup</h3>
+                            <div class="flex items-center space-x-2">
+                                <button type="button" id="prescriptiveExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
+                                <a href="data-files/prescriptive/prescriptive-sample-doc.txt" download="Prescriptive_Sample_Context.txt" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .txt</a>
+                                <a href="data-files/prescriptive/prescriptive-sample-data.csv" download="Prescriptive_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>
+                            </div>
+                        </div>
+
+                        <div id="prescriptiveExamples" class="hidden mb-4 p-3 bg-black/20 border border-white/15 rounded-lg">
+                            <div id="prescriptiveExampleContent" class="text-white/80">Loading example...</div>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <!-- === ADDED TOGGLE SECTION START === -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-200 mb-2">Business Goal / Context</label>
+                                <div class="input-radio-group">
+                                    <input type="radio" name="prescriptiveInputType" id="prescriptiveInputTextToggle" class="input-radio" checked>
+                                    <label for="prescriptiveInputTextToggle" class="input-radio-label">Text Input</label>
+                                    <input type="radio" name="prescriptiveInputType" id="prescriptiveInputFileToggle" class="input-radio">
+                                    <label for="prescriptiveInputFileToggle" class="input-radio-label">Document Upload</label>
                                 </div>
                             </div>
 
-                            <div id="prescriptiveExamples" class="hidden mb-4 p-3 bg-black/20 border border-white/15 rounded-lg">
-                                <div id="prescriptiveExampleContent" class="text-white/80">Loading example...</div>
+                            <div id="prescriptiveTextInputArea">
+                                <label for="prescriptiveGoalText" class="block text-sm font-medium text-gray-200 mb-2">What is your business goal?</label>
+                                <textarea id="prescriptiveGoalText" class="input-field h-24" placeholder="Be specific. For example: 'Increase customer retention by 15% in the next quarter.' or 'Reduce operational costs in the logistics department by 10%.'"></textarea>
                             </div>
+
+                            <div id="prescriptiveFileInputArea" class="hidden">
+                                <label for="prescriptiveContextFile" class="block text-sm font-medium text-gray-200 mb-2">Context Document (.txt, .docx)</label>
+                                <div class="input-file-wrapper">
+                                    <label for="prescriptiveContextFile" id="prescriptiveContextFileLabel" class="input-file-btn">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                                    <span class="file-name">Select context document...</span>
+                                    </label>
+                                    <input type="file" id="prescriptiveContextFile" class="input-file" accept=".txt,.docx">
+                                </div>
+                            </div>
+                            <!-- === ADDED TOGGLE SECTION END === -->
                             
-                            <div class="space-y-4">
-                                <div>
-                                    <label for="prescriptiveGoal" class="block text-sm font-medium text-gray-200 mb-2">What is your business goal? (This is your context)</label>
-                                    <textarea id="prescriptiveGoal" class="input-field h-24" placeholder="Be specific. For example: 'Increase customer retention by 15% in the next quarter.' or 'Reduce operational costs in the logistics department by 10%.'"></textarea>
+                            <div>
+                                <label for="prescriptiveFile" class="block text-sm font-medium text-gray-200 mb-2">Upload Data File (.csv)</label>
+                                <div class="input-file-wrapper">
+                                    <label for="prescriptiveFile" id="prescriptiveFileLabel" class="input-file-btn">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                                        <span class="file-name">Select .csv file...</span>
+                                    </label>
+                                    <input type="file" id="prescriptiveFile" class="input-file" accept=".csv">
                                 </div>
-                                <div>
-                                    <label for="prescriptiveFile" class="block text-sm font-medium text-gray-200 mb-2">Upload Data File (.csv)</label>
-                                    <div class="input-file-wrapper">
-                                        <label for="prescriptiveFile" id="prescriptiveFileLabel" class="input-file-btn">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
-                                            <span class="file-name">Select .csv file...</span>
-                                        </label>
-                                        <input type="file" id="prescriptiveFile" class="input-file" accept=".csv">
-                                    </div>
-                                </div>
-                            </div>
-                            <button id="generateBtn" class="btn btn-primary w-full text-lg py-3 mt-4">
-                                <span id="generateBtnText">💡 Generate Prescriptions</span>
-                                <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
-                            </button>
-                            <div class="text-center mt-4">
-	                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
                             </div>
                         </div>
-                        <div class="mt-12">
-                             <h2 class="text-3xl font-bold mb-4 text-center">Prescriptive Analysis Results</h2>
-                             <div id="analysisResult" class="glass-container min-h-[500px] overflow-x-auto"></div>
-                             <div id="analysisActions" class="text-center mt-4 space-x-2 hidden">
-                                <button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>
-                                <button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
-                            </div>
+                        <button id="generateBtn" class="btn btn-primary w-full text-lg py-3 mt-4">
+                            <span id="generateBtnText">💡 Generate Prescriptions</span>
+                            <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
+                        </button>
+                        <div class="text-center mt-4">
+                            <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
                         </div>
                     </div>
-                `;
-        
-        // This helper function is fine and doesn't need changes
-        setupInputToggle("prescriptiveFile", "prescriptiveFileLabel", null, null);
+                    <div class="mt-12">
+                         <h2 class="text-3xl font-bold mb-4 text-center">Prescriptive Analysis Results</h2>
+                         <div id="analysisResult" class="glass-container min-h-[500px] overflow-x-auto"></div>
+                         <div id="analysisActions" class="text-center mt-4 space-x-2 hidden">
+                            <button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>
+                            <button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+    
+    // This helper function is fine and doesn't need changes
+    setupInputToggle("prescriptiveFile", "prescriptiveFileLabel", null, null);
 
-        // --- NEW: Add listener for the examples button ---
-        const examplesBtn = $("prescriptiveExamplesBtn");
-        const examplesDiv = $("prescriptiveExamples");
-        const exampleContentEl = $("prescriptiveExampleContent");
+    // === ADDED TOGGLE EVENT LISTENERS START ===
+    // Toggle between text and file input
+    const prescriptiveInputTextToggle = $("prescriptiveInputTextToggle");
+    const prescriptiveInputFileToggle = $("prescriptiveInputFileToggle");
+    const prescriptiveTextInputArea = $("prescriptiveTextInputArea");
+    const prescriptiveFileInputArea = $("prescriptiveFileInputArea");
 
-        if (examplesBtn && examplesDiv && exampleContentEl) {
-            examplesBtn.addEventListener("click", () => {
-                const isHidden = examplesDiv.classList.toggle("hidden");
-                examplesBtn.textContent = isHidden ? "View Examples" : "Hide Examples";
+    if (prescriptiveInputTextToggle && prescriptiveInputFileToggle) {
+        prescriptiveInputTextToggle.addEventListener("change", () => {
+            prescriptiveTextInputArea.classList.remove("hidden");
+            prescriptiveFileInputArea.classList.add("hidden");
+        });
+        prescriptiveInputFileToggle.addEventListener("change", () => {
+            prescriptiveTextInputArea.classList.add("hidden");
+            prescriptiveFileInputArea.classList.remove("hidden");
+        });
+    }
 
-                if (!isHidden && exampleContentEl.textContent === "Loading example...") {
-                    // Populate with relevant prescriptive example
-                    exampleContentEl.innerHTML = `
-                        <div class="mb-4">
-                            <div class="flex items-center mb-2">
-                                <span class="text-green-400 mr-2">✅</span>
-                                <span class="text-sm font-medium text-green-400">GOOD EXAMPLE</span>
-                                <span class="text-xs text-white/60 ml-2">(Results in specific, data-driven actions)</span>
+    // Context file input listener
+    const contextFileInput = $("prescriptiveContextFile");
+    if (contextFileInput) {
+        contextFileInput.addEventListener("change", (e) => {
+            const label = $("prescriptiveContextFileLabel");
+            const fileNameSpan = label.querySelector(".file-name");
+            if (e.target.files.length > 0) {
+                fileNameSpan.textContent = e.target.files[0].name;
+                label.classList.add("has-file");
+            } else {
+                fileNameSpan.textContent = "Select context document...";
+                label.classList.remove("has-file");
+            }
+        });
+    }
+    // === ADDED TOGGLE EVENT LISTENERS END ===
+
+    // --- NEW: Add listener for the examples button ---
+    const examplesBtn = $("prescriptiveExamplesBtn");
+    const examplesDiv = $("prescriptiveExamples");
+    const exampleContentEl = $("prescriptiveExampleContent");
+
+    if (examplesBtn && examplesDiv && exampleContentEl) {
+        examplesBtn.addEventListener("click", () => {
+            const isHidden = examplesDiv.classList.toggle("hidden");
+            examplesBtn.textContent = isHidden ? "View Examples" : "Hide Examples";
+
+            if (!isHidden && exampleContentEl.textContent === "Loading example...") {
+                // Populate with relevant prescriptive example
+                exampleContentEl.innerHTML = `
+                    <div class="mb-4">
+                        <div class="flex items-center mb-2">
+                            <span class="text-green-400 mr-2">✅</span>
+                            <span class="text-sm font-medium text-green-400">GOOD EXAMPLE</span>
+                            <span class="text-xs text-white/60 ml-2">(Results in specific, data-driven actions)</span>
+                        </div>
+                        <div class="bg-green-900/20 border border-green-500/30 rounded p-3">
+                            <div class="text-xs text-white/90 mb-2"><strong>Business Goal (Context):</strong></div>
+                            <div class="text-xs text-white/80 mb-3">
+                                "We need to reduce customer churn by 10% this quarter."
                             </div>
-                            <div class="bg-green-900/20 border border-green-500/30 rounded p-3">
-                                <div class="text-xs text-white/90 mb-2"><strong>Business Goal (Context):</strong></div>
-                                <div class="text-xs text-white/80 mb-3">
-                                    "We need to reduce customer churn by 10% this quarter."
-                                </div>
-                                <div class="text-xs text-white/90 mb-2"><strong>CSV Data (Snippet):</strong></div>
-                                <div class="bg-black/30 p-2 rounded font-mono text-xs text-white/90">
+                            <div class="text-xs text-white/90 mb-2"><strong>CSV Data (Snippet):</strong></div>
+                            <div class="bg-black/30 p-2 rounded font-mono text-xs text-white/90">
 CustomerID,Tenure_Months,Support_Tickets,Used_Feature_X,Churned<br>
 1001,24,1,Yes,No<br>
 1002,3,8,No,Yes<br>
 1003,36,2,Yes,No<br>
 1004,6,5,No,Yes
-                                </div>
                             </div>
                         </div>
-                        
-                        <div class="border-t border-white/20 pt-3">
-                            <div class="text-xs font-medium text-white/90 mb-2">💡 How to Get the Best Results:</div>
-                            <div class="text-xs text-white/80 space-y-1">
-                                <div>• <strong>Have a clear goal.</strong> "Reduce churn" is better than "Analyze customers".</div>
-                                <div>• <strong>Include an outcome column.</strong> The data should have the variable you want to affect (e.g., 'Churned', 'Sales', 'Cost').</div>
-                                <div>• <strong>Include driver columns.</strong> The data needs factors you can control or influence (e.g., 'Support_Tickets', 'Used_Feature_X').</div>
-                            </div>
+                    </div>
+                    
+                    <div class="border-t border-white/20 pt-3">
+                        <div class="text-xs font-medium text-white/90 mb-2">💡 How to Get the Best Results:</div>
+                        <div class="text-xs text-white/80 space-y-1">
+                            <div>• <strong>Have a clear goal.</strong> "Reduce churn" is better than "Analyze customers".</div>
+                            <div>• <strong>Include an outcome column.</strong> The data should have the variable you want to affect (e.g., 'Churned', 'Sales', 'Cost').</div>
+                            <div>• <strong>Include driver columns.</strong> The data needs factors you can control or influence (e.g., 'Support_Tickets', 'Used_Feature_X').</div>
                         </div>
-                    `;
-                }
-            });
-        }
-        // --- END NEW LISTENER ---
-
-
-        // Attach listener for the feedback link
-                const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
-                if (feedbackLink) {
-                    feedbackLink.addEventListener("click", (e) => {
-                        e.preventDefault();
-                        
-                        // This just calls the navigateTo function.
-                        // It relies on your main \`MapsTo\` function to be
-                        // the *simplified one* (without memory logic)
-                        // and your \`submitFeedbackPageBtn\` listener
-                        // to be the *simplified one* (that just goes home).
-                        if (typeof navigateTo === 'function') {
-                            navigateTo('feedback');
-                        } else {
-                            console.error("navigateTo function is not defined.");
-                        }
-                    });
-                } else {
-                    console.warn("Feedback link not found inside createPrescriptiveLayout_DA");
-                }
-                // --- END FIX ---
+                    </div>
+                `;
+            }
+        });
     }
-    
+    // --- END NEW LISTENER ---
+
+
+    // Attach listener for the feedback link
+            const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+            if (feedbackLink) {
+                feedbackLink.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    
+                    // This just calls the navigateTo function.
+                    // It relies on your main \`MapsTo\` function to be
+                    // the *simplified one* (without memory logic)
+                    // and your \`submitFeedbackPageBtn\` listener
+                    // to be the *simplified one* (that just goes home).
+                    if (typeof navigateTo === 'function') {
+                        navigateTo('feedback');
+                    } else {
+                        console.error("navigateTo function is not defined.");
+                    }
+                });
+            } else {
+                console.warn("Feedback link not found inside createPrescriptiveLayout_DA");
+            }
+            // --- END FIX ---
+}
+
     /**
      * --- UPDATED (V15 - Final Fix) ---
      * Creates the layout for the Visualization tool.
@@ -6853,122 +6868,146 @@ CustomerID,Tenure_Months,Support_Tickets,Used_Feature_X,Churned<br>
      * - Added "Download Sample .txt" link next to the CSV link.
      */
     function createVisualizationLayout_DA(template) {
-        // Helper function to safely get element
-        function safeGetElement(id) {
-            try {
-                 return document.getElementById(id);
-            } catch (e) {
-                console.error("Error getting element:", id, e);
-                return null;
-            }
+    // Helper function to safely get element
+    function safeGetElement(id) {
+        try {
+             return document.getElementById(id);
+        } catch (e) {
+            console.error("Error getting element:", id, e);
+            return null;
         }
+    }
+    
+    const contentContainer = safeGetElement("templateDetailContent");
+    if (!contentContainer) {
+        console.error("Content container not found");
+        return;
+    }
+    
+    contentContainer.className = "grid lg:grid-cols-1 gap-12";
+    
+    const htmlContent = [
+        '<div class="lg:col-span-1">',
+        '<h1 class="text-4xl font-bold text-center mb-2">' + (template.title || 'Visualization') + '</h1>',
+        '<p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">' + (template.description || '') + '</p>',
+        '<div class="glass-container max-w-2xl mx-auto w-full p-6 space-y-4">',
         
-        const contentContainer = safeGetElement("templateDetailContent");
-        if (!contentContainer) {
-            console.error("Content container not found");
-            return;
-        }
+        // --- CHANGED BLOCK START ---
+        // Added the "Download Sample .txt" link here
+        '<div class="flex items-center justify-between mb-2">',
+        '<h3 class="text-xl font-bold text-white">Visualization Setup</h3>',
+        '<div class="flex items-center space-x-2">', 
+            '<button type="button" id="vizConfigExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>',
+            // Added the new .txt link
+            '<a href="data-files/visualization/visualization-sample-doc.txt" download="Visualization_Sample_Doc.txt" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .txt</a>',
+            '<a href="data-files/visualization/visualization-sample.csv" download="Visualization_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>',
+        '</div>',
+        '</div>',
+        // --- CHANGED BLOCK END ---
         
-        contentContainer.className = "grid lg:grid-cols-1 gap-12";
-        
-        const htmlContent = [
-            '<div class="lg:col-span-1">',
-            '<h1 class="text-4xl font-bold text-center mb-2">' + (template.title || 'Visualization') + '</h1>',
-            '<p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">' + (template.description || '') + '</p>',
-            '<div class="glass-container max-w-2xl mx-auto w-full p-6 space-y-4">',
-            
-            // --- CHANGED BLOCK START ---
-            // Added the "Download Sample .txt" link here
-            '<div class="flex items-center justify-between mb-2">',
-            '<h3 class="text-xl font-bold text-white">Visualization Setup</h3>',
-            '<div class="flex items-center space-x-2">', 
-                '<button type="button" id="vizConfigExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>',
-                // Added the new .txt link
-                '<a href="data-files/visualization/visualization-sample-doc.txt" download="Visualization_Sample_Doc.txt" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .txt</a>',
-                '<a href="data-files/visualization/visualization-sample.csv" download="Visualization_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>',
-            '</div>',
-            '</div>',
-            // --- CHANGED BLOCK END ---
-            
-            // --- Good vs. Bad Examples ---
-            '<div id="vizConfigExamples" class="hidden mb-4 p-3 bg-black/20 border border-white/15 rounded-lg">',
-            '<div class="text-xs font-medium text-white/90 mb-3">📋 How to Get the Best Results</div>',
-            // Good Example
-            '<div class="mb-4">', 
-            '<div class="flex items-center mb-2">',
-            '<span class="text-green-400 mr-2">✅</span>',
-            '<span class="text-sm font-medium text-green-400">GOOD EXAMPLE</span>',
-            '<span class="text-xs text-white/60 ml-2">(Results in relevant, accurate charts)</span>',
-            '</div>',
-            '<div class="bg-green-900/20 border border-green-500/30 rounded p-3">',
-            '<div class="text-xs text-white/90 mb-2"><strong>Context Text (Your Request):</strong></div>',
-            '<div class="text-xs text-white/80 mb-3">',
-            '"Show me the sales revenue trend over time. Also, how does marketing spend correlate with sales revenue? And which product category has the highest total sales?"',
-            '</div>',
-            '<div class="text-xs text-white/90 mb-2"><strong>CSV Data (Snippet):</strong></div>',
-            '<div class="bg-black/30 p-2 rounded font-mono text-xs text-white/90">',
-            'Date,Region,Marketing_Spend,Sales_Revenue,Product_Category<br>',
-            '2024-01-01,North,5000,78500,Electronics<br>',
-            '2024-02-01,North,5200,79200,Apparel<br>',
-            '2024-03-01,West,7100,107000,Home Goods',
-            '</div>',
-            '</div>',
-            '</div>',
-            // MODIFIED: Bad Example (with annotations)
-            '<div class="mb-4">',
-            '<div class="flex items-center mb-2">',
-            '<span class="text-red-400 mr-2">❌</span>',
-            '<span class="text-sm font-medium text-red-400">BAD EXAMPLE</span>',
-            '<span class="text-xs text-white/60 ml-2">(Results in generic, unhelpful charts)</span>',
-            '</div>',
-            '<div class="bg-red-900/20 border border-red-500/30 rounded p-3">',
-            '<div class="text-xs text-white/80 mb-3">',
-            '<strong>Context Text:</strong> "Here\'s my data. Show me charts. I want to see what\'s happening." <span class="text-red-300 italic text-xs">(Vague, not specific)</span>',
-            '</div>',
-            '<div class="text-xs text-white/90 mb-2"><strong>CSV Data (Snippet):</strong></div>',
-            '<div class="bg-black/30 p-2 rounded font-mono text-xs text-white/90">',
-            'Date,Sales,Marketing ($),Region<br>',
-            'Jan 1, "$5,000", "100", N/A <span class="text-red-300 italic text-xs">(Messy data: $, commas, inconsistent dates)</span><br>',
-            'Feb 1, "$6,200", "120", North<br>',
-            'Mar 1, "7000", "110", West',
-            '</div>',
-            '</div>',
-            '</div>',
-            '<div class="border-t border-white/20 pt-3">',
-            '<div class="text-xs font-medium text-white/90 mb-2">💡 How to Write Your Request:</div>',
-            '<div class="text-xs text-white/80 space-y-1">',
-            '<div>• <strong>Be specific:</strong> Ask clear questions (e.g., "correlate X and Y," "show trend of Z").</div>',
-            '<div>• <strong>Clean your data:</strong> Ensure numbers are just numbers (no $, %, or commas).</div>',
-            '<div>• <strong>Use clean headers:</strong> Use simple column names (e.g., Marketing_Spend not Marketing ($)).</div>',
-            '</div>',
-            '</div>',
+        // --- Good vs. Bad Examples ---
+        '<div id="vizConfigExamples" class="hidden mb-4 p-3 bg-black/20 border border-white/15 rounded-lg">',
+        '<div class="text-xs font-medium text-white/90 mb-3">📋 How to Get the Best Results</div>',
+        // Good Example
+        '<div class="mb-4">', 
+        '<div class="flex items-center mb-2">',
+        '<span class="text-green-400 mr-2">✅</span>',
+        '<span class="text-sm font-medium text-green-400">GOOD EXAMPLE</span>',
+        '<span class="text-xs text-white/60 ml-2">(Results in relevant, accurate charts)</span>',
+        '</div>',
+        '<div class="bg-green-900/20 border border-green-500/30 rounded p-3">',
+        '<div class="text-xs text-white/90 mb-2"><strong>Context Text (Your Request):</strong></div>',
+        '<div class="text-xs text-white/80 mb-3">',
+        '"Show me the sales revenue trend over time. Also, how does marketing spend correlate with sales revenue? And which product category has the highest total sales?"',
+        '</div>',
+        '<div class="text-xs text-white/90 mb-2"><strong>CSV Data (Snippet):</strong></div>',
+        '<div class="bg-black/30 p-2 rounded font-mono text-xs text-white/90">',
+        'Date,Region,Marketing_Spend,Sales_Revenue,Product_Category<br>',
+        '2024-01-01,North,5000,78500,Electronics<br>',
+        '2024-02-01,North,5200,79200,Apparel<br>',
+        '2024-03-01,West,7100,107000,Home Goods',
+        '</div>',
+        '</div>',
+        '</div>',
+        // MODIFIED: Bad Example (with annotations)
+        '<div class="mb-4">',
+        '<div class="flex items-center mb-2">',
+        '<span class="text-red-400 mr-2">❌</span>',
+        '<span class="text-sm font-medium text-red-400">BAD EXAMPLE</span>',
+        '<span class="text-xs text-white/60 ml-2">(Results in generic, unhelpful charts)</span>',
+        '</div>',
+        '<div class="bg-red-900/20 border border-red-500/30 rounded p-3">',
+        '<div class="text-xs text-white/80 mb-3">',
+        '<strong>Context Text:</strong> "Here\'s my data. Show me charts. I want to see what\'s happening." <span class="text-red-300 italic text-xs">(Vague, not specific)</span>',
+        '</div>',
+        '<div class="text-xs text-white/90 mb-2"><strong>CSV Data (Snippet):</strong></div>',
+        '<div class="bg-black/30 p-2 rounded font-mono text-xs text-white/90">',
+        'Date,Sales,Marketing ($),Region<br>',
+        'Jan 1, "$5,000", "100", N/A <span class="text-red-300 italic text-xs">(Messy data: $, commas, inconsistent dates)</span><br>',
+        'Feb 1, "$6,200", "120", North<br>',
+        'Mar 1, "7000", "110", West',
+        '</div>',
+        '</div>',
+        '</div>',
+        '<div class="border-t border-white/20 pt-3">',
+        '<div class="text-xs font-medium text-white/90 mb-2">💡 How to Write Your Request:</div>',
+        '<div class="text-xs text-white/80 space-y-1">',
+        '<div>• <strong>Be specific:</strong> Ask clear questions (e.g., "correlate X and Y," "show trend of Z").</div>',
+        '<div>• <strong>Clean your data:</strong> Ensure numbers are just numbers (no $, %, or commas).</div>',
+        '<div>• <strong>Use clean headers:</strong> Use simple column names (e.g., Marketing_Spend not Marketing ($)).</div>',
+        '</div>',
+        '</div>',
 
-            // --- MOVED BLOCK START ---
-            // The Data Requirements Checklist is now inside the "vizConfigExamples" div
-            '<div class="mt-4 p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg">',
-            '<div class="mb-2">',
-                '<h4 class="text-sm font-medium text-blue-300">📋 Data Requirements Checklist</h4>',
-            '</div>',
-            '<ul class="list-disc list-inside text-xs text-white/80 space-y-1">',
-            '<li><strong>File Format:</strong> CSV (UTF-8 encoded).</li>',
-            '<li><strong>Headers:</strong> Must be in the **first row**. Use simple names (e.g., `Sales_Revenue`, not `Sales ($)`).</li>',
-            '<li><strong>Numbers:</strong> Must be **numbers only** (no $, ,, or % symbols).</li>',
-            '<li><strong>Dates:</strong> Must be in a **consistent format** (e.g., YYYY-MM-DD or MM/DD/YYYY).</li>',
-            '<li><strong>Categorical:</strong> Must have **consistent spelling** (e.g., "North", not "North" and "N.").</li>',
-            '<li><strong>Data Quality:</strong> Check for missing values (nulls) or extreme outliers.</li>',
-            '<li><strong>Limits:</strong> Recommended 30-50+ rows for reliable insights. Max file size ~5MB.</li>',
-            '</ul>',
-            '</div>',
-            // --- MOVED BLOCK END ---
+        // --- MOVED BLOCK START ---
+        // The Data Requirements Checklist is now inside the "vizConfigExamples" div
+        '<div class="mt-4 p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg">',
+        '<div class="mb-2">',
+            '<h4 class="text-sm font-medium text-blue-300">📋 Data Requirements Checklist</h4>',
+        '</div>',
+        '<ul class="list-disc list-inside text-xs text-white/80 space-y-1">',
+        '<li><strong>File Format:</strong> CSV (UTF-8 encoded).</li>',
+        '<li><strong>Headers:</strong> Must be in the **first row**. Use simple names (e.g., `Sales_Revenue`, not `Sales ($)`).</li>',
+        '<li><strong>Numbers:</strong> Must be **numbers only** (no $, ,, or % symbols).</li>',
+        '<li><strong>Dates:</strong> Must be in a **consistent format** (e.g., YYYY-MM-DD or MM/DD/YYYY).</li>',
+        '<li><strong>Categorical:</strong> Must have **consistent spelling** (e.g., "North", not "North" and "N.").</li>',
+        '<li><strong>Data Quality:</strong> Check for missing values (nulls) or extreme outliers.</li>',
+        '<li><strong>Limits:</strong> Recommended 30-50+ rows for reliable insights. Max file size ~5MB.</li>',
+        '</ul>',
+        '</div>',
+        // --- MOVED BLOCK END ---
 
-            '</div>',
-            // --- End Examples Div ---
+        '</div>',
+        // --- End Examples Div ---
 
-            '<div class="space-y-4">',
+        // === ADDED TOGGLE SECTION START ===
+        '<div class="space-y-4">',
             '<div>',
-            '<label for="vizRequest" class="block text-sm font-medium text-gray-200 mb-2">What do you want to visualize? (This is your context)</label>',
-            '<textarea id="vizRequest" class="input-field h-24" placeholder="Be specific. For example: \'Show the relationship between Marketing Spend and Sales Revenue\', or \'Visualize the distribution of customer ages by product category.\'"></textarea>',
+                '<label class="block text-sm font-medium text-gray-200 mb-2">Visualization Request / Context</label>',
+                '<div class="input-radio-group">',
+                    '<input type="radio" name="vizInputType" id="vizInputTextToggle" class="input-radio" checked>',
+                    '<label for="vizInputTextToggle" class="input-radio-label">Text Input</label>',
+                    '<input type="radio" name="vizInputType" id="vizInputFileToggle" class="input-radio">',
+                    '<label for="vizInputFileToggle" class="input-radio-label">Document Upload</label>',
+                '</div>',
             '</div>',
+
+            '<div id="vizTextInputArea">',
+                '<label for="vizRequestText" class="block text-sm font-medium text-gray-200 mb-2">What do you want to visualize?</label>',
+                '<textarea id="vizRequestText" class="input-field h-24" placeholder="Be specific. For example: \'Show the relationship between Marketing Spend and Sales Revenue\', or \'Visualize the distribution of customer ages by product category.\'"></textarea>',
+            '</div>',
+
+            '<div id="vizFileInputArea" class="hidden">',
+                '<label for="vizContextFile" class="block text-sm font-medium text-gray-200 mb-2">Context Document (.txt, .docx)</label>',
+                '<div class="input-file-wrapper">',
+                    '<label for="vizContextFile" id="vizContextFileLabel" class="input-file-btn">',
+                    '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>',
+                    '<span class="file-name">Select context document...</span>',
+                    '</label>',
+                    '<input type="file" id="vizContextFile" class="input-file" accept=".txt,.docx">',
+                '</div>',
+            '</div>',
+        // === ADDED TOGGLE SECTION END ===
+
             '<div>',
             '<label for="vizFile" class="block text-sm font-medium text-gray-200 mb-2">Upload Data File (.csv)</label>',
             '<div class="input-file-wrapper">',
@@ -6983,276 +7022,298 @@ CustomerID,Tenure_Months,Support_Tickets,Used_Feature_X,Churned<br>
             '</div>',
             '<div id="vizFileError" class="text-red-400 text-sm mt-2"></div>',
             '</div>',
-            '</div>',
+        '</div>',
 
-            // --- Column Guidance (V10) ---
-            '<details class="styled-details text-sm mt-4">',
-                '<summary class="font-semibold">View Column Guidance (using sample data)</summary>',
-                '<div class="bg-black/20 p-4 rounded-b-lg space-y-3 text-xs text-white/80">',
-                    '<div>',
-                        '<h5 class="font-semibold text-white mb-1">Sales & Marketing Analysis:</h5>',
-                        '<p>• `Date`, `Sales_Revenue` (number), `Marketing_Spend` (number), `Region` (text), `Product_Category` (text)</p>',
-                    '</div>',
-                    '<div>',
-                        '<h5 class="font-semibold text-white mb-1">Customer & Product Analysis:</h5>',
-                        '<p>• `Date`, `Customer_Satisfaction` (number), `Region` (text), `Product_Category` (text), `Sales_Revenue` (number)</p>',
-                    '</div>',
-                '</div>',
-            '</details>',
 
-            '<div id="vizDataQualityWarning" class="hidden error-message p-3 text-sm mt-4"></div>',
-            '<div id="vizDataPreview" class="hidden space-y-2 mt-4">',
-            '<label class="block text-sm font-medium text-gray-200">Data Preview (First 5 Rows)</label>',
-            '<div class="overflow-x-auto rounded-lg border border-white/20">',
-            '<table class="min-w-full text-left text-sm text-white/90" id="vizPreviewTable">',
-            '</table>',
-            '</div>',
-            '</div>',
-            '<button id="generateBtn" class="btn btn-primary w-full text-lg py-3 mt-4">',
-            '<span id="generateBtnText">📊 Generate Visualizations</span>',
-            '<span id="generateSpinner" class="loading-spinner hidden ml-2"></span>',
-            '</button>',
+
+        '<div id="vizDataQualityWarning" class="hidden error-message p-3 text-sm mt-4"></div>',
+        '<div id="vizDataPreview" class="hidden space-y-2 mt-4">',
+        '<label class="block text-sm font-medium text-gray-200">Data Preview (First 5 Rows)</label>',
+        '<div class="overflow-x-auto rounded-lg border border-white/20">',
+        '<table class="min-w-full text-left text-sm text-white/90" id="vizPreviewTable">',
+        '</table>',
+        '</div>',
+        '</div>',
+        '<button id="generateBtn" class="btn btn-primary w-full text-lg py-3 mt-4">',
+        '<span id="generateBtnText">📊 Generate Visualizations</span>',
+        '<span id="generateSpinner" class="loading-spinner hidden ml-2"></span>',
+        '</button>',
+        
+        // --- Feedback Link (V12) ---
+        '<div class="text-center mt-4">',
+        '<a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>',
+        '</div>',
+
+        '</div>', // This closes <div class="glass-container ...
+        '<div class="mt-12">',
+        '<h2 class="text-3xl font-bold mb-4 text-center">Data Visualizations</h2>',
+        '<div id="analysisResult" class="glass-container min-h-[500px] overflow-x-auto"></div>',
+        '<div id="analysisActions" class="text-center mt-4 space-x-2 hidden">',
+        '<button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>',
+        '<button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>',
+        '</div>',
+        '</div>',
+        '</div>',
+    ].join('');
+    
+    contentContainer.innerHTML = htmlContent;
+
+    // --- Helper functions for preview (V9) ---
+    const getHeadersFromText = (text) => {
+        const firstLine = text.split(/[\r\n]+/)[0];
+        let headers = firstLine.split(',').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+        if (headers.length <= 1) headers = firstLine.split(';').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+        if (headers.length <= 1) headers = firstLine.split('\t').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+        if (headers.length === 0) throw new Error("Could not parse headers.");
+        return headers;
+    };
+
+    const showDataPreview = (csvText) => {
+        const previewContainer = safeGetElement("vizDataPreview");
+        const previewTable = safeGetElement("vizPreviewTable");
+        const qualityWarning = safeGetElement("vizDataQualityWarning");
+        if (!previewContainer || !previewTable || !qualityWarning) return;
+
+        let warnings = [];
+
+        try {
+            const lines = csvText.split(/[\r\n]+/).filter(line => line.trim() !== '');
+            const rows = lines.slice(0, 6); 
             
-            // --- Feedback Link (V12) ---
-            '<div class="text-center mt-4">',
-            '<a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>',
-            '</div>',
+            // --- Your Data Quality Logic ---
+            const dataRowCount = lines.length - 1;
+            if (dataRowCount < 30) {
+                warnings.push(`Insufficient data for reliable visualization (only ${dataRowCount} rows).`);
+            } else if (dataRowCount < 50) {
+                warnings.push(`Limited dataset (${dataRowCount} rows). Basic charts only.`);
+            }
+            // --- END Your Logic ---
 
-            '</div>', // This closes <div class="glass-container ...
-            '<div class="mt-12">',
-            '<h2 class="text-3xl font-bold mb-4 text-center">Data Visualizations</h2>',
-            '<div id="analysisResult" class="glass-container min-h-[500px] overflow-x-auto"></div>',
-            '<div id="analysisActions" class="text-center mt-4 space-x-2 hidden">',
-            '<button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>',
-            '<button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>',
-            '</div>',
-            '</div>',
-            '</div>',
-        ].join('');
-        
-        contentContainer.innerHTML = htmlContent;
-
-        // --- Helper functions for preview (V9) ---
-        const getHeadersFromText = (text) => {
-            const firstLine = text.split(/[\r\n]+/)[0];
-            let headers = firstLine.split(',').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
-            if (headers.length <= 1) headers = firstLine.split(';').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
-            if (headers.length <= 1) headers = firstLine.split('\t').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
-            if (headers.length === 0) throw new Error("Could not parse headers.");
-            return headers;
-        };
-
-        const showDataPreview = (csvText) => {
-            const previewContainer = safeGetElement("vizDataPreview");
-            const previewTable = safeGetElement("vizPreviewTable");
-            const qualityWarning = safeGetElement("vizDataQualityWarning");
-            if (!previewContainer || !previewTable || !qualityWarning) return;
-
-            let warnings = [];
-
-            try {
-                const lines = csvText.split(/[\r\n]+/).filter(line => line.trim() !== '');
-                const rows = lines.slice(0, 6); 
-                
-                // --- Your Data Quality Logic ---
-                const dataRowCount = lines.length - 1;
-                if (dataRowCount < 30) {
-                    warnings.push(`Insufficient data for reliable visualization (only ${dataRowCount} rows).`);
-                } else if (dataRowCount < 50) {
-                    warnings.push(`Limited dataset (${dataRowCount} rows). Basic charts only.`);
-                }
-                // --- END Your Logic ---
-
-                if (rows.length < 2) {
-                    previewContainer.classList.add("hidden");
-                    if(dataRowCount === 0) {
-                        warnings.push("File appears to be empty or missing data rows.");
-                    }
-                } else {
-                    const headers = getHeadersFromText(rows[0]);
-                    let tableHTML = '<thead class="bg-white/10 text-xs uppercase"><tr>';
-                    headers.forEach(h => { tableHTML += `<th scope="col" class="px-4 py-2">${h}</th>`; });
-                    tableHTML += '</tr></thead><tbody>';
-
-                    let nullCount = 0;
-                    let messyDataCount = 0;
-
-                    rows.slice(1).forEach((line, rowIndex) => {
-                        let cells = line.split(',');
-                        if (cells.length !== headers.length) cells = line.split(';');
-                        if (cells.length !== headers.length) cells = line.split('\t');
-
-                        tableHTML += `<tr class="border-t border-white/10 ${rowIndex % 2 === 0 ? 'bg-white/5' : ''}">`;
-                        headers.forEach((_, cellIndex) => {
-                            const cellValue = cells[cellIndex]?.trim() ?? '';
-                            let displayValue = cellValue;
-                            
-                            if (cellValue === '' || cellValue.toLowerCase() === 'null' || cellValue.toLowerCase() === 'na') {
-                                nullCount++;
-                                displayValue = `<span class="text-yellow-400 italic" title="Null/Missing Value">NULL</span>`;
-                            } else if (/[$,%"]/.test(cellValue) && !isNaN(parseFloat(cellValue.replace(/[$,%"]/g, '')))) {
-                                messyDataCount++;
-                                displayValue = `<span class="text-orange-400" title="Messy Data (contains symbols)">${cellValue}</span>`;
-                            }
-
-                            tableHTML += `<td class="px-4 py-2 whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]" title="${cellValue}">${displayValue}</td>`;
-                        });
-                        tableHTML += '</tr>';
-                    });
-                    tableHTML += '</tbody>';
-                    previewTable.innerHTML = tableHTML;
-                    previewContainer.classList.remove("hidden");
-
-                    if (nullCount > 0) {
-                        warnings.push(`Spotted ${nullCount} missing values (NULL) in the preview.`);
-                    }
-                    if (messyDataCount > 0) {
-                        warnings.push(`Spotted ${messyDataCount} numerical values with symbols ($, %, etc.). Please clean the data.`);
-                    }
-                }
-
-                // Display warnings
-                if (warnings.length > 0) {
-                    qualityWarning.innerHTML = "<strong>⚠️ Data Quality Warnings:</strong><ul class='list-disc list-inside mt-1'>" + warnings.map(w => `<li>${w}</li>`).join('') + "</ul>";
-                    qualityWarning.classList.remove("hidden");
-                } else {
-                    qualityWarning.classList.add("hidden");
-                }
-
-            } catch (e) {
-                console.error("Error showing data preview:", e);
+            if (rows.length < 2) {
                 previewContainer.classList.add("hidden");
-                qualityWarning.textContent = `Error during preview: ${e.message}`;
+                if(dataRowCount === 0) {
+                    warnings.push("File appears to be empty or missing data rows.");
+                }
+            } else {
+                const headers = getHeadersFromText(rows[0]);
+                let tableHTML = '<thead class="bg-white/10 text-xs uppercase"><tr>';
+                headers.forEach(h => { tableHTML += `<th scope="col" class="px-4 py-2">${h}</th>`; });
+                tableHTML += '</tr></thead><tbody>';
+
+                let nullCount = 0;
+                let messyDataCount = 0;
+
+                rows.slice(1).forEach((line, rowIndex) => {
+                    let cells = line.split(',');
+                    if (cells.length !== headers.length) cells = line.split(';');
+                    if (cells.length !== headers.length) cells = line.split('\t');
+
+                    tableHTML += `<tr class="border-t border-white/10 ${rowIndex % 2 === 0 ? 'bg-white/5' : ''}">`;
+                    headers.forEach((_, cellIndex) => {
+                        const cellValue = cells[cellIndex]?.trim() ?? '';
+                        let displayValue = cellValue;
+                        
+                        if (cellValue === '' || cellValue.toLowerCase() === 'null' || cellValue.toLowerCase() === 'na') {
+                            nullCount++;
+                            displayValue = `<span class="text-yellow-400 italic" title="Null/Missing Value">NULL</span>`;
+                        } else if (/[$,%"]/.test(cellValue) && !isNaN(parseFloat(cellValue.replace(/[$,%"]/g, '')))) {
+                            messyDataCount++;
+                            displayValue = `<span class="text-orange-400" title="Messy Data (contains symbols)">${cellValue}</span>`;
+                        }
+
+                        tableHTML += `<td class="px-4 py-2 whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]" title="${cellValue}">${displayValue}</td>`;
+                    });
+                    tableHTML += '</tr>';
+                });
+                tableHTML += '</tbody>';
+                previewTable.innerHTML = tableHTML;
+                previewContainer.classList.remove("hidden");
+
+                if (nullCount > 0) {
+                    warnings.push(`Spotted ${nullCount} missing values (NULL) in the preview.`);
+                }
+                if (messyDataCount > 0) {
+                    warnings.push(`Spotted ${messyDataCount} numerical values with symbols ($, %, etc.). Please clean the data.`);
+                }
+            }
+
+            // Display warnings
+            if (warnings.length > 0) {
+                qualityWarning.innerHTML = "<strong>⚠️ Data Quality Warnings:</strong><ul class='list-disc list-inside mt-1'>" + warnings.map(w => `<li>${w}</li>`).join('') + "</ul>";
                 qualityWarning.classList.remove("hidden");
+            } else {
+                qualityWarning.classList.add("hidden");
             }
-        };
-        // --- END HELPERS ---
-        
-        // --- Attaching Event Listeners ---
-        setTimeout(function() {
-            try {
-                // 1. Examples toggle
-                const examplesBtn = safeGetElement("vizConfigExamplesBtn");
-                const examplesDiv = safeGetElement("vizConfigExamples");
-                if (examplesBtn && examplesDiv) {
-                    examplesBtn.addEventListener("click", function() {
-                        const isHidden = examplesDiv.classList.toggle("hidden");
-                        examplesBtn.textContent = isHidden ? "View Examples" : "Hide Examples";
-                    });
-                }
 
-                // 2. File input handler
-                const fileInput = safeGetElement("vizFile");
-                const fileLabel = safeGetElement("vizFileLabel");
-                const fileError = safeGetElement("vizFileError");
+        } catch (e) {
+            console.error("Error showing data preview:", e);
+            previewContainer.classList.add("hidden");
+            qualityWarning.textContent = `Error during preview: ${e.message}`;
+            qualityWarning.classList.remove("hidden");
+        }
+    };
+    // --- END HELPERS ---
+    
+    // --- Attaching Event Listeners ---
+    setTimeout(function() {
+        try {
+            // === ADDED TOGGLE EVENT LISTENERS START ===
+            // 0. Input type toggle
+            const vizInputTextToggle = safeGetElement("vizInputTextToggle");
+            const vizInputFileToggle = safeGetElement("vizInputFileToggle");
+            const vizTextInputArea = safeGetElement("vizTextInputArea");
+            const vizFileInputArea = safeGetElement("vizFileInputArea");
 
-                if (fileInput && fileLabel && fileError) {
-                    fileInput.addEventListener("change", async function(e) {
-                        const fileNameSpan = fileLabel.querySelector(".file-name");
-                        const qualityWarning = safeGetElement("vizDataQualityWarning");
-                        const previewContainer = safeGetElement("vizDataPreview");
+            if (vizInputTextToggle && vizInputFileToggle) {
+                vizInputTextToggle.addEventListener("change", () => {
+                    vizTextInputArea.classList.remove("hidden");
+                    vizFileInputArea.classList.add("hidden");
+                });
+                vizInputFileToggle.addEventListener("change", () => {
+                    vizTextInputArea.classList.add("hidden");
+                    vizFileInputArea.classList.remove("hidden");
+                });
+            }
 
-                        fileError.textContent = "";
-                        qualityWarning.classList.add("hidden");
-                        previewContainer.classList.add("hidden");
-
-                        if (fileNameSpan) {
-                            if (e.target.files.length > 0) {
-                                const file = e.target.files[0];
-                                fileNameSpan.textContent = file.name;
-                                fileLabel.classList.add("has-file");
-                                
-                                try {
-                                    if (typeof Papa === 'undefined') {
-                                        throw new Error("CSV parsing library (PapaParse) not loaded.");
-                                    }
-                                    const text = await extractTextFromFile(file);
-                                    showDataPreview(text); 
-                                } catch (err) {
-                                    fileError.textContent = `Error reading file: ${err.message}`;
-                                    previewContainer.classList.add("hidden");
-                                    qualityWarning.classList.add("hidden");
-                                }
-                            } else {
-                                fileNameSpan.textContent = "Select .csv file...";
-                                fileLabel.classList.remove("has-file");
-                            }
-                        }
-                    });
-                }
-
-                // 3. Generate button handler
-                const generateBtn = safeGetElement("generateBtn");
-                if (generateBtn && typeof handleGenerate === 'function') {
-                    generateBtn.addEventListener("click", handleGenerate);
-                }
-
-                // 4. Save button listeners
-                if (typeof reattachActionListeners === 'function') {
-                    reattachActionListeners();
-                }
-
-                // 5. Handle analysis cache
-                const analysisResult = safeGetElement("analysisResult");
-                const analysisActions = safeGetElement("analysisActions");
-                
-                if (analysisResult && analysisActions) {
-                    if (typeof analysisCache !== 'undefined' && 
-                        typeof currentTemplateId !== 'undefined' && 
-                        analysisCache[currentTemplateId]) {
-                        
-                        analysisResult.innerHTML = analysisCache[currentTemplateId];
-                        analysisActions.classList.remove("hidden");
-                        
-                        if (typeof reattachTabListeners === 'function') {
-                            reattachTabListeners(analysisResult);
-                        }
-                        
-                        setTimeout(() => {
-                            const chartsInPanel = analysisResult.querySelectorAll('.plotly-chart');
-                            chartsInPanel.forEach(chartDiv => {
-                                if (chartDiv.layout && typeof Plotly !== 'undefined') {
-                                    try { Plotly.Plots.resize(chartDiv); } catch (resizeError) { console.error(`Error resizing cached chart ${chartDiv.id}:`, resizeError); }
-                                }
-                            });
-                        }, 150);
-
+            // 0.5. Context file input listener
+            const contextFileInput = safeGetElement("vizContextFile");
+            if (contextFileInput) {
+                contextFileInput.addEventListener("change", (e) => {
+                    const label = safeGetElement("vizContextFileLabel");
+                    const fileNameSpan = label.querySelector(".file-name");
+                    if (e.target.files.length > 0) {
+                        fileNameSpan.textContent = e.target.files[0].name;
+                        label.classList.add("has-file");
                     } else {
-                        analysisResult.innerHTML = 
-                            '<div class="text-white/60 p-8 text-center">Your generated analysis will appear here.</div>';
-                        analysisActions.classList.add("hidden");
+                        fileNameSpan.textContent = "Select context document...";
+                        label.classList.remove("has-file");
                     }
-                }
-                
-                // --- THIS IS THE FIX ---
-                // 6. Attach listener for the feedback link
-                const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
-                if (feedbackLink) {
-                    feedbackLink.addEventListener("click", (e) => {
-                        e.preventDefault();
-                        
-                        // This just calls the navigateTo function.
-                        // It relies on your main `MapsTo` function to be
-                        // the *simplified one* (without memory logic)
-                        // and your `submitFeedbackPageBtn` listener
-                        // to be the *simplified one* (that just goes home).
-                        if (typeof navigateTo === 'function') {
-                            navigateTo('feedback');
-                        } else {
-                            console.error("navigateTo function is not defined.");
-                        }
-                    });
-                } else {
-                    console.warn("Feedback link not found inside createVisualizationLayout_DA");
-                }
-                // --- END FIX ---
-
-
-            } catch (error) {
-                console.error("Error setting up visualization layout:", error);
+                });
             }
-        }, 100);
-    }
+            // === ADDED TOGGLE EVENT LISTENERS END ===
+
+            // 1. Examples toggle
+            const examplesBtn = safeGetElement("vizConfigExamplesBtn");
+            const examplesDiv = safeGetElement("vizConfigExamples");
+            if (examplesBtn && examplesDiv) {
+                examplesBtn.addEventListener("click", function() {
+                    const isHidden = examplesDiv.classList.toggle("hidden");
+                    examplesBtn.textContent = isHidden ? "View Examples" : "Hide Examples";
+                });
+            }
+
+            // 2. File input handler
+            const fileInput = safeGetElement("vizFile");
+            const fileLabel = safeGetElement("vizFileLabel");
+            const fileError = safeGetElement("vizFileError");
+
+            if (fileInput && fileLabel && fileError) {
+                fileInput.addEventListener("change", async function(e) {
+                    const fileNameSpan = fileLabel.querySelector(".file-name");
+                    const qualityWarning = safeGetElement("vizDataQualityWarning");
+                    const previewContainer = safeGetElement("vizDataPreview");
+
+                    fileError.textContent = "";
+                    qualityWarning.classList.add("hidden");
+                    previewContainer.classList.add("hidden");
+
+                    if (fileNameSpan) {
+                        if (e.target.files.length > 0) {
+                            const file = e.target.files[0];
+                            fileNameSpan.textContent = file.name;
+                            fileLabel.classList.add("has-file");
+                            
+                            try {
+                                if (typeof Papa === 'undefined') {
+                                    throw new Error("CSV parsing library (PapaParse) not loaded.");
+                                }
+                                const text = await extractTextFromFile(file);
+                                showDataPreview(text); 
+                            } catch (err) {
+                                fileError.textContent = `Error reading file: ${err.message}`;
+                                previewContainer.classList.add("hidden");
+                                qualityWarning.classList.add("hidden");
+                            }
+                        } else {
+                            fileNameSpan.textContent = "Select .csv file...";
+                            fileLabel.classList.remove("has-file");
+                        }
+                    }
+                });
+            }
+
+            // 3. Generate button handler
+            const generateBtn = safeGetElement("generateBtn");
+            if (generateBtn && typeof handleGenerate === 'function') {
+                generateBtn.addEventListener("click", handleGenerate);
+            }
+
+            // 4. Save button listeners
+            if (typeof reattachActionListeners === 'function') {
+                reattachActionListeners();
+            }
+
+            // 5. Handle analysis cache
+            const analysisResult = safeGetElement("analysisResult");
+            const analysisActions = safeGetElement("analysisActions");
+            
+            if (analysisResult && analysisActions) {
+                if (typeof analysisCache !== 'undefined' && 
+                    typeof currentTemplateId !== 'undefined' && 
+                    analysisCache[currentTemplateId]) {
+                    
+                    analysisResult.innerHTML = analysisCache[currentTemplateId];
+                    analysisActions.classList.remove("hidden");
+                    
+                    if (typeof reattachTabListeners === 'function') {
+                        reattachTabListeners(analysisResult);
+                    }
+                    
+                    setTimeout(() => {
+                        const chartsInPanel = analysisResult.querySelectorAll('.plotly-chart');
+                        chartsInPanel.forEach(chartDiv => {
+                            if (chartDiv.layout && typeof Plotly !== 'undefined') {
+                                try { Plotly.Plots.resize(chartDiv); } catch (resizeError) { console.error(`Error resizing cached chart ${chartDiv.id}:`, resizeError); }
+                            }
+                        });
+                    }, 150);
+
+                } else {
+                    analysisResult.innerHTML = 
+                        '<div class="text-white/60 p-8 text-center">Your generated analysis will appear here.</div>';
+                    analysisActions.classList.add("hidden");
+                }
+            }
+            
+            // --- THIS IS THE FIX ---
+            // 6. Attach listener for the feedback link
+            const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+            if (feedbackLink) {
+                feedbackLink.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    
+                    // This just calls the navigateTo function.
+                    // It relies on your main `MapsTo` function to be
+                    // the *simplified one* (without memory logic)
+                    // and your `submitFeedbackPageBtn` listener
+                    // to be the *simplified one* (that just goes home).
+                    if (typeof navigateTo === 'function') {
+                        navigateTo('feedback');
+                    } else {
+                        console.error("navigateTo function is not defined.");
+                    }
+                });
+            } else {
+                console.warn("Feedback link not found inside createVisualizationLayout_DA");
+            }
+            // --- END FIX ---
+
+
+        } catch (error) {
+            console.error("Error setting up visualization layout:", error);
+        }
+    }, 100);
+}
 
     /**
      * Creates the UI for the S.M.A.R.T. Objectives tool.
@@ -7798,77 +7859,94 @@ CustomerID,Tenure_Months,Support_Tickets,Used_Feature_X,Churned<br>
     }
 
     async function handleVisualizationAnalysis_DA() {
-        const analysisResultContainer = $("analysisResult");
-        analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div></div><div></div><div></div> </div><h3 class="text-xl font-semibold text-white mb-4">Performing Visualization Analysis...</h3><p class="text-white/80 mb-2">Loading data, performing calculations, and generating insights...</p></div>`;
-        setLoading("generate", true);
-        $("analysisActions").classList.add("hidden");
-
-        const API_URL = "https://analysis.data2int.com/api/visualization"; // Use your new endpoint
-        const MODEL_NAME = "llama3.1:latest"; // Fallback model name for logging, not for direct call
-
-        try {
-            // 1. Gather Inputs
-            const vizRequestText = $("vizRequest").value.trim();
-            const dataFile = $("vizFile").files[0];
-
-            if (!dataFile) {
-                throw new Error("❌ Please upload a CSV data file.");
+    const analysisResultContainer = $("analysisResult");
+    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div></div><div></div><div></div> </div><h3 class="text-xl font-semibold text-white mb-4">Performing Visualization Analysis...</h3><p class="text-white/80 mb-2">Loading data, performing calculations, and generating insights...</p></div>`;
+    setLoading("generate", true);
+    $("analysisActions").classList.add("hidden");
+    const API_URL = "https://analysis.data2int.com/api/visualization";
+    const MODEL_NAME = "llama3.1:latest";
+    
+    try {
+        // 1. Gather Inputs
+        
+        // === ADDED TOGGLE LOGIC START ===
+        // Check which input type is selected
+        const isUsingFile = $("vizInputFileToggle").checked;
+        let vizRequestText = "";
+        
+        if (isUsingFile) {
+            // User selected file upload - we'll handle the file differently
+            const contextFile = $("vizContextFile").files[0];
+            // For now, we'll leave vizRequestText empty when using file
+        } else {
+            // User selected text input - use the original logic
+            vizRequestText = $("vizRequestText").value.trim();
+        }
+        // === ADDED TOGGLE LOGIC END ===
+        
+        const dataFile = $("vizFile").files[0];
+        if (!dataFile) {
+            throw new Error("❌ Please upload a CSV data file.");
+        }
+        // 2. Prepare FormData
+        const formData = new FormData();
+        formData.append("data_file", dataFile, dataFile.name);
+        
+        // === MODIFIED CONTEXT HANDLING START ===
+        // 3. Cleverly handle the context text or file:
+        if (isUsingFile) {
+            // If user selected file upload, attach the context file directly
+            const contextFile = $("vizContextFile").files[0];
+            if (contextFile) {
+                formData.append("context_file", contextFile, contextFile.name);
+                console.log("Attaching user uploaded context file.");
             }
-
-            // 2. Prepare FormData
-            const formData = new FormData();
-            formData.append("data_file", dataFile, dataFile.name);
-
-            // 3. Cleverly handle the context text:
-            // Convert the text from the <textarea> into a Blob (an in-memory file)
-            // so the backend can receive it as the 'context_file'.
+        } else {
+            // If user selected text input, convert the text from the <textarea> into a Blob
             if (vizRequestText) {
                 const contextBlob = new Blob([vizRequestText], { type: 'text/plain' });
                 formData.append("context_file", contextBlob, "visualization_context.txt");
                 console.log("Attaching user request text as context_file.");
             }
-            
-            // 4. We are NOT sending chart_configs, so the backend will auto-generate
-            // formData.append("chart_configs", JSON.stringify([...])); 
-
-            // 5. Send Request to Python Backend
-            console.log(`Sending Visualization request to Python backend at ${API_URL}...`);
-            const response = await fetch(API_URL, {
-                method: "POST",
-                body: formData,
-                // Add Authorization headers if your API requires them
-            });
-
-            if (!response.ok) {
-                let errorDetail = `API Error: ${response.status}`;
-                try {
-                    const errorJson = await response.json();
-                    errorDetail = errorJson.detail || `API Error: ${response.status} - ${response.statusText}`;
-                } catch (e) {
-                    errorDetail = `API Error: ${response.status} - ${response.statusText}`;
-                }
-                throw new Error(errorDetail);
-            }
-
-            const parsedData = await response.json();
-            
-            // Check if the backend returned its *own* error
-            if (parsedData.metadata && parsedData.metadata.error) {
-                throw new Error(`Backend Analysis Error: ${parsedData.metadata.error_message}`);
-            }
-
-            // 6. Render Results
-            // We now call the new renderer function that can handle the backend's JSON structure
-            renderVisualizationPage_DA(analysisResultContainer, parsedData);
-
-        } catch (error) {
-            console.error(`Error in handleVisualizationAnalysis_DA (Backend) using ${MODEL_NAME}:`, error);
-            analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
-            setLoading("generate", false);
         }
-        // 'finally' block is not needed here; setLoading(false) is handled
-        // by the renderer on success and the catch block on error.
+        // === MODIFIED CONTEXT HANDLING END ===
+        
+        // 4. We are NOT sending chart_configs, so the backend will auto-generate
+        // formData.append("chart_configs", JSON.stringify([...])); 
+        // 5. Send Request to Python Backend
+        console.log(`Sending Visualization request to Python backend at ${API_URL}...`);
+        const response = await fetch(API_URL, {
+            method: "POST",
+            body: formData,
+            // Add Authorization headers if your API requires them
+        });
+        if (!response.ok) {
+            let errorDetail = `API Error: ${response.status}`;
+            try {
+                const errorJson = await response.json();
+                errorDetail = errorJson.detail || `API Error: ${response.status} - ${response.statusText}`;
+            } catch (e) {
+                errorDetail = `API Error: ${response.status} - ${response.statusText}`;
+            }
+            throw new Error(errorDetail);
+        }
+        const parsedData = await response.json();
+        
+        // Check if the backend returned its *own* error
+        if (parsedData.metadata && parsedData.metadata.error) {
+            throw new Error(`Backend Analysis Error: ${parsedData.metadata.error_message}`);
+        }
+        // 6. Render Results
+        // We now call the new renderer function that can handle the backend's JSON structure
+        renderVisualizationPage_DA(analysisResultContainer, parsedData);
+    } catch (error) {
+        console.error(`Error in handleVisualizationAnalysis_DA (Backend) using ${MODEL_NAME}:`, error);
+        analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
+        setLoading("generate", false);
     }
+    // 'finally' block is not needed here; setLoading(false) is handled
+    // by the renderer on success and the catch block on error.
+}
 
     /**
      * --- UPDATED (V15) ---
@@ -14253,9 +14331,26 @@ The AI will read this and build the matrix for you."></textarea>
         setLoading("generate", true); // Set loading state
 
         try {
-            // 1. Gather Inputs
+            // --- 1. Gather Inputs (MODIFIED) ---
             const dataFile = $("descriptiveFile").files[0];
-            const contextFile = $("descriptiveContextFile").files[0];
+            
+            // --- NEW LOGIC: Check radio button ---
+            const useDoc = $("docUpload").checked;
+            let contextFile = null;
+            let contextText = "";
+
+            if (useDoc) {
+                contextFile = $("descriptiveContextFile").files[0];
+                if (!contextFile) {
+                    throw new Error("❌ You selected 'Document Upload' but did not select a context file.");
+                }
+            } else {
+                contextText = $("descriptiveContextText").value.trim();
+                if (!contextText) {
+                    throw new Error("❌ Please paste your context into the text area or select 'Document Upload' to upload a file.");
+                }
+            }
+            // --- END NEW LOGIC ---
 
             if (!dataFile) {
                 throw new Error("❌ Please upload a CSV data file.");
@@ -14266,22 +14361,23 @@ The AI will read this and build the matrix for you."></textarea>
             formData.append("analysis_type", "descriptive");
             formData.append("data_file", dataFile, dataFile.name);
 
-            // Add the context file if it exists
+            // --- MODIFIED: Add context file or context text blob ---
             if (contextFile) {
+                // Add the context file if it exists
                 formData.append("context_file", contextFile, contextFile.name); 
-                // NOTE: You will need to add `context_file: Optional[UploadFile] = File(None)` 
-                // to your main.py router to accept this.
+            } else if (contextText) {
+                // Convert text to a Blob and append it as a file
+                const contextBlob = new Blob([contextText], { type: 'text/plain' });
+                formData.append("context_file", contextBlob, "context_input.txt");
             }
+            // --- END MODIFICATION ---
             
-            // We are NOT sending analysis_types, so the backend will run all of them.
-
             // 3. Call your FastAPI Backend (NOT Ollama)
             const API_URL = "https://analysis.data2int.com/api/descriptive"; // Your main API endpoint
             
             const response = await fetch(API_URL, {
                 method: "POST",
                 body: formData,
-                // Add Authorization headers if your API requires them
             });
 
             if (!response.ok) {
@@ -14290,7 +14386,6 @@ The AI will read this and build the matrix for you."></textarea>
                     const errorJson = await response.json();
                     errorDetail = errorJson.detail || `API Error: ${response.status}`;
                 } catch (e) {
-                    // Fallback if error response isn't JSON
                     errorDetail = `API Error: ${response.status} - ${response.statusText}`;
                 }
                 throw new Error(errorDetail);
@@ -14303,9 +14398,7 @@ The AI will read this and build the matrix for you."></textarea>
                 throw new Error(`Backend Analysis Error: ${parsedData.error}`);
             }
 
-            // 5. Pass the *entire response* to your teammate's render function
-            // This is the critical step. We are now trusting the Python backend
-            // to send the *exact* JSON structure that renderDescriptivePage_DA expects.
+            // 5. Pass the *entire response* to your render function
             renderDescriptivePage_DA(analysisResultContainer, parsedData);
 
         } catch (error) {
@@ -14313,8 +14406,6 @@ The AI will read this and build the matrix for you."></textarea>
             analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
             setLoading("generate", false);
         }
-        // 'finally' block is not needed here because setLoading(false) is handled 
-        // by renderDescriptivePage_DA on success and by the catch block on error.
     }
 
     async function handleParetoFishboneAnalysis() {
@@ -23534,29 +23625,40 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
         setLoading("generate", true);
         $("analysisActions").classList.add("hidden");
 
-        const API_URL = "https://analysis.data2int.com/api/regression"; // Your FastAPI endpoint
+        const API_URL = "https://analysis.data2int.com/api/regression"; 
         
-        // --- NEW: Get the warning div ---
         const warningEl = $("regressionDataWarning");
-        if (warningEl) warningEl.textContent = ""; // Clear previous warnings
+        if (warningEl) warningEl.textContent = ""; 
 
         try {
-            // --- 1. Gather Inputs from NEW UI Elements ---
+            // --- 1. Gather Inputs from UI Elements ---
             const dependentVar = $("dependentVar").value;
             
-            // Get all checked independent variables
             const independentVarCheckboxes = document.querySelectorAll("#independentVarsContainer .independent-var-checkbox:checked");
             const independentVarsList = Array.from(independentVarCheckboxes).map(cb => cb.value);
 
             const dataFile = $("regressionFile").files[0];
-            const contextFile = $("regressionContextFile").files[0];
+            
+            // --- MODIFIED BLOCK START: Get Context ---
+            const useDoc = $("docUpload").checked;
+            let contextFile = null;
+            let contextText = "";
+
+            if (useDoc) {
+                contextFile = $("regressionContextFile").files[0];
+                // Note: We don't require the context file, so no error if it's missing.
+            } else {
+                contextText = $("regressionContextText").value.trim();
+                // Note: We don't require the context text.
+            }
+            // --- MODIFIED BLOCK END ---
 
             // 2. Validate Inputs
             if (!dataFile) {
                 throw new Error("❌ Please upload a CSV data file.");
             }
             if (!dependentVar) {
-                throw new Error("❌ Please select a Dependent Variable (Y).");
+                 throw new Error("❌ Please select a Dependent Variable (Y).");
             }
             if (independentVarsList.length === 0) {
                  throw new Error("❌ Please select at least one Independent Variable (X).");
@@ -23565,9 +23667,8 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
                 throw new Error("❌ The Dependent Variable cannot also be an Independent Variable.");
             }
 
-            // --- VALIDATION BLOCK (uses the new error strings) ---
             const numFeatures = independentVarsList.length;
-            const numObservations = currentRegressionRowCount; // Get stored row count
+            const numObservations = currentRegressionRowCount; 
             const ratio = numObservations / numFeatures;
 
             console.log(`Validation: ${numObservations} observations, ${numFeatures} features. Ratio: ${ratio}`);
@@ -23578,22 +23679,24 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
             if (ratio < 10) {
                 throw new Error(`❌ Insufficient Data Ratio: You have ${numObservations} observations for ${numFeatures} features (a ratio of ${ratio.toFixed(1)}-to-1). A 10-to-1 ratio (or ${numFeatures * 10} rows) is recommended.`);
             }
-            // --- END VALIDATION BLOCK ---
-
 
             // 3. Prepare FormData for the backend
             const formData = new FormData();
             
-            // Append files
             formData.append("data_file", dataFile, dataFile.name);
+
+            // --- MODIFIED BLOCK START: Append Context ---
             if (contextFile) {
+                // If user uploaded a file, append it
                 formData.append("context_file", contextFile, contextFile.name);
+            } else if (contextText) {
+                // If user typed text, create a Blob and append it as a file
+                const contextBlob = new Blob([contextText], { type: 'text/plain' });
+                formData.append("context_file", contextBlob, "context_input.txt");
             }
+            // --- MODIFIED BLOCK END ---
 
-            // Append simple text fields
             formData.append("target_column", dependentVar);
-
-            // Convert and append fields that backend expects as JSON strings
             formData.append("feature_columns", JSON.stringify(independentVarsList));
             
             // 4. Send Request to Python Backend
@@ -23605,15 +23708,13 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
             });
 
             // 5. Handle Response
-            const parsedData = await response.json(); // Get JSON response regardless of status
+            const parsedData = await response.json(); 
 
             if (!response.ok) {
-                // Handle HTTP errors (4xx, 5xx)
                 const errorMsg = parsedData.detail || `API Error: ${response.status} - ${response.statusText}`;
                 throw new Error(errorMsg);
             }
 
-            // Check for application-level errors
             if (parsedData.metadata && parsedData.metadata.error === true) {
                 console.error("Backend analysis failed:", parsedData.metadata.error_message);
                 throw new Error(`Backend Analysis Error: ${parsedData.metadata.error_message}`);
@@ -23626,25 +23727,21 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
             console.error(`Error in handleRegressionAnalysis_DA (Backend):`, error);
             const errorMessage = error.message;
 
-            // --- MODIFIED ERROR HANDLING ---
-            // Check if it's one of our new validation errors
             if (errorMessage.startsWith("❌")) {
                  if (warningEl) {
-                    warningEl.textContent = errorMessage.substring(2); // Display it by the input
-                    warningEl.className = "text-red-400 text-sm mt-2"; // Make it red
+                    warningEl.textContent = errorMessage.substring(2); 
+                    warningEl.className = "text-red-400 text-sm mt-2"; 
                  }
-                 analysisResultContainer.innerHTML = '<div class="text-white/60 p-8 text-center">Analysis stopped due to data issues.</div>'; // Reset results panel
+                 analysisResultContainer.innerHTML = '<div class="text-white/60 p-8 text-center">Analysis stopped due to data issues.</div>'; 
             } else {
-                // It's a different error, show it in the main results box
                 analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400"><strong>Error:</strong> ${errorMessage}</div>`;
             }
-            // --- END MODIFIED BLOCK ---
 
         } finally {
             setLoading("generate", false);
         }
     }
-
+    
     /**
      * --- NEW RENDERER v5 (Null-Safe) ---
      * --- USER REQUESTED UPDATE V3 ---
@@ -26595,12 +26692,29 @@ function renderPlsDiagnosticsTab(data_summary, model_evaluation, reliability_val
     // Define URL and Model
     const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
     // *** CHOOSE MODEL: qwen or llama ***
-    const MODEL_NAME = "qwen3:30b-a3b"; // Use Qwen for potentially better numerical accuracy
-    // const MODEL_NAME = "llama3.1:latest"; // Alternative option
+    //const MODEL_NAME = "qwen3:30b-a3b"; // Use Qwen for potentially better numerical accuracy
+    const MODEL_NAME = "llama3.1:latest"; // Alternative option
 
     try {
         // 1. Gather Inputs
-        const businessGoal = $("prescriptiveGoal").value.trim();
+        
+        // === ADDED TOGGLE LOGIC START ===
+        // Check which input type is selected
+        const isUsingFile = $("prescriptiveInputFileToggle").checked;
+        let businessGoal = "";
+        
+        if (isUsingFile) {
+            // User selected file upload - we'll handle the file differently
+            const contextFile = $("prescriptiveContextFile").files[0];
+            if (contextFile) {
+                businessGoal = await extractTextFromFile(contextFile);
+            }
+        } else {
+            // User selected text input - use the original logic
+            businessGoal = $("prescriptiveGoalText").value.trim();
+        }
+        // === ADDED TOGGLE LOGIC END ===
+        
         const file = $("prescriptiveFile").files[0];
 
         if (!businessGoal || !file) {
@@ -26742,7 +26856,6 @@ function renderPlsDiagnosticsTab(data_summary, model_evaluation, reliability_val
          }
     }
 }
-
 
 function renderPrescriptivePage_DA(container, data) {
     container.innerHTML = ""; // Clear loading state
