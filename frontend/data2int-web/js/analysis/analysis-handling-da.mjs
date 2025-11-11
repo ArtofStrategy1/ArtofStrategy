@@ -20,7 +20,22 @@ async function handleDescriptiveAnalysis_DA() {
     try {
         // 1. Gather Inputs
         const dataFile = dom.$("descriptiveFile").files[0];
-        const contextFile = dom.$("descriptiveContextFile").files[0];
+        
+        const useDoc = dom.$("docUpload").checked;
+        let contextFile = null;
+        let contextText = "";
+
+        if (useDoc) {
+            contextFile = dom.$("descriptiveContextFile").files[0];
+            if (!contextFile) {
+                throw new Error("❌ You selected 'Document Upload' but did not select a context file.");
+            }
+        } else {
+            contextText = dom.$("descriptiveContextText").value.trim();
+            if (!contextText) {
+                throw new Error("❌ Please paste your context into the text area or select 'Document Upload' to upload a file.");
+            }
+        }
 
         if (!dataFile) {
             throw new Error("❌ Please upload a CSV data file.");
@@ -31,22 +46,22 @@ async function handleDescriptiveAnalysis_DA() {
         formData.append("analysis_type", "descriptive");
         formData.append("data_file", dataFile, dataFile.name);
 
-        // Add the context file if it exists
+        // --- MODIFIED: Add context file or context text blob ---
         if (contextFile) {
+            // Add the context file if it exists
             formData.append("context_file", contextFile, contextFile.name); 
-            // NOTE: You will need to add `context_file: Optional[UploadFile] = File(None)` 
-            // to your main.py router to accept this.
+        } else if (contextText) {
+            // Convert text to a Blob and append it as a file
+            const contextBlob = new Blob([contextText], { type: 'text/plain' });
+            formData.append("context_file", contextBlob, "context_input.txt");
         }
         
-        // We are NOT sending analysis_types, so the backend will run all of them.
-
         // 3. Call your FastAPI Backend (NOT Ollama)
         const API_URL = "https://analysis.data2int.com/api/descriptive"; // Your main API endpoint
         
         const response = await fetch(API_URL, {
             method: "POST",
             body: formData,
-            // Add Authorization headers if your API requires them
         });
 
         if (!response.ok) {
@@ -68,9 +83,7 @@ async function handleDescriptiveAnalysis_DA() {
             throw new Error(`Backend Analysis Error: ${parsedData.error}`);
         }
 
-        // 5. Pass the *entire response* to your teammate's render function
-        // This is the critical step. We are now trusting the Python backend
-        // to send the *exact* JSON structure that renderDescriptivePage_DA expects.
+        // 5. Pass the entire response to render function
         renderDA.renderDescriptivePage_DA(analysisResultContainer, parsedData);
 
     } catch (error) {
@@ -78,8 +91,6 @@ async function handleDescriptiveAnalysis_DA() {
         analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
         setLoading("generate", false);
     }
-    // 'finally' block is not needed here because setLoading(false) is handled 
-    // by renderDescriptivePage_DA on success and by the catch block on error.
 }
 
 
@@ -198,155 +209,106 @@ async function handlePrescriptiveAnalysis_DA() {
     const analysisResultContainer = dom.$("analysisResult");
     analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div></div><div></div><div></div></div><h3 class="text-xl font-semibold text-white">Running Enhanced Prescriptive Analysis...</h3><p class="text-white/80 mb-2">Linking data insights directly to actionable recommendations...</p></div>`;
     setLoading("generate", true);
-
-    // Define URL and Model
-    const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
-    // *** CHOOSE MODEL: qwen or llama ***
-    const MODEL_NAME = "qwen3:30b-a3b"; // Use Qwen for potentially better numerical accuracy
-    // const MODEL_NAME = "llama3.1:latest"; // Alternative option
+    dom.$("analysisActions").classList.add("hidden");
+    
+    // Updated API URL for backend
+    const API_URL = "https://analysis.data2int.com/api/prescriptive";
 
     try {
         // 1. Gather Inputs
-        const businessGoal = dom.$("prescriptiveGoal").value.trim();
-        const file = dom.$("prescriptiveFile").files[0];
-
-        if (!businessGoal || !file) {
-            throw new Error("❌ Please describe your business goal and upload a CSV data file.");
-        }
-
-        const fileContent = await extractTextFromFile(file);
-
-        // Truncate if necessary
-        const MAX_CONTEXT_LENGTH = 15000; // Adjust as needed
-        let truncatedNote = "";
-        let dataSnippet = fileContent;
-        if (fileContent.length > MAX_CONTEXT_LENGTH) {
-            dataSnippet = fileContent.substring(0, MAX_CONTEXT_LENGTH);
-            truncatedNote = `(Note: Analysis based on the first ${MAX_CONTEXT_LENGTH} characters of data.)`;
-            console.warn(`Prescriptive analysis data truncated.`);
-        }
-
-        // 2. Construct Enhanced Prompt
-        const prompt = `
-            You are a highly skilled prescriptive analytics consultant. Your task is to analyze the user's business goal and the provided dataset to recommend specific, data-driven actions. Precision, data grounding, and actionable insights are critical.
-
-            **ANALYSIS INPUTS:**
-            * **Business Goal:** "${businessGoal}"
-            * **Data Snippet:** ${truncatedNote}\n\`\`\`csv\n${dataSnippet}\n\`\`\`
-
-            **DETAILED TASKS:**
-            1.  **Identify Key Data Insights (3-5 insights):** Analyze the data snippet *first* to find patterns, correlations, or segments directly relevant to achieving the stated business goal. For each insight:
-                * **\`insight\`:** State the specific, quantifiable finding from the data (e.g., "Customers in 'Region X' have a 30% higher Average Order Value").
-                * **\`implication\`:** Explain *why* this insight is important for achieving the business goal (e.g., "Targeting Region X could significantly boost overall revenue per customer").
-
-            2.  **Develop Prescriptions (3-4 prescriptions):** Based *only* on the identified data insights and the business goal, formulate specific, actionable recommendations. For each prescription:
-                * **\`recommendation\`:** A clear, concise action title (e.g., "Launch Targeted Campaign for Region X").
-                * **\`rationale\`:** Explain *exactly how* this action leverages a specific data insight (reference the insight) to help achieve the business goal.
-                * **\`impact\`:** Estimate the potential impact on the goal ("High", "Medium", "Low").
-                * **\`effort\`:** Estimate the implementation effort ("High", "Medium", "Low").
-                * **\`action_items\`:** List 2-3 concrete, specific first steps to implement the recommendation.
-                * **\`expected_outcome\`:** State a specific, measurable outcome linked to the business goal (e.g., "Increase AOV in Region X by 15% within 6 months").
-                * **\`kpis_to_track\`:** List 2-3 specific KPIs to measure the success of *this particular* prescription.
-
-            3.  **Self-Correction:** Before outputting JSON, review: Are insights directly from the data snippet? Do prescriptions logically follow ONLY from insights and the goal? Are outcomes measurable? Are all constraints met? Fix any inconsistencies.
-
-            **ABSOLUTE CONSTRAINTS:**
-            - **DATA GROUNDING:** Insights and prescriptions MUST derive *solely* from the provided data snippet and business goal. No external knowledge or assumptions.
-            - **LINKAGE:** Clearly link each prescription's rationale back to a specific data insight identified in step 1.
-            - **ACTIONABILITY:** Recommendations and action items must be specific and practical.
-            - **MEASURABILITY:** Expected outcomes and KPIs must be quantifiable.
-            - **JSON FORMAT:** Adhere EXACTLY. Include all specified keys.
-
-            **RETURN FORMAT:**
-            Provide ONLY a valid JSON object. **CRITICAL: Include ALL keys: "main_goal", "data_insights", AND "prescriptions".** "data_insights" must contain 3-5 objects, and "prescriptions" must contain 3-4 objects, each with ALL specified sub-keys.
-            {
-              "main_goal": "${businessGoal}",
-              "data_insights": [ // 3-5 insight objects
-                {
-                  "insight": "Specific finding from data...",
-                  "implication": "Why this matters for the goal..."
-                } // ...
-              ],
-              "prescriptions": [ // 3-4 prescription objects
-                {
-                  "recommendation": "Action Title",
-                  "rationale": "Links insight X to goal Y...",
-                  "impact": "High/Medium/Low",
-                  "effort": "High/Medium/Low",
-                  "action_items": ["Step 1...", "Step 2..."],
-                  "expected_outcome": "Measurable outcome...",
-                  "kpis_to_track": ["KPI 1...", "KPI 2..."]
-                } // ...
-              ]
+        
+        // === TOGGLE LOGIC (UNCHANGED) ===
+        const isUsingFile = dom.$("prescriptiveInputFileToggle").checked;
+        let businessGoal = "";
+        let contextFile = null;
+        
+        if (isUsingFile) {
+            // User selected file upload
+            contextFile = dom.$("prescriptiveContextFile").files[0];
+            if (contextFile) {
+                // For backend, we'll send the file and let the backend extract the text
+                businessGoal = ""; // Backend will read from context_file
+            } else {
+                throw new Error("❌ Please upload a context document when using file upload mode.");
             }
-        `;
+        } else {
+            // User selected text input
+            businessGoal = dom.$("prescriptiveGoalText").value.trim();
+            if (!businessGoal) {
+                throw new Error("❌ Please describe your business goal.");
+            }
+        }
+        // === END TOGGLE LOGIC ===
+        
+        const dataFile = dom.$("prescriptiveFile").files[0];
+        if (!dataFile) {
+            throw new Error("❌ Please upload a CSV data file.");
+        }
 
-        // 3. Send Request to Ollama
-        console.log(`Sending ENHANCED Prescriptive Analysis prompt to ${MODEL_NAME}...`);
-        const response = await fetch(OLLAMA_URL, {
+        // 2. Prepare FormData for backend API
+        const formData = new FormData();
+        formData.append("data_file", dataFile, dataFile.name);
+        
+        if (businessGoal) {
+            formData.append("business_goal", businessGoal);
+        } else {
+            // If using file upload mode, we need a placeholder business goal
+            // The backend will read the actual goal from context_file
+            formData.append("business_goal", "See attached context file");
+        }
+        
+        if (contextFile) {
+            formData.append("context_file", contextFile, contextFile.name);
+        }
+
+        // 3. Send Request to Python Backend
+        console.log(`Sending Prescriptive Analysis request to Python backend at ${API_URL}...`);
+        const response = await fetch(API_URL, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ model: MODEL_NAME, prompt: prompt, stream: false, format: "json", options: { num_ctx: 32768 } })
+            body: formData,
         });
 
         if (!response.ok) {
-            let errorBody = `API error ${response.status}`;
-            try { errorBody += `: ${await response.text()}`; } catch (e) {}
-            throw new Error(errorBody);
+            let errorDetail = `API Error: ${response.status}`;
+            try {
+                const errorJson = await response.json();
+                errorDetail = errorJson.detail || `API Error: ${response.status} - ${response.statusText}`;
+            } catch (e) {
+                errorDetail = `API Error: ${response.status} - ${response.statusText}`;
+            }
+            throw new Error(errorDetail);
         }
 
-        const data = await response.json();
-        let parsedData;
-        try {
-            parsedData = JSON.parse(data.response);
-             // *** Robust Validation ***
-             console.log('--- RAW AI JSON RESPONSE (Parsed - Enhanced Prescriptive) ---');
-             console.log(JSON.stringify(parsedData, null, 2));
-             console.log('------------------------------------');
-
-             if (!parsedData ||
-                 !parsedData.main_goal || typeof parsedData.main_goal !== 'string' ||
-                 !parsedData.data_insights || !Array.isArray(parsedData.data_insights) || parsedData.data_insights.length < 2 || // Expect at least 2 insights
-                 (parsedData.data_insights.length > 0 && (
-                     typeof parsedData.data_insights[0] !== 'object' ||
-                     !parsedData.data_insights[0].hasOwnProperty('insight') ||
-                     !parsedData.data_insights[0].hasOwnProperty('implication')
-                 )) ||
-                 !parsedData.prescriptions || !Array.isArray(parsedData.prescriptions) || parsedData.prescriptions.length < 2 || // Expect at least 2 prescriptions
-                 (parsedData.prescriptions.length > 0 && (
-                     typeof parsedData.prescriptions[0] !== 'object' ||
-                     !parsedData.prescriptions[0].hasOwnProperty('recommendation') ||
-                     !parsedData.prescriptions[0].hasOwnProperty('rationale') ||
-                     !parsedData.prescriptions[0].hasOwnProperty('impact') ||
-                     !parsedData.prescriptions[0].hasOwnProperty('effort') ||
-                     !parsedData.prescriptions[0].hasOwnProperty('action_items') || !Array.isArray(parsedData.prescriptions[0].action_items) ||
-                     !parsedData.prescriptions[0].hasOwnProperty('expected_outcome') ||
-                     !parsedData.prescriptions[0].hasOwnProperty('kpis_to_track') || !Array.isArray(parsedData.prescriptions[0].kpis_to_track)
-                 ))
-                )
-             {
-                  console.error("Validation Failed (Prescriptive): Required fields missing or invalid structure/count.", parsedData);
-                  throw new Error(`AI response structure is incorrect. Missing/invalid fields (main_goal, data_insights [>=2], prescriptions [>=2] with all sub-keys). Check console.`);
-             }
-             console.log(`Successfully parsed ENHANCED Prescriptive Analysis JSON using ${MODEL_NAME}. Found ${parsedData.data_insights.length} insights, ${parsedData.prescriptions.length} prescriptions.`);
-
-        } catch (e) {
-            console.error(`Failed to parse/validate ENHANCED Prescriptive Analysis JSON using ${MODEL_NAME}:`, data?.response, e);
-            throw new Error(`Invalid JSON received or required fields missing in AI response: ${e.message}. Check console logs.`);
+        const parsedData = await response.json();
+        
+        // Check if the backend returned an error
+        if (parsedData.metadata && parsedData.metadata.error) {
+            throw new Error(`Backend Analysis Error: ${parsedData.metadata.error_message}`);
         }
 
-        // 4. Render Results
+        // 4. Validate the response structure
+        if (!parsedData.data_insights || !Array.isArray(parsedData.data_insights) || parsedData.data_insights.length < 1) {
+            throw new Error("Invalid response structure: Missing or insufficient data insights");
+        }
+        
+        if (!parsedData.prescriptions || !Array.isArray(parsedData.prescriptions) || parsedData.prescriptions.length < 1) {
+            throw new Error("Invalid response structure: Missing or insufficient prescriptions");
+        }
+
+        console.log(`Successfully received prescriptive analysis with ${parsedData.data_insights.length} insights and ${parsedData.prescriptions.length} prescriptions.`);
+
+        // 5. Render Results using existing render function
         renderDA.renderPrescriptivePage_DA(analysisResultContainer, parsedData);
 
     } catch (error) {
-        console.error(`Error in handlePrescriptiveAnalysis_DA (Enhanced) using ${MODEL_NAME}:`, error);
+        console.error(`Error in handlePrescriptiveAnalysis_DA (Backend):`, error);
         analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
         setLoading("generate", false);
     } finally {
         // Ensure loading stops
-         if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
+        if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
             setLoading("generate", false);
-         }
+        }
     }
 }
 
@@ -357,35 +319,56 @@ async function handleVisualizationAnalysis_DA() {
     analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div></div><div></div><div></div> </div><h3 class="text-xl font-semibold text-white mb-4">Performing Visualization Analysis...</h3><p class="text-white/80 mb-2">Loading data, performing calculations, and generating insights...</p></div>`;
     setLoading("generate", true);
     dom.$("analysisActions").classList.add("hidden");
-
-    const API_URL = "https://analysis.data2int.com/api/visualization"; // Use your new endpoint
-    const MODEL_NAME = "llama3.1:latest"; // Fallback model name for logging, not for direct call
-
+    const API_URL = "https://analysis.data2int.com/api/visualization";
+    const MODEL_NAME = "llama3.1:latest";
+    
     try {
         // 1. Gather Inputs
-        const vizRequestText = dom.$("vizRequest").value.trim();
+        
+        // === ADDED TOGGLE LOGIC START ===
+        // Check which input type is selected
+        const isUsingFile = dom.$("vizInputFileToggle").checked;
+        let vizRequestText = "";
+        
+        if (isUsingFile) {
+            // User selected file upload - we'll handle the file differently
+            const contextFile = dom.$("vizContextFile").files[0];
+            // For now, we'll leave vizRequestText empty when using file
+        } else {
+            // User selected text input - use the original logic
+            vizRequestText = dom.$("vizRequestText").value.trim();
+        }
+        // === ADDED TOGGLE LOGIC END ===
+        
         const dataFile = dom.$("vizFile").files[0];
-
         if (!dataFile) {
             throw new Error("❌ Please upload a CSV data file.");
         }
-
         // 2. Prepare FormData
         const formData = new FormData();
         formData.append("data_file", dataFile, dataFile.name);
-
-        // 3. Cleverly handle the context text:
-        // Convert the text from the <textarea> into a Blob (an in-memory file)
-        // so the backend can receive it as the 'context_file'.
-        if (vizRequestText) {
-            const contextBlob = new Blob([vizRequestText], { type: 'text/plain' });
-            formData.append("context_file", contextBlob, "visualization_context.txt");
-            console.log("Attaching user request text as context_file.");
+        
+        // === MODIFIED CONTEXT HANDLING START ===
+        // 3. Cleverly handle the context text or file:
+        if (isUsingFile) {
+            // If user selected file upload, attach the context file directly
+            const contextFile = dom.$("vizContextFile").files[0];
+            if (contextFile) {
+                formData.append("context_file", contextFile, contextFile.name);
+                console.log("Attaching user uploaded context file.");
+            }
+        } else {
+            // If user selected text input, convert the text from the <textarea> into a Blob
+            if (vizRequestText) {
+                const contextBlob = new Blob([vizRequestText], { type: 'text/plain' });
+                formData.append("context_file", contextBlob, "visualization_context.txt");
+                console.log("Attaching user request text as context_file.");
+            }
         }
+        // === MODIFIED CONTEXT HANDLING END ===
         
         // 4. We are NOT sending chart_configs, so the backend will auto-generate
         // formData.append("chart_configs", JSON.stringify([...])); 
-
         // 5. Send Request to Python Backend
         console.log(`Sending Visualization request to Python backend at ${API_URL}...`);
         const response = await fetch(API_URL, {
@@ -433,22 +416,34 @@ async function handleRegressionAnalysis_DA() {
     setLoading("generate", true);
     dom.$("analysisActions").classList.add("hidden");
 
-    const API_URL = "https://analysis.data2int.com/api/regression"; // Your FastAPI endpoint
+    const API_URL = "https://analysis.data2int.com/api/regression"; // FastAPI endpoint
     
     // --- NEW: Get the warning div ---
     const warningEl = dom.$("regressionDataWarning");
     if (warningEl) warningEl.textContent = ""; // Clear previous warnings
 
     try {
-        // --- 1. Gather Inputs from NEW UI Elements ---
+        // --- 1. Gather Inputs from UI Elements ---
         const dependentVar = dom.$("dependentVar").value;
         
-        // Get all checked independent variables
         const independentVarCheckboxes = document.querySelectorAll("#independentVarsContainer .independent-var-checkbox:checked");
         const independentVarsList = Array.from(independentVarCheckboxes).map(cb => cb.value);
 
         const dataFile = dom.$("regressionFile").files[0];
-        const contextFile = dom.$("regressionContextFile").files[0];
+        
+        // --- MODIFIED BLOCK START: Get Context ---
+        const useDoc = dom.$("docUpload").checked;
+        let contextFile = null;
+        let contextText = "";
+
+        if (useDoc) {
+            contextFile = dom.$("regressionContextFile").files[0];
+            // Note: We don't require the context file, so no error if it's missing.
+        } else {
+            contextText = dom.$("regressionContextText").value.trim();
+            // Note: We don't require the context text.
+        }
+        // --- MODIFIED BLOCK END ---
 
         // 2. Validate Inputs
         if (!dataFile) {
@@ -464,7 +459,6 @@ async function handleRegressionAnalysis_DA() {
             throw new Error("❌ The Dependent Variable cannot also be an Independent Variable.");
         }
 
-        // --- VALIDATION BLOCK (uses the new error strings) ---
         const numFeatures = independentVarsList.length;
         const numObservations = appState.currentRegressionRowCount; // Get stored row count
         const ratio = numObservations / numFeatures;
@@ -477,18 +471,22 @@ async function handleRegressionAnalysis_DA() {
         if (ratio < 10) {
             throw new Error(`❌ Insufficient Data Ratio: You have ${numObservations} observations for ${numFeatures} features (a ratio of ${ratio.toFixed(1)}-to-1). A 10-to-1 ratio (or ${numFeatures * 10} rows) is recommended.`);
         }
-        // --- END VALIDATION BLOCK ---
-
 
         // 3. Prepare FormData for the backend
         const formData = new FormData();
         
         // Append files
         formData.append("data_file", dataFile, dataFile.name);
-        if (contextFile) {
-            formData.append("context_file", contextFile, contextFile.name);
-        }
 
+        if (contextFile) {
+            // If user uploaded a file, append it
+            formData.append("context_file", contextFile, contextFile.name);
+        } else if (contextText) {
+            // If user typed text, create a Blob and append it as a file
+            const contextBlob = new Blob([contextText], { type: 'text/plain' });
+            formData.append("context_file", contextBlob, "context_input.txt");
+        }
+        
         // Append simple text fields
         formData.append("target_column", dependentVar);
 

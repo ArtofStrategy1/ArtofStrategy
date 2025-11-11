@@ -13,83 +13,99 @@ function createDescriptiveLayout_DA(template) {
     const contentContainer = dom.$("templateDetailContent");
     contentContainer.className = "grid lg:grid-cols-1 gap-12";
     contentContainer.innerHTML = `
-                <div class="lg:col-span-1">
-                        <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
-                        <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">${template.description}</p>
-
-                    <div class="glass-container max-w-2xl mx-auto w-full p-6 space-y-4">
-                            
-                        <div class="flex items-center justify-between mb-2">
-                            <h3 class="text-xl font-bold text-white">Upload Your Dataset & Context</h3>
-                            <div class="flex items-center space-x-2">
-                                <button type="button" id="descConfigExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
-                                <a href="data-files/descriptive/descriptive-sample-doc.txt" download="Descriptive_Sample_Doc.txt" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .txt</a>
-                                <a href="data-files/descriptive/descriptive-sample-data.csv" download="Descriptive_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>
-                            </div>
-                        </div>
-
-                        <div id="descConfigExamples" class="hidden mb-4 p-3 bg-black/20 border border-white/15 rounded-lg">
-                            <div class="text-xs font-medium text-white/90 mb-2">📋 How to Use Descriptive Analysis</div>
-                            <div class="space-y-2 text-xs">
-                                <div id="descExampleContent" class="text-white/80">Loading example...</div>
-                            </div>
-                        </div>
-
-                        <div class="space-y-4">
-                            <div>
-                                <label for="descriptiveContextFile" class="block text-sm font-medium text-gray-200 mb-2">Company Document (.txt, .docx)</label>
-                                <div class="input-file-wrapper">
-                                    <label for="descriptiveContextFile" id="descriptiveContextFileLabel" class="input-file-btn">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
-                                        <span class="file-name">Select context document...</span>
-                                    </label>
-                                        <input type="file" id="descriptiveContextFile" class="input-file" accept=".txt,.docx">
+                    <div class="lg:col-span-1">
+                         <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
+                         <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">${template.description}</p>
+   
+                     <div class="glass-container max-w-2xl mx-auto w-full p-6 space-y-4">
+                             
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-xl font-bold text-white">Upload Your Dataset & Context</h3>
+                                <div class="flex items-center space-x-2">
+                                    <button type="button" id="descConfigExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
+                                    <a href="data-files/descriptive/descriptive-sample-doc.txt" download="Descriptive_Sample_Doc.txt" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .txt</a>
+                                    <a href="data-files/descriptive/descriptive-sample-data.csv" download="Descriptive_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>
                                 </div>
                             </div>
-                            <div>
-                                <label for="descriptiveFile" class="block text-sm font-medium text-gray-200 mb-2">Data File (.csv)</label>
+ 
+                            <div id="descConfigExamples" class="hidden mb-4 p-3 bg-black/20 border border-white/15 rounded-lg">
+                                <div class="text-xs font-medium text-white/90 mb-2">📋 How to Use Descriptive Analysis</div>
+                                <div class="space-y-2 text-xs">
+                                    <div id="descExampleContent" class="text-white/80">Loading example...</div>
+                                </div>
+                            </div>
+
+                            <div class="space-y-4">
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-200 mb-2">Company Context</label>
+                                    <div class="input-radio-group">
+                                        <input type="radio" name="inputType" id="textInput" class="input-radio" checked>
+                                        <label for="textInput" class="input-radio-label">Text Input</label>
+                                        <input type="radio" name="inputType" id="docUpload" class="input-radio">
+                                        <label for="docUpload" class="input-radio-label">Document Upload</label>
+                                    </div>
+                                </div>
+
+                                <div id="descriptiveContextTextArea">
+                                    <label for="descriptiveContextText" class="block text-sm font-medium text-gray-200 mb-2">Paste Context Here</label>
+                                    <textarea id="descriptiveContextText" class="input-field h-32" placeholder="Paste your company context, business plan, or problem description here..."></textarea>
+                                </div>
+
+                                <div id="descriptiveContextFileArea" class="hidden">
+                                    <label for="descriptiveContextFile" class="block text-sm font-medium text-gray-200 mb-2">Company Document (.txt, .docx)</label>
                                     <div class="input-file-wrapper">
-                                    <label for="descriptiveFile" id="descriptiveFileLabel" class="input-file-btn">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
-                                        <span class="file-name">Select .csv data file...</span>
-                                    </label>
-                                    <input type="file" id="descriptiveFile" class="input-file" accept=".csv">
+                                        <label for="descriptiveContextFile" id="descriptiveContextFileLabel" class="input-file-btn">
+                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                                            <span class="file-name">Select context document...</span>
+                                        </label>
+                                         <input type="file" id="descriptiveContextFile" class="input-file" accept=".txt,.docx">
+                                    </div>
                                 </div>
-                                <div id="descriptiveFileError" class="text-red-400 text-sm mt-2"></div>
+                                <div>
+                                    <label for="descriptiveFile" class="block text-sm font-medium text-gray-200 mb-2">Data File (.csv)</label>
+                                     <div class="input-file-wrapper">
+                                        <label for="descriptiveFile" id="descriptiveFileLabel" class="input-file-btn">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                                            <span class="file-name">Select .csv data file...</span>
+                                        </label>
+                                         <input type="file" id="descriptiveFile" class="input-file" accept=".csv">
+                                    </div>
+                                    <div id="descriptiveFileError" class="text-red-400 text-sm mt-2"></div>
+                                </div>
+                                
+                                <div id="descriptiveDataPreview" class="space-y-2">
+                                    <label class="block text-sm font-medium text-gray-200">Data Preview (First 5 Rows)</label>
+                                    <div class="overflow-x-auto rounded-lg border border-white/20">
+                                        <table class="min-w-full text-left text-sm text-white/90" id="descriptivePreviewTable">
+                                            <tbody>
+                                                <tr>
+                                                    <td class="p-4 text-center text-white/60" colspan="100%">Upload a .csv file to see a preview.</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
                             </div>
-                            
-                            <div id="descriptiveDataPreview" class="space-y-2">
-                                <label class="block text-sm font-medium text-gray-200">Data Preview (First 5 Rows)</label>
-                                <div class="overflow-x-auto rounded-lg border border-white/20">
-                                    <table class="min-w-full text-left text-sm text-white/90" id="descriptivePreviewTable">
-                                        <tbody>
-                                            <tr>
-                                                <td class="p-4 text-center text-white/60" colspan="100%">Upload a .csv file to see a preview.</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
+        
+                             <button id="generateBtn" class="btn btn-primary w-full text-lg py-3 mt-4">
+                                <span id="generateBtnText">🔍 Analyze Data</span>
+                                <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
+                            </button>
+                            <div class="text-center mt-4">
+	                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
                             </div>
                         </div>
-    
-                            <button id="generateBtn" class="btn btn-primary w-full text-lg py-3 mt-4">
-                            <span id="generateBtnText">🔍 Analyze Data</span>
-                            <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
-                        </button>
-                        <div class="text-center mt-4">
-                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                        <div class="mt-12">
+                             <h2 class="text-3xl font-bold mb-4 text-center">Descriptive Analysis Results</h2>
+                             <div id="analysisResult" class="glass-container min-h-[500px] overflow-x-auto"></div>
+                             <div id="analysisActions" class="text-center mt-4 space-x-2 hidden">
+                                <button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>
+                                <button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
+                            </div>
                         </div>
                     </div>
-                    <div class="mt-12">
-                            <h2 class="text-3xl font-bold mb-4 text-center">Descriptive Analysis Results</h2>
-                            <div id="analysisResult" class="glass-container min-h-[500px] overflow-x-auto"></div>
-                            <div id="analysisActions" class="text-center mt-4 space-x-2 hidden">
-                            <button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>
-                            <button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
-                        </div>
-                    </div>
-                </div>
-            `;
+                `;
 
     // --- All Helper Functions are LOCAL to this function ---
 
@@ -196,7 +212,10 @@ function createDescriptiveLayout_DA(template) {
             });
         }
     };
-    attachListener("descriptiveContextFile", "descriptiveContextFileLabel");
+
+    // Call setupInputToggle for the new radio buttons
+    // This handles the show/hide logic AND the "descriptiveContextFile" listener
+    setupInputToggle("descriptiveContextFile", "descriptiveContextFileLabel", "descriptiveContextTextArea", "descriptiveContextFileArea");
 
     // === NEW: Event listener for the descriptive data file ===
     const descriptiveFileInput = dom.$("descriptiveFile");
@@ -228,80 +247,38 @@ function createDescriptiveLayout_DA(template) {
 
             if (!isHidden && exampleContentEl.textContent === "Loading example...") {
                 exampleContentEl.innerHTML = `
-                    <div class="mb-4">
-                        <div class="flex items-center mb-2">
-                            <span class="text-green-400 mr-2">✅</span>
-                            <span class="text-sm font-medium text-green-400">GOOD EXAMPLE</span>
-                            <span class="text-xs text-white/60 ml-2">(Results in comprehensive statistical insights with clear patterns)</span>
-                        </div>
-                        <div class="bg-green-900/20 border border-green-500/30 rounded p-3 mb-3">
-                            <div class="text-xs text-white/90 mb-2"><strong>Company Document:</strong></div>
-                            <div class="text-xs text-white/80 mb-3">
-                                "TechFlow Solutions seeks to understand performance drivers affecting customer satisfaction and revenue growth. 
-                                Key areas of focus: regional performance variations, employee productivity trends, and customer retention patterns. 
-                                Strategic priority: identify underperforming segments and optimization opportunities."
+                         <div class="mb-4">
+                            <div class="flex items-center mb-2">
+                                <span class="text-green-400 mr-2">✅</span>
+                                <span class="text-sm font-medium text-green-400">GOOD EXAMPLE</span>
+                                <span class="text-xs text-white/60 ml-2">(Results in comprehensive statistical insights with clear patterns)</span>
                             </div>
-                            <div class="text-xs text-white/90 mb-2"><strong>CSV Data (quarterly metrics):</strong></div>
-                            <div class="bg-black/30 p-2 rounded font-mono text-xs text-white/90">
+                            <div class="bg-green-900/20 border border-green-500/30 rounded p-3 mb-3">
+                                <div class="text-xs text-white/90 mb-2"><strong>Company Context (Text Input or .txt):</strong></div>
+                                 <div class="text-xs text-white/80 mb-3">
+                                    "TechFlow Solutions seeks to understand performance drivers affecting customer satisfaction and revenue growth. 
+                                    Key areas of focus: regional performance variations, employee productivity trends, and customer retention patterns. 
+                                    Strategic priority: identify underperforming segments and optimization opportunities."
+                                </div>
+                                <div class="text-xs text-white/90 mb-2"><strong>CSV Data (quarterly metrics):</strong></div>
+                                <div class="bg-black/30 p-2 rounded font-mono text-xs text-white/90">
 Quarter,Revenue_Millions,Customer_Count,Satisfaction_Score,Employee_Count,Regional_Performance
 Q1_2023,12.5,285,4.2,125,North
 Q2_2023,13.8,295,4.1,132,North  
 Q3_2023,15.2,310,4.5,140,South
 Q4_2023,16.9,325,4.8,145,West</div>
-                        </div>
-                    </div>
-                    <div class="mb-4">
-                        <div class="flex items-center mb-2">
-                            <span class="text-red-400 mr-2">❌</span>
-                            <span class="text-sm font-medium text-red-400">BAD EXAMPLE</span>
-                            <span class="text-xs text-white/60 ml-2">(Results in limited insights and unclear patterns)</span>
-                        </div>
-                        <div class="bg-red-900/20 border border-red-500/30 rounded p-3">
-                            <div class="text-xs text-white/80 mb-3">
-                                "Our company has some data and wants analysis. Please look at everything and tell us what's important."
                             </div>
-                            <div class="bg-black/30 p-2 rounded font-mono text-xs text-white/90">
-Data1,Data2,Info,Stuff,$Revenue
-A,Good,5,Things,$15000
-B,Bad,3,Items,$12000</div>
-                        </div>
-                    </div>
-                    <div class="border-t border-white/20 pt-3">
-                        <div class="text-xs font-medium text-white/90 mb-2">📝 Key Differences Between Good & Bad Input:</div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                            <div>
-                                <div class="text-green-400 font-medium mb-1">✅ Good Practices:</div>
-                                <div class="text-white/80 space-y-1">
-                                    <div>• Clear business context and objectives</div>
-                                    <div>• Specific questions or focus areas</div>
-                                    <div>• Consistent column naming</div>
-                                    <div>• Clean numeric data (no symbols)</div>
-                                    <div>• Meaningful time periods</div>
-                                </div>
-                            </div>
-                            <div>
-                                <div class="text-red-400 font-medium mb-1">❌ Bad Practices:</div>
-                                <div class="text-white/80 space-y-1">
-                                    <div>• Vague or missing context</div>
-                                    <div>• Generic column names</div>
-                                    <div>• Mixed data formats</div>
-                                    <div>• Currency symbols in numbers</div>
-                                    <div>• Inconsistent categorization</div>
-                                </div>
+                         </div>
+                        
+                        <div class="border-t border-white/20 pt-3">
+                            <div class="text-xs font-medium text-white/90 mb-2">💡 How to Use This Tool:</div>
+                            <div class="text-xs text-white/80 space-y-1">
+                                <div>• <strong>Provide Context:</strong> Use the text input or file upload to describe your business goals or what you're looking for.</div>
+                                <div>• <strong>Provide Data:</strong> Upload the raw .csv file you want to analyze.</div>
+                                <div>• <strong>AI Links Both:</strong> The AI will analyze the CSV data *and* use your context to provide relevant business insights.</div>
                             </div>
                         </div>
-                    </div>
-                    <div class="border-t border-white/20 pt-3 mt-3">
-                        <div class="text-xs font-medium text-white/90 mb-2">💡 How to Use This Tool:</div>
-                        <div class="text-xs text-white/80 space-y-1">
-                            <div>• <strong>Write naturally:</strong> Describe your situation in plain English</div>
-                            <div>• <strong>Be specific:</strong> Mention what you want to understand or improve</div>
-                            <div>• <strong>Clean your data:</strong> Use consistent formatting and clear column headers</div>
-                            <div>• <strong>Include context:</strong> Help the AI understand your business goals</div>
-                            <div>• <strong>Show relationships:</strong> The document explains what the numbers mean</div>
-                        </div>
-                    </div>
-                `;
+                    `;
             }
         });
     }
@@ -815,62 +792,268 @@ function createPrescriptiveLayout_DA(template) {
     const contentContainer = dom.$("templateDetailContent");
     contentContainer.className = "grid lg:grid-cols-1 gap-12";
     contentContainer.innerHTML = `
-                    <div class="lg:col-span-1">
-                         <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
-                         <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">${template.description}</p>
-                        <div class="glass-container max-w-2xl mx-auto w-full p-6 space-y-4">
-                         
-                             <div class="flex items-center justify-between mb-2">
-                                <h3 class="text-xl font-bold text-white">Prescriptive Setup</h3>
-                                <div class="flex items-center space-x-2">
-                                    <button type="button" id="prescriptiveExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
-                                    <a href="data-files/prescriptive/prescriptive-sample-doc.txt" download="Prescriptive_Sample_Context.txt" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .txt</a>
-                                    <a href="data-files/prescriptive/prescriptive-sample-data.csv" download="Prescriptive_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>
+                <div class="lg:col-span-1">
+                     <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
+                     <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">${template.description}</p>
+                    <div class="glass-container max-w-2xl mx-auto w-full p-6 space-y-4">
+                     
+                         <div class="flex items-center justify-between mb-2">
+                            <h3 class="text-xl font-bold text-white">Prescriptive Setup</h3>
+                            <div class="flex items-center space-x-2">
+                                <button type="button" id="prescriptiveExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
+                                <a href="data-files/prescriptive/prescriptive-sample-doc.txt" download="Prescriptive_Sample_Context.txt" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .txt</a>
+                                <a href="data-files/prescriptive/prescriptive-sample-data.csv" download="Prescriptive_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>
+                            </div>
+                        </div>
+
+                        <div id="prescriptiveExamples" class="hidden mb-4 p-3 bg-black/20 border border-white/15 rounded-lg">
+                            <div id="prescriptiveExampleContent" class="text-white/80">Loading example...</div>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <!-- === ADDED TOGGLE SECTION START === -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-200 mb-2">Business Goal / Context</label>
+                                <div class="input-radio-group">
+                                    <input type="radio" name="prescriptiveInputType" id="prescriptiveInputTextToggle" class="input-radio" checked>
+                                    <label for="prescriptiveInputTextToggle" class="input-radio-label">Text Input</label>
+                                    <input type="radio" name="prescriptiveInputType" id="prescriptiveInputFileToggle" class="input-radio">
+                                    <label for="prescriptiveInputFileToggle" class="input-radio-label">Document Upload</label>
                                 </div>
                             </div>
 
-                            <div id="prescriptiveExamples" class="hidden mb-4 p-3 bg-black/20 border border-white/15 rounded-lg">
-                                <div id="prescriptiveExampleContent" class="text-white/80">Loading example...</div>
+                            <div id="prescriptiveTextInputArea">
+                                <label for="prescriptiveGoalText" class="block text-sm font-medium text-gray-200 mb-2">What is your business goal?</label>
+                                <textarea id="prescriptiveGoalText" class="input-field h-24" placeholder="Be specific. For example: 'Increase customer retention by 15% in the next quarter.' or 'Reduce operational costs in the logistics department by 10%.'"></textarea>
                             </div>
+
+                            <div id="prescriptiveFileInputArea" class="hidden">
+                                <label for="prescriptiveContextFile" class="block text-sm font-medium text-gray-200 mb-2">Context Document (.txt, .docx)</label>
+                                <div class="input-file-wrapper">
+                                    <label for="prescriptiveContextFile" id="prescriptiveContextFileLabel" class="input-file-btn">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                                    <span class="file-name">Select context document...</span>
+                                    </label>
+                                    <input type="file" id="prescriptiveContextFile" class="input-file" accept=".txt,.docx">
+                                </div>
+                            </div>
+                            <!-- === ADDED TOGGLE SECTION END === -->
                             
-                            <div class="space-y-4">
-                                <div>
-                                    <label for="prescriptiveGoal" class="block text-sm font-medium text-gray-200 mb-2">What is your business goal? (This is your context)</label>
-                                    <textarea id="prescriptiveGoal" class="input-field h-24" placeholder="Be specific. For example: 'Increase customer retention by 15% in the next quarter.' or 'Reduce operational costs in the logistics department by 10%.'"></textarea>
+                            <div>
+                                <label for="prescriptiveFile" class="block text-sm font-medium text-gray-200 mb-2">Upload Data File (.csv)</label>
+                                <div class="input-file-wrapper">
+                                    <label for="prescriptiveFile" id="prescriptiveFileLabel" class="input-file-btn">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                                        <span class="file-name">Select .csv file...</span>
+                                    </label>
+                                    <input type="file" id="prescriptiveFile" class="input-file" accept=".csv">
                                 </div>
-                                <div>
-                                    <label for="prescriptiveFile" class="block text-sm font-medium text-gray-200 mb-2">Upload Data File (.csv)</label>
-                                    <div class="input-file-wrapper">
-                                        <label for="prescriptiveFile" id="prescriptiveFileLabel" class="input-file-btn">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
-                                            <span class="file-name">Select .csv file...</span>
-                                        </label>
-                                        <input type="file" id="prescriptiveFile" class="input-file" accept=".csv">
-                                    </div>
-                                </div>
-                            </div>
-                            <button id="generateBtn" class="btn btn-primary w-full text-lg py-3 mt-4">
-                                <span id="generateBtnText">💡 Generate Prescriptions</span>
-                                <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
-                            </button>
-                            <div class="text-center mt-4">
-	                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                                <div id="prescriptiveFileError" class="text-red-400 text-sm mt-2"></div>
                             </div>
                         </div>
-                        <div class="mt-12">
-                             <h2 class="text-3xl font-bold mb-4 text-center">Prescriptive Analysis Results</h2>
-                             <div id="analysisResult" class="glass-container min-h-[500px] overflow-x-auto"></div>
-                             <div id="analysisActions" class="text-center mt-4 space-x-2 hidden">
-                                <button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>
-                                <button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
+                        
+                        <!-- Data Preview Section -->
+                        <div id="prescriptiveDataQualityWarning" class="hidden error-message p-3 text-sm mt-4"></div>
+                        <div id="prescriptiveDataPreview" class="hidden space-y-2 mt-4">
+                            <label class="block text-sm font-medium text-gray-200">Data Preview (First 5 Rows)</label>
+                            <div class="overflow-x-auto rounded-lg border border-white/20">
+                                <table class="min-w-full text-left text-sm text-white/90" id="prescriptivePreviewTable">
+                                </table>
                             </div>
+                        </div>
+
+                        <button id="generateBtn" class="btn btn-primary w-full text-lg py-3 mt-4">
+                            <span id="generateBtnText">💡 Generate Prescriptions</span>
+                            <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
+                        </button>
+                        <div class="text-center mt-4">
+                            <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
                         </div>
                     </div>
-                `;
+                    <div class="mt-12">
+                         <h2 class="text-3xl font-bold mb-4 text-center">Prescriptive Analysis Results</h2>
+                         <div id="analysisResult" class="glass-container min-h-[500px] overflow-x-auto"></div>
+                         <div id="analysisActions" class="text-center mt-4 space-x-2 hidden">
+                            <button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>
+                            <button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+    
     // This helper function is fine and doesn't need changes
     setupInputToggle("prescriptiveFile", "prescriptiveFileLabel", null, null);
 
-    // --- NEW: Add listener for the examples button ---
+    // === TOGGLE EVENT LISTENERS ===
+    const prescriptiveInputTextToggle = dom.$("prescriptiveInputTextToggle");
+    const prescriptiveInputFileToggle = dom.$("prescriptiveInputFileToggle");
+    const prescriptiveTextInputArea = dom.$("prescriptiveTextInputArea");
+    const prescriptiveFileInputArea = dom.$("prescriptiveFileInputArea");
+
+    if (prescriptiveInputTextToggle && prescriptiveInputFileToggle) {
+        prescriptiveInputTextToggle.addEventListener("change", () => {
+            prescriptiveTextInputArea.classList.remove("hidden");
+            prescriptiveFileInputArea.classList.add("hidden");
+        });
+        prescriptiveInputFileToggle.addEventListener("change", () => {
+            prescriptiveTextInputArea.classList.add("hidden");
+            prescriptiveFileInputArea.classList.remove("hidden");
+        });
+    }
+
+    // Context file input listener
+    const contextFileInput = dom.$("prescriptiveContextFile");
+    if (contextFileInput) {
+        contextFileInput.addEventListener("change", (e) => {
+            const label = dom.$("prescriptiveContextFileLabel");
+            const fileNameSpan = label.querySelector(".file-name");
+            if (e.target.files.length > 0) {
+                fileNameSpan.textContent = e.target.files[0].name;
+                label.classList.add("has-file");
+            } else {
+                fileNameSpan.textContent = "Select context document...";
+                label.classList.remove("has-file");
+            }
+        });
+    }
+
+    // === CSV DATA FILE INPUT LISTENER WITH PREVIEW ===
+    const dataFileInput = dom.$("prescriptiveFile");
+    const dataFileLabel = dom.$("prescriptiveFileLabel");
+    const fileError = dom.$("prescriptiveFileError");
+
+    if (dataFileInput && dataFileLabel && fileError) {
+        dataFileInput.addEventListener("change", async function(e) {
+            const fileNameSpan = dataFileLabel.querySelector(".file-name");
+            const qualityWarning = dom.$("prescriptiveDataQualityWarning");
+            const previewContainer = dom.$("prescriptiveDataPreview");
+            const previewTable = dom.$("prescriptivePreviewTable");
+
+            fileError.textContent = "";
+            qualityWarning.classList.add("hidden");
+            previewContainer.classList.add("hidden");
+
+            if (fileNameSpan) {
+                if (e.target.files.length > 0) {
+                    const file = e.target.files[0];
+                    fileNameSpan.textContent = file.name;
+                    dataFileLabel.classList.add("has-file");
+                    
+                    // Validate file type
+                    if (!file.name.toLowerCase().endsWith('.csv')) {
+                        fileError.textContent = "Please select a CSV file (.csv)";
+                        return;
+                    }
+                    
+                    // Validate file size (10MB limit)
+                    const maxSize = 10 * 1024 * 1024;
+                    if (file.size > maxSize) {
+                        fileError.textContent = "File size must be less than 10MB";
+                        return;
+                    }
+                    
+                    try {
+                        // Read the file as text
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const csvText = e.target.result;
+                            
+                            // Show data preview - ALL LOGIC INLINE
+                            let warnings = [];
+                            const lines = csvText.split(/[\r\n]+/).filter(line => line.trim() !== '');
+                            const rows = lines.slice(0, 6); // Header + 5 data rows
+                            
+                            const dataRowCount = lines.length - 1;
+                            if (dataRowCount < 10) {
+                                warnings.push(`Small dataset (only ${dataRowCount} rows). Results may be limited.`);
+                            }
+
+                            if (rows.length < 2) {
+                                previewContainer.classList.add("hidden");
+                                if(dataRowCount === 0) {
+                                    warnings.push("File appears to be empty or missing data rows.");
+                                }
+                            } else {
+                                // Parse headers - ALL INLINE
+                                const firstLine = rows[0];
+                                let headers = firstLine.split(',').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+                                if (headers.length <= 1) headers = firstLine.split(';').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+                                if (headers.length <= 1) headers = firstLine.split('\t').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+                                
+                                if (headers.length === 0) {
+                                    throw new Error("Could not parse headers.");
+                                }
+
+                                let tableHTML = '<thead class="bg-white/10 text-xs uppercase"><tr>';
+                                headers.forEach(h => { tableHTML += `<th scope="col" class="px-4 py-2">${h}</th>`; });
+                                tableHTML += '</tr></thead><tbody>';
+
+                                let nullCount = 0;
+                                let messyDataCount = 0;
+
+                                rows.slice(1).forEach((line, rowIndex) => {
+                                    let cells = line.split(',');
+                                    if (cells.length !== headers.length) cells = line.split(';');
+                                    if (cells.length !== headers.length) cells = line.split('\t');
+
+                                    tableHTML += `<tr class="border-t border-white/10 ${rowIndex % 2 === 0 ? 'bg-white/5' : ''}">`;
+                                    headers.forEach((_, cellIndex) => {
+                                        const cellValue = cells[cellIndex]?.trim() ?? '';
+                                        let displayValue = cellValue;
+                                        
+                                        if (cellValue === '' || cellValue.toLowerCase() === 'null' || cellValue.toLowerCase() === 'na') {
+                                            nullCount++;
+                                            displayValue = `<span class="text-yellow-400 italic" title="Null/Missing Value">NULL</span>`;
+                                        } else if (/[$,%"]/.test(cellValue) && !isNaN(parseFloat(cellValue.replace(/[$,%"]/g, '')))) {
+                                            messyDataCount++;
+                                            displayValue = `<span class="text-orange-400" title="Messy Data (contains symbols)">${cellValue}</span>`;
+                                        }
+
+                                        tableHTML += `<td class="px-4 py-2 whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]" title="${cellValue}">${displayValue}</td>`;
+                                    });
+                                    tableHTML += '</tr>';
+                                });
+                                tableHTML += '</tbody>';
+                                previewTable.innerHTML = tableHTML;
+                                previewContainer.classList.remove("hidden");
+
+                                if (nullCount > 0) {
+                                    warnings.push(`Spotted ${nullCount} missing values (NULL) in the preview.`);
+                                }
+                                if (messyDataCount > 0) {
+                                    warnings.push(`Spotted ${messyDataCount} numerical values with symbols ($, %, etc.). Consider cleaning the data.`);
+                                }
+                            }
+
+                            // Display warnings
+                            if (warnings.length > 0) {
+                                qualityWarning.innerHTML = "<strong>⚠️ Data Quality Warnings:</strong><ul class='list-disc list-inside mt-1'>" + warnings.map(w => `<li>${w}</li>`).join('') + "</ul>";
+                                qualityWarning.classList.remove("hidden");
+                            } else {
+                                qualityWarning.classList.add("hidden");
+                            }
+                        };
+                        
+                        reader.onerror = function() {
+                            fileError.textContent = "Error reading file";
+                        };
+                        
+                        reader.readAsText(file);
+                        
+                    } catch (err) {
+                        fileError.textContent = `Error reading file: ${err.message}`;
+                        previewContainer.classList.add("hidden");
+                        qualityWarning.classList.add("hidden");
+                    }
+                } else {
+                    fileNameSpan.textContent = "Select .csv file...";
+                    dataFileLabel.classList.remove("has-file");
+                }
+            }
+        });
+    }
+
+    // --- Examples button listener ---
     const examplesBtn = dom.$("prescriptiveExamplesBtn");
     const examplesDiv = dom.$("prescriptiveExamples");
     const exampleContentEl = dom.$("prescriptiveExampleContent");
@@ -881,7 +1064,6 @@ function createPrescriptiveLayout_DA(template) {
             examplesBtn.textContent = isHidden ? "View Examples" : "Hide Examples";
 
             if (!isHidden && exampleContentEl.textContent === "Loading example...") {
-                // Populate with relevant prescriptive example
                 exampleContentEl.innerHTML = `
                     <div class="mb-4">
                         <div class="flex items-center mb-2">
@@ -923,12 +1105,6 @@ CustomerID,Tenure_Months,Support_Tickets,Used_Feature_X,Churned<br>
     if (feedbackLink) {
         feedbackLink.addEventListener("click", (e) => {
             e.preventDefault();
-            
-            // This just calls the navigateTo function.
-            // It relies on the main `MapsTo` function to be
-            // the simplified one (without memory logic)
-            // and the `submitFeedbackPageBtn` listener
-            // to be the simplified one (that just goes home).
             if (typeof navigateTo === 'function') {
                 navigateTo('feedback');
             } else {
@@ -952,7 +1128,7 @@ function createVisualizationLayout_DA(template) {
     // Helper function to safely get element
     function safeGetElement(id) {
         try {
-                return document.getElementById(id);
+             return document.getElementById(id);
         } catch (e) {
             console.error("Error getting element:", id, e);
             return null;
@@ -1060,41 +1236,52 @@ function createVisualizationLayout_DA(template) {
         '</div>',
         // --- End Examples Div ---
 
+        // === ADDED TOGGLE SECTION START ===
         '<div class="space-y-4">',
-        '<div>',
-        '<label for="vizRequest" class="block text-sm font-medium text-gray-200 mb-2">What do you want to visualize? (This is your context)</label>',
-        '<textarea id="vizRequest" class="input-field h-24" placeholder="Be specific. For example: \'Show the relationship between Marketing Spend and Sales Revenue\', or \'Visualize the distribution of customer ages by product category.\'"></textarea>',
-        '</div>',
-        '<div>',
-        '<label for="vizFile" class="block text-sm font-medium text-gray-200 mb-2">Upload Data File (.csv)</label>',
-        '<div class="input-file-wrapper">',
-        '<label for="vizFile" id="vizFileLabel" class="input-file-btn">',
-        '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16">',
-        '<path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>',
-        '<path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/>',
-        '</svg>',
-        '<span class="file-name">Select .csv file...</span>',
-        '</label>',
-        '<input type="file" id="vizFile" class="input-file" accept=".csv">',
-        '</div>',
-        '<div id="vizFileError" class="text-red-400 text-sm mt-2"></div>',
-        '</div>',
-        '</div>',
-
-        // --- Column Guidance (V10) ---
-        '<details class="styled-details text-sm mt-4">',
-            '<summary class="font-semibold">View Column Guidance (using sample data)</summary>',
-            '<div class="bg-black/20 p-4 rounded-b-lg space-y-3 text-xs text-white/80">',
-                '<div>',
-                    '<h5 class="font-semibold text-white mb-1">Sales & Marketing Analysis:</h5>',
-                    '<p>• `Date`, `Sales_Revenue` (number), `Marketing_Spend` (number), `Region` (text), `Product_Category` (text)</p>',
-                '</div>',
-                '<div>',
-                    '<h5 class="font-semibold text-white mb-1">Customer & Product Analysis:</h5>',
-                    '<p>• `Date`, `Customer_Satisfaction` (number), `Region` (text), `Product_Category` (text), `Sales_Revenue` (number)</p>',
+            '<div>',
+                '<label class="block text-sm font-medium text-gray-200 mb-2">Visualization Request / Context</label>',
+                '<div class="input-radio-group">',
+                    '<input type="radio" name="vizInputType" id="vizInputTextToggle" class="input-radio" checked>',
+                    '<label for="vizInputTextToggle" class="input-radio-label">Text Input</label>',
+                    '<input type="radio" name="vizInputType" id="vizInputFileToggle" class="input-radio">',
+                    '<label for="vizInputFileToggle" class="input-radio-label">Document Upload</label>',
                 '</div>',
             '</div>',
-        '</details>',
+
+            '<div id="vizTextInputArea">',
+                '<label for="vizRequestText" class="block text-sm font-medium text-gray-200 mb-2">What do you want to visualize?</label>',
+                '<textarea id="vizRequestText" class="input-field h-24" placeholder="Be specific. For example: \'Show the relationship between Marketing Spend and Sales Revenue\', or \'Visualize the distribution of customer ages by product category.\'"></textarea>',
+            '</div>',
+
+            '<div id="vizFileInputArea" class="hidden">',
+                '<label for="vizContextFile" class="block text-sm font-medium text-gray-200 mb-2">Context Document (.txt, .docx)</label>',
+                '<div class="input-file-wrapper">',
+                    '<label for="vizContextFile" id="vizContextFileLabel" class="input-file-btn">',
+                    '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>',
+                    '<span class="file-name">Select context document...</span>',
+                    '</label>',
+                    '<input type="file" id="vizContextFile" class="input-file" accept=".txt,.docx">',
+                '</div>',
+            '</div>',
+        // === ADDED TOGGLE SECTION END ===
+
+            '<div>',
+            '<label for="vizFile" class="block text-sm font-medium text-gray-200 mb-2">Upload Data File (.csv)</label>',
+            '<div class="input-file-wrapper">',
+            '<label for="vizFile" id="vizFileLabel" class="input-file-btn">',
+            '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16">',
+            '<path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>',
+            '<path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/>',
+            '</svg>',
+            '<span class="file-name">Select .csv file...</span>',
+            '</label>',
+            '<input type="file" id="vizFile" class="input-file" accept=".csv">',
+            '</div>',
+            '<div id="vizFileError" class="text-red-400 text-sm mt-2"></div>',
+            '</div>',
+        '</div>',
+
+
 
         '<div id="vizDataQualityWarning" class="hidden error-message p-3 text-sm mt-4"></div>',
         '<div id="vizDataPreview" class="hidden space-y-2 mt-4">',
@@ -1227,6 +1414,41 @@ function createVisualizationLayout_DA(template) {
     // --- Attaching Event Listeners ---
     setTimeout(function() {
         try {
+            // === ADDED TOGGLE EVENT LISTENERS START ===
+            // 0. Input type toggle
+            const vizInputTextToggle = safeGetElement("vizInputTextToggle");
+            const vizInputFileToggle = safeGetElement("vizInputFileToggle");
+            const vizTextInputArea = safeGetElement("vizTextInputArea");
+            const vizFileInputArea = safeGetElement("vizFileInputArea");
+
+            if (vizInputTextToggle && vizInputFileToggle) {
+                vizInputTextToggle.addEventListener("change", () => {
+                    vizTextInputArea.classList.remove("hidden");
+                    vizFileInputArea.classList.add("hidden");
+                });
+                vizInputFileToggle.addEventListener("change", () => {
+                    vizTextInputArea.classList.add("hidden");
+                    vizFileInputArea.classList.remove("hidden");
+                });
+            }
+
+            // 0.5. Context file input listener
+            const contextFileInput = safeGetElement("vizContextFile");
+            if (contextFileInput) {
+                contextFileInput.addEventListener("change", (e) => {
+                    const label = safeGetElement("vizContextFileLabel");
+                    const fileNameSpan = label.querySelector(".file-name");
+                    if (e.target.files.length > 0) {
+                        fileNameSpan.textContent = e.target.files[0].name;
+                        label.classList.add("has-file");
+                    } else {
+                        fileNameSpan.textContent = "Select context document...";
+                        label.classList.remove("has-file");
+                    }
+                });
+            }
+            // === ADDED TOGGLE EVENT LISTENERS END ===
+
             // 1. Examples toggle
             const examplesBtn = safeGetElement("vizConfigExamplesBtn");
             const examplesDiv = safeGetElement("vizConfigExamples");
@@ -1293,8 +1515,8 @@ function createVisualizationLayout_DA(template) {
             const analysisActions = safeGetElement("analysisActions");
             
             if (analysisResult && analysisActions) {
-                if (typeof appState.analysisCache !== 'undefined' && 
-                    typeof appState.currentTemplateId !== 'undefined' && 
+                if (typeof analysisCache !== 'undefined' && 
+                    typeof currentTemplateId !== 'undefined' && 
                     appState.analysisCache[appState.currentTemplateId]) {
                     
                     analysisResult.innerHTML = appState.analysisCache[appState.currentTemplateId];
@@ -1356,108 +1578,120 @@ function createRegressionLayout_DA(template) {
     const contentContainer = dom.$("templateDetailContent");
     contentContainer.className = "grid lg:grid-cols-1 gap-12";
     contentContainer.innerHTML = `
-                <div class="lg:col-span-1">
-                        <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
-                        <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">${template.description}</p>
-    
-                <div class="glass-container max-w-2xl mx-auto w-full p-6 space-y-4">
-                            
-                        <div class="flex items-center justify-between mb-2">
-                            <h3 class="text-xl font-bold text-white">Analysis Setup</h3>
-                            <div class="flex items-center space-x-2">
-                                <button type="button" id="regressionExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
-                                <a href="data-files/regression/regression-sample-doc.txt" download="Regression_Sample_Doc.txt" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .txt</a>
-                                <a href="data-files/regression/regression-sample.csv" download="Regression_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>
+                   <div class="lg:col-span-1">
+                         <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
+                         <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">${template.description}</p>
+      
+                   <div class="glass-container max-w-2xl mx-auto w-full p-6 space-y-4">
+                             
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-xl font-bold text-white">Analysis Setup</h3>
+                                <div class="flex items-center space-x-2">
+                                    <button type="button" id="regressionExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
+                                    <a href="data-files/regression/regression-sample-doc.txt" download="Regression_Sample_Doc.txt" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .txt</a>
+                                    <a href="data-files/regression/regression-sample.csv" download="Regression_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>
+                                </div>
                             </div>
-                        </div>
 
-                        <div id="regressionExamples" class="hidden mb-4 p-3 bg-black/20 border border-white/15 rounded-lg">
-                            <div id="regressionExampleContent" class="text-white/80">Loading example...</div>
-                        </div>
+                            <div id="regressionExamples" class="hidden mb-4 p-3 bg-black/20 border border-white/15 rounded-lg">
+                                <div id="regressionExampleContent" class="text-white/80">Loading example...</div>
+                            </div>
 
-                        <div class="space-y-4">
-                            
-                            <div>
-                                <label for="regressionContextFile" class="block text-sm font-medium text-gray-200 mb-2">Company Document (Optional)</label>
-                                <div class="input-file-wrapper">
-                                    <label for="regressionContextFile" id="regressionContextFileLabel" class="input-file-btn">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi 
-bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
-                                        <span class="file-name">Select context document...</span>
+                             <div class="space-y-4">
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-200 mb-2">Company Context (Optional)</label>
+                                    <div class="input-radio-group">
+                                        <input type="radio" name="inputType" id="textInput" class="input-radio" checked>
+                                        <label for="textInput" class="input-radio-label">Text Input</label>
+                                        <input type="radio" name="inputType" id="docUpload" class="input-radio">
+                                        <label for="docUpload" class="input-radio-label">Document Upload</label>
+                                    </div>
+                                </div>
+
+                                <div id="regressionContextTextArea">
+                                    <label for="regressionContextText" class="block text-sm font-medium text-gray-200 mb-2">Paste Context Here</label>
+                                    <textarea id="regressionContextText" class="input-field h-32" placeholder="Paste your company context, business plan, or problem description here..."></textarea>
+                                </div>
+                                
+                                <div id="regressionContextFileArea" class="hidden">
+                                    <label for="regressionContextFile" class="block text-sm font-medium text-gray-200 mb-2">Company Document (.txt, .docx)</label>
+                                    <div class="input-file-wrapper">
+                                        <label for="regressionContextFile" id="regressionContextFileLabel" class="input-file-btn">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                                            <span class="file-name">Select context document...</span>
+                                        </label>
+                                        <input type="file" id="regressionContextFile" class="input-file" accept=".txt,.docx">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="regressionFile" class="block text-sm font-medium text-gray-200 mb-2" title="Must be a .csv file. All columns for analysis must be numeric. Ensure no spaces in headers (e.g., use 'Marketing_Spend').">
+                                        Upload Data File (.csv)
                                     </label>
-                                    <input type="file" id="regressionContextFile" class="input-file" accept=".txt,.docx">
-                            </div>
-                            </div>
-                            
-                            <div>
-                                <label for="regressionFile" class="block text-sm font-medium text-gray-200 mb-2" title="Must be a .csv file. All columns for analysis must be numeric. Ensure no spaces in headers (e.g., use 'Marketing_Spend').">
-                                    Upload Data File (.csv)
-                                </label>
-                                <div class="input-file-wrapper">
-                                    <label for="regressionFile" id="regressionFileLabel" class="input-file-btn">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
-                                        <span class="file-name">Select .csv data file...</span>
+                                    <div class="input-file-wrapper">
+                                        <label for="regressionFile" id="regressionFileLabel" class="input-file-btn">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                                            <span class="file-name">Select .csv data file...</span>
+                                        </label>
+                                        <input type="file" id="regressionFile" class="input-file" accept=".csv">
+                                    </div>
+                                    <div id="regressionFileError" class="text-red-400 text-sm mt-2"></div>
+                                    <div id="regressionDataWarning" class="text-yellow-400 text-sm mt-2"></div>
+                                </div>
+
+                                <div id="regressionDataPreview" class="space-y-2">
+                                    <label class="block text-sm font-medium text-gray-200">Data Preview (First 5 Rows)</label>
+                                    <div class="overflow-x-auto rounded-lg border border-white/20">
+                                        <table class="min-w-full text-left text-sm text-white/90" id="regressionPreviewTable">
+                                            <tbody>
+                                                <tr>
+                                                    <td class="p-4 text-center text-white/60" colspan="100%">Upload a .csv file to see a preview.</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label for="dependentVar" class="block text-sm font-medium text-gray-200 mb-2" title="This is the 'outcome' variable you want to predict (e.g., 'Sales'). It must be numeric.">
+                                        Dependent Variable (Y)
                                     </label>
-                                    <input type="file" id="regressionFile" class="input-file" accept=".csv">
+                                    <div class="select-wrapper">
+                                        <select id="dependentVar" class="input-field" disabled>
+                                            <option value="">-- Upload data to see variables --</option>
+                                        </select>
+                                    </div>
                                 </div>
-                                <div id="regressionFileError" class="text-red-400 text-sm mt-2"></div>
-                                <div id="regressionDataWarning" class="text-yellow-400 text-sm mt-2"></div>
-                            </div>
 
-                            <div id="regressionDataPreview" class="space-y-2">
-                                <label class="block text-sm font-medium text-gray-200">Data Preview (First 5 Rows)</label>
-                                <div class="overflow-x-auto rounded-lg border border-white/20">
-                                    <table class="min-w-full text-left text-sm text-white/90" id="regressionPreviewTable">
-                                        <tbody>
-                                            <tr>
-                                                <td class="p-4 text-center text-white/60" colspan="100%">Upload a .csv file to see a preview.</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-200 mb-2" title="These are the 'predictor' variables you think influence your outcome (e.g., 'Marketing_Spend', 'Website_Traffic'). They must be numeric.">
+                                        Independent Variables (X)
+                                    </label>
+                                    <div id="independentVarsContainer" class="max-h-40 overflow-y-auto space-y-1 p-3 bg-black/20 rounded-lg border border-white/20">
+                                        <p class="text-sm text-white/60 text-center">-- Upload data to see variables --</p>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div>
-                                <label for="dependentVar" class="block text-sm font-medium text-gray-200 mb-2" title="This is the 'outcome' variable you want to predict (e.g., 'Sales'). It must be numeric.">
-                                    Dependent Variable (Y)
-                                </label>
-                                <div class="select-wrapper">
-                                    <select id="dependentVar" class="input-field" disabled>
-                                        <option value="">-- Upload data to see variables --</option>
-                                    </select>
-                                </div>
                             </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-200 mb-2" title="These are the 'predictor' variables you think influence your outcome (e.g., 'Marketing_Spend', 'Website_Traffic'). They must be numeric.">
-                                    Independent Variables (X)
-                                </label>
-                                <div id="independentVarsContainer" class="max-h-40 overflow-y-auto space-y-1 p-3 bg-black/20 rounded-lg border border-white/20">
-                                    <p class="text-sm text-white/60 text-center">-- Upload data to see variables --</p>
-                                </div>
+                            <button id="generateBtn" class="btn btn-primary w-full text-lg py-3 mt-4">
+                                 <span id="generateBtnText">📈 Run Regression Analysis</span>
+                                <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
+                            </button>
+                            <div class="text-center mt-4">
+	                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
                             </div>
-
                         </div>
-                        <button id="generateBtn" class="btn btn-primary w-full text-lg py-3 mt-4">
-                                <span id="generateBtnText">📈 Run Regression Analysis</span>
-                            <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
-                        </button>
-                        <div class="text-center mt-4">
-                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
-                        </div>
-                
-    </div>
-                    <div class="mt-12">
-                            <h2 class="text-3xl font-bold mb-4 text-center">Regression Results</h2>
-                            <div id="analysisResult" class="glass-container min-h-[500px] overflow-x-auto"></div>
-                            <div id="analysisActions" class="text-center mt-4 space-x-2 hidden">
-                            <button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>
-                            
-<button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
+                        
+                        <div class="mt-12">
+                             <h2 class="text-3xl font-bold mb-4 text-center">Regression Results</h2>
+                             <div id="analysisResult" class="glass-container min-h-[500px] overflow-x-auto"></div>
+                             <div id="analysisActions" class="text-center mt-4 space-x-2 hidden">
+                                <button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>
+                                <button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            `;
+                `;
 
     // --- All Helper Functions are LOCAL to this function ---
 
@@ -1793,23 +2027,8 @@ Feb 1, "$52,000", "$5.2k", "15,500 visitors"
         });
     }
     
-    const attachListener = (inputId, labelId) => {
-        const fileInput = dom.$(inputId);
-        if (fileInput) {
-            fileInput.addEventListener("change", (e) => {
-                const label = dom.$(labelId);
-                const fileNameSpan = label.querySelector(".file-name");
-                if (e.target.files.length > 0) {
-                    fileNameSpan.textContent = e.target.files[0].name;
-                    label.classList.add("has-file");
-                } else {
-                    fileNameSpan.textContent = "Select a file...";
-                    label.classList.remove("has-file");
-                }
-            });
-        }
-    };
-    attachListener("regressionContextFile", "regressionContextFileLabel");
+    // Call setupInputToggle for the new context inputs
+    setupInputToggle("regressionContextFile", "regressionContextFileLabel", "regressionContextTextArea", "regressionContextFileArea");
 
     dom.$("generateBtn").addEventListener("click", handleGenerate);
     reattachActionListeners();
