@@ -2713,6 +2713,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- Admin Dashboard ---
     let statsInterval = null; // Admin Dashboard Stats Timer
     let currentFeedbackItems = []; // Caches the feedback list
+    let currentContactItems = []; // Caches the contact list
 
     // --- NEW: Variables for merging async results ---
     let pendingOllamaResult = null;
@@ -3430,7 +3431,8 @@ function createAdminDashboardTabs() {
     tabNav.innerHTML = `
         <button class="home-tab-btn active" data-tab="dbStats">📊 Database Statistics</button>
         <button class="home-tab-btn" data-tab="users">👥 Users</button>
-        <button class="home-tab-btn" data-tab="feedback">🎫 Feedback</button> 
+        <button class="home-tab-btn" data-tab="feedback">🎫 Feedback</button>
+        <button class="home-tab-btn" data-tab="contacts">📨 Contacts</button>
     `;
     
     // 4. Define Tab Content Panels (MODIFIED - Added feedbackPanel)
@@ -3447,6 +3449,9 @@ function createAdminDashboardTabs() {
         </div>
 
         <div id="feedbackPanel" class="home-tab-panel">
+        </div>
+
+        <div id="contactsPanel" class="home-tab-panel">
         </div>
     `;
 
@@ -3488,6 +3493,7 @@ function setupAdminTabsListeners() {
                 // --- MODIFIED: Added check for 'feedback' ---
                 if (targetTab === 'users') renderViewDatabaseTab(); 
                 if (targetTab === 'feedback') renderFeedbackTab(); // <-- NEW
+                if (targetTab === 'contacts') renderContactsTab();
                 // 'dbStats' is pre-filled
 
             } else {
@@ -4052,7 +4058,7 @@ function renderFeedbackTab() {
 }
 
 /**
- * Fetches feedback data from Supabase based on current filters.
+ * Fetches feedback data from the SECURE EDGE FUNCTION.
  */
 async function fetchAndRenderFeedback() {
     console.log("DEBUG: fetchAndRenderFeedback() called."); 
@@ -4062,57 +4068,59 @@ async function fetchAndRenderFeedback() {
     container.innerHTML = `
         <div class="flex items-center justify-center p-10">
             <div class="loading-spinner mr-3"></div>
-            <span class="text-white/80">Fetching feedback...</span>
+            <span class="text-white/80">Fetching secure feedback...</span>
         </div>
     `;
 
     try {
+        // 1. Get session token
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!session) throw new Error("You are not logged in.");
+
+        // 2. Get filter values
         const status = document.querySelector("#feedbackStatusTabs .active").dataset.status || "";
         const searchTerm = $("feedbackSearch").value.trim();
-        const type = $("feedbackTypeFilter").value;
+        const reason = $("feedbackTypeFilter").value; // 'reason' matches the new function
+        
+        console.log(`DEBUG: Fetching with filters: Status='${status}', Search='${searchTerm}', Reason='${reason}'`); 
 
-        console.log(`DEBUG: Fetching with filters: Status='${status}', Search='${searchTerm}', Type='${type}'`); 
+        // 3. Build URL with query parameters
+        const params = new URLSearchParams({
+            page: 1, // Add pagination later if needed
+            limit: 50,
+            sortBy: 'priority',
+            sortOrder: 'asc'
+        });
+        if (status) params.append('status', status);
+        if (reason) params.append('reason', reason);
+        if (searchTerm) params.append('search', searchTerm);
 
-        let query = supabase
-            .from('feedback')
-            .select(`
-                *,
-                users (
-                    first_name,
-                    last_name,
-                    email
-                )
-            `, { count: 'exact' });
+        const url = `${SUPABASE_URL}/functions/v1/admin-feedback-secure/feedback?${params.toString()}`;
 
-        if (status) {
-            query = query.eq('status', status); 
-        }
-        if (type) {
-            query = query.eq('reason', type); 
-        }
-        if (searchTerm) {
-            query = query.ilike('content', `%${searchTerm}%`); 
-        }
-
-        query = query.order('priority', { ascending: true, nullsFirst: false }); 
-        query = query.order('created_at', { ascending: false });
-
-        const { data, error, count } = await query.limit(50); 
-
-        if (error) {
-            console.error("DEBUG: Supabase fetch error:", error); 
-            if (error.code === "42703") { 
-                throw new Error("Database error. Did you add the `status` and `priority` columns to your `publicv2.feedback` table?");
+        // 4. Call the secure Edge Function
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
             }
-            throw error;
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || `Failed to fetch feedback: ${response.statusText}`);
         }
 
-        console.log(`DEBUG: Supabase fetch success. Received ${data ? data.length : 0} items. Total count: ${count}`); 
+        const feedbackItems = data.data || [];
+        const count = data.pagination?.total || 0;
 
-        currentFeedbackItems = data || [];
+        console.log(`DEBUG: Supabase fetch success. Received ${feedbackItems.length} items. Total count: ${count}`); 
+
+        currentFeedbackItems = feedbackItems;
         console.log("DEBUG: Updated 'currentFeedbackItems' cache.", currentFeedbackItems); 
 
-        renderFeedbackCards(container, data, count);
+        renderFeedbackCards(container, feedbackItems, count);
 
     } catch (error) {
         console.error("Error fetching feedback:", error);
@@ -4346,35 +4354,41 @@ function showModalMessage(message, type) {
 }
 
 /**
- * Handles updating the status of a feedback item.
+ * Handles updating the status of a feedback item via the SECURE EDGE FUNCTION.
  */
 async function handleUpdateFeedbackStatus(feedbackId, newStatus, closeCallback) {
     console.log(`DEBUG: handleUpdateFeedbackStatus() called. ID: ${feedbackId}, New Status: ${newStatus}`); 
     const updateBtn = $("modalUpdateBtn");
-    const resolveBtn = $("modalResolveBtn");
     
     if(updateBtn) updateBtn.disabled = true;
-    if(resolveBtn) resolveBtn.disabled = true;
     showModalMessage("Updating...", "success");
     
     try {
+        // 1. Get session token
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) throw sessionError;
         if (!session) throw new Error("Not logged in");
 
-        const { data, error } = await supabase
-            .from('feedback')
-            .update({ status: newStatus })
-            .eq('id', feedbackId)
-            .select();
-            
-        if (error) {
-            console.error("DEBUG: Supabase update error:", error); 
-            throw error;
-        }
+        // 2. Call the secure Edge Function
+        const url = `${SUPABASE_URL}/functions/v1/admin-feedback-secure/feedback/${feedbackId}`;
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify({ status: newStatus })
+        });
         
-        console.log("DEBUG: Supabase update success:", data); 
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || "Failed to update status");
+        }
+            
+        console.log("DEBUG: Supabase update success:", data.data); 
         showModalMessage(`Status updated to "${newStatus}"!`, "success");
+        
+        // 3. Refresh the list from the server
         await fetchAndRenderFeedback();
         
         if (closeCallback) {
@@ -4386,17 +4400,15 @@ async function handleUpdateFeedbackStatus(feedbackId, newStatus, closeCallback) 
         showModalMessage(error.message, "error");
     } finally {
         if(updateBtn) updateBtn.disabled = false;
-        if(resolveBtn) resolveBtn.disabled = false;
     }
 }
 
 /**
- * Handles saving the internal admin notes for a feedback item.
+ * Handles saving the internal admin notes via the SECURE EDGE FUNCTION.
  */
 async function handleSaveFeedbackNotes(feedbackId) {
     console.log(`DEBUG: handleSaveFeedbackNotes() called for ID: ${feedbackId}`);
     
-    // Get the new notes from the textarea
     const notesText = $("modalNotes").value.trim();
     const saveBtn = $("modalSaveNotesBtn");
     if (!saveBtn) return;
@@ -4405,43 +4417,41 @@ async function handleSaveFeedbackNotes(feedbackId) {
     saveBtn.disabled = true;
     saveBtn.innerHTML = '<span class="loading-spinner mr-2"></span> Saving...';
     
-    // Use the modal's built-in message function
     showModalMessage("Saving notes...", "success"); 
 
     try {
-        // 1. Get admin session
+        // 1. Get session token
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) throw sessionError;
         if (!session) throw new Error("You are not authenticated.");
+
+        // 2. Call the secure Edge Function
+        const url = `${SUPABASE_URL}/functions/v1/admin-feedback-secure/feedback/${feedbackId}`;
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify({ admin_notes: notesText }) // Send only the notes
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || "Failed to save notes");
+        }
         
-        // Optional: Check if user is an admin
-        if (currentUser?.app_metadata?.role !== 'admin') {
-            throw new Error("You do not have permission to save notes.");
-        }
+        const updatedNotes = data.data?.admin_notes;
 
-        // 2. Call Supabase to update the admin_notes column
-        const { data, error } = await supabase
-            .from('feedback')
-            .update({ admin_notes: notesText }) // Update the new column
-            .eq('id', feedbackId)
-            .select() // Select the updated row
-            .single(); // We only expect one row
-
-        if (error) {
-            throw error;
+        // 3. Update the local cache
+        const index = currentFeedbackItems.findIndex(f => f.id == feedbackId);
+        if (index !== -1) {
+            currentFeedbackItems[index].admin_notes = updatedNotes;
+            console.log("DEBUG: Local cache updated with new notes.");
         }
-
-        if (data) {
-            // 3. Update the local cache (currentFeedbackItems)
-            const index = currentFeedbackItems.findIndex(f => f.id == feedbackId);
-            if (index !== -1) {
-                currentFeedbackItems[index].admin_notes = notesText;
-                console.log("DEBUG: Local cache updated with new notes.");
-            }
-            
-            // 4. Show success
-            showModalMessage("Notes saved successfully!", "success");
-        }
+        
+        // 4. Show success
+        showModalMessage("Notes saved successfully!", "success");
 
     } catch (error) {
         console.error("Error saving notes:", error);
@@ -4472,6 +4482,438 @@ document.addEventListener('keydown', (e) => {
 });
 
 // --- END OF BEAUTIFUL MODAL FUNCTIONS ---
+
+/**
+ * Main controller for the Contacts Tab.
+ * Builds the UI and triggers the first data fetch.
+ */
+function renderContactsTab() {
+    console.log("DEBUG: renderContactsTab() called. Building UI...");
+    const panel = $("contactsPanel");
+    if (!panel) {
+        console.error("DEBUG: contactsPanel element not found!");
+        return;
+    }
+
+    // 1. Build the UI (Toolbar + Table Placeholder)
+    panel.innerHTML = `
+        <div class="glass-container p-6"> 
+            <h2 class="text-3xl font-bold mb-4">Contact Form Submissions</h2>
+            
+            <div class="flex flex-col md:flex-row gap-4 mb-6">
+                <div class="flex-grow">
+                    <input type="text" id="contactSearch" class="input-field" placeholder="Search email, subject, or message...">
+                </div>
+                <div class="flex-shrink-0">
+                    <select id="contactStatusFilter" class="input-field">
+                        <option value="">All Statuses</option>
+                        <option value="New">New</option>
+                        <option value="Replied">Replied</option>
+                        <option value="Archived">Archived</option>
+                    </select>
+                </div>
+                <div class="flex-shrink-0">
+                    <select id="contactSortBy" class="input-field">
+                        <option value="created_at" selected>Sort by: Newest</option>
+                        <option value="email">Sort by: Email</option>
+                        <option value="last_name">Sort by: Last Name</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div id="contactCardContainer" class="overflow-x-auto">
+                <p class="text-white/70 text-center p-10">Initializing contacts tab...</p>
+            </div>
+        </div>
+    `;
+
+    // 2. Attach event listeners
+    const searchInput = panel.querySelector("#contactSearch");
+    const statusFilter = panel.querySelector("#contactStatusFilter");
+    const sortSelect = panel.querySelector("#contactSortBy");
+
+    let searchTimeout;
+    searchInput.addEventListener("input", () => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            fetchAndRenderContacts(1); // Reset to page 1
+        }, 500);
+    });
+
+    statusFilter.addEventListener("change", () => fetchAndRenderContacts(1));
+    sortSelect.addEventListener("change", () => fetchAndRenderContacts(1));
+
+    // 3. Initial data load
+    fetchAndRenderContacts(1);
+}
+
+/**
+ * Fetches contact data from the SECURE EDGE FUNCTION.
+ */
+async function fetchAndRenderContacts(page = 1) {
+    console.log("DEBUG: fetchAndRenderContacts() called."); 
+    const container = $("contactCardContainer");
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="flex items-center justify-center p-10">
+            <div class="loading-spinner mr-3"></div>
+            <span class="text-white/80">Fetching secure contacts...</span>
+        </div>
+    `;
+
+    try {
+        // 1. Get session token
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!session) throw new Error("You are not logged in.");
+
+        // 2. Get filter values
+        const status = $("contactStatusFilter").value;
+        const searchTerm = $("contactSearch").value.trim();
+        const sortBy = $("contactSortBy").value;
+        
+        console.log(`DEBUG: Fetching contacts: Status='${status}', Search='${searchTerm}', Sort='${sortBy}'`); 
+
+        // 3. Build URL
+        const params = new URLSearchParams({
+            page: page,
+            limit: 20, // 20 per page
+            sortBy: sortBy,
+            sortOrder: 'desc'
+        });
+        if (status) params.append('status', status);
+        if (searchTerm) params.append('search', searchTerm);
+
+        const url = `${SUPABASE_URL}/functions/v1/admin-contacts-secure/contacts?${params.toString()}`;
+
+        // 4. Call the secure Edge Function
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+            }
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || `Failed to fetch contacts: ${response.statusText}`);
+        }
+
+        const contactItems = data.data || [];
+        const pagination = data.pagination || {};
+
+        console.log(`DEBUG: Contact fetch success. Received ${contactItems.length} items.`); 
+
+        currentContactItems = contactItems; // Update cache
+        renderContactsTable(container, contactItems, pagination); // Render as a table
+
+    } catch (error) {
+        console.error("Error fetching contacts:", error);
+        container.innerHTML = `<div class="error-message p-4">${error.message}</div>`;
+    }
+}
+
+/**
+ * Renders the contacts as a table (similar to Users tab).
+ */
+function renderContactsTable(container, contacts, pagination) {
+    if (!contacts || contacts.length === 0) {
+        container.innerHTML = `<p class="text-white/70 text-center p-10">No contacts found matching your criteria.</p>`;
+        return;
+    }
+
+    let tableHtml = `
+        <table class="w-full text-left styled-table">
+            <thead>
+                <tr>
+                    <th class="p-3">Status</th>
+                    <th class="p-3">Date</th>
+                    <th class="p-3">From</th>
+                    <th class="p-3">Subject</th>
+                    <th class="p-3">Company</th>
+                    <th class="p-3 w-24">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    contacts.forEach(item => {
+        const displayName = `${item.first_name || ''} ${item.last_name || ''}`.trim() || 'N/A';
+        const statusTag = item.status === 'New' ? 'tag-status-open' : 
+                          item.status === 'Replied' ? 'tag-status-resolved' : 'tag-type';
+        
+        tableHtml += `
+            <tr class="border-b border-white/10">
+                <td class="p-3"><span class="feedback-tag ${statusTag}">${item.status}</span></td>
+                <td class="p-3 text-sm">${new Date(item.created_at).toLocaleDateString()}</td>
+                <td class="p-3">
+                    <div>${displayName}</div>
+                    <div class="text-xs text-white/60" style="overflow-wrap: break-word;">${item.email}</div>
+                </td>
+                <td class="p-3">${item.subject}</td>
+                <td class="p-3 text-sm text-white/70">${item.company_name || 'N/A'}</td>
+                <td class="p-3">
+                    <button class="admin-view-contact-btn btn btn-secondary py-1 px-3 text-xs" data-id="${item.id}">
+                        View
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+
+    tableHtml += `</tbody></table>`;
+
+    // Add Pagination controls
+    if (pagination && pagination.totalPages > 1) {
+        tableHtml += `<div class="flex justify-between items-center mt-4 text-sm">`;
+        tableHtml += `<span class="text-white/70">Page ${pagination.page} of ${pagination.totalPages} (Total: ${pagination.total})</span>`;
+        tableHtml += `<div class="flex gap-2">`;
+        if (pagination.page > 1) {
+            tableHtml += `<button class="btn btn-secondary pagination-btn-contact" data-page="${pagination.page - 1}">Previous</button>`;
+        }
+        if (pagination.page < pagination.totalPages) {
+            tableHtml += `<button class="btn btn-secondary pagination-btn-contact" data-page="${pagination.page + 1}">Next</button>`;
+        }
+        tableHtml += `</div></div>`;
+    }
+
+    container.innerHTML = tableHtml;
+
+    // Attach "View" button listeners
+    container.querySelectorAll('.admin-view-contact-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const contactId = e.currentTarget.dataset.id;
+            openContactModal(contactId);
+        });
+    });
+
+    // Attach pagination listeners
+    container.querySelectorAll('.pagination-btn-contact').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const newPage = e.target.dataset.page;
+            fetchAndRenderContacts(parseInt(newPage));
+        });
+    });
+}
+
+/**
+ * Opens the modal for a specific contact message.
+ */
+function openContactModal(contactId) {
+    console.log(`DEBUG: openContactModal() called for ID: ${contactId}`);
+    
+    const modal = $("contactDetailModal");
+    const modalContent = $("contactModalContent");
+    if (!modal || !modalContent) return;
+
+    const item = currentContactItems.find(c => c.id == contactId);
+    if (!item) {
+        alert("Error: Could not find contact data.");
+        return;
+    }
+
+    modal.style.display = 'flex';
+    setTimeout(() => modal.classList.add('modal-open'), 10);
+    
+    const displayName = `${item.first_name || ''} ${item.last_name || ''}`.trim() || 'N/A';
+    const emailSubject = `Re: ${item.subject || 'Your Inquiry'}`;
+
+    modalContent.innerHTML = `
+        <div class="modal-header">
+            <div class="modal-title-section">
+                <h3 class="modal-title">${item.subject || 'Contact Submission'}</h3>
+            </div>
+            <button class="modal-close-btn" id="modalCloseContactBtn">&times;</button>
+        </div>
+        
+        <div class="modal-body" style="max-height: 80vh; padding: 1.5rem 1.5rem 3.5rem;">
+            <div class="modal-tags">
+                <span class="feedback-tag ${item.status === 'New' ? 'tag-status-open' : 'tag-status-resolved'}">${item.status}</span>
+                ${item.company_name ? `<span class="feedback-tag tag-type">${item.company_name}</span>` : ''}
+            </div>
+            
+            <div class="modal-content-section" style="margin-bottom: 1.25rem;">
+                <h4 class="modal-section-title" style="font-size: 1rem; margin-bottom: 0.5rem;">Message Content</h4>
+                <div class="modal-feedback-content" style="font-size: 0.9rem; padding: 1rem;">
+                    ${item.message}
+                </div>
+            </div>
+            
+            <div class="modal-info-grid" style="margin-bottom: 1.5rem;">
+                <div class="modal-info-card" style="padding: 0.75rem 1rem;">
+                    <h5 class="modal-info-label" style="font-size: 0.7rem; margin-bottom: 0.25rem;">From</h5>
+                    <div class="modal-info-value" style="font-size: 0.875rem;">${displayName}</div>
+                    <div class="modal-info-sub" style="font-size: 0.7rem; overflow-wrap: break-word;">${item.email}</div>
+                </div>
+                <div class="modal-info-card" style="padding: 0.75rem 1rem;">
+                    <h5 class="modal-info-label" style="font-size: 0.7rem; margin-bottom: 0.25rem;">Submitted</h5>
+                    <div class="modal-info-value" style="font-size: 0.875rem;">${new Date(item.created_at).toLocaleDateString()}</div>
+                    <div class="modal-info-sub" style="font-size: 0.7rem;">${new Date(item.created_at).toLocaleTimeString()}</div>
+                </div>
+                <div class="modal-info-card" style="padding: 0.75rem 1rem;">
+                    <h5 class="modal-info-label" style="font-size: 0.7rem; margin-bottom: 0.25rem;">Status</h5>
+                    <div class="modal-info-value" style="font-size: 0.875rem;">${item.status}</div>
+                </div>
+                <div class="modal-info-card" style="padding: 0.75rem 1rem;">
+                    <h5 class="modal-info-label" style="font-size: 0.7rem; margin-bottom: 0.25rem;">Phone</h5>
+                    <div class="modal-info-value" style="font-size: 0.875rem;">${item.phone || 'N/A'}</div>
+                </div>
+            </div>
+            
+            <div id="contactModalMessage" class="modal-message" style="display: none;"></div>
+
+            <div class="modal-status-section" style="margin-bottom: 1.25rem;">
+                <h4 class="modal-section-title" style="font-size: 1rem; margin-bottom: 0.5rem;">Actions</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <a href="mailto:${item.email}?subject=${encodeURIComponent(emailSubject)}" 
+                       id="modalReplyContactBtn" 
+                       class="modal-btn modal-btn-primary" 
+                       style="padding: 0.75rem 1.25rem; font-size: 0.9rem;">
+                       <span class="modal-btn-icon">↩️</span>
+                       Reply via Email
+                    </a>
+                    
+                    <div class="modal-status-controls">
+                        <select id="modalContactStatusSelect" class="modal-select" style="padding: 0.75rem 1rem;">
+                            <option value="New" ${item.status === 'New' ? 'selected' : ''}>Mark as New</option>
+                            <option value="Replied" ${item.status === 'Replied' ? 'selected' : ''}>Mark as Replied</option>
+                            <option value="Archived" ${item.status === 'Archived' ? 'selected' : ''}>Mark as Archived</option>
+                        </select>
+                        <button id="modalUpdateContactBtn" class="modal-btn modal-btn-secondary" style="padding: 0.75rem 1.25rem; font-size: 0.9rem;">Update</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Attach event listeners for the new modal
+    setTimeout(() => {
+        const closeBtn = $("modalCloseContactBtn");
+        const replyBtn = $("modalReplyContactBtn");
+        const updateBtn = $("modalUpdateContactBtn");
+        
+        if (closeBtn) {
+            closeBtn.onclick = closeContactModal;
+        }
+        
+        if (replyBtn) {
+            // This is the corrected line:
+            replyBtn.onclick = () => {
+                // This is just a link, but we also update status
+                // in the background for a better UX.
+                handleUpdateContactStatus(item.id, 'Replied');
+            };
+        }
+        
+        if (updateBtn) {
+            updateBtn.onclick = () => {
+                const statusSelect = $("modalContactStatusSelect");
+                const newStatus = statusSelect ? statusSelect.value : 'New';
+                // Pass the closeCallback so the modal closes on update
+                handleUpdateContactStatus(item.id, newStatus, closeContactModal); 
+            };
+        }
+    }, 100);
+}
+
+/**
+ * Closes the contact modal.
+ */
+function closeContactModal() {
+    const modal = $("contactDetailModal");
+    if (modal) {
+        modal.classList.remove('modal-open');
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 300);
+    }
+}
+
+/**
+ * Handles updating the status of a contact item via the SECURE EDGE FUNCTION.
+ */
+async function handleUpdateContactStatus(contactId, newStatus, closeCallback) {
+    console.log(`DEBUG: handleUpdateContactStatus() called. ID: ${contactId}, New Status: ${newStatus}`); 
+    const updateBtn = $("modalUpdateContactBtn");
+    
+    if(updateBtn) updateBtn.disabled = true;
+    showContactModalMessage("Updating...", "success");
+    
+    try {
+        // 1. Get session token
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!session) throw new Error("Not logged in");
+
+        // 2. Call the secure Edge Function
+        const url = `${SUPABASE_URL}/functions/v1/admin-contacts-secure/contacts/${contactId}`;
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify({ status: newStatus })
+        });
+        
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || "Failed to update status");
+        }
+            
+        console.log("DEBUG: Contact update success:", data.data); 
+        showContactModalMessage(`Status updated to "${newStatus}"!`, "success");
+        
+        // 3. Refresh the main contact list from the server
+        await fetchAndRenderContacts(1); // Go back to page 1
+        
+        if (closeCallback) {
+            setTimeout(closeCallback, 1500);
+        }
+
+    } catch (error) {
+        console.error("Error updating contact status:", error);
+        showContactModalMessage(error.message, "error");
+    } finally {
+        if(updateBtn) updateBtn.disabled = false;
+    }
+}
+
+/**
+ * Shows messages in the contact modal.
+ */
+function showContactModalMessage(message, type) {
+    const messageEl = $("contactModalMessage");
+    if (messageEl) {
+        messageEl.style.display = "block";
+        messageEl.className = `modal-message ${type === "error" ? "modal-message-error" : "modal-message-success"}`;
+        messageEl.textContent = message;
+        
+        setTimeout(() => {
+            messageEl.style.display = "none";
+        }, 3000);
+    }
+}
+
+// Global click handler to close contact modal
+document.addEventListener('click', (e) => {
+    const modal = $("contactDetailModal");
+    if (modal && e.target === modal) {
+        closeContactModal();
+    }
+});
+
+// Global escape key handler for contact modal
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        const modal = $("contactDetailModal");
+        if (modal && modal.style.display === 'flex') {
+            closeContactModal();
+        }
+    }
+});
 
     // --- Admin Dashboard Stats Logic ---
     const refreshStatsBtn = $("refreshStatsBtn");
@@ -29954,8 +30396,8 @@ function renderMiscPage_MSC(container, data) {
 });
 
     </script>
-
-    <!-- Replace your sidebar HTML with this beautiful modal HTML -->
+<!-- Feedback Modal -->
+<!-- Replace your sidebar HTML with this beautiful modal HTML -->
 <div id="feedbackDetailModal" class="feedback-modal">
     <div class="feedback-modal-container">
         <div id="feedbackModalContent">
@@ -29970,6 +30412,25 @@ function renderMiscPage_MSC(container, data) {
                 <div class="flex items-center justify-center p-10">
                     <div class="loading-spinner mr-3"></div>
                     <span class="text-white/80">Loading details...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Contact Modal -->
+<div id="contactDetailModal" class="feedback-modal">
+    <div class="feedback-modal-container" style="max-width: 1000px;"> <div id="contactModalContent">
+            <div class="modal-header">
+                <div class="modal-title-section">
+                    <h3 class="modal-title">Loading...</h3>
+                </div>
+                <button class="modal-close-btn" id="modalCloseContactBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="flex items-center justify-center p-10">
+                    <div class="loading-spinner mr-3"></div>
+                    <span class="text-white/80">Loading contact message...</span>
                 </div>
             </div>
         </div>
