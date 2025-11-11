@@ -3433,6 +3433,7 @@ function createAdminDashboardTabs() {
         <button class="home-tab-btn" data-tab="users">👥 Users</button>
         <button class="home-tab-btn" data-tab="feedback">🎫 Feedback</button>
         <button class="home-tab-btn" data-tab="contacts">📨 Contacts</button>
+        <button class="home-tab-btn" data-tab="subscriptions">💳 Subscriptions</button>
     `;
     
     // 4. Define Tab Content Panels (MODIFIED - Added feedbackPanel)
@@ -3452,6 +3453,9 @@ function createAdminDashboardTabs() {
         </div>
 
         <div id="contactsPanel" class="home-tab-panel">
+        </div>
+
+        <div id="subscriptionsPanel" class="home-tab-panel">
         </div>
     `;
 
@@ -3494,6 +3498,7 @@ function setupAdminTabsListeners() {
                 if (targetTab === 'users') renderViewDatabaseTab(); 
                 if (targetTab === 'feedback') renderFeedbackTab(); // <-- NEW
                 if (targetTab === 'contacts') renderContactsTab();
+                if (targetTab === 'subscriptions') renderSubscriptionsTab();
                 // 'dbStats' is pre-filled
 
             } else {
@@ -4545,6 +4550,82 @@ function renderContactsTab() {
 
     // 3. Initial data load
     fetchAndRenderContacts(1);
+}
+
+/**
+ * Renders the placeholder UI for the Subscriptions tab.
+ */
+function renderSubscriptionsTab() {
+    console.log("DEBUG: renderSubscriptionsTab() called. Building UI..."); 
+    const panel = $("subscriptionsPanel");
+    if (!panel) {
+        console.error("DEBUG: subscriptionsPanel element not found!"); 
+        return;
+    }
+
+    // 1. Build the UI
+    panel.innerHTML = `
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="glass-container">
+                <h3 class="text-xl font-semibold mb-2 text-green-400">Monthly Revenue</h3>
+                <p class="text-4xl font-bold">--</p>
+                <p class="text-white/60 text-sm mt-2">Stripe data not connected.</p>
+            </div>
+            <div class="glass-container">
+                <h3 class="text-xl font-semibold mb-2 text-blue-400">Premium Users</h3>
+                <p class="text-4xl font-bold">--</p>
+                <p class="text-white/60 text-sm mt-2">Stripe data not connected.</p>
+            </div>
+            <div class="glass-container">
+                <h3 class="text-xl font-semibold mb-2 text-yellow-400">New Subscriptions (30d)</h3>
+                <p class="text-4xl font-bold">--</p>
+                <p class="text-white/60 text-sm mt-2">Stripe data not connected.</p>
+            </div>
+        </div>
+
+        <div class="glass-container p-6 mt-8"> 
+            <h2 class="text-3xl font-bold mb-4">Subscription Management</h2>
+            <p class="text-white/70 text-center p-10">
+                <span class="text-2xl mb-4">💳</span><br>
+                <strong>This feature is not yet connected.</strong><br>
+                Connecting this tab will require integrating a payment processor like Stripe.
+            </p>
+            
+            <div class="opacity-30">
+                <div class="flex flex-col md:flex-row gap-4 mb-6">
+                    <input type="text" class="input-field" placeholder="Search by user email or subscription ID..." disabled>
+                    <select class="input-field" disabled>
+                        <option>Filter by: Active</option>
+                        <option>Filter by: Canceled</option>
+                    </select>
+                </div>
+                <table class="w-full text-left styled-table">
+                    <thead>
+                        <tr>
+                            <th class="p-3">User Email</th>
+                            <th class="p-3">Plan</th>
+                            <th class="p-3">Status</th>
+                            <th class="p-3">Subscribed On</th>
+                            <th class="p-3">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="p-3 text-white/50">example@email.com</td>
+                            <td class="p-3 text-white/50">Premium</td>
+                            <td class="p-3 text-white/50">Active</td>
+                            <td class="p-3 text-white/50">2025-10-01</td>
+                            <td class="p-3">
+                                <button class="btn btn-secondary py-1 px-3 text-xs" disabled>Manage</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+
+    // 2. Attach any placeholder listeners (none needed for now)
 }
 
 /**
