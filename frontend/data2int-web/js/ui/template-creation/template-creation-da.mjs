@@ -3,68 +3,183 @@
 // =====================================================================================================
 import { appState } from "../../state/app-state.mjs";
 import { dom } from "../../utils/dom-utils.mjs";
-import { handleGenerate } from "../../analysis/analysis-helpers.mjs"
+import { handleGenerate } from "../../analysis/analysis-helpers.mjs";
 import { reattachActionListeners, reattachTabListeners } from "./template-creation.mjs";
 import { setupInputToggle } from "../../utils/ui-utils.mjs";
+import { navigateTo } from "../navigation.mjs";
 import { extractTextFromFile, handleSaveAsDocx, handleSaveAsPdf } from "../../utils/file-utils.mjs";
 
 function createDescriptiveLayout_DA(template) {
     const contentContainer = dom.$("templateDetailContent");
     contentContainer.className = "grid lg:grid-cols-1 gap-12";
     contentContainer.innerHTML = `
-                    <div class="lg:col-span-1">
-                         <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
-                         <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">${template.description}</p>
-                        <div class="glass-container max-w-2xl mx-auto w-full p-6 space-y-4">
-                             
-                            <div class="flex items-center justify-between mb-2">
-                                <h3 class="text-xl font-bold text-white">Upload Your Dataset & Context</h3>
-                                <button type="button" id="descConfigExamplesBtn" class="text-xs px-2 py-1 border border-white/30 rounded text-white/80 hover:bg-white/10 hover:text-white transition-all">View Examples</button>
-                            </div>
-                            <div id="descConfigExamples" class="hidden mb-4 p-3 bg-black/20 border border-white/15 rounded-lg">
-                                <div class="text-xs font-medium text-white/90 mb-2">📋 How to Use Descriptive Analysis</div>
-                                <div class="space-y-2 text-xs">
-                                    <div id="descExampleContent" class="text-white/80">Loading example...</div>
-                                </div>
-                            </div>
+                <div class="lg:col-span-1">
+                        <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
+                        <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">${template.description}</p>
 
-                            <div class="space-y-4">
-                                <div>
-                                    <label for="descriptiveContextFile" class="block text-sm font-medium text-gray-200 mb-2">Company Document (.txt, .docx)</label>
-                                    <div class="input-file-wrapper">
-                                        <label for="descriptiveContextFile" id="descriptiveContextFileLabel" class="input-file-btn">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
-                                            <span class="file-name">Select context document...</span>
-                                        </label>
-                                        <input type="file" id="descriptiveContextFile" class="input-file" accept=".txt,.docx">
-                                    </div>
-                                </div>
-                                <div>
-                                    <label for="descriptiveFile" class="block text-sm font-medium text-gray-200 mb-2">Data File (.csv)</label>
-                                    <div class="input-file-wrapper">
-                                        <label for="descriptiveFile" id="descriptiveFileLabel" class="input-file-btn">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
-                                            <span class="file-name">Select .csv data file...</span>
-                                        </label>
-                                        <input type="file" id="descriptiveFile" class="input-file" accept=".csv">
-                                    </div>
-                                </div>
+                    <div class="glass-container max-w-2xl mx-auto w-full p-6 space-y-4">
+                            
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="text-xl font-bold text-white">Upload Your Dataset & Context</h3>
+                            <div class="flex items-center space-x-2">
+                                <button type="button" id="descConfigExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
+                                <a href="data-files/descriptive/descriptive-sample-doc.txt" download="Descriptive_Sample_Doc.txt" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .txt</a>
+                                <a href="data-files/descriptive/descriptive-sample-data.csv" download="Descriptive_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>
                             </div>
-                            <button id="generateBtn" class="btn btn-primary w-full text-lg py-3 mt-4">
-                                <span id="generateBtnText">🔍 Analyze Data</span>
-                                <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
-                            </button>
                         </div>
-                        <div class="mt-12">
-                             <h2 class="text-3xl font-bold mb-4 text-center">Descriptive Analysis Results</h2>
-                             <div id="analysisResult" class="glass-container min-h-[500px] overflow-x-auto"></div>
-                             <div id="analysisActions" class="text-center mt-4 space-x-2 hidden">
-                                <button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>
-                                <button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
+
+                        <div id="descConfigExamples" class="hidden mb-4 p-3 bg-black/20 border border-white/15 rounded-lg">
+                            <div class="text-xs font-medium text-white/90 mb-2">📋 How to Use Descriptive Analysis</div>
+                            <div class="space-y-2 text-xs">
+                                <div id="descExampleContent" class="text-white/80">Loading example...</div>
                             </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div>
+                                <label for="descriptiveContextFile" class="block text-sm font-medium text-gray-200 mb-2">Company Document (.txt, .docx)</label>
+                                <div class="input-file-wrapper">
+                                    <label for="descriptiveContextFile" id="descriptiveContextFileLabel" class="input-file-btn">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                                        <span class="file-name">Select context document...</span>
+                                    </label>
+                                        <input type="file" id="descriptiveContextFile" class="input-file" accept=".txt,.docx">
+                                </div>
+                            </div>
+                            <div>
+                                <label for="descriptiveFile" class="block text-sm font-medium text-gray-200 mb-2">Data File (.csv)</label>
+                                    <div class="input-file-wrapper">
+                                    <label for="descriptiveFile" id="descriptiveFileLabel" class="input-file-btn">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                                        <span class="file-name">Select .csv data file...</span>
+                                    </label>
+                                    <input type="file" id="descriptiveFile" class="input-file" accept=".csv">
+                                </div>
+                                <div id="descriptiveFileError" class="text-red-400 text-sm mt-2"></div>
+                            </div>
+                            
+                            <div id="descriptiveDataPreview" class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-200">Data Preview (First 5 Rows)</label>
+                                <div class="overflow-x-auto rounded-lg border border-white/20">
+                                    <table class="min-w-full text-left text-sm text-white/90" id="descriptivePreviewTable">
+                                        <tbody>
+                                            <tr>
+                                                <td class="p-4 text-center text-white/60" colspan="100%">Upload a .csv file to see a preview.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+    
+                            <button id="generateBtn" class="btn btn-primary w-full text-lg py-3 mt-4">
+                            <span id="generateBtnText">🔍 Analyze Data</span>
+                            <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
+                        </button>
+                        <div class="text-center mt-4">
+                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
                         </div>
                     </div>
-                `;
+                    <div class="mt-12">
+                            <h2 class="text-3xl font-bold mb-4 text-center">Descriptive Analysis Results</h2>
+                            <div id="analysisResult" class="glass-container min-h-[500px] overflow-x-auto"></div>
+                            <div id="analysisActions" class="text-center mt-4 space-x-2 hidden">
+                            <button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>
+                            <button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+    // --- All Helper Functions are LOCAL to this function ---
+
+    const getHeadersFromText = (text) => {
+        if (!text || typeof text !== 'string' || !text.trim()) throw new Error("Input text is empty.");
+        const firstLine = text.split(/[\r\n]+/)[0];
+        if (!firstLine || !firstLine.trim()) throw new Error("First line (header) is empty.");
+
+        let headers = firstLine.split(',').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+        if (headers.length <= 1) headers = firstLine.split(';').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+        if (headers.length <= 1) headers = firstLine.split('\t').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+        if (headers.length === 0) throw new Error("Could not parse headers (tried comma, semicolon, tab).");
+        return headers;
+    };
+    
+    const showDataPreview = (csvText, tableId, containerId) => {
+        const previewContainer = dom.$(containerId);
+        const previewTable = dom.$(tableId);
+        if (!previewContainer || !previewTable) return;
+
+        try {
+            const lines = csvText.split(/[\r\n]+/).filter(Boolean);
+            const rows = lines.slice(0, 6); 
+            
+            if (rows.length < 2) { 
+                previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Data file is empty or has no data rows.</td></tr></tbody>';
+                previewContainer.classList.remove("hidden"); 
+                return; 
+            }
+
+            const headers = getHeadersFromText(rows[0]);
+            let tableHTML = '<thead class="bg-white/10 text-xs uppercase"><tr>';
+            headers.forEach(h => { tableHTML += `<th scope="col" class="px-4 py-2">${h}</th>`; });
+            tableHTML += '</tr></thead><tbody>';
+
+            rows.slice(1).forEach((line, rowIndex) => {
+                let cells = line.split(',');
+                if (cells.length !== headers.length) cells = line.split(';');
+                if (cells.length !== headers.length) cells = line.split('\t');
+
+                tableHTML += `<tr class="border-t border-white/10 ${rowIndex % 2 === 0 ? 'bg-white/5' : ''}">`;
+                headers.forEach((_, cellIndex) => {
+                    tableHTML += `<td class="px-4 py-2">${cells[cellIndex] === undefined ? '' : cells[cellIndex]}</td>`;
+                });
+                tableHTML += '</tr>';
+            });
+            tableHTML += '</tbody>';
+            previewTable.innerHTML = tableHTML;
+            previewContainer.classList.remove("hidden");
+        } catch (e) {
+            console.error("Error showing data preview:", e);
+            previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-red-400" colspan="100%">Error reading data preview.</td></tr></tbody>';
+            previewContainer.classList.remove("hidden");
+        }
+    };
+
+    const processDataInput_Descriptive = async (file) => {
+        const errorEl = dom.$("descriptiveFileError");
+        const previewContainer = dom.$("descriptiveDataPreview");
+        const previewTable = dom.$("descriptivePreviewTable");
+        
+        errorEl.textContent = "";
+        previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Processing data...</td></tr></tbody>';
+        previewContainer.classList.remove("hidden");
+
+        if (!file) {
+                previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Upload a .csv file to see a preview.</td></tr></tbody>';
+                return;
+        }
+
+        try {
+            const textContent = await extractTextFromFile(file); 
+            const originalHeaders = getHeadersFromText(textContent);
+
+            const lines = textContent.split(/[\r\n]+/).filter(Boolean);
+            if (lines.length < 10) {
+                errorEl.textContent = "Warning: Small dataset (<10 rows). Analysis may be unreliable.";
+            }
+
+            showDataPreview(textContent, 'descriptivePreviewTable', 'descriptiveDataPreview');
+
+        } catch (err) {
+            console.error("Descriptive input processing failed:", err);
+            errorEl.textContent = `Error: ${err.message}.`;
+            previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-red-400" colspan="100%">Error reading data preview.</td></tr></tbody>';
+            previewContainer.classList.remove("hidden");
+        }
+    };
+
+    // === Simplified attachListener for context file ===
     const attachListener = (inputId, labelId) => {
         const fileInput = dom.$(inputId);
         if (fileInput) {
@@ -81,8 +196,25 @@ function createDescriptiveLayout_DA(template) {
             });
         }
     };
-    attachListener("descriptiveFile", "descriptiveFileLabel");
     attachListener("descriptiveContextFile", "descriptiveContextFileLabel");
+
+    // === NEW: Event listener for the descriptive data file ===
+    const descriptiveFileInput = dom.$("descriptiveFile");
+    if (descriptiveFileInput) {
+        descriptiveFileInput.addEventListener("change", (e) => {
+            const label = dom.$("descriptiveFileLabel");
+            const fileNameSpan = label.querySelector(".file-name");
+            if (e.target.files.length > 0) {
+                fileNameSpan.textContent = e.target.files[0].name;
+                label.classList.add("has-file");
+                processDataInput_Descriptive(e.target.files[0]); // Process the file
+            } else {
+                fileNameSpan.textContent = "Select .csv data file...";
+                label.classList.remove("has-file");
+                processDataInput_Descriptive(null); // Reset
+            }
+        });
+    }
 
     // --- Add Example Toggle ---
     const examplesBtn = dom.$("descConfigExamplesBtn");
@@ -95,7 +227,6 @@ function createDescriptiveLayout_DA(template) {
             examplesBtn.textContent = isHidden ? "View Examples" : "Hide Examples";
 
             if (!isHidden && exampleContentEl.textContent === "Loading example...") {
-                // Populate with relevant descriptive analysis example following DEMATEL pattern
                 exampleContentEl.innerHTML = `
                     <div class="mb-4">
                         <div class="flex items-center mb-2">
@@ -103,7 +234,6 @@ function createDescriptiveLayout_DA(template) {
                             <span class="text-sm font-medium text-green-400">GOOD EXAMPLE</span>
                             <span class="text-xs text-white/60 ml-2">(Results in comprehensive statistical insights with clear patterns)</span>
                         </div>
-                        
                         <div class="bg-green-900/20 border border-green-500/30 rounded p-3 mb-3">
                             <div class="text-xs text-white/90 mb-2"><strong>Company Document:</strong></div>
                             <div class="text-xs text-white/80 mb-3">
@@ -111,7 +241,6 @@ function createDescriptiveLayout_DA(template) {
                                 Key areas of focus: regional performance variations, employee productivity trends, and customer retention patterns. 
                                 Strategic priority: identify underperforming segments and optimization opportunities."
                             </div>
-                            
                             <div class="text-xs text-white/90 mb-2"><strong>CSV Data (quarterly metrics):</strong></div>
                             <div class="bg-black/30 p-2 rounded font-mono text-xs text-white/90">
 Quarter,Revenue_Millions,Customer_Count,Satisfaction_Score,Employee_Count,Regional_Performance
@@ -121,29 +250,24 @@ Q3_2023,15.2,310,4.5,140,South
 Q4_2023,16.9,325,4.8,145,West</div>
                         </div>
                     </div>
-                    
                     <div class="mb-4">
                         <div class="flex items-center mb-2">
                             <span class="text-red-400 mr-2">❌</span>
                             <span class="text-sm font-medium text-red-400">BAD EXAMPLE</span>
                             <span class="text-xs text-white/60 ml-2">(Results in limited insights and unclear patterns)</span>
                         </div>
-                        
                         <div class="bg-red-900/20 border border-red-500/30 rounded p-3">
                             <div class="text-xs text-white/80 mb-3">
                                 "Our company has some data and wants analysis. Please look at everything and tell us what's important."
                             </div>
-                            
                             <div class="bg-black/30 p-2 rounded font-mono text-xs text-white/90">
 Data1,Data2,Info,Stuff,$Revenue
 A,Good,5,Things,$15000
 B,Bad,3,Items,$12000</div>
                         </div>
                     </div>
-                    
                     <div class="border-t border-white/20 pt-3">
                         <div class="text-xs font-medium text-white/90 mb-2">📝 Key Differences Between Good & Bad Input:</div>
-                        
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                             <div>
                                 <div class="text-green-400 font-medium mb-1">✅ Good Practices:</div>
@@ -155,7 +279,6 @@ B,Bad,3,Items,$12000</div>
                                     <div>• Meaningful time periods</div>
                                 </div>
                             </div>
-                            
                             <div>
                                 <div class="text-red-400 font-medium mb-1">❌ Bad Practices:</div>
                                 <div class="text-white/80 space-y-1">
@@ -168,7 +291,6 @@ B,Bad,3,Items,$12000</div>
                             </div>
                         </div>
                     </div>
-                    
                     <div class="border-t border-white/20 pt-3 mt-3">
                         <div class="text-xs font-medium text-white/90 mb-2">💡 How to Use This Tool:</div>
                         <div class="text-xs text-white/80 space-y-1">
@@ -183,9 +305,25 @@ B,Bad,3,Items,$12000</div>
             }
         });
     }
+    // --- End of Example Toggle ---
 
     dom.$("generateBtn").addEventListener("click", handleGenerate);
     reattachActionListeners();
+
+    // Attach listener for the feedback link
+    const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+    if (feedbackLink) {
+        feedbackLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            if (typeof navigateTo === 'function') {
+                navigateTo('feedback');
+            } else {
+                console.error("navigateTo function is not defined.");
+            }
+        });
+    } else {
+        console.warn("Feedback link not found inside createDescriptiveLayout_DA");
+    }
 }
 
 
@@ -207,9 +345,13 @@ function createPredictiveAnalysisLayout(template) {
 
             <div class="max-w-2xl mx-auto w-full">
                 <div class="glass-container p-6 space-y-6">
+
                     <div class="flex items-center justify-between mb-2">
                         <h3 class="text-xl font-bold text-white">Forecasting Configuration</h3>
-                        <button type="button" id="predictiveExamplesBtn" class="text-xs px-2 py-1 border border-white/30 rounded text-white/80 hover:bg-white/10 hover:text-white transition-all">View Examples</button>
+                        <div class="flex items-center space-x-2">
+                            <button type="button" id="predictiveExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
+                            <a href="data-files/predictive/predictive-sample-data.csv" download="Predictive_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>
+                        </div>
                     </div>
 
                     <div id="predictiveExamples" class="hidden mb-4 p-3 bg-black/20 border border-white/15 rounded-lg">
@@ -240,7 +382,7 @@ function createPredictiveAnalysisLayout(template) {
 
                     <div id="predictiveTextInputArea" class="hidden">
                         <label for="predictiveDataText" class="block text-sm font-medium text-gray-200 mb-2">Paste CSV Data</label>
-                        <textarea id="predictiveDataText" class="input-field h-48" placeholder="Date,Revenue,Customers\\n2023-01-01,150000,1250\\n2023-02-01,162000,1340..."></textarea>
+                        <textarea id="predictiveDataText" class="input-field h-48" placeholder="Date,Revenue,Customers\n2023-01-01,150000,1250\n2023-02-01,162000,1340..."></textarea>
                         <div id="predictiveTextError" class="text-red-400 text-sm mt-2"></div>
                     </div>
 
@@ -291,6 +433,9 @@ function createPredictiveAnalysisLayout(template) {
                         <span id="generateBtnText">📈 Generate Forecast</span>
                         <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                     </button>
+                    <div class="text-center mt-4">
+	                    <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                    </div>
                 </div>
             </div>
 
@@ -496,10 +641,12 @@ function createPredictiveAnalysisLayout(template) {
     // Example button listener
     if (examplesBtn && examplesDiv) {
         examplesBtn.addEventListener("click", () => {
-            examplesDiv.classList.toggle("hidden");
-            if (!examplesDiv.classList.contains('hidden')) {
+            const isHidden = examplesDiv.classList.toggle("hidden");
+            examplesBtn.textContent = isHidden ? "View Examples" : "Hide Examples";
+
+            if (!isHidden) {
                 const exampleContent = dom.$("predictiveExampleContent");
-                if (exampleContent) {
+                if (exampleContent && exampleContent.textContent === "Loading example...") {
                     exampleContent.innerHTML = `
                         <div class="text-xs font-medium text-white/90 mb-2">📊 Data Format Examples</div>
                         <div class="space-y-2 text-xs">
@@ -639,6 +786,26 @@ function createPredictiveAnalysisLayout(template) {
         dom.$("analysisResult").innerHTML = '<div class="text-white/60 p-8 text-center">Upload your data (ensuring the first column is the date/time) and configure options to generate a forecast.</div>';
         dom.$("analysisActions").classList.add("hidden");
     }
+    // Attach listener for the feedback link
+    const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+    if (feedbackLink) {
+        feedbackLink.addEventListener("click", (e) => {
+                e.preventDefault();
+            
+            // This just calls the navigateTo function.
+            // It relies on your main `MapsTo` function to be
+            // the *simplified one* (without memory logic)
+            // and your `submitFeedbackPageBtn` listener
+            // to be the *simplified one* (that just goes home).
+                if (typeof navigateTo === 'function') {
+                navigateTo('feedback');
+            } else {
+                console.error("navigateTo function is not defined.");
+            }
+        });
+    } else {
+        console.warn("Feedback link not found inside createPredictiveAnalysisLayout");
+    }
 
 }
 
@@ -673,6 +840,9 @@ function createPrescriptiveLayout_DA(template) {
                             <span id="generateBtnText"> prescribe Actions</span>
                             <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                         </button>
+                        <div class="text-center mt-4">
+                            <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                        </div>
                     </div>
                     <div class="mt-12">
                             <h2 class="text-3xl font-bold mb-4 text-center">Prescriptive Analysis Results</h2>
@@ -685,51 +855,437 @@ function createPrescriptiveLayout_DA(template) {
                 </div>
             `;
     setupInputToggle("prescriptiveFile", "prescriptiveFileLabel", null, null);
+
+    // Attach listener for the feedback link
+    const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+    if (feedbackLink) {
+        feedbackLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            
+            // This just calls the navigateTo function.
+            // It relies on your main `MapsTo` function to be
+            // the *simplified one* (without memory logic)
+            // and your `submitFeedbackPageBtn` listener
+            // to be the *simplified one* (that just goes home).
+            if (typeof navigateTo === 'function') {
+                navigateTo('feedback');
+            } else {
+                console.error("navigateTo function is not defined.");
+            }
+        });
+    } else {
+        console.warn("Feedback link not found inside createPrescriptiveLayout_DA");
+    }
 }
 
 
 
+/**
+ * --- UPDATED (V15 - Final Fix) ---
+ * Creates the layout for the Visualization tool.
+ * --- USER REQUESTED FORMATTING UPDATE V3 ---
+ * - Added "Download Sample .txt" link next to the CSV link.
+ */
 function createVisualizationLayout_DA(template) {
-    const contentContainer = dom.$("templateDetailContent");
+    // Helper function to safely get element
+    function safeGetElement(id) {
+        try {
+                return document.getElementById(id);
+        } catch (e) {
+            console.error("Error getting element:", id, e);
+            return null;
+        }
+    }
+    
+    const contentContainer = safeGetElement("templateDetailContent");
+    if (!contentContainer) {
+        console.error("Content container not found");
+        return;
+    }
+    
     contentContainer.className = "grid lg:grid-cols-1 gap-12";
-    contentContainer.innerHTML = `
-                <div class="lg:col-span-1">
-                        <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
-                        <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">${template.description}</p>
-                    <div class="glass-container max-w-2xl mx-auto w-full p-6 space-y-4">
-                            <h3 class="text-xl font-bold mb-4 text-white">Visualization Setup</h3>
-                        <div class="space-y-4">
-                            <div>
-                                <label for="vizRequest" class="block text-sm font-medium text-gray-200 mb-2">What do you want to visualize?</label>
-                                <textarea id="vizRequest" class="input-field h-24" placeholder="Be specific. For example: 'Show the relationship between Marketing Spend and Sales Revenue', or 'Visualize the distribution of customer ages by product category.'"></textarea>
-                            </div>
-                            <div>
-                                <label for="vizFile" class="block text-sm font-medium text-gray-200 mb-2">Upload Data File (.csv)</label>
-                                <div class="input-file-wrapper">
-                                    <label for="vizFile" id="vizFileLabel" class="input-file-btn">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
-                                        <span class="file-name">Select .csv file...</span>
-                                    </label>
-                                    <input type="file" id="vizFile" class="input-file" accept=".csv">
-                                </div>
-                            </div>
-                        </div>
-                        <button id="generateBtn" class="btn btn-primary w-full text-lg py-3 mt-4">
-                            <span id="generateBtnText">📊 Generate Visualizations</span>
-                            <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
-                        </button>
-                    </div>
-                    <div class="mt-12">
-                            <h2 class="text-3xl font-bold mb-4 text-center">Data Visualizations</h2>
-                            <div id="analysisResult" class="glass-container min-h-[500px] overflow-x-auto"></div>
-                            <div id="analysisActions" class="text-center mt-4 space-x-2 hidden">
-                            <button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>
-                            <button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-    setupInputToggle("vizFile", "vizFileLabel", null, null);
+    
+    const htmlContent = [
+        '<div class="lg:col-span-1">',
+        '<h1 class="text-4xl font-bold text-center mb-2">' + (template.title || 'Visualization') + '</h1>',
+        '<p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">' + (template.description || '') + '</p>',
+        '<div class="glass-container max-w-2xl mx-auto w-full p-6 space-y-4">',
+        
+        // --- CHANGED BLOCK START ---
+        // Added the "Download Sample .txt" link here
+        '<div class="flex items-center justify-between mb-2">',
+        '<h3 class="text-xl font-bold text-white">Visualization Setup</h3>',
+        '<div class="flex items-center space-x-2">', 
+            '<button type="button" id="vizConfigExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>',
+            // Added the new .txt link
+            '<a href="data-files/visualization/visualization-sample-doc.txt" download="Visualization_Sample_Doc.txt" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .txt</a>',
+            '<a href="data-files/visualization/visualization-sample.csv" download="Visualization_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>',
+        '</div>',
+        '</div>',
+        // --- CHANGED BLOCK END ---
+        
+        // --- Good vs. Bad Examples ---
+        '<div id="vizConfigExamples" class="hidden mb-4 p-3 bg-black/20 border border-white/15 rounded-lg">',
+        '<div class="text-xs font-medium text-white/90 mb-3">📋 How to Get the Best Results</div>',
+        // Good Example
+        '<div class="mb-4">', 
+        '<div class="flex items-center mb-2">',
+        '<span class="text-green-400 mr-2">✅</span>',
+        '<span class="text-sm font-medium text-green-400">GOOD EXAMPLE</span>',
+        '<span class="text-xs text-white/60 ml-2">(Results in relevant, accurate charts)</span>',
+        '</div>',
+        '<div class="bg-green-900/20 border border-green-500/30 rounded p-3">',
+        '<div class="text-xs text-white/90 mb-2"><strong>Context Text (Your Request):</strong></div>',
+        '<div class="text-xs text-white/80 mb-3">',
+        '"Show me the sales revenue trend over time. Also, how does marketing spend correlate with sales revenue? And which product category has the highest total sales?"',
+        '</div>',
+        '<div class="text-xs text-white/90 mb-2"><strong>CSV Data (Snippet):</strong></div>',
+        '<div class="bg-black/30 p-2 rounded font-mono text-xs text-white/90">',
+        'Date,Region,Marketing_Spend,Sales_Revenue,Product_Category<br>',
+        '2024-01-01,North,5000,78500,Electronics<br>',
+        '2024-02-01,North,5200,79200,Apparel<br>',
+        '2024-03-01,West,7100,107000,Home Goods',
+        '</div>',
+        '</div>',
+        '</div>',
+        // MODIFIED: Bad Example (with annotations)
+        '<div class="mb-4">',
+        '<div class="flex items-center mb-2">',
+        '<span class="text-red-400 mr-2">❌</span>',
+        '<span class="text-sm font-medium text-red-400">BAD EXAMPLE</span>',
+        '<span class="text-xs text-white/60 ml-2">(Results in generic, unhelpful charts)</span>',
+        '</div>',
+        '<div class="bg-red-900/20 border border-red-500/30 rounded p-3">',
+        '<div class="text-xs text-white/80 mb-3">',
+        '<strong>Context Text:</strong> "Here\'s my data. Show me charts. I want to see what\'s happening." <span class="text-red-300 italic text-xs">(Vague, not specific)</span>',
+        '</div>',
+        '<div class="text-xs text-white/90 mb-2"><strong>CSV Data (Snippet):</strong></div>',
+        '<div class="bg-black/30 p-2 rounded font-mono text-xs text-white/90">',
+        'Date,Sales,Marketing ($),Region<br>',
+        'Jan 1, "$5,000", "100", N/A <span class="text-red-300 italic text-xs">(Messy data: $, commas, inconsistent dates)</span><br>',
+        'Feb 1, "$6,200", "120", North<br>',
+        'Mar 1, "7000", "110", West',
+        '</div>',
+        '</div>',
+        '</div>',
+        '<div class="border-t border-white/20 pt-3">',
+        '<div class="text-xs font-medium text-white/90 mb-2">💡 How to Write Your Request:</div>',
+        '<div class="text-xs text-white/80 space-y-1">',
+        '<div>• <strong>Be specific:</strong> Ask clear questions (e.g., "correlate X and Y," "show trend of Z").</div>',
+        '<div>• <strong>Clean your data:</strong> Ensure numbers are just numbers (no $, %, or commas).</div>',
+        '<div>• <strong>Use clean headers:</strong> Use simple column names (e.g., Marketing_Spend not Marketing ($)).</div>',
+        '</div>',
+        '</div>',
+
+        // --- MOVED BLOCK START ---
+        // The Data Requirements Checklist is now inside the "vizConfigExamples" div
+        '<div class="mt-4 p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg">',
+        '<div class="mb-2">',
+            '<h4 class="text-sm font-medium text-blue-300">📋 Data Requirements Checklist</h4>',
+        '</div>',
+        '<ul class="list-disc list-inside text-xs text-white/80 space-y-1">',
+        '<li><strong>File Format:</strong> CSV (UTF-8 encoded).</li>',
+        '<li><strong>Headers:</strong> Must be in the **first row**. Use simple names (e.g., `Sales_Revenue`, not `Sales ($)`).</li>',
+        '<li><strong>Numbers:</strong> Must be **numbers only** (no $, ,, or % symbols).</li>',
+        '<li><strong>Dates:</strong> Must be in a **consistent format** (e.g., YYYY-MM-DD or MM/DD/YYYY).</li>',
+        '<li><strong>Categorical:</strong> Must have **consistent spelling** (e.g., "North", not "North" and "N.").</li>',
+        '<li><strong>Data Quality:</strong> Check for missing values (nulls) or extreme outliers.</li>',
+        '<li><strong>Limits:</strong> Recommended 30-50+ rows for reliable insights. Max file size ~5MB.</li>',
+        '</ul>',
+        '</div>',
+        // --- MOVED BLOCK END ---
+
+        '</div>',
+        // --- End Examples Div ---
+
+        '<div class="space-y-4">',
+        '<div>',
+        '<label for="vizRequest" class="block text-sm font-medium text-gray-200 mb-2">What do you want to visualize? (This is your context)</label>',
+        '<textarea id="vizRequest" class="input-field h-24" placeholder="Be specific. For example: \'Show the relationship between Marketing Spend and Sales Revenue\', or \'Visualize the distribution of customer ages by product category.\'"></textarea>',
+        '</div>',
+        '<div>',
+        '<label for="vizFile" class="block text-sm font-medium text-gray-200 mb-2">Upload Data File (.csv)</label>',
+        '<div class="input-file-wrapper">',
+        '<label for="vizFile" id="vizFileLabel" class="input-file-btn">',
+        '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16">',
+        '<path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>',
+        '<path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/>',
+        '</svg>',
+        '<span class="file-name">Select .csv file...</span>',
+        '</label>',
+        '<input type="file" id="vizFile" class="input-file" accept=".csv">',
+        '</div>',
+        '<div id="vizFileError" class="text-red-400 text-sm mt-2"></div>',
+        '</div>',
+        '</div>',
+
+        // --- Column Guidance (V10) ---
+        '<details class="styled-details text-sm mt-4">',
+            '<summary class="font-semibold">View Column Guidance (using sample data)</summary>',
+            '<div class="bg-black/20 p-4 rounded-b-lg space-y-3 text-xs text-white/80">',
+                '<div>',
+                    '<h5 class="font-semibold text-white mb-1">Sales & Marketing Analysis:</h5>',
+                    '<p>• `Date`, `Sales_Revenue` (number), `Marketing_Spend` (number), `Region` (text), `Product_Category` (text)</p>',
+                '</div>',
+                '<div>',
+                    '<h5 class="font-semibold text-white mb-1">Customer & Product Analysis:</h5>',
+                    '<p>• `Date`, `Customer_Satisfaction` (number), `Region` (text), `Product_Category` (text), `Sales_Revenue` (number)</p>',
+                '</div>',
+            '</div>',
+        '</details>',
+
+        '<div id="vizDataQualityWarning" class="hidden error-message p-3 text-sm mt-4"></div>',
+        '<div id="vizDataPreview" class="hidden space-y-2 mt-4">',
+        '<label class="block text-sm font-medium text-gray-200">Data Preview (First 5 Rows)</label>',
+        '<div class="overflow-x-auto rounded-lg border border-white/20">',
+        '<table class="min-w-full text-left text-sm text-white/90" id="vizPreviewTable">',
+        '</table>',
+        '</div>',
+        '</div>',
+        '<button id="generateBtn" class="btn btn-primary w-full text-lg py-3 mt-4">',
+        '<span id="generateBtnText">📊 Generate Visualizations</span>',
+        '<span id="generateSpinner" class="loading-spinner hidden ml-2"></span>',
+        '</button>',
+        
+        // --- Feedback Link (V12) ---
+        '<div class="text-center mt-4">',
+        '<a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>',
+        '</div>',
+
+        '</div>', // This closes <div class="glass-container ...
+        '<div class="mt-12">',
+        '<h2 class="text-3xl font-bold mb-4 text-center">Data Visualizations</h2>',
+        '<div id="analysisResult" class="glass-container min-h-[500px] overflow-x-auto"></div>',
+        '<div id="analysisActions" class="text-center mt-4 space-x-2 hidden">',
+        '<button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>',
+        '<button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>',
+        '</div>',
+        '</div>',
+        '</div>',
+    ].join('');
+    
+    contentContainer.innerHTML = htmlContent;
+
+    // --- Helper functions for preview (V9) ---
+    const getHeadersFromText = (text) => {
+        const firstLine = text.split(/[\r\n]+/)[0];
+        let headers = firstLine.split(',').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+        if (headers.length <= 1) headers = firstLine.split(';').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+        if (headers.length <= 1) headers = firstLine.split('\t').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+        if (headers.length === 0) throw new Error("Could not parse headers.");
+        return headers;
+    };
+
+    const showDataPreview = (csvText) => {
+        const previewContainer = safeGetElement("vizDataPreview");
+        const previewTable = safeGetElement("vizPreviewTable");
+        const qualityWarning = safeGetElement("vizDataQualityWarning");
+        if (!previewContainer || !previewTable || !qualityWarning) return;
+
+        let warnings = [];
+
+        try {
+            const lines = csvText.split(/[\r\n]+/).filter(line => line.trim() !== '');
+            const rows = lines.slice(0, 6); 
+            
+            // --- Your Data Quality Logic ---
+            const dataRowCount = lines.length - 1;
+            if (dataRowCount < 30) {
+                warnings.push(`Insufficient data for reliable visualization (only ${dataRowCount} rows).`);
+            } else if (dataRowCount < 50) {
+                warnings.push(`Limited dataset (${dataRowCount} rows). Basic charts only.`);
+            }
+            // --- END Your Logic ---
+
+            if (rows.length < 2) {
+                previewContainer.classList.add("hidden");
+                if(dataRowCount === 0) {
+                    warnings.push("File appears to be empty or missing data rows.");
+                }
+            } else {
+                const headers = getHeadersFromText(rows[0]);
+                let tableHTML = '<thead class="bg-white/10 text-xs uppercase"><tr>';
+                headers.forEach(h => { tableHTML += `<th scope="col" class="px-4 py-2">${h}</th>`; });
+                tableHTML += '</tr></thead><tbody>';
+
+                let nullCount = 0;
+                let messyDataCount = 0;
+
+                rows.slice(1).forEach((line, rowIndex) => {
+                    let cells = line.split(',');
+                    if (cells.length !== headers.length) cells = line.split(';');
+                    if (cells.length !== headers.length) cells = line.split('\t');
+
+                    tableHTML += `<tr class="border-t border-white/10 ${rowIndex % 2 === 0 ? 'bg-white/5' : ''}">`;
+                    headers.forEach((_, cellIndex) => {
+                        const cellValue = cells[cellIndex]?.trim() ?? '';
+                        let displayValue = cellValue;
+                        
+                        if (cellValue === '' || cellValue.toLowerCase() === 'null' || cellValue.toLowerCase() === 'na') {
+                            nullCount++;
+                            displayValue = `<span class="text-yellow-400 italic" title="Null/Missing Value">NULL</span>`;
+                        } else if (/[$,%"]/.test(cellValue) && !isNaN(parseFloat(cellValue.replace(/[$,%"]/g, '')))) {
+                            messyDataCount++;
+                            displayValue = `<span class="text-orange-400" title="Messy Data (contains symbols)">${cellValue}</span>`;
+                        }
+
+                        tableHTML += `<td class="px-4 py-2 whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]" title="${cellValue}">${displayValue}</td>`;
+                    });
+                    tableHTML += '</tr>';
+                });
+                tableHTML += '</tbody>';
+                previewTable.innerHTML = tableHTML;
+                previewContainer.classList.remove("hidden");
+
+                if (nullCount > 0) {
+                    warnings.push(`Spotted ${nullCount} missing values (NULL) in the preview.`);
+                }
+                if (messyDataCount > 0) {
+                    warnings.push(`Spotted ${messyDataCount} numerical values with symbols ($, %, etc.). Please clean the data.`);
+                }
+            }
+
+            // Display warnings
+            if (warnings.length > 0) {
+                qualityWarning.innerHTML = "<strong>⚠️ Data Quality Warnings:</strong><ul class='list-disc list-inside mt-1'>" + warnings.map(w => `<li>${w}</li>`).join('') + "</ul>";
+                qualityWarning.classList.remove("hidden");
+            } else {
+                qualityWarning.classList.add("hidden");
+            }
+
+        } catch (e) {
+            console.error("Error showing data preview:", e);
+            previewContainer.classList.add("hidden");
+            qualityWarning.textContent = `Error during preview: ${e.message}`;
+            qualityWarning.classList.remove("hidden");
+        }
+    };
+    // --- END HELPERS ---
+    
+    // --- Attaching Event Listeners ---
+    setTimeout(function() {
+        try {
+            // 1. Examples toggle
+            const examplesBtn = safeGetElement("vizConfigExamplesBtn");
+            const examplesDiv = safeGetElement("vizConfigExamples");
+            if (examplesBtn && examplesDiv) {
+                examplesBtn.addEventListener("click", function() {
+                    const isHidden = examplesDiv.classList.toggle("hidden");
+                    examplesBtn.textContent = isHidden ? "View Examples" : "Hide Examples";
+                });
+            }
+
+            // 2. File input handler
+            const fileInput = safeGetElement("vizFile");
+            const fileLabel = safeGetElement("vizFileLabel");
+            const fileError = safeGetElement("vizFileError");
+
+            if (fileInput && fileLabel && fileError) {
+                fileInput.addEventListener("change", async function(e) {
+                    const fileNameSpan = fileLabel.querySelector(".file-name");
+                    const qualityWarning = safeGetElement("vizDataQualityWarning");
+                    const previewContainer = safeGetElement("vizDataPreview");
+
+                    fileError.textContent = "";
+                    qualityWarning.classList.add("hidden");
+                    previewContainer.classList.add("hidden");
+
+                    if (fileNameSpan) {
+                        if (e.target.files.length > 0) {
+                            const file = e.target.files[0];
+                            fileNameSpan.textContent = file.name;
+                            fileLabel.classList.add("has-file");
+                            
+                            try {
+                                if (typeof Papa === 'undefined') {
+                                    throw new Error("CSV parsing library (PapaParse) not loaded.");
+                                }
+                                const text = await extractTextFromFile(file);
+                                showDataPreview(text); 
+                            } catch (err) {
+                                fileError.textContent = `Error reading file: ${err.message}`;
+                                previewContainer.classList.add("hidden");
+                                qualityWarning.classList.add("hidden");
+                            }
+                        } else {
+                            fileNameSpan.textContent = "Select .csv file...";
+                            fileLabel.classList.remove("has-file");
+                        }
+                    }
+                });
+            }
+
+            // 3. Generate button handler
+            const generateBtn = safeGetElement("generateBtn");
+            if (generateBtn && typeof handleGenerate === 'function') {
+                generateBtn.addEventListener("click", handleGenerate);
+            }
+
+            // 4. Save button listeners
+            if (typeof reattachActionListeners === 'function') {
+                reattachActionListeners();
+            }
+
+            // 5. Handle analysis cache
+            const analysisResult = safeGetElement("analysisResult");
+            const analysisActions = safeGetElement("analysisActions");
+            
+            if (analysisResult && analysisActions) {
+                if (typeof appState.analysisCache !== 'undefined' && 
+                    typeof appState.currentTemplateId !== 'undefined' && 
+                    appState.analysisCache[appState.currentTemplateId]) {
+                    
+                    analysisResult.innerHTML = appState.analysisCache[appState.currentTemplateId];
+                    analysisActions.classList.remove("hidden");
+                    
+                    if (typeof reattachTabListeners === 'function') {
+                        reattachTabListeners(analysisResult);
+                    }
+                    
+                    setTimeout(() => {
+                        const chartsInPanel = analysisResult.querySelectorAll('.plotly-chart');
+                        chartsInPanel.forEach(chartDiv => {
+                            if (chartDiv.layout && typeof Plotly !== 'undefined') {
+                                try { Plotly.Plots.resize(chartDiv); } catch (resizeError) { console.error(`Error resizing cached chart ${chartDiv.id}:`, resizeError); }
+                            }
+                        });
+                    }, 150);
+
+                } else {
+                    analysisResult.innerHTML = 
+                        '<div class="text-white/60 p-8 text-center">Your generated analysis will appear here.</div>';
+                    analysisActions.classList.add("hidden");
+                }
+            }
+            
+            // --- THIS IS THE FIX ---
+            // 6. Attach listener for the feedback link
+            const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+            if (feedbackLink) {
+                feedbackLink.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    
+                    // This just calls the navigateTo function.
+                    // It relies on your main `MapsTo` function to be
+                    // the *simplified one* (without memory logic)
+                    // and your `submitFeedbackPageBtn` listener
+                    // to be the *simplified one* (that just goes home).
+                    if (typeof navigateTo === 'function') {
+                        navigateTo('feedback');
+                    } else {
+                        console.error("navigateTo function is not defined.");
+                    }
+                });
+            } else {
+                console.warn("Feedback link not found inside createVisualizationLayout_DA");
+            }
+            // --- END FIX ---
+
+
+        } catch (error) {
+            console.error("Error setting up visualization layout:", error);
+        }
+    }, 100);
 }
 
 
@@ -741,29 +1297,40 @@ function createRegressionLayout_DA(template) {
                 <div class="lg:col-span-1">
                         <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
                         <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">${template.description}</p>
-                    <div class="glass-container max-w-2xl mx-auto w-full p-6 space-y-4">
-                            <h3 class="text-xl font-bold mb-4 text-white">Analysis Setup</h3>
+    
+                <div class="glass-container max-w-2xl mx-auto w-full p-6 space-y-4">
+                            
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="text-xl font-bold text-white">Analysis Setup</h3>
+                            <div class="flex items-center space-x-2">
+                                <button type="button" id="regressionExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
+                                <a href="data-files/regression/regression-sample-doc.txt" download="Regression_Sample_Doc.txt" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .txt</a>
+                                <a href="data-files/regression/regression-sample.csv" download="Regression_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>
+                            </div>
+                        </div>
+
+                        <div id="regressionExamples" class="hidden mb-4 p-3 bg-black/20 border border-white/15 rounded-lg">
+                            <div id="regressionExampleContent" class="text-white/80">Loading example...</div>
+                        </div>
+
                         <div class="space-y-4">
+                            
                             <div>
-                                <label for="dependentVar" class="block text-sm font-medium text-gray-200 mb-2">Dependent Variable (Y)</label>
-                                <input type="text" id="dependentVar" class="input-field" placeholder="The outcome you want to predict (e.g., 'Sales')">
-                            </div>
-                            <div>
-                                <label for="independentVars" class="block text-sm font-medium text-gray-200 mb-2">Independent Variables (X)</label>
-                                <input type="text" id="independentVars" class="input-field" placeholder="Comma-separated predictors (e.g., 'Marketing Spend, Website Traffic')">
-                            </div>
-                            <div>
-                                <label for="regressionContextFile" class="block text-sm font-medium text-gray-200 mb-2">Company Document (.txt, .docx)</label>
+                                <label for="regressionContextFile" class="block text-sm font-medium text-gray-200 mb-2">Company Document (Optional)</label>
                                 <div class="input-file-wrapper">
                                     <label for="regressionContextFile" id="regressionContextFileLabel" class="input-file-btn">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi 
+bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
                                         <span class="file-name">Select context document...</span>
                                     </label>
                                     <input type="file" id="regressionContextFile" class="input-file" accept=".txt,.docx">
-                                </div>
                             </div>
+                            </div>
+                            
                             <div>
-                                <label for="regressionFile" class="block text-sm font-medium text-gray-200 mb-2">Upload Data File (.csv)</label>
+                                <label for="regressionFile" class="block text-sm font-medium text-gray-200 mb-2" title="Must be a .csv file. All columns for analysis must be numeric. Ensure no spaces in headers (e.g., use 'Marketing_Spend').">
+                                    Upload Data File (.csv)
+                                </label>
                                 <div class="input-file-wrapper">
                                     <label for="regressionFile" id="regressionFileLabel" class="input-file-btn">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
@@ -771,25 +1338,399 @@ function createRegressionLayout_DA(template) {
                                     </label>
                                     <input type="file" id="regressionFile" class="input-file" accept=".csv">
                                 </div>
+                                <div id="regressionFileError" class="text-red-400 text-sm mt-2"></div>
+                                <div id="regressionDataWarning" class="text-yellow-400 text-sm mt-2"></div>
                             </div>
+
+                            <div id="regressionDataPreview" class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-200">Data Preview (First 5 Rows)</label>
+                                <div class="overflow-x-auto rounded-lg border border-white/20">
+                                    <table class="min-w-full text-left text-sm text-white/90" id="regressionPreviewTable">
+                                        <tbody>
+                                            <tr>
+                                                <td class="p-4 text-center text-white/60" colspan="100%">Upload a .csv file to see a preview.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="dependentVar" class="block text-sm font-medium text-gray-200 mb-2" title="This is the 'outcome' variable you want to predict (e.g., 'Sales'). It must be numeric.">
+                                    Dependent Variable (Y)
+                                </label>
+                                <div class="select-wrapper">
+                                    <select id="dependentVar" class="input-field" disabled>
+                                        <option value="">-- Upload data to see variables --</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-200 mb-2" title="These are the 'predictor' variables you think influence your outcome (e.g., 'Marketing_Spend', 'Website_Traffic'). They must be numeric.">
+                                    Independent Variables (X)
+                                </label>
+                                <div id="independentVarsContainer" class="max-h-40 overflow-y-auto space-y-1 p-3 bg-black/20 rounded-lg border border-white/20">
+                                    <p class="text-sm text-white/60 text-center">-- Upload data to see variables --</p>
+                                </div>
+                            </div>
+
                         </div>
                         <button id="generateBtn" class="btn btn-primary w-full text-lg py-3 mt-4">
-                            <span id="generateBtnText">📈 Run Regression Analysis</span>
+                                <span id="generateBtnText">📈 Run Regression Analysis</span>
                             <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                         </button>
-                    </div>
+                        <div class="text-center mt-4">
+                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                        </div>
+                
+    </div>
                     <div class="mt-12">
                             <h2 class="text-3xl font-bold mb-4 text-center">Regression Results</h2>
                             <div id="analysisResult" class="glass-container min-h-[500px] overflow-x-auto"></div>
                             <div id="analysisActions" class="text-center mt-4 space-x-2 hidden">
                             <button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>
-                            <button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
+                            
+<button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
                         </div>
                     </div>
                 </div>
             `;
 
-    // Helper to attach listeners to file inputs
+    // --- All Helper Functions are LOCAL to this function ---
+
+    const getHeadersFromText = (text) => {
+        if (!text || typeof text !== 'string' || !text.trim()) throw new Error("Input text is empty.");
+        const firstLine = text.split(/[\r\n]+/)[0];
+        if (!firstLine || !firstLine.trim()) throw new Error("First line (header) is empty.");
+
+        let headers = firstLine.split(',').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+        if (headers.length <= 1) headers = firstLine.split(';').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+        if (headers.length <= 1) headers = firstLine.split('\t').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+        if (headers.length === 0) throw new Error("Could not parse headers (tried comma, semicolon, tab).");
+        return headers;
+    };
+    
+    const showDataPreview = (csvText, tableId, containerId) => {
+        const previewContainer = dom.$(containerId);
+        const previewTable = dom.$(tableId);
+        if (!previewContainer || !previewTable) return;
+
+        try {
+            const lines = csvText.split(/[\r\n]+/).filter(Boolean); 
+            const rows = lines.slice(0, 6); 
+            
+            if (rows.length < 2) { 
+                previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Data file is empty or has no data rows.</td></tr></tbody>';
+                previewContainer.classList.remove("hidden"); 
+                return; 
+            }
+
+            const headers = getHeadersFromText(rows[0]);
+            let tableHTML = '<thead class="bg-white/10 text-xs uppercase"><tr>';
+            headers.forEach(h => { tableHTML += `<th scope="col" class="px-4 py-2">${h}</th>`; });
+            tableHTML += '</tr></thead><tbody>';
+
+            rows.slice(1).forEach((line, rowIndex) => {
+                let cells = line.split(',');
+                if (cells.length !== headers.length) cells = line.split(';');
+                if (cells.length !== headers.length) cells = line.split('\t');
+
+                tableHTML += `<tr class="border-t border-white/10 ${rowIndex % 2 === 0 ? 'bg-white/5' : ''}">`;
+                headers.forEach((_, cellIndex) => {
+                    tableHTML += `<td class="px-4 py-2">${cells[cellIndex] === undefined ? '' : cells[cellIndex]}</td>`;
+                });
+                tableHTML += '</tr>';
+            });
+            tableHTML += '</tbody>';
+            previewTable.innerHTML = tableHTML;
+            previewContainer.classList.remove("hidden");
+        } catch (e) {
+            console.error("Error showing data preview:", e);
+            previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-red-400" colspan="100%">Error reading data preview.</td></tr></tbody>';
+            previewContainer.classList.remove("hidden");
+        }
+    };
+
+    /**
+     * --- MODIFIED HELPER FUNCTION ---
+     * Populates variable selectors and adds event listeners
+     * to prevent Y/X conflicts and check data ratios.
+     */
+    const updateRegressionVariables = (headers) => {
+        const dependentSelect = dom.$("dependentVar");
+        const independentContainer = dom.$("independentVarsContainer");
+        const errorEl = dom.$("regressionFileError"); // Get the error element
+        if (!dependentSelect || !independentContainer || !errorEl) return;
+
+        dependentSelect.innerHTML = ''; 
+        independentContainer.innerHTML = ''; 
+        errorEl.textContent = ""; // Clear errors
+
+        let dependentFound = false;
+        const excludePatterns = ['id', 'date', 'time', 'timestamp', 'index', 'row'];
+        
+        headers.forEach((header, index) => {
+            const option = new Option(header, header);
+            dependentSelect.add(option);
+
+            const checkboxHtml = `
+                <label class="flex items-center space-x-2 text-sm text-white/90 p-1.5 rounded hover:bg-white/10">
+                    <input type="checkbox" class="method-checkbox independent-var-checkbox" value="${header}">
+                    <span>${header}</span>
+                </label>`;
+            independentContainer.innerHTML += checkboxHtml;
+
+            if (!dependentFound && !excludePatterns.some(pattern => header.toLowerCase().includes(pattern))) {
+                dependentSelect.value = header;
+                dependentFound = true;
+            }
+        });
+
+        if (!dependentFound && headers.length > 0) {
+                dependentSelect.value = headers[0];
+        }
+
+        const allCheckboxes = independentContainer.querySelectorAll('.independent-var-checkbox');
+
+        // --- NEW: Function to sync checkbox states ---
+        const syncCheckboxes = () => {
+            const selectedDependent = dependentSelect.value;
+            errorEl.textContent = ""; // Clear any previous errors on change
+
+            allCheckboxes.forEach(cb => {
+                if (cb.value === selectedDependent) {
+                    cb.checked = false;
+                    cb.disabled = true;
+                } else {
+                    cb.disabled = false;
+                }
+            });
+            // Trigger a change event on the container to re-run ratio check
+            independentContainer.dispatchEvent(new Event('change'));
+        };
+        
+        // --- Initial Checkbox State ---
+        const initialSelectedDependent = dependentSelect.value;
+        allCheckboxes.forEach(cb => {
+            if (cb.value === initialSelectedDependent) {
+                cb.checked = false;
+                cb.disabled = true;
+            } else if (!excludePatterns.some(pattern => cb.value.toLowerCase().includes(pattern))) {
+                cb.checked = true;
+            } else {
+                cb.checked = false; 
+            }
+        });
+        // --- End Initial State ---
+
+
+        // --- Add Event Listeners ---
+        
+        // 1. When Dependent var changes, disable/uncheck matching independent var
+        dependentSelect.removeEventListener('change', syncCheckboxes); // Avoid duplicates
+        dependentSelect.addEventListener('change', syncCheckboxes);
+
+        // 2. When Independent var is checked, check ratio
+        independentContainer.removeEventListener('change', handleIndepChange); // Avoid duplicates
+        independentContainer.addEventListener('change', handleIndepChange);
+        
+        function handleIndepChange(e) {
+            // Only run if a checkbox was clicked (or event was dispatched)
+            if (e.target.matches('.independent-var-checkbox') || e.type === 'change') {
+                
+                // Clear the general data warning (from file upload)
+                const warningEl = dom.$("regressionDataWarning");
+                if (warningEl) warningEl.textContent = "";
+
+                // Check ratio and show warning *in the error field*
+                const numFeatures = independentContainer.querySelectorAll('.independent-var-checkbox:checked').length;
+                const numObservations = appState.currentRegressionRowCount;
+                
+                if (numFeatures === 0) {
+                    errorEl.textContent = ""; // Clear errors if no features selected
+                    return;
+                }
+
+                const ratio = numObservations / numFeatures;
+
+                if (numObservations >= 30 && ratio < 10) {
+                        errorEl.textContent = `Warning: Data ratio is low (${ratio.toFixed(1)}-to-1). A 10-to-1 ratio (or ${numFeatures * 10} rows) is recommended.`;
+                        errorEl.className = "text-yellow-400 text-sm mt-2"; // Make it a yellow warning
+                } else if (numObservations < 30) {
+                        // This warning is already shown by processDataInput, but good to have
+                        errorEl.textContent = `Warning: Insufficient data (${numObservations} rows). 30+ recommended.`;
+                        errorEl.className = "text-yellow-400 text-sm mt-2";
+                } else {
+                        errorEl.textContent = ""; // Clear if ratio is fine
+                        errorEl.className = "text-red-400 text-sm mt-2"; // Reset class
+                }
+            }
+        }
+        
+        dependentSelect.disabled = false;
+        // Trigger initial ratio check
+        independentContainer.dispatchEvent(new Event('change'));
+    };
+
+
+    /**
+     * Processes the uploaded regression data file.
+     */
+    const processDataInput_Regression = async (file) => {
+        const errorEl = dom.$("regressionFileError");
+        const warningEl = dom.$("regressionDataWarning"); 
+        const dependentSelect = dom.$("dependentVar");
+        const independentContainer = dom.$("independentVarsContainer");
+        const previewContainer = dom.$("regressionDataPreview");
+        const previewTable = dom.$("regressionPreviewTable");
+        
+        errorEl.textContent = ""; 
+        if (warningEl) warningEl.textContent = ""; 
+
+        dependentSelect.disabled = true;
+        dependentSelect.innerHTML = '<option value="">-- Processing data... --</option>';
+        independentContainer.innerHTML = "";
+        
+        previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Processing data...</td></tr></tbody>';
+        previewContainer.classList.remove("hidden");
+
+        appState.currentRegressionRowCount = 0; // Reset row count
+        
+        if (!file) {
+                dependentSelect.innerHTML = '<option value="">-- Upload data file --</option>';
+                independentContainer.innerHTML = '<p class="text-sm text-white/60 text-center">-- Upload data file --</p>';
+                previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Upload a .csv file to see a preview.</td></tr></tbody>';
+                return;
+        }
+
+        try {
+            const textContent = await extractTextFromFile(file); 
+            const originalHeaders = getHeadersFromText(textContent);
+
+            const lines = textContent.split(/[\r\n]+/).filter(Boolean);
+            
+            appState.currentRegressionRowCount = lines.length - 1; 
+
+            // --- MODIFIED WARNING LOGIC ---
+            if (appState.currentRegressionRowCount < 10) { 
+                // Use errorEl for critical file read errors/warnings
+                errorEl.textContent = "Warning: Small dataset (<10 rows). Regression will be unreliable.";
+                errorEl.className = "text-yellow-400 text-sm mt-2"; // Make it yellow
+            } 
+            else if (appState.currentRegressionRowCount < 30) {
+                // Use warningEl for non-blocking data warnings
+                if (warningEl) warningEl.textContent = `Warning: Insufficient data (${appState.currentRegressionRowCount} rows). A minimum of 30 rows is recommended.`;
+            }
+            // --- END MODIFIED LOGIC ---
+
+            showDataPreview(textContent, 'regressionPreviewTable', 'regressionDataPreview');
+            updateRegressionVariables(originalHeaders); // This will trigger the initial ratio check
+
+        } catch (err) {
+            console.error("Regression input processing failed:", err);
+            errorEl.textContent = `Error: ${err.message}.`;
+            errorEl.className = "text-red-400 text-sm mt-2"; // Make it red
+            if (warningEl) warningEl.textContent = "";
+            dependentSelect.disabled = true;
+            dependentSelect.innerHTML = '<option value="">-- Error reading data --</option>';
+            independentContainer.innerHTML = '<p class="text-sm text-red-400 text-center">Error reading data.</p>';
+            previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-red-400" colspan="100%">Error reading data preview.</td></tr></tbody>';
+            previewContainer.classList.remove("hidden");
+        }
+    };
+
+    // --- Attach Event Listeners ---
+    
+    const examplesBtn = dom.$("regressionExamplesBtn");
+    const examplesDiv = dom.$("regressionExamples");
+    const exampleContentEl = dom.$("regressionExampleContent");
+
+    if (examplesBtn && examplesDiv && exampleContentEl) {
+        examplesBtn.addEventListener("click", () => {
+            const isHidden = examplesDiv.classList.toggle("hidden");
+            examplesBtn.textContent = isHidden ? "View Examples" : "Hide Examples";
+
+            if (!isHidden && exampleContentEl.textContent === "Loading example...") {
+                // Populate with relevant regression example
+                exampleContentEl.innerHTML = `
+                    <div class="text-xs font-medium text-white/90 mb-2">📋 How to Use Regression Analysis</div>
+                    <div class="space-y-2 text-xs">
+                        <div class="mb-4">
+                            <div class="flex items-center mb-2">
+                                <span class="text-green-400 mr-2">✅</span>
+                                <span class="text-sm font-medium text-green-400">GOOD EXAMPLE</span>
+                                <span class="text-xs text-white/60 ml-2">(Results in clear, significant findings)</span>
+                            </div>
+                            <div class="bg-green-900/20 border border-green-500/30 rounded p-3">
+                                <div class="text-xs text-white/90 mb-2"><strong>CSV Data (Snippet):</strong></div>
+                                <div class="bg-black/30 p-2 rounded font-mono text-xs text-white/90">
+Date,Sales,Marketing_Spend,Website_Traffic,Customer_Service_Calls<br>
+2023-01-01,50000,5000,15000,300<br>
+2023-02-01,52000,5200,15500,320<br>
+2023-03-01,60000,6000,18000,280
+                                </div>
+                                <div class="text-xs text-white/90 mt-3 mb-1"><strong>Selected Variables:</strong></div>
+                                <div class="text-xs text-white/80">
+                                    • <strong>Dependent (Y):</strong> Sales<br>
+                                    • <strong>Independent (X):</strong> Marketing_Spend, Website_Traffic
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="flex items-center mb-2">
+                                <span class="text-red-400 mr-2">❌</span>
+                                <span class="text-sm font-medium text-red-400">BAD EXAMPLE</span>
+                                <span class="text-xs text-white/60 ml-2">(Results in errors or unreliable findings)</span>
+                            </div>
+                            <div class="bg-red-900/20 border border-red-500/30 rounded p-3">
+                                <div class="text-xs text-white/90 mb-2"><strong>CSV Data (Snippet with issues):</strong></div>
+                                <div class="bg-black/30 p-2 rounded font-mono text-xs text-white/90">
+Date,Sales,Marketing,Traffic<br>
+Jan 1, "$50,000", "$5k", "15,000 visitors"<br>
+Feb 1, "$52,000", "$5.2k", "15,500 visitors"
+                                </div>
+                                <div class="text-xs text-white/90 mt-3 mb-1"><strong>Issues:</strong></div>
+                                <div class="text-xs text-red-300 font-medium space-y-1">
+                                    <div>• <strong>Non-Numeric Data:</strong> 'Sales' and 'Marketing' columns contain '$' and 'k', which will cause errors. Data must be numbers only (e.g., 50000, 5000).</div>
+                                    <div>• <strong>Messy Data:</strong> 'Traffic' column contains text ("visitors") and commas. It should be a clean number (e.g., 15000).</div>
+                                    <div>• <strong>Bad Column Names:</strong> 'Marketing Spend' (with a space) is better as 'Marketing_Spend'.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-white/20 pt-3">
+                            <div class="text-xs font-medium text-white/90 mb-2">💡 How to Get the Best Results:</div>
+                            <div class="text-xs text-white/80 space-y-1">
+                                <div>• <strong>Clean your data first!</strong> All columns used in the analysis (Y and X) must contain **numbers only**.</div>
+                                <div>• Remove all text, commas (in numbers), and currency symbols ($, €) from your data columns.</div>
+                                <div>• Use clear column names with **no spaces** (e.g., 'Website_Traffic' instead of 'Website Traffic').</div>
+                                <div>• Ensure you have enough data (30+ rows recommended).</div>
+                            </div>
+                        </div>
+                    </div>`;
+            }
+        });
+    }
+    
+    const regressionFileInput = dom.$("regressionFile");
+    if (regressionFileInput) {
+        regressionFileInput.addEventListener("change", (e) => {
+            const label = dom.$("regressionFileLabel");
+            const fileNameSpan = label.querySelector(".file-name");
+            if (e.target.files.length > 0) {
+                fileNameSpan.textContent = e.target.files[0].name;
+                label.classList.add("has-file");
+                processDataInput_Regression(e.target.files[0]);
+            } else {
+                fileNameSpan.textContent = "Select .csv data file...";
+                label.classList.remove("has-file");
+                processDataInput_Regression(null);
+            }
+        });
+    }
+    
     const attachListener = (inputId, labelId) => {
         const fileInput = dom.$(inputId);
         if (fileInput) {
@@ -806,12 +1747,24 @@ function createRegressionLayout_DA(template) {
             });
         }
     };
-
-    attachListener("regressionFile", "regressionFileLabel");
     attachListener("regressionContextFile", "regressionContextFileLabel");
 
     dom.$("generateBtn").addEventListener("click", handleGenerate);
     reattachActionListeners();
+
+    const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+    if (feedbackLink) {
+        feedbackLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            if (typeof navigateTo === 'function') {
+                navigateTo('feedback');
+            } else {
+                console.error("navigateTo function is not defined.");
+            }
+        });
+    } else {
+        console.warn("Feedback link not found inside createRegressionLayout_DA");
+    }
 }
 
 
@@ -849,6 +1802,9 @@ function createPlsLayout_DA(template) {
                             <span id="generateBtnText">📊 Run PLS-SEM Analysis</span>
                             <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                         </button>
+                        <div class="text-center mt-4">
+                            <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                        </div>
                     </div>
                     <div class="mt-12">
                             <h2 class="text-3xl font-bold mb-4 text-center">PLS-SEM Results</h2>
@@ -862,6 +1818,27 @@ function createPlsLayout_DA(template) {
             `;
 
     setupInputToggle("plsFile", "plsFileLabel", null, null);
+
+    // Attach listener for the feedback link
+    const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+    if (feedbackLink) {
+        feedbackLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            
+            // This just calls the navigateTo function.
+            // It relies on your main `MapsTo` function to be
+            // the *simplified one* (without memory logic)
+            // and your `submitFeedbackPageBtn` listener
+            // to be the *simplified one* (that just goes home).
+            if (typeof navigateTo === 'function') {
+                navigateTo('feedback');
+            } else {
+                console.error("navigateTo function is not defined.");
+            }
+        });
+    } else {
+        console.warn("Feedback link not found inside createPlsLayout_DA");
+    }
 }
 
 
@@ -881,18 +1858,23 @@ function createSemAnalysisLayout(template) {
             <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
             <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">${template.description}</p>
 
-            <div class="max-w-2xl mx-auto w-full">
-                <div class="glass-container p-6 space-y-6">
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-xl font-bold text-white">Analysis Configuration</h3>
-                        <button type="button" id="configExamplesBtn" class="text-xs px-2 py-1 border border-white/30 rounded text-white/80 hover:bg-white/10 hover:text-white transition-all">View Examples</button>
+        <div class="max-w-2xl mx-auto w-full">
+            <div class="glass-container p-6 space-y-6">
+                
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-xl font-bold text-white">Analysis Configuration</h3>
+                    <div class="flex items-center space-x-2">
+                        <button type="button" id="configExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
+                        <a href="data-files/sem/sem-sample-data.csv" download="SEM_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>
                     </div>
-                    <div id="configExamples" class="hidden mb-4 p-3 bg-black/20 border border-white/15 rounded-lg">
-                        <div class="text-xs font-medium text-white/90 mb-2">📋 Configuration Examples</div>
-                        <div class="space-y-2 text-xs">
-                            <div id="exampleContent" class="text-white/80">Loading example...</div>
-                        </div>
+                </div>
+
+                <div id="configExamples" class="hidden mb-4 p-3 bg-black/20 border border-white/15 rounded-lg">
+                    <div class="text-xs font-medium text-white/90 mb-2">📋 Configuration Examples</div>
+                    <div class="space-y-2 text-xs">
+                        <div id="exampleContent" class="text-white/80">Loading example...</div>
                     </div>
+                </div>
 
                     <div class="input-radio-group">
                         <input type="radio" name="semInputType" id="semInputFileToggle" class="input-radio" checked>
@@ -919,10 +1901,15 @@ function createSemAnalysisLayout(template) {
                         <div id="semTextError" class="text-red-400 text-sm mt-2"></div>
                     </div>
 
-                    <div id="semDataPreview" class="hidden space-y-2">
+                    <div id="semDataPreview" class="space-y-2">
                         <label class="block text-sm font-medium text-gray-200">Data Preview (First 5 Rows)</label>
                         <div class="overflow-x-auto rounded-lg border border-white/20">
                             <table class="min-w-full text-left text-sm text-white/90" id="semPreviewTable">
+                                <tbody>
+                                    <tr>
+                                        <td class="p-4 text-center text-white/60" colspan="100%">Upload or paste data to see a preview.</td>
+                                    </tr>
+                                </tbody>
                             </table>
                         </div>
                     </div>
@@ -934,64 +1921,63 @@ function createSemAnalysisLayout(template) {
                         </select>
                     </div>
 
-                    <div>
-                        <div class="flex items-center justify-between mb-2">
-                            <label for="semMeasurementSyntax" class="block text-sm font-medium text-gray-200">Measurement Model Syntax</label>
-                            <button type="button" id="measurementExamplesBtn" class="text-xs px-2 py-1 border border-white/30 rounded text-white/80 hover:bg-white/10 hover:text-white transition-all">View Examples</button>
-                        </div>
-                        <div id="measurementExamples" class="hidden mb-2 p-3 bg-black/20 border border-white/15 rounded-lg">
-                            <div class="text-xs font-medium text-white/90 mb-2">📊 Measurement Model Examples</div>
-                            <div class="space-y-2 text-xs">
-                                <div>
-                                    <div class="text-white/80 mb-1">Basic Factor Structure:</div>
-                                    <div class="bg-black/30 p-2 rounded font-mono text-white/90 relative">
-                                        <button class="absolute top-1 right-1 text-xs px-1 py-0.5 bg-white/10 rounded hover:bg-white/20" onclick="copyToClipboard(this, 'Anxiety =~ anx1 + anx2 + anx3 + anx4\\nDepression =~ dep1 + dep2 + dep3 + dep4')">Copy</button>
-                                        Anxiety =~ anx1 + anx2 + anx3 + anx4<br>Depression =~ dep1 + dep2 + dep3 + dep4
-                                    </div>
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label for="semMeasurementSyntax" class="block text-sm font-medium text-gray-200">Measurement Model Syntax</label>
+                        <button type="button" id="measurementExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
+                    </div>
+                    <div id="measurementExamples" class="hidden mb-2 p-3 bg-black/20 border border-white/15 rounded-lg">
+                        <div class="text-xs font-medium text-white/90 mb-2">📊 Measurement Model Examples</div>
+                        <div class="space-y-2 text-xs">
+                            <div>
+                                <div class="text-white/80 mb-1">Basic Factor Structure:</div>
+                                <div class="bg-black/30 p-2 rounded font-mono text-white/90 relative">
+                                    Anxiety =~ anx1 + anx2 + anx3 + anx4<br>Depression =~ dep1 + dep2 + dep3 + dep4
                                 </div>
-                                <div>
-                                    <div class="text-white/80 mb-1">With Fixed Loadings:</div>
-                                    <div class="bg-black/30 p-2 rounded font-mono text-white/90 relative">
-                                        <button class="absolute top-1 right-1 text-xs px-1 py-0.5 bg-white/10 rounded hover:bg-white/20" onclick="copyToClipboard(this, 'Performance =~ 1*perf1 + perf2 + perf3\\nSatisfaction =~ 1*sat1 + sat2 + sat3')">Copy</button>
-                                        Performance =~ 1*perf1 + perf2 + perf3<br>Satisfaction =~ 1*sat1 + sat2 + sat3
-                                    </div>
+                            </div>
+                            <div>
+                                <div class="text-white/80 mb-1">With Fixed Loadings:</div>
+                                <div class="bg-black/30 p-2 rounded font-mono text-white/90 relative">
+                                    Performance =~ 1*perf1 + perf2 + perf3<br>Satisfaction =~ 1*sat1 + sat2 + sat3
                                 </div>
                             </div>
                         </div>
-                        <textarea id="semMeasurementSyntax" class="input-field h-32" placeholder="e.g., Factor1 =~ varA + varB\nFactor2 =~ varC + varD..."></textarea>
                     </div>
+                    <textarea id="semMeasurementSyntax" class="input-field h-32" placeholder="e.g., Factor1 =~ varA + varB\nFactor2 =~ varC + varD..."></textarea>
+                </div>
 
-                    <div>
-                        <div class="flex items-center justify-between mb-2">
-                            <label for="semStructuralSyntax" class="block text-sm font-medium text-gray-200">Structural Model Syntax</label>
-                            <button type="button" id="structuralExamplesBtn" class="text-xs px-2 py-1 border border-white/30 rounded text-white/80 hover:bg-white/10 hover:text-white transition-all">View Examples</button>
-                        </div>
-                        <div id="structuralExamples" class="hidden mb-2 p-3 bg-black/20 border border-white/15 rounded-lg">
-                            <div class="text-xs font-medium text-white/90 mb-2">🔗 Structural Model Examples</div>
-                            <div class="space-y-2 text-xs">
-                                <div>
-                                    <div class="text-white/80 mb-1">Simple Regression:</div>
-                                    <div class="bg-black/30 p-2 rounded font-mono text-white/90 relative">
-                                        <button class="absolute top-1 right-1 text-xs px-1 py-0.5 bg-white/10 rounded hover:bg-white/20" onclick="copyToClipboard(this, 'Performance ~ Motivation + Ability\\nSatisfaction ~ Performance')">Copy</button>
-                                        Performance ~ Motivation + Ability<br>Satisfaction ~ Performance
-                                    </div>
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label for="semStructuralSyntax" class="block text-sm font-medium text-gray-200">Structural Model Syntax</label>
+                        <button type="button" id="structuralExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
+                    </div>
+                    <div id="structuralExamples" class="hidden mb-2 p-3 bg-black/20 border border-white/15 rounded-lg">
+                        <div class="text-xs font-medium text-white/90 mb-2">🔗 Structural Model Examples</div>
+                        <div class="space-y-2 text-xs">
+                            <div>
+                                <div class="text-white/80 mb-1">Simple Regression:</div>
+                                <div class="bg-black/30 p-2 rounded font-mono text-white/90 relative">
+                                    Performance ~ Motivation + Ability<br>Satisfaction ~ Performance
                                 </div>
-                                <div>
-                                    <div class="text-white/80 mb-1">Mediation Model:</div>
-                                    <div class="bg-black/30 p-2 rounded font-mono text-white/90 relative">
-                                        <button class="absolute top-1 right-1 text-xs px-1 py-0.5 bg-white/10 rounded hover:bg-white/20" onclick="copyToClipboard(this, 'Outcome ~ c*Predictor + b*Mediator\\nMediator ~ a*Predictor\\n\\nindirect := a*b\\ntotal := c + (a*b)')">Copy</button>
-                                        Outcome ~ c*Predictor + b*Mediator<br>Mediator ~ a*Predictor<br><br>indirect := a*b<br>total := c + (a*b)
-                                    </div>
+                            </div>
+                            <div>
+                                <div class="text-white/80 mb-1">Mediation Model:</div>
+                                <div class="bg-black/30 p-2 rounded font-mono text-white/90 relative">
+                                    Outcome ~ c*Predictor + b*Mediator<br>Mediator ~ a*Predictor<br><br>indirect := a*b<br>total := c + (a*b)
                                 </div>
                             </div>
                         </div>
-                        <textarea id="semStructuralSyntax" class="input-field h-32" placeholder="e.g., Factor1 ~ Factor2\nObservedVar ~ Factor1..."></textarea>
                     </div>
+                    <textarea id="semStructuralSyntax" class="input-field h-32" placeholder="e.g., Factor1 ~ Factor2\nObservedVar ~ Factor1..."></textarea>
+                </div>
 
                     <button id="generateBtn" class="btn btn-primary w-full text-lg py-3">
                         <span id="generateBtnText">📊 Run SEM Analysis</span>
                         <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                     </button>
+                    <div class="text-center mt-4">
+                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                    </div>
                 </div>
             </div>
 
@@ -1005,30 +1991,19 @@ function createSemAnalysisLayout(template) {
             </div>
         </div>`;
 
-    // --- Helper function for copying to clipboard ---
-    window.copyToClipboard = function(button, text) {
-        navigator.clipboard.writeText(text.replace(/\\n/g, '\n')).then(() => {
-            const originalText = button.textContent;
-            button.textContent = 'Copied!';
-            setTimeout(() => {
-                button.textContent = originalText;
-            }, 2000);
-        });
-    };
+// --- Attach Core Event Listeners ---
+dom.$("generateBtn").addEventListener("click", handleGenerate); 
+reattachActionListeners(); 
 
-    // --- Attach Core Event Listeners ---
-    dom.$("generateBtn").addEventListener("click", handleGenerate); // Assumes handleGenerate exists and calls handleSemAnalysis
-    reattachActionListeners(); // Assumes this function attaches save button listeners
-
-    // --- Add Example Toggle Event Listeners ---
-    dom.$("configExamplesBtn").addEventListener("click", function() {
-        const exampleDiv = dom.$("configExamples");
-        const isHidden = exampleDiv.classList.contains("hidden");
-        
-        if (isHidden) {
-            // Display hardcoded example content immediately
-            const exampleContent = dom.$("exampleContent");
-            const exampleText = `Date,Performance_Score,Satisfaction_Rating,Quality_Index,Revenue_USD
+// --- Add Example Toggle Event Listeners ---
+dom.$("configExamplesBtn").addEventListener("click", function() {
+    const exampleDiv = dom.$("configExamples");
+    const isHidden = exampleDiv.classList.contains("hidden");
+    
+    if (isHidden) {
+        // Display hardcoded example content immediately
+        const exampleContent = dom.$("exampleContent");
+        const exampleText = `Date,Performance_Score,Satisfaction_Rating,Quality_Index,Revenue_USD
 2023-01-01,85,4.2,8.5,15000
 2023-02-01,87,4.4,8.7,16200
 2023-03-01,89,4.6,8.9,17500
@@ -1036,46 +2011,44 @@ function createSemAnalysisLayout(template) {
 2023-05-01,91,4.8,9.1,18900
 2023-06-01,88,4.5,8.8,17200`;
 
-            exampleContent.innerHTML = `
-                <div class="bg-black/30 p-2 rounded font-mono text-white/90 text-xs whitespace-pre-wrap">${exampleText}</div>
-                <div class="text-white/60 text-xs mt-2 space-y-1">
-                    <div class="font-medium text-white/80">SEM Data Requirements:</div>
-                    <div>• <strong>Clean column names:</strong> No spaces, symbols, or special characters (use underscores instead)</div>
-                    <div>• <strong>Numeric data only:</strong> All measurement variables must be numbers</div>
-                    <div>• <strong>Sample size:</strong> Minimum 200 rows recommended for reliable results</div>
-                    <div>• <strong>No missing values:</strong> Complete data for all variables (or <10% missing)</div>
-                    <div>• <strong>Variable types:</strong> Use meaningful names like Performance_Score, Customer_Satisfaction</div>
-                    <div>• <strong>Scale consistency:</strong> Use same scale for related measures (e.g., all 1-10 ratings)</div>
-                </div>
-            `;
-        }
-        
-        exampleDiv.classList.toggle("hidden");
-        this.textContent = isHidden ? "Hide Examples" : "View Examples";
-    });
+        exampleContent.innerHTML = `
+            <div class="bg-black/30 p-2 rounded font-mono text-white/90 text-xs whitespace-pre-wrap">${exampleText}</div>
+            <div class="text-white/60 text-xs mt-2 space-y-1">
+                <div class="font-medium text-white/80">SEM Data Requirements:</div>
+                <div>• <strong>Clean column names:</strong> No spaces, symbols, or special characters (use underscores instead)</div>
+                <div>• <strong>Numeric data only:</strong> All measurement variables must be numbers</div>
+                <div>• <strong>Sample size:</strong> Minimum 200 rows recommended for reliable results</div>
+                <div>• <strong>No missing values:</strong> Complete data for all variables (or <10% missing)</div>
+                <div>• <strong>Variable types:</strong> Use meaningful names like Performance_Score, Customer_Satisfaction</div>
+                <div>• <strong>Scale consistency:</strong> Use same scale for related measures (e.g., all 1-10 ratings)</div>
+            </div>
+        `;
+    }
+    
+    exampleDiv.classList.toggle("hidden");
+    this.textContent = isHidden ? "Hide Examples" : "View Examples";
+});
 
-    dom.$("measurementExamplesBtn").addEventListener("click", function() {
-        const exampleDiv = dom.$("measurementExamples");
-        const isHidden = exampleDiv.classList.contains("hidden");
-        exampleDiv.classList.toggle("hidden");
-        this.textContent = isHidden ? "Hide Examples" : "View Examples";
-    });
+dom.$("measurementExamplesBtn").addEventListener("click", function() {
+    const exampleDiv = dom.$("measurementExamples");
+    const isHidden = exampleDiv.classList.contains("hidden");
+    exampleDiv.classList.toggle("hidden");
+    this.textContent = isHidden ? "Hide Examples" : "View Examples";
+});
 
-    dom.$("structuralExamplesBtn").addEventListener("click", function() {
-        const exampleDiv = dom.$("structuralExamples");
-        const isHidden = exampleDiv.classList.contains("hidden");
-        exampleDiv.classList.toggle("hidden");
-        this.textContent = isHidden ? "Hide Examples" : "View Examples";
-    });
+dom.$("structuralExamplesBtn").addEventListener("click", function() {
+    const exampleDiv = dom.$("structuralExamples");
+    const isHidden = exampleDiv.classList.contains("hidden");
+    exampleDiv.classList.toggle("hidden");
+    this.textContent = isHidden ? "Hide Examples" : "View Examples";
+});
 
     // --- Restore Cached Results (if any) ---
     if (appState.analysisCache[appState.currentTemplateId]) {
         dom.$("analysisResult").innerHTML = appState.analysisCache[appState.currentTemplateId];
         dom.$("analysisActions").classList.remove("hidden");
-        // Re-attach listeners specific to the results content (e.g., tabs)
-        reattachTabListeners(dom.$("analysisResult")); // Assumes this function exists
+        reattachTabListeners(dom.$("analysisResult")); 
     } else {
-        // Default placeholder if no cached results
         dom.$("analysisResult").innerHTML = '<div class="text-white/60 p-8 text-center">Your generated analysis will appear here.</div>';
         dom.$("analysisActions").classList.add("hidden");
     }
@@ -1094,37 +2067,34 @@ function createSemAnalysisLayout(template) {
     const dataPreviewContainer = dom.$("semDataPreview");
     const previewTable = dom.$("semPreviewTable");
     const modelTemplateSelect = dom.$("semModelTemplate");
-    let fullHeaders = []; // Holds the headers extracted from data
+    let fullHeaders = []; 
 
-    // --- SEM Helper Functions --- (Keep all helper functions as they were)
+    // --- SEM Helper Functions (with MODIFICATIONS) ---
 
-    /**
-     * Extracts headers from CSV text, trying common delimiters.
-     * @param {string} text - CSV content.
-     * @returns {string[]} Array of headers.
-     */
     const getHeadersFromText = (text) => {
         if (!text || typeof text !== 'string' || !text.trim()) throw new Error("Input text is empty.");
         const firstLine = text.split(/[\r\n]+/)[0];
         if (!firstLine || !firstLine.trim()) throw new Error("First line (header) is empty.");
 
         let headers = firstLine.split(',').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
-        if (headers.length <= 1) {
-            headers = firstLine.split(';').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
-        }
-        if (headers.length <= 1) {
-            headers = firstLine.split('\t').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
-        }
+        if (headers.length <= 1) headers = firstLine.split(';').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+        if (headers.length <= 1) headers = firstLine.split('\t').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
         if (headers.length === 0) throw new Error("Could not parse headers (tried comma, semicolon, tab).");
         return headers;
     };
 
-    /** Shows the first 5 data rows in the preview table. */
+    /** === MODIFIED showDataPreview === */
     const showDataPreview = (csvText) => {
         try {
-            const lines = csvText.split(/[\r\n]+/).filter(Boolean); // Filter empty lines
-            const rows = lines.slice(0, 6); // Header + 5 data rows
-            if (rows.length < 2) { dataPreviewContainer.classList.add("hidden"); return; }
+            const lines = csvText.split(/[\r\n]+/).filter(Boolean); 
+            const rows = lines.slice(0, 6); 
+            
+            // === MODIFIED: Show placeholder if file is empty/no rows ===
+            if (rows.length < 2) { 
+                previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Data file is empty or has no data rows.</td></tr></tbody>';
+                dataPreviewContainer.classList.remove("hidden"); 
+                return; 
+            }
 
             const headers = getHeadersFromText(rows[0]);
             let tableHTML = '<thead class="bg-white/10 text-xs uppercase"><tr>';
@@ -1132,10 +2102,9 @@ function createSemAnalysisLayout(template) {
             tableHTML += '</tr></thead><tbody>';
 
             rows.slice(1).forEach((line, rowIndex) => {
-                // Simple split for preview - assumes consistent delimiter detected by getHeadersFromText
                 let cells = line.split(',');
-                if (cells.length <= 1) cells = line.split(';');
-                if (cells.length <= 1) cells = line.split('\t');
+                if (cells.length !== headers.length) cells = line.split(';');
+                if (cells.length !== headers.length) cells = line.split('\t');
 
                 tableHTML += `<tr class="border-t border-white/10 ${rowIndex % 2 === 0 ? 'bg-white/5' : ''}">`;
                 headers.forEach((_, cellIndex) => {
@@ -1145,34 +2114,34 @@ function createSemAnalysisLayout(template) {
             });
             tableHTML += '</tbody>';
             previewTable.innerHTML = tableHTML;
-            dataPreviewContainer.classList.remove("hidden");
+            dataPreviewContainer.classList.remove("hidden"); // Ensure it's visible
         } catch (e) {
             console.error("Error showing data preview:", e);
-            dataPreviewContainer.classList.add("hidden");
+            // === MODIFIED: Show error in table ===
+            previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-red-400" colspan="100%">Error reading data preview.</td></tr></tbody>';
+            dataPreviewContainer.classList.remove("hidden"); // Ensure it's visible
         }
     };
 
-    /** Populates the model template dropdown based on detected headers. */
-    const updateModelTemplates = (headers) => {
-        fullHeaders = headers;
-        modelTemplateSelect.innerHTML = '';
-        modelTemplateSelect.add(new Option("Select a model template...", ""));
-        modelTemplateSelect.add(new Option("Custom Syntax (Type below)", "custom"));
-        modelTemplateSelect.add(new Option("Auto-Suggest (Generic Model)", "autosuggest"));
-        modelTemplateSelect.disabled = false;
-    };
+const updateModelTemplates = (headers) => {
+    fullHeaders = headers;
+    modelTemplateSelect.innerHTML = '';
+    modelTemplateSelect.add(new Option("Select a model template...", ""));
+    modelTemplateSelect.add(new Option("Custom Syntax (Type below)", "custom"));
+    modelTemplateSelect.add(new Option("Auto-Suggest (Generic Model)", "autosuggest"));
+    modelTemplateSelect.disabled = false;
+};
 
-    /** Splits syntax into measurement/structural parts and populates text boxes, removing comments first. */
     const populateSyntaxBoxes = (fullSyntax) => {
         const uncommentedSyntax = fullSyntax.split('\n')
-            .filter(line => !line.trim().startsWith('#')) // Remove comments
+            .filter(line => !line.trim().startsWith('#'))
             .join('\n');
         const lines = uncommentedSyntax.split('\n');
         let measurement = [], structural = [], foundStructural = false;
 
         lines.forEach(line => {
             const trimmedLine = line.trim();
-            if (!trimmedLine) return; // Skip blank lines after comment removal
+            if (!trimmedLine) return;
             if (trimmedLine.includes('~') && !trimmedLine.includes('=~')) foundStructural = true;
             if (foundStructural) structural.push(line);
             else measurement.push(line);
@@ -1184,126 +2153,122 @@ function createSemAnalysisLayout(template) {
         structuralSyntaxBox.placeholder = structuralSyntaxBox.value ? structuralSyntaxBox.placeholder : "e.g., F1 ~ F2";
     };
 
-    /** Generates the recommended path analysis syntax (comment-free). */
     const generateRecommendedSyntax = () => {
         const fullSyntax = `
 Marketing =~ Ad_Spend_USD + Brand_Awareness_Pct
-
 Profit_USD ~ Marketing + Online_Sales_USD + Retail_Sales_USD`;
         populateSyntaxBoxes(fullSyntax);
     };
 
-    /** Generates a super simple SEM syntax based on columns (quick fix version). */
-    const generateSyntax = () => {
-        if (fullHeaders.length === 0) { 
-            alert("Data headers not found for auto-suggestion."); 
-            return; 
-        }
+const generateSyntax = () => {
+    if (fullHeaders.length === 0) { 
+        alert("Data headers not found for auto-suggestion."); 
+        return; 
+    }
+    const excludePatterns = ['id', 'date', 'time', 'timestamp', 'index', 'row'];
+    const analyticalHeaders = fullHeaders.filter(h => 
+        !excludePatterns.some(pattern => h.toLowerCase().includes(pattern))
+    );
+    if (analyticalHeaders.length < 4) {
+        populateSyntaxBoxes(`# Need at least 4 numeric columns for SEM\n# Available: ${analyticalHeaders.join(', ')}\n# Please add more numeric variables to your data`);
+        return;
+    }
+    let measurementPart = '';
+    let structuralPart = '';
+    measurementPart += `Factor1 =~ ${analyticalHeaders[0]} + ${analyticalHeaders[1]}\n`;
+    measurementPart += `Factor2 =~ ${analyticalHeaders[2]} + ${analyticalHeaders[3]}\n`;
+    structuralPart = 'Factor2 ~ Factor1\n';
+    let fullSyntax = measurementPart.trim() + '\n\n' + structuralPart.trim();
+    populateSyntaxBoxes(fullSyntax);
+};
 
-        // Filter out common non-analytical columns
-        const excludePatterns = ['id', 'date', 'time', 'timestamp', 'index', 'row'];
-        const analyticalHeaders = fullHeaders.filter(h => 
-            !excludePatterns.some(pattern => h.toLowerCase().includes(pattern))
-        );
-
-        // QUICK FIX: Check if we have enough columns
-        if (analyticalHeaders.length < 4) {
-            populateSyntaxBoxes(`# Need at least 4 numeric columns for SEM\n# Available: ${analyticalHeaders.join(', ')}\n# Please add more numeric variables to your data`);
-            return;
-        }
-
-        // QUICK FIX: Generate the simplest possible model
-        let measurementPart = '';
-        let structuralPart = '';
-        
-        // Just create 2 factors with 2 indicators each
-        measurementPart += `Factor1 =~ ${analyticalHeaders[0]} + ${analyticalHeaders[1]}\n`;
-        measurementPart += `Factor2 =~ ${analyticalHeaders[2]} + ${analyticalHeaders[3]}\n`;
-        
-        // Simple structural relationship
-        structuralPart = 'Factor2 ~ Factor1\n';
-
-        // Combine parts
-        let fullSyntax = measurementPart.trim() + '\n\n' + structuralPart.trim();
-        populateSyntaxBoxes(fullSyntax);
-    };
-
-    /** Processes data input (file or text) to update UI state. */
+    /** === MODIFIED processDataInput === */
     const processDataInput = async (isFileInput) => {
         let textContent = null;
         let originalHeaders = [];
         const errorEl = isFileInput === null ? null : (isFileInput ? fileError : textError);
         const inputEl = isFileInput === null ? null : (isFileInput ? fileInput : textInput);
 
-        // Clear errors
         if (fileError) fileError.textContent = "";
         if (textError) textError.textContent = "";
 
-        // Reset UI before processing
         modelTemplateSelect.disabled = true;
-        modelTemplateSelect.innerHTML = '<option value="">-- Upload or paste data first --</option>';
-        dataPreviewContainer.classList.add("hidden");
-        previewTable.innerHTML = "";
-        measurementSyntaxBox.value = ""; // Clear syntax boxes too
+        modelTemplateSelect.innerHTML = '<option value="">-- Processing data... --</option>';
+        // === MODIFIED: Show processing in table ===
+        previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Processing data...</td></tr></tbody>';
+        dataPreviewContainer.classList.remove("hidden"); // Make sure it's visible
+        
+        measurementSyntaxBox.value = ""; 
         structuralSyntaxBox.value = "";
         measurementSyntaxBox.placeholder = "Upload or paste data to see model templates...";
         structuralSyntaxBox.placeholder = "";
 
-        // If isFileInput is null, it means we just need to reset the UI (e.g., file deselected)
-        if (isFileInput === null) return;
+        if (isFileInput === null) {
+            // === MODIFIED: Show placeholder on reset ===
+            modelTemplateSelect.innerHTML = '<option value="">-- Upload or paste data first --</option>';
+            previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Upload or paste data to see a preview.</td></tr></tbody>';
+            return;
+        }
 
         try {
             if (isFileInput) {
                 const file = inputEl.files[0];
-                if (!file) return;
+                if (!file) {
+                    // === MODIFIED: Show placeholder if no file ===
+                    modelTemplateSelect.innerHTML = '<option value="">-- Upload or paste data first --</option>';
+                    previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Upload or paste data to see a preview.</td></tr></tbody>';
+                    return;
+                }
                 textContent = await extractTextFromFile(file);
             } else {
                 textContent = inputEl.value;
-                if (!textContent.trim()) return;
+                if (!textContent.trim()) {
+                    // === MODIFIED: Show placeholder if no text ===
+                    modelTemplateSelect.innerHTML = '<option value="">-- Upload or paste data first --</option>';
+                    previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Upload or paste data to see a preview.</td></tr></tbody>';
+                    return;
+                }
             }
 
-            originalHeaders = getHeadersFromText(textContent);
-            
-            // QUICK FIX: Basic data validation
-            const lines = textContent.split(/[\r\n]+/).filter(Boolean);
-            const dataRows = lines.slice(1); // Skip header
-            
-            if (dataRows.length < 10) {
-                if (errorEl) errorEl.textContent = "Warning: Very small dataset. Need at least 10 rows for reliable SEM analysis.";
-            }
-            
-            // Check for numeric data in first few rows
-            let numericColumnsCount = 0;
-            if (dataRows.length > 0) {
-                const firstRow = dataRows[0].split(/[,;\t]/);
-                firstRow.forEach((cell, index) => {
-                    if (index > 0 && !isNaN(parseFloat(cell)) && isFinite(cell)) { // Skip first column (might be date/id)
-                        numericColumnsCount++;
-                    }
-                });
-            }
-            
-            if (numericColumnsCount < 3) {
-                if (errorEl) errorEl.textContent = "Warning: Most columns appear non-numeric. SEM requires numeric data.";
-            }
+        originalHeaders = getHeadersFromText(textContent);
 
-            // If headers parsed successfully:
+        const lines = textContent.split(/[\r\n]+/).filter(Boolean);
+        const dataRows = lines.slice(1); 
+        
+        if (dataRows.length < 10) {
+            if (errorEl) errorEl.textContent = "Warning: Very small dataset. Need at least 10 rows for reliable SEM analysis.";
+        }
+        
+        let numericColumnsCount = 0;
+        if (dataRows.length > 0) {
+            const firstRow = dataRows[0].split(/[,;\t]/);
+            firstRow.forEach((cell, index) => {
+                if (index > 0 && !isNaN(parseFloat(cell)) && isFinite(cell)) {
+                    numericColumnsCount++;
+                }
+            });
+        }
+        
+        if (numericColumnsCount < 3) {
+            if (errorEl) errorEl.textContent = "Warning: Most columns appear non-numeric. SEM requires numeric data.";
+        }
+
             showDataPreview(textContent);
-            updateModelTemplates(originalHeaders); // This enables the dropdown
+            updateModelTemplates(originalHeaders);
 
-            // AUTO-TRIGGER: Only if we have sufficient data
-            if (dataRows.length >= 10 && numericColumnsCount >= 3) {
-                modelTemplateSelect.value = "autosuggest";
-                modelTemplateSelect.dispatchEvent(new Event('change'));
-            }
+        if (dataRows.length >= 10 && numericColumnsCount >= 3) {
+            modelTemplateSelect.value = "autosuggest";
+            modelTemplateSelect.dispatchEvent(new Event('change'));
+        }
 
         } catch (err) {
             console.error("Input processing failed:", err);
             if (errorEl) errorEl.textContent = `Error: ${err.message}.`;
-            // Reset UI to error state
             modelTemplateSelect.disabled = true;
             modelTemplateSelect.innerHTML = '<option value="">-- Error reading data --</option>';
-            dataPreviewContainer.classList.add("hidden");
+            // === MODIFIED: Show error in table ===
+            previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-red-400" colspan="100%">Error reading data preview.</td></tr></tbody>';
+            dataPreviewContainer.classList.remove("hidden");
             measurementSyntaxBox.placeholder = "Error reading input data.";
             structuralSyntaxBox.placeholder = "";
         }
@@ -1311,19 +2276,17 @@ Profit_USD ~ Marketing + Online_Sales_USD + Retail_Sales_USD`;
 
     // --- Attach Input Event Listeners ---
 
-    // Radio toggles
     fileToggle.addEventListener("change", () => {
         fileArea.classList.remove("hidden");
         textArea.classList.add("hidden");
-        processDataInput(fileInput.files.length > 0 ? true : null); // Re-process if file exists, else reset
+        processDataInput(fileInput.files.length > 0 ? true : null); 
     });
     textToggle.addEventListener("change", () => {
         fileArea.classList.add("hidden");
         textArea.classList.remove("hidden");
-        processDataInput(textInput.value.trim() ? false : null); // Re-process if text exists, else reset
+        processDataInput(textInput.value.trim() ? false : null); 
     });
 
-    // File input selection
     if (fileInput) {
         fileInput.addEventListener("change", () => {
             const label = dom.$("semFileLabel");
@@ -1331,63 +2294,70 @@ Profit_USD ~ Marketing + Online_Sales_USD + Retail_Sales_USD`;
             if (fileInput.files.length > 0) {
                 fileNameSpan.textContent = fileInput.files[0].name;
                 label.classList.add("has-file");
-                processDataInput(true); // Process the new file
-            } else { // File deselected
+                processDataInput(true); 
+            } else { 
                 fileNameSpan.textContent = "Select data file...";
                 label.classList.remove("has-file");
-                processDataInput(null); // Reset the UI
+                processDataInput(null); 
             }
         });
     }
 
-    // Text input typing (only process if text area is visible)
-    // Use 'blur' or a debounce mechanism if 'input' triggers too often
     if (textInput) {
-        textInput.addEventListener("blur", () => { // Changed from 'input' to 'blur'
+        textInput.addEventListener("blur", () => { 
             if (!textArea.classList.contains("hidden")) {
                 processDataInput(textInput.value.trim() ? false : null);
             }
         });
     }
 
-    // Model template selection change
     if (modelTemplateSelect) {
-        // --- MODIFIED LISTENER ---
-        modelTemplateSelect.addEventListener("change", async () => { // Make the handler async
+        modelTemplateSelect.addEventListener("change", async () => { 
             const selected = modelTemplateSelect.value;
-            measurementSyntaxBox.value = ""; // Clear boxes when selection changes
+            measurementSyntaxBox.value = ""; 
             structuralSyntaxBox.value = "";
 
             switch (selected) {
                 case "custom":
                     measurementSyntaxBox.placeholder = "Type measurement model syntax here...";
                     structuralSyntaxBox.placeholder = "Type structural model syntax here...";
-                    measurementSyntaxBox.focus(); // Focus the first box for custom entry
+                    measurementSyntaxBox.focus(); 
                     break;
                 case "autosuggest":
                     measurementSyntaxBox.placeholder = "Auto-suggesting generic model...";
                     structuralSyntaxBox.placeholder = "Auto-suggesting generic model...";
-                    generateSyntax(); // Call the simple auto-suggest function
+                    generateSyntax(); 
                     measurementSyntaxBox.placeholder = measurementSyntaxBox.value ? "Review auto-suggested syntax." : "Could not auto-suggest.";
                     structuralSyntaxBox.placeholder = structuralSyntaxBox.value ? "Review auto-suggested syntax." : "";
-
                     break;
                 case "recommended":
                     measurementSyntaxBox.placeholder = "Loading recommended model...";
                     structuralSyntaxBox.placeholder = "Loading recommended model...";
-                    generateRecommendedSyntax(); // Call the specific recommended syntax function
+                    generateRecommendedSyntax(); 
                     measurementSyntaxBox.placeholder = "Review recommended syntax.";
                     structuralSyntaxBox.placeholder = "Review recommended syntax.";
                     break;
                 default:
-                    // Option "" selected (Select a model template...)
                     measurementSyntaxBox.placeholder = "Select a model template or type syntax...";
                     structuralSyntaxBox.placeholder = "";
             }
         });
-        // --- END OF MODIFIED LISTENER ---
     }
 
+    // Attach listener for the feedback link
+            const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+            if (feedbackLink) {
+                feedbackLink.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    if (typeof navigateTo === 'function') {
+                        navigateTo('feedback');
+                    } else {
+                        console.error("navigateTo function is not defined.");
+                    }
+                });
+            } else {
+                console.warn("Feedback link not found inside createSemAnalysisLayout");
+            }
 }
 
 
@@ -1412,9 +2382,13 @@ contentContainer.innerHTML = `
 
         <div class="max-w-2xl mx-auto w-full">
             <div class="glass-container p-6 space-y-6">
+
                 <div class="flex items-center justify-between mb-2">
                     <h3 class="text-xl font-bold text-white">Analysis Configuration</h3>
-                    <button type="button" id="configExamplesBtn" class="text-xs px-2 py-1 border border-white/30 rounded text-white/80 hover:bg-white/10 hover:text-white transition-all">View Examples</button>
+                    <div class="flex items-center space-x-2">
+                        <button type="button" id="configExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
+                        <a href="data-files/dematel/dematel-sample-doc.txt" download="DEMATEL_Sample_Context.txt" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .txt</a>
+                    </div>
                 </div>
                 
                 <div id="configExamples" class="hidden mb-4 p-3 bg-black/20 border border-white/15 rounded-lg">
@@ -1523,6 +2497,9 @@ The AI will read this and build the matrix for you."></textarea>
                     <span id="generateBtnText">Analyze Causal Factors</span>
                     <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                 </button>
+                <div class="text-center mt-4">
+	                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                </div>
             </div>
         </div>
 
@@ -1552,7 +2529,6 @@ The AI will read this and build the matrix for you."></textarea>
     }
 
     // --- Attach Core Event Listeners ---
-    // This button now correctly calls your main 'handleGenerate' router
     dom.$("generateBtn").addEventListener("click", handleGenerate); 
     
     reattachActionListeners(); 
@@ -1643,6 +2619,27 @@ The AI will read this and build the matrix for you."></textarea>
         textInput.addEventListener("input", () => {
              dom.$("dematelTextError").textContent = "";
         });
+    }
+
+    // Attach listener for the feedback link
+    const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+    if (feedbackLink) {
+        feedbackLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            
+            // This just calls the navigateTo function.
+            // It relies on your main `MapsTo` function to be
+            // the *simplified one* (without memory logic)
+            // and your `submitFeedbackPageBtn` listener
+            // to be the *simplified one* (that just goes home).
+            if (typeof navigateTo === 'function') {
+                navigateTo('feedback');
+            } else {
+                console.error("navigateTo function is not defined.");
+            }
+        });
+    } else {
+        console.warn("Feedback link not found inside createDematelLayout");
     }
 }
 

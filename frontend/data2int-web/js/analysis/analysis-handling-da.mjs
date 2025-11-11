@@ -36,7 +36,7 @@ async function handleDescriptiveAnalysis_DA() {
         // We are NOT sending analysis_types, so the backend will run all of them.
 
         // 3. Call your FastAPI Backend (NOT Ollama)
-        const API_URL = "https://analysis.data2int.com/api/data-analysis"; // Your main API endpoint
+        const API_URL = "https://analysis.data2int.com/api/descriptive"; // Your main API endpoint
         
         const response = await fetch(API_URL, {
             method: "POST",
@@ -154,7 +154,7 @@ async function handlePredictiveAnalysis() {
         formData.append("modelType", modelType);
 
         // --- 4. Send Request to Backend API ---
-        const API_URL = "https://analysis.data2int.com/api/data-analysis";
+        const API_URL = "https://analysis.data2int.com/api/predictive";
         console.log("Sending Predictive Analysis request to:", API_URL);
 
         const response = await fetch(API_URL, {
@@ -348,353 +348,194 @@ async function handlePrescriptiveAnalysis_DA() {
 
 
 async function handleVisualizationAnalysis_DA() {
-    const analysisResultContainer = dom.$("analysisResult");
-    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div></div><div></div><div></div> </div><h3 class="text-xl font-semibold text-white mb-4">Generating Advanced Visualizations...</h3><p class="text-white/80 mb-2">Analyzing data, selecting optimal charts, and crafting insights...</p></div>`;
+    const analysisResultContainer = $("analysisResult");
+    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div></div><div></div><div></div> </div><h3 class="text-xl font-semibold text-white mb-4">Performing Visualization Analysis...</h3><p class="text-white/80 mb-2">Loading data, performing calculations, and generating insights...</p></div>`;
     setLoading("generate", true);
+    $("analysisActions").classList.add("hidden");
 
-    // Define URL and Model
-    const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
-    // *** CHOOSE MODEL: qwen or llama ***
-    const MODEL_NAME = "llama3.1:latest"; // Use Qwen for potentially better numerical accuracy / chart logic
-    // const MODEL_NAME = "llama3.1:latest"; // Alternative option
+    const API_URL = "https://analysis.data2int.com/api/visualization"; // Use your new endpoint
+    const MODEL_NAME = "llama3.1:latest"; // Fallback model name for logging, not for direct call
 
     try {
         // 1. Gather Inputs
-        const vizRequest = dom.$("vizRequest").value.trim();
-        const file = dom.$("vizFile").files[0];
+        const vizRequestText = $("vizRequest").value.trim();
+        const dataFile = $("vizFile").files[0];
 
-        if (!vizRequest || !file) {
-            throw new Error("❌ Please describe your visualization request and upload a CSV data file.");
+        if (!dataFile) {
+            throw new Error("❌ Please upload a CSV data file.");
         }
 
-        const fileContent = await extractTextFromFile(file);
+        // 2. Prepare FormData
+        const formData = new FormData();
+        formData.append("data_file", dataFile, dataFile.name);
 
-        // Truncate if necessary
-        const MAX_CONTEXT_LENGTH = 15000; // Adjust as needed
-        let truncatedNote = "";
-        let dataSnippet = fileContent;
-        if (fileContent.length > MAX_CONTEXT_LENGTH) {
-            dataSnippet = fileContent.substring(0, MAX_CONTEXT_LENGTH);
-            truncatedNote = `(Note: Analysis based on the first ${MAX_CONTEXT_LENGTH} characters of data.)`;
-            console.warn(`Visualization analysis data truncated.`);
+        // 3. Cleverly handle the context text:
+        // Convert the text from the <textarea> into a Blob (an in-memory file)
+        // so the backend can receive it as the 'context_file'.
+        if (vizRequestText) {
+            const contextBlob = new Blob([vizRequestText], { type: 'text/plain' });
+            formData.append("context_file", contextBlob, "visualization_context.txt");
+            console.log("Attaching user request text as context_file.");
         }
+        
+        // 4. We are NOT sending chart_configs, so the backend will auto-generate
+        // formData.append("chart_configs", JSON.stringify([...])); 
 
-        // 2. Construct Enhanced Prompt
-        const prompt = `
-            You are a senior business intelligence analyst using Plotly.js. Your task is to analyze a user's request and dataset snippet to create the most insightful and relevant visualizations. Accuracy, clarity, and actionable insights are paramount.
-
-            **ANALYSIS INPUTS:**
-            * **User Request:** "${vizRequest}"
-            * **Data Snippet:** ${truncatedNote}\n\`\`\`csv\n${dataSnippet}\n\`\`\`
-
-            **DETAILED TASKS:**
-            1.  **Chart Selection Rationale:** Briefly explain (1-2 sentences) your thought process for choosing the types of charts generated based on the user request and apparent data structure.
-            2.  **Generate Visualizations (3-4 charts):** Create distinct, complementary visualizations using appropriate chart types (e.g., bar, line, scatter, pie, box, heatmap) that directly address the user's request using ONLY the provided data snippet. For each visualization:
-                * **\`title\`:** A short, descriptive title.
-                * **\`plotly_trace\`:** A *complete* Plotly.js trace object (or array of traces if needed, e.g., for grouped bars). Ensure data types are correct (numbers for y-values etc.).
-                * **\`plotly_layout\`:** A *complete* Plotly.js layout object, including axis labels and a title.
-                * **\`interpretation\`:** A detailed, multi-sentence interpretation explaining *what the chart shows* based on visual patterns (trends, distributions, comparisons, outliers) evident in the plotted data.
-                * **\`actionable_insight\`:** A specific business action or decision that should be considered based *only* on the interpretation of *this specific chart* and the original user request context.
-
-            3.  **Self-Correction:** Before outputting JSON, review: Does the chart selection rationale make sense? Are trace/layout objects complete and valid Plotly JSON? Do interpretations accurately reflect the chart's visual patterns in the data snippet? Are insights actionable and directly linked to the interpretation? Fix errors rigorously.
-
-            **ABSOLUTE CONSTRAINTS:**
-            - **DATA GROUNDING:** All chart data, interpretations, and insights MUST be derived *solely* from the provided data snippet and user request. No external data or assumptions.
-            - **PLOTLY VALIDITY:** Ensure \`plotly_trace\` and \`plotly_layout\` are valid JSON structures usable by Plotly.js. Use correct data types.
-            - **ACTIONABILITY:** Insights must suggest concrete next steps or decisions.
-            - **JSON FORMAT:** Adhere EXACTLY. Include all specified keys.
-
-            **RETURN FORMAT:**
-            Provide ONLY a valid JSON object. **CRITICAL: Include ALL keys: "chart_selection_rationale", AND "visualizations".** The "visualizations" array MUST contain **3-4 objects**, each with "title", "plotly_trace", "plotly_layout", "interpretation", and "actionable_insight" keys.
-            {
-              "chart_selection_rationale": "Brief explanation here...",
-              "visualizations": [
-                { // Chart 1
-                  "title": "Chart Title 1",
-                  "plotly_trace": { /* ... Complete Trace Object(s) ... */ },
-                  "plotly_layout": { /* ... Complete Layout Object ... */ },
-                  "interpretation": "Detailed interpretation of chart 1 based on data...",
-                  "actionable_insight": "Specific action based on interpretation of chart 1..."
-                },
-                { // Chart 2
-                  "title": "Chart Title 2",
-                  "plotly_trace": { /* ... */ },
-                  "plotly_layout": { /* ... */ },
-                  "interpretation": "Detailed interpretation of chart 2...",
-                  "actionable_insight": "Specific action based on interpretation of chart 2..."
-                } // ... 3-4 charts total ...
-              ]
-            }
-        `;
-
-        // 3. Send Request to Ollama
-        console.log(`Sending ENHANCED Visualization prompt to ${MODEL_NAME}...`);
-        const response = await fetch(OLLAMA_URL, {
+        // 5. Send Request to Python Backend
+        console.log(`Sending Visualization request to Python backend at ${API_URL}...`);
+        const response = await fetch(API_URL, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ model: MODEL_NAME, prompt: prompt, stream: false, format: "json", options: { num_ctx: 32768 } })
+            body: formData,
+            // Add Authorization headers if your API requires them
         });
 
         if (!response.ok) {
-            let errorBody = `API error ${response.status}`;
-            try { errorBody += `: ${await response.text()}`; } catch (e) {}
-            throw new Error(errorBody);
+            let errorDetail = `API Error: ${response.status}`;
+            try {
+                const errorJson = await response.json();
+                errorDetail = errorJson.detail || `API Error: ${response.status} - ${response.statusText}`;
+            } catch (e) {
+                errorDetail = `API Error: ${response.status} - ${response.statusText}`;
+            }
+            throw new Error(errorDetail);
         }
 
-        const data = await response.json();
-        let parsedData;
-        try {
-            parsedData = JSON.parse(data.response);
-             // *** Robust Validation ***
-             console.log('--- RAW AI JSON RESPONSE (Parsed - Enhanced Visualization) ---');
-             console.log(JSON.stringify(parsedData, null, 2));
-             console.log('------------------------------------');
-
-             if (!parsedData ||
-                 !parsedData.chart_selection_rationale || typeof parsedData.chart_selection_rationale !== 'string' ||
-                 !parsedData.visualizations || !Array.isArray(parsedData.visualizations) || parsedData.visualizations.length < 2 || // Expect at least 2 charts
-                 (parsedData.visualizations.length > 0 && (
-                     typeof parsedData.visualizations[0] !== 'object' ||
-                     !parsedData.visualizations[0].hasOwnProperty('title') ||
-                     !parsedData.visualizations[0].hasOwnProperty('plotly_trace') || typeof parsedData.visualizations[0].plotly_trace !== 'object' || // Basic check
-                     !parsedData.visualizations[0].hasOwnProperty('plotly_layout') || typeof parsedData.visualizations[0].plotly_layout !== 'object' || // Basic check
-                     !parsedData.visualizations[0].hasOwnProperty('interpretation') ||
-                     !parsedData.visualizations[0].hasOwnProperty('actionable_insight')
-                 ))
-                )
-             {
-                  console.error("Validation Failed (Visualization): Required fields missing or invalid structure/count.", parsedData);
-                  throw new Error(`AI response structure is incorrect. Missing/invalid fields (chart_selection_rationale, visualizations array [>=2] with all sub-keys). Check console.`);
-             }
-             console.log(`Successfully parsed ENHANCED Visualization JSON using ${MODEL_NAME}. Rationale provided. Found ${parsedData.visualizations.length} visualizations.`);
-
-        } catch (e) {
-            console.error(`Failed to parse/validate ENHANCED Visualization JSON using ${MODEL_NAME}:`, data?.response, e);
-            throw new Error(`Invalid JSON received or required fields missing in AI response: ${e.message}. Check console logs.`);
+        const parsedData = await response.json();
+        
+        // Check if the backend returned its *own* error
+        if (parsedData.metadata && parsedData.metadata.error) {
+            throw new Error(`Backend Analysis Error: ${parsedData.metadata.error_message}`);
         }
 
-        // 4. Render Results
-        renderDA.renderVisualizationPage_DA(analysisResultContainer, parsedData);
+        // 6. Render Results
+        // We now call the new renderer function that can handle the backend's JSON structure
+        renderVisualizationPage_DA(analysisResultContainer, parsedData);
 
     } catch (error) {
-        console.error(`Error in handleVisualizationAnalysis_DA (Enhanced) using ${MODEL_NAME}:`, error);
+        console.error(`Error in handleVisualizationAnalysis_DA (Backend) using ${MODEL_NAME}:`, error);
         analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
         setLoading("generate", false);
-    } finally {
-        // Ensure loading stops
-         if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
-            setLoading("generate", false);
-         }
     }
+    // 'finally' block is not needed here; setLoading(false) is handled
+    // by the renderer on success and the catch block on error.
 }
 
 
 
 async function handleRegressionAnalysis_DA() {
-    const analysisResultContainer = dom.$("analysisResult");
-    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div></div><div></div><div></div> </div><h3 class="text-xl font-semibold text-white mb-4">Running Comprehensive Regression...</h3><p class="text-white/80 mb-2">Building model, running diagnostics, and generating actionable insights...</p></div>`;
+    const analysisResultContainer = $("analysisResult");
+    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div></div><div></div><div></div> </div><h3 class="text-xl font-semibold text-white mb-4">Running scikit-learn Regression...</h3><p class="text-white/80 mb-2">Sending data to Python backend for statistical analysis...</p></div>`;
     setLoading("generate", true);
+    $("analysisActions").classList.add("hidden");
 
-    // Define URL and Model
-    const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
-    // *** CHOOSE MODEL: qwen or llama ***
-    const MODEL_NAME = "llama3.1:latest"; // Use Qwen for potentially better numerical accuracy
-    // const MODEL_NAME = "llama3.1:latest"; // Alternative option
+    const API_URL = "https://analysis.data2int.com/api/regression"; // Your FastAPI endpoint
+    
+    // --- NEW: Get the warning div ---
+    const warningEl = $("regressionDataWarning");
+    if (warningEl) warningEl.textContent = ""; // Clear previous warnings
 
     try {
-        // 1. Gather Inputs
-        const dependentVar = dom.$("dependentVar").value.trim();
-        const independentVarsRaw = dom.$("independentVars").value.trim();
-        const dataFile = dom.$("regressionFile").files[0];
-        const contextFile = dom.$("regressionContextFile").files[0];
+        // --- 1. Gather Inputs from NEW UI Elements ---
+        const dependentVar = $("dependentVar").value;
+        
+        // Get all checked independent variables
+        const independentVarCheckboxes = document.querySelectorAll("#independentVarsContainer .independent-var-checkbox:checked");
+        const independentVarsList = Array.from(independentVarCheckboxes).map(cb => cb.value);
 
-        if (!dependentVar || !independentVarsRaw || !dataFile) {
-            throw new Error("❌ Please specify Dependent Variable, at least one Independent Variable, and upload a CSV data file.");
+        const dataFile = $("regressionFile").files[0];
+        const contextFile = $("regressionContextFile").files[0];
+
+        // 2. Validate Inputs
+        if (!dataFile) {
+            throw new Error("❌ Please upload a CSV data file.");
         }
-        // Clean up independent vars list
-        const independentVars = independentVarsRaw.split(',').map(v => v.trim()).filter(v => v).join(', ');
-        if (!independentVars) {
-             throw new Error("❌ Please specify at least one valid Independent Variable.");
+        if (!dependentVar) {
+            throw new Error("❌ Please select a Dependent Variable (Y).");
+        }
+        if (independentVarsList.length === 0) {
+                throw new Error("❌ Please select at least one Independent Variable (X).");
+        }
+        if (independentVarsList.includes(dependentVar)) {
+            throw new Error("❌ The Dependent Variable cannot also be an Independent Variable.");
         }
 
+        // --- VALIDATION BLOCK (uses the new error strings) ---
+        const numFeatures = independentVarsList.length;
+        const numObservations = currentRegressionRowCount; // Get stored row count
+        const ratio = numObservations / numFeatures;
 
-        const fileContent = await extractTextFromFile(dataFile);
-        let businessContext = "No additional business context document provided.";
+        console.log(`Validation: ${numObservations} observations, ${numFeatures} features. Ratio: ${ratio}`);
+
+        if (numObservations < 30) {
+            throw new Error(`❌ Insufficient Data: You have only ${numObservations} rows. A minimum of 30 is recommended for basic regression.`);
+        }
+        if (ratio < 10) {
+            throw new Error(`❌ Insufficient Data Ratio: You have ${numObservations} observations for ${numFeatures} features (a ratio of ${ratio.toFixed(1)}-to-1). A 10-to-1 ratio (or ${numFeatures * 10} rows) is recommended.`);
+        }
+        // --- END VALIDATION BLOCK ---
+
+
+        // 3. Prepare FormData for the backend
+        const formData = new FormData();
+        
+        // Append files
+        formData.append("data_file", dataFile, dataFile.name);
         if (contextFile) {
-            try {
-                 businessContext = await extractTextFromFile(contextFile);
-                 console.log("Extracted text from context file for regression.");
-            } catch (e) {
-                 console.warn("Could not read context file:", e.message);
-                 businessContext = `Error reading context file: ${e.message}. Proceeding without document context.`;
-            }
-        } else {
-             console.log("No business context file uploaded for regression.");
+            formData.append("context_file", contextFile, contextFile.name);
         }
 
+        // Append simple text fields
+        formData.append("target_column", dependentVar);
 
-        // Truncate if necessary
-        const MAX_DATA_LENGTH = 15000; // Keep data snippet reasonable
-        const MAX_CONTEXT_LENGTH = 7000; // Context less critical than data for pure regression
-        let truncatedNote = "";
-        let dataSnippet = fileContent;
-
-        if (fileContent.length > MAX_DATA_LENGTH) {
-            dataSnippet = fileContent.substring(0, MAX_DATA_LENGTH);
-            truncatedNote = `(Note: Analysis based on the first ${MAX_DATA_LENGTH} characters of the data file.)`;
-            console.warn(`Regression analysis data truncated.`);
-        }
-         if (businessContext.length > MAX_CONTEXT_LENGTH) {
-            businessContext = businessContext.substring(0, MAX_CONTEXT_LENGTH) + "\n... (business context truncated)";
-            console.warn(`Regression business context truncated.`);
-        }
-
-        // 2. Construct Enhanced Prompt
-        const prompt = `
-            You are a meticulous senior data analyst performing a comprehensive multiple regression analysis. Accuracy, clear interpretation of statistics, validation of assumptions, and actionable business insights grounded in data are paramount.
-
-            **ANALYSIS INPUTS:**
-            * **Dependent Variable (Y):** "${dependentVar}"
-            * **Independent Variables (X):** "${independentVars}"
-            * **Business Context:** """${businessContext}"""
-            * **Data Snippet:** ${truncatedNote}\n\`\`\`csv\n${dataSnippet}\n\`\`\`
-
-            **DETAILED TASKS:**
-            1.  **Model Summary & Fit:** Calculate and interpret key model statistics:
-                * **R-squared & Adj. R-squared:** Provide values and explain *precisely* what percentage of variance in "${dependentVar}" is explained by the model, considering the number of predictors (Adj. R²).
-                * **F-statistic & Prob(F-statistic):** Provide values and state clearly whether the overall model is statistically significant (typically p < 0.05).
-                * **Regression Equation:** Provide the calculated equation.
-                * **Overall Interpretation:** Summarize the model's goodness-of-fit based on these metrics.
-
-            2.  **Variable Importance (if applicable/calculable):** Estimate the relative importance of each independent variable in predicting the dependent variable. Provide a score or ranking and a brief rationale based on model coefficients or other standard methods (e.g., contribution to R²). If not directly calculable from standard OLS output, omit this section or state it's based on coefficient magnitude/significance.
-
-            3.  **Coefficients Analysis:** For *each* coefficient (including the Intercept):
-                * Provide: Variable Name, Coefficient value, Standard Error, P-value.
-                * **Interpretation:** Explain the practical meaning of the coefficient (e.g., "For each one-unit increase in [X variable], ${dependentVar} is predicted to [increase/decrease] by [coefficient value] units, holding other variables constant.").
-                * **Significance:** State clearly whether the coefficient is statistically significant (p < 0.05) and its implication (i.e., we are confident this variable has a real effect).
-
-            4.  **Residuals Analysis (Model Diagnostics):**
-                * Simulate/generate plausible 'predicted' vs. 'residuals' data points (around 15-20 points consistent with the fit stats).
-                * **Interpretation:** Analyze the *pattern* of these residuals. Explicitly check for:
-                    * **Linearity:** Do residuals scatter randomly around zero, or show a curve (suggesting non-linear relationship)?
-                    * **Homoscedasticity:** Is the spread of residuals roughly constant across predicted values, or does it fan out/in (heteroscedasticity)?
-                    * **Normality (Conceptual):** Do residuals seem roughly normally distributed around zero?
-                    * **Conclusion:** State whether the basic assumptions of linear regression appear to be met based *only* on the visual pattern of the simulated residuals.
-
-            5.  **Business Recommendations (3-4 recommendations):** Based *only* on the significant coefficients, variable importance, and the provided Business Context:
-                * **\`recommendation\`:** A clear, actionable title.
-                * **\`insight_link\`:** State which specific significant variable(s) or model finding drives this recommendation.
-                * **\`action_items\`:** List 2-3 concrete steps a business could take based on this finding and the context.
-                * **\`potential_risks\`:** Briefly mention 1-2 potential risks or considerations for implementing the action.
-                * **\`kpis_to_track\`:** List 2-3 KPIs to measure the success of the implemented action.
-
-            6.  **Self-Correction:** Before outputting JSON, rigorously check: Are R²/F-stat interpretations correct? Are coefficient p-values interpreted correctly? Does the residual analysis correctly check assumptions? Are recommendations directly linked ONLY to significant findings and business context? Fix all errors.
-
-            **ABSOLUTE CONSTRAINTS:**
-            - **DATA GROUNDING:** All interpretations and recommendations MUST derive *solely* from the analysis of the provided data snippet, variable definitions, and business context. No external knowledge.
-            - **STATISTICAL ACCURACY:** Interpretations of R², F-stat, p-values, and residual patterns must be statistically sound.
-            - **ACTIONABILITY & LINKAGE:** Recommendations must be practical and clearly linked back to specific, significant model results.
-            - **JSON FORMAT:** Adhere EXACTLY. Include all specified keys and sub-keys.
-
-            **RETURN FORMAT:**
-            Provide ONLY a valid JSON object. **CRITICAL: Include ALL keys specified below.**
-            {
-              "model_summary": {
-                "dependent_variable": "${dependentVar}",
-                "r_squared": 0.0, // Calculated
-                "adj_r_squared": 0.0, // Calculated
-                "f_statistic": 0.0, // Calculated
-                "prob_f_statistic": 0.0, // Calculated
-                "regression_equation": "Y = ...", // Calculated
-                "interpretation": "Precise interpretation of fit..." // Generated
-              },
-              "variable_importance": [ // Optional section if calculable, otherwise omit or explain basis
-                { "variable": "Var1", "importance_score": 0.0, "rationale": "Based on..." },
-                { "variable": "Var2", "importance_score": 0.0, "rationale": "Based on..." }
-              ],
-              "coefficients": [ // Include Intercept + all Independent Vars
-                {
-                  "variable": "Intercept", "coefficient": 0.0, "std_error": 0.0, "p_value": 0.0,
-                  "interpretation": "Baseline value interpretation...", "significance": "Is it significant? (p<0.05)"
-                },
-                {
-                   "variable": "X1", "coefficient": 0.0, "std_error": 0.0, "p_value": 0.0,
-                   "interpretation": "Practical meaning of coefficient...", "significance": "Is it significant? (p<0.05)"
-                } // ... for all variables ...
-              ],
-              "residuals_analysis": { // Renamed key for clarity
-                "predicted_vs_residuals": [ // Array of ~15-20 plausible points
-                    { "predicted": 0.0, "residual": 0.0 }
-                 ],
-                "interpretation": "Analysis of pattern for Linearity, Homoscedasticity, Normality. Conclusion on assumptions met/violated..." // Generated
-              },
-              "business_recommendations": [ // 3-4 recommendations
-                {
-                  "recommendation": "Action Title",
-                  "insight_link": "Driven by significance of [Variable X]...",
-                  "action_items": ["Step 1...", "Step 2..."],
-                  "potential_risks": "Risk 1...",
-                  "kpis_to_track": ["KPI 1...", "KPI 2..."]
-                } // ...
-              ]
-            }
-        `;
-
-        // 3. Send Request to Ollama
-        console.log(`Sending ENHANCED Regression prompt to ${MODEL_NAME}...`);
-        const response = await fetch(OLLAMA_URL, {
+        // Convert and append fields that backend expects as JSON strings
+        formData.append("feature_columns", JSON.stringify(independentVarsList));
+        
+        // 4. Send Request to Python Backend
+        console.log(`Sending Regression request to Python backend at ${API_URL}...`);
+        
+        const response = await fetch(API_URL, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ model: MODEL_NAME, prompt: prompt, stream: false, format: "json", options: { num_ctx: 32768 } }) // Increased context
+            body: formData,
         });
 
+        // 5. Handle Response
+        const parsedData = await response.json(); // Get JSON response regardless of status
+
         if (!response.ok) {
-            let errorBody = `API error ${response.status}`;
-            try { errorBody += `: ${await response.text()}`; } catch (e) {}
-            throw new Error(errorBody);
+            // Handle HTTP errors (4xx, 5xx)
+            const errorMsg = parsedData.detail || `API Error: ${response.status} - ${response.statusText}`;
+            throw new Error(errorMsg);
         }
 
-        const data = await response.json();
-        let parsedData;
-        try {
-            parsedData = JSON.parse(data.response);
-             // *** Robust Validation ***
-             console.log('--- RAW AI JSON RESPONSE (Parsed - Enhanced Regression) ---');
-             console.log(JSON.stringify(parsedData, null, 2));
-             console.log('------------------------------------');
-
-             if (!parsedData ||
-                 !parsedData.model_summary || typeof parsedData.model_summary !== 'object' || !parsedData.model_summary.hasOwnProperty('r_squared') ||
-                 // variable_importance is optional
-                 !parsedData.coefficients || !Array.isArray(parsedData.coefficients) || parsedData.coefficients.length === 0 ||
-                 (parsedData.coefficients.length > 0 && (typeof parsedData.coefficients[0] !== 'object' || !parsedData.coefficients[0].hasOwnProperty('p_value'))) ||
-                 !parsedData.residuals_analysis || typeof parsedData.residuals_analysis !== 'object' || !parsedData.residuals_analysis.hasOwnProperty('predicted_vs_residuals') || !Array.isArray(parsedData.residuals_analysis.predicted_vs_residuals) ||
-                 !parsedData.business_recommendations || !Array.isArray(parsedData.business_recommendations) || parsedData.business_recommendations.length < 2 || // Expect >= 2 recommendations
-                 (parsedData.business_recommendations.length > 0 && (typeof parsedData.business_recommendations[0] !== 'object' || !parsedData.business_recommendations[0].hasOwnProperty('insight_link')))
-                )
-             {
-                  console.error("Validation Failed (Regression): Required fields missing or invalid structure/count.", parsedData);
-                  throw new Error(`AI response structure is incorrect. Missing/invalid fields (model_summary, coefficients, residuals_analysis, or business_recommendations [>=2]). Check console.`);
-             }
-             console.log(`Successfully parsed ENHANCED Regression JSON using ${MODEL_NAME}. Found ${parsedData.coefficients.length} coefficients, ${parsedData.business_recommendations.length} recommendations.`);
-
-        } catch (e) {
-            console.error(`Failed to parse/validate ENHANCED Regression JSON using ${MODEL_NAME}:`, data?.response, e);
-            throw new Error(`Invalid JSON received or required fields missing in AI response: ${e.message}. Check console logs.`);
+        // Check for application-level errors
+        if (parsedData.metadata && parsedData.metadata.error === true) {
+            console.error("Backend analysis failed:", parsedData.metadata.error_message);
+            throw new Error(`Backend Analysis Error: ${parsedData.metadata.error_message}`);
         }
 
-        // 4. Render Results
-        renderDA.renderRegressionPage_DA(analysisResultContainer, parsedData);
+        // 6. Render Results
+        renderAdvancedRegressionPage(analysisResultContainer, parsedData);
 
     } catch (error) {
-        console.error(`Error in handleRegressionAnalysis_DA (Enhanced) using ${MODEL_NAME}:`, error);
-        analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
-        setLoading("generate", false);
+        console.error(`Error in handleRegressionAnalysis_DA (Backend):`, error);
+        const errorMessage = error.message;
+
+        // --- MODIFIED ERROR HANDLING ---
+        // Check if it's one of our new validation errors
+        if (errorMessage.startsWith("❌")) {
+                if (warningEl) {
+                warningEl.textContent = errorMessage.substring(2); // Display it by the input
+                warningEl.className = "text-red-400 text-sm mt-2"; // Make it red
+                }
+                analysisResultContainer.innerHTML = '<div class="text-white/60 p-8 text-center">Analysis stopped due to data issues.</div>'; // Reset results panel
+        } else {
+            // It's a different error, show it in the main results box
+            analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400"><strong>Error:</strong> ${errorMessage}</div>`;
+        }
+        // --- END MODIFIED BLOCK ---
+
     } finally {
-        // Ensure loading stops
-         if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
-            setLoading("generate", false);
-         }
+        setLoading("generate", false);
     }
 }
 
@@ -942,7 +783,7 @@ async function handleSemAnalysis() {
 
         // --- 4. Send Request to Backend API ---
         // *** Replace with your actual backend API endpoint ***
-        const API_URL = "https://analysis.data2int.com/api/data-analysis"; // Example URL
+        const API_URL = "https://analysis.data2int.com/api/sem"; // Example URL
 
         const response = await fetch(API_URL, {
             method: "POST",
@@ -995,7 +836,7 @@ async function handleSemAnalysis() {
 async function handleDematelAnalysis() {
     // API URLs
     const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
-    const PYTHON_BACKEND_URL = "https://analysis.data2int.com/api/data-analysis";
+    const PYTHON_BACKEND_URL = "https://analysis.data2int.com/api/dematel";
     
     // Model to use for AI analysis
     const MODEL_NAME = "llama3.1:latest"; // Sticking with Llama 3.1

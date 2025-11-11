@@ -18,6 +18,13 @@ let pendingN8nResult = null;
 let currentAnalysisMessageId = null;
 let currentAnalysisContext = null;
 
+// --- Admin Dashboard Stats Timer ---
+let statsInterval = null;
+
+// --- Regression Analysis ---
+let currentRegressionRowCount = 0; // Stores the row count for ratio validation
+
+
 export const appState = {
     userLoggedIn,
     currentUser,
@@ -30,5 +37,7 @@ export const appState = {
     pendingOllamaResult,
     pendingN8nResult,
     currentAnalysisMessageId,
-    currentAnalysisContext
+    currentAnalysisContext,
+    statsInterval,
+    currentRegressionRowCount
 }

@@ -3,9 +3,10 @@
 // =====================================================================================================
 import { appState } from "../../state/app-state.mjs";
 import { dom } from "../../utils/dom-utils.mjs";
-import { handleGenerate } from "../../analysis/analysis-helpers.mjs"
+import { handleGenerate } from "../../analysis/analysis-helpers.mjs";
 import { reattachActionListeners, reattachTabListeners } from "./template-creation.mjs";
 import { setupInputToggle } from "../../utils/ui-utils.mjs";
+import { navigateTo } from "../navigation.mjs";
 
 function createProcessMappingLayout(template) {
     const contentContainer = dom.$("templateDetailContent");
@@ -40,6 +41,9 @@ function createProcessMappingLayout(template) {
                                 <span id="generateBtnText">🗺️ Map Process</span>
                                 <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                             </button>
+                            <div class="text-center mt-4">
+                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                            </div>
                         </div>
                     </div>
                     
@@ -53,6 +57,26 @@ function createProcessMappingLayout(template) {
                     </div>
                 </div>`;
     setupInputToggle("processFile", "processFileLabel", "textInputArea", "docUploadArea");
+    // Attach listener for the feedback link
+    const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+    if (feedbackLink) {
+        feedbackLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            
+            // This just calls the navigateTo function.
+            // It relies on your main `MapsTo` function to be
+            // the *simplified one* (without memory logic)
+            // and your `submitFeedbackPageBtn` listener
+            // to be the *simplified one* (that just goes home).
+            if (typeof navigateTo === 'function') {
+                navigateTo('feedback');
+            } else {
+                console.error("navigateTo function is not defined.");
+            }
+        });
+    } else {
+        console.warn("Feedback link not found inside createProcessMappingLayout");
+    }
 }
 
 
@@ -100,6 +124,9 @@ function createParetoLayout(template) {
                             <button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>
                             <button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
                         </div>
+                        <div class="text-center mt-4">
+                            <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                        </div>
                     </div>
                 </div>
             `;
@@ -142,6 +169,27 @@ function createParetoLayout(template) {
             }
         });
     }
+
+    // Attach listener for the feedback link
+    const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+    if (feedbackLink) {
+        feedbackLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            
+            // This just calls the navigateTo function.
+            // It relies on your main `MapsTo` function to be
+            // the *simplified one* (without memory logic)
+            // and your `submitFeedbackPageBtn` listener
+            // to be the *simplified one* (that just goes home).
+            if (typeof navigateTo === 'function') {
+                navigateTo('feedback');
+            } else {
+                console.error("navigateTo function is not defined.");
+            }
+        });
+    } else {
+        console.warn("Feedback link not found inside createParetoLayout");
+    }
 }
 
 
@@ -178,6 +226,9 @@ function createSystemThinkingLayout(template) {
                                 <span id="generateBtnText">🧠 Analyze System Dynamics</span>
                                 <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                             </button>
+                            <div class="text-center mt-4">
+                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                            </div>
                         </div>
                     </div>
                     <div class="mt-12">
@@ -190,6 +241,26 @@ function createSystemThinkingLayout(template) {
                     </div>
                 </div>`;
     setupInputToggle("systemFile", "systemFileLabel", "textInputArea", "docUploadArea");
+    // Attach listener for the feedback link
+    const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+    if (feedbackLink) {
+        feedbackLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            
+            // This just calls the navigateTo function.
+            // It relies on your main `MapsTo` function to be
+            // the *simplified one* (without memory logic)
+            // and your `submitFeedbackPageBtn` listener
+            // to be the *simplified one* (that just goes home).
+            if (typeof navigateTo === 'function') {
+                navigateTo('feedback');
+            } else {
+                console.error("navigateTo function is not defined.");
+            }
+        });
+    } else {
+        console.warn("Feedback link not found inside createSystemThinkingLayout");
+    }
 }
 
 
@@ -226,6 +297,9 @@ function createLeveragePointsLayout(template) {
                             <span id="generateBtnText">⚡ Find Leverage Points</span>
                             <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                         </button>
+                        <div class="text-center mt-4">
+                            <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                        </div>
                     </div>
                     
                     <div class="mt-12">
@@ -242,6 +316,27 @@ function createLeveragePointsLayout(template) {
 
     // Re-attach all necessary event listeners for the new elements
     setupInputToggle("leverageFile", "leverageFileLabel", "textInputArea", "docUploadArea");
+
+    // Attach listener for the feedback link
+    const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+    if (feedbackLink) {
+        feedbackLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            
+            // This just calls the navigateTo function.
+            // It relies on your main `MapsTo` function to be
+            // the *simplified one* (without memory logic)
+            // and your `submitFeedbackPageBtn` listener
+            // to be the *simplified one* (that just goes home).
+            if (typeof navigateTo === 'function') {
+                navigateTo('feedback');
+            } else {
+                console.error("navigateTo function is not defined.");
+            }
+        });
+    } else {
+        console.warn("Feedback link not found inside createLeveragePointsLayout");
+    }
 }
 
 function createArchetypeAnalysisLayout(template) {
@@ -276,6 +371,9 @@ function createArchetypeAnalysisLayout(template) {
                             <span id="generateBtnText">🧠 Analyze System</span>
                             <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                         </button>
+                        <div class="text-center mt-4">
+                            <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                        </div>
                     </div>
                     
                     <div class="mt-12">
@@ -329,6 +427,27 @@ function createArchetypeAnalysisLayout(template) {
             }
         });
     }
+
+    // Attach listener for the feedback link
+    const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+    if (feedbackLink) {
+        feedbackLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            
+            // This just calls the navigateTo function.
+            // It relies on your main `MapsTo` function to be
+            // the *simplified one* (without memory logic)
+            // and your `submitFeedbackPageBtn` listener
+            // to be the *simplified one* (that just goes home).
+            if (typeof navigateTo === 'function') {
+                navigateTo('feedback');
+            } else {
+                console.error("navigateTo function is not defined.");
+            }
+        });
+    } else {
+        console.warn("Feedback link not found inside createArchetypeAnalysisLayout");
+    }
 }
 
 
@@ -365,6 +484,9 @@ function createSystemGoalsLayout(template) {
                             <span id="generateBtnText">🎯 Formulate Initiatives</span>
                             <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                         </button>
+                        <div class="text-center mt-4">
+                            <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                        </div>
                     </div>
                     
                     <div class="mt-12">
@@ -381,6 +503,27 @@ function createSystemGoalsLayout(template) {
 
     // Re-attach all necessary event listeners for the new elements
     setupInputToggle("systemGoalsFile", "systemGoalsFileLabel", "textInputArea", "docUploadArea");
+
+    // Attach listener for the feedback link
+    const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+    if (feedbackLink) {
+        feedbackLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            
+            // This just calls the navigateTo function.
+            // It relies on your main `MapsTo` function to be
+            // the *simplified one* (without memory logic)
+            // and your `submitFeedbackPageBtn` listener
+            // to be the *simplified one* (that just goes home).
+            if (typeof navigateTo === 'function') {
+                navigateTo('feedback');
+            } else {
+                console.error("navigateTo function is not defined.");
+            }
+        });
+    } else {
+        console.warn("Feedback link not found inside createSystemGoalsLayout");
+    }
 }
 
 
@@ -416,6 +559,9 @@ function createSystemObjectivesLayout_ST(template) {
                             <span id="generateBtnText">🎯 Set System-Aware Objectives</span>
                             <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                         </button>
+                        <div class="text-center mt-4">
+                            <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                        </div>
                     </div>
                     <div class="mt-12">
                             <h2 class="text-3xl font-bold mb-4 text-center">Systemic Objective Analysis</h2>
@@ -428,6 +574,26 @@ function createSystemObjectivesLayout_ST(template) {
                 </div>
             `;
     setupInputToggle("systemObjFile", "systemObjFileLabel", "textInputArea", "docUploadArea");
+
+    const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+    if (feedbackLink) {
+        feedbackLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            
+            // This just calls the navigateTo function.
+            // It relies on your main `MapsTo` function to be
+            // the *simplified one* (without memory logic)
+            // and your `submitFeedbackPageBtn` listener
+            // to be the *simplified one* (that just goes home).
+            if (typeof navigateTo === 'function') {
+                navigateTo('feedback');
+            } else {
+                console.error("navigateTo function is not defined.");
+            }
+        });
+    } else {
+        console.warn("Feedback link not found inside createSystemObjectivesLayout_ST");
+    }
 }
 
 
@@ -463,6 +629,9 @@ function createSystemActionsLayout_ST(template) {
                             <span id="generateBtnText">⚙️ Formulate Actions</span>
                             <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                         </button>
+                        <div class="text-center mt-4">
+                            <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                        </div>
                     </div>
                     <div class="mt-12">
                             <h2 class="text-3xl font-bold mb-4 text-center">Systemic Action Plan</h2>
@@ -475,6 +644,26 @@ function createSystemActionsLayout_ST(template) {
                 </div>
             `;
     setupInputToggle("systemActionFile", "systemActionFileLabel", "textInputArea", "docUploadArea");
+    // Attach listener for the feedback link
+    const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+    if (feedbackLink) {
+        feedbackLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            
+            // This just calls the navigateTo function.
+            // It relies on your main `MapsTo` function to be
+            // the *simplified one* (without memory logic)
+            // and your `submitFeedbackPageBtn` listener
+            // to be the *simplified one* (that just goes home).
+            if (typeof navigateTo === 'function') {
+                navigateTo('feedback');
+            } else {
+                console.error("navigateTo function is not defined.");
+            }
+        });
+    } else {
+        console.warn("Feedback link not found inside createSystemActionsLayout_ST");
+    }
 }
 
 

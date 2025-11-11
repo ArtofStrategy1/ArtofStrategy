@@ -1,11 +1,12 @@
 import { appConfig } from './config.mjs';
 import { appState } from './state/app-state.mjs';
 import { dom } from './utils/dom-utils.mjs';
-import { proceedFromModal } from './utils/ui-utils.mjs';
+import { setLoading, showMessage, proceedFromModal } from './utils/ui-utils.mjs';
 import { initializeWebSocket } from './services/websocket-service.mjs';
 import { updateNavBar, navigateTo } from './ui/navigation.mjs';
 import { setupHomeTabs, attachHomeCardListeners } from './ui/home.mjs';
-import { handleLogin, handleRegister } from './services/auth-service.mjs';
+import { templateConfig } from './ui/template-creation/template-config.mjs';
+import { handleLogin, handleRegister, handleContactSubmit } from './services/auth-service.mjs';
 import { fetchAndDisplayStatistics } from './services/stats-service.mjs';
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -287,6 +288,85 @@ document.addEventListener("DOMContentLoaded", () => {
         versionModal.classList.add("hidden");
     });
 
+
+    // --- NEW FEEDBACK PAGE LOGIC (CALLING EDGE FUNCTION) ---
+
+    // 1. Populate the tool dropdown
+    const feedbackToolSelect = dom.$("feedbackToolName");
+    if (feedbackToolSelect) {
+        for (const templateId in templateConfig.templates) {
+            if (templateConfig.templates.hasOwnProperty(templateId)) {
+                const title = templateConfig.templates[templateId].title;
+                feedbackToolSelect.add(new Option(title, templateId));
+            }
+        }
+    }
+
+    // 2. Add the submit button listener
+    const submitFeedbackPageBtn = dom.$("submitFeedbackPageBtn");
+    if (submitFeedbackPageBtn) {
+        submitFeedbackPageBtn.addEventListener("click", async () => { 
+            
+            const tool_name = dom.$("feedbackToolName").value;
+            const reason = dom.$("feedbackReason").value;
+            const content = dom.$("feedbackTextPage").value.trim();
+            const ratingInput = document.querySelector('input[name="feedbackRating"]:checked');
+            
+            const rating = ratingInput ? (ratingInput.value === "0" ? null : parseInt(ratingInput.value)) : null;
+
+            if (!appState.currentUser) {
+                showMessage("feedbackMessagePage", "You must be logged in to submit feedback.", "error");
+                return;
+            }
+            if (!reason) {
+                showMessage("feedbackMessagePage", "Please select a reason.", "error");
+                return;
+            }
+            if (content.length <= 10) { 
+                showMessage("feedbackMessagePage", "Please enter at least 10 characters in the details box.", "error");
+                return;
+            }
+
+            setLoading("submitFeedbackPage", true);
+            
+            try {
+                const feedbackObject = {
+                    tool_name: tool_name,
+                    reason: reason,
+                    content: content,
+                    rating: rating 
+                };
+                
+                const { data, error: invokeError } = await appConfig.supabase.functions.invoke(
+                    'insert-feedback', 
+                     { body: feedbackObject }
+                );
+
+                if (invokeError) {
+                    throw invokeError; 
+                }
+
+                // --- Success ---
+                setLoading("submitFeedbackPage", false);
+                showMessage("feedbackMessagePage", "Thank you! Your feedback has been received.", "success");
+                
+                // --- MODIFIED BLOCK: Always go to home ---
+                setTimeout(() => {
+                     console.log(`---> Feedback success. Navigating to "home".`);
+                     navigateTo("home"); 
+                }, 2000);
+
+            } catch (error) {
+                // --- Error Handling ---
+                console.error("Feedback submission error:", error);
+                setLoading("submitFeedbackPage", false);
+                showMessage("feedbackMessagePage", `Error: ${error.message || 'An unknown error occurred.'}`, "error");
+            }
+        });
+    }
+    // --- END OF NEW FEEDBACK PAGE LOGIC ---
+
+
     dom.$("loginBtn").addEventListener("click", handleLogin);
     dom.$("registerBtn").addEventListener("click", handleRegister);
 
@@ -294,6 +374,12 @@ document.addEventListener("DOMContentLoaded", () => {
         navigateTo("home");
     } else {
         navigateTo("home");
+    }
+
+    // *** Attach the Contact Submit Handler ***
+    const contactSubmitBtn = dom.$("contactSubmitBtn");
+    if (contactSubmitBtn) {
+        contactSubmitBtn.addEventListener("click", handleContactSubmit);
     }
 
     setupHomeTabs();
