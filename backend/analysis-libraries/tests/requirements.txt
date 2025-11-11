@@ -1,0 +1,17 @@
+
+
+fastapi
+uvicorn
+pandas
+numpy
+httpx
+statsmodels
+scikit-learn
+semopy
+plspm
+graphviz
+python-multipart
+
+
+pytest
+pytest-asyncio
