@@ -7,8 +7,8 @@ import { appConfig } from '../config.mjs';
 import { setLoading } from '../utils/ui-utils.mjs';
 import { extractTextFromFile } from '../utils/file-utils.mjs';
 import { attemptMergeAndRender } from '../ui/analysis-rendering/analysis-rendering.mjs';
-import * as renderSP from '../ui/analysis-rendering/analysis-rendering-sp.mjs';
-import * as renderFA from '../ui/analysis-rendering/analysis-rendering-factor.mjs';
+import * as renderSP from '../ui/analysis-rendering/analysis-rendering-sp/analysis-rendering-sp.mjs';
+import { renderFactorAnalysisPage } from '../ui/analysis-rendering/analysis-rendering-sp/analysis-rendering-factor.mjs';
 
 /**
  * HANDLER: Mission Vision (DEEP ANALYSIS v4 - with Goal Enrichment)
@@ -405,7 +405,7 @@ async function handleFactorAnalysis() {
         }
 
         // 4. Render Results
-        renderFA.renderFactorAnalysisPage(analysisResultContainer, parsedData); // Pass the full, rich data
+        renderFactorAnalysisPage(analysisResultContainer, parsedData); // Pass the full, rich data
 
     } catch (error) {
         console.error(`Error in handleFactorAnalysis (DEEP v2) using ${MODEL_NAME}:`, error);

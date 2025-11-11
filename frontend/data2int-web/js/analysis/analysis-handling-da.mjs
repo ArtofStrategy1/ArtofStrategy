@@ -1,11 +1,16 @@
 // =====================================================================================================
 // ===================               Data Analysis Handling Functions               ====================
 // =====================================================================================================
+import { appState } from "../state/app-state.mjs";
 import { dom } from '../utils/dom-utils.mjs';
 import { setLoading } from '../utils/ui-utils.mjs';
 import { extractTextFromFile } from '../utils/file-utils.mjs';
-import * as renderDA from '../ui/analysis-rendering/analysis-rendering-da.mjs';
-import * as renderSEM from '../ui/analysis-rendering/analysis-rendering-sem.mjs';
+import { renderPredictiveAnalysisPage } from '../ui/analysis-rendering/analysis-rendering-da/analysis-rendering-predictive.mjs';
+import { renderAdvancedRegressionPage } from '../ui/analysis-rendering/analysis-rendering-da/analysis-rendering-regression.mjs';
+import { renderPlsPage_DA } from '../ui/analysis-rendering/analysis-rendering-da/analysis-rendering-pls.mjs';
+import { renderSemAnalysisPage } from '../ui/analysis-rendering/analysis-rendering-da/analysis-rendering-sem.mjs';
+import { renderDematelAnalysisPage } from '../ui/analysis-rendering/analysis-rendering-da/analysis-rendering-dematel.mjs';
+import * as renderDA from '../ui/analysis-rendering/analysis-rendering-da/analysis-rendering-da.mjs';
 
 async function handleDescriptiveAnalysis_DA() {
     const analysisResultContainer = dom.$("analysisResult");
@@ -177,7 +182,7 @@ async function handlePredictiveAnalysis() {
         console.log("Received predictive analysis results:", parsedData);
 
         // Call the rendering function
-        renderDA.renderPredictiveAnalysisPage(dom.$("analysisResult"), parsedData); // Assumes this function exists and works
+        renderPredictiveAnalysisPage(dom.$("analysisResult"), parsedData); // Assumes this function exists and works
 
     } catch (error) {
         console.error("Error during Predictive Analysis:", error);
@@ -348,18 +353,18 @@ async function handlePrescriptiveAnalysis_DA() {
 
 
 async function handleVisualizationAnalysis_DA() {
-    const analysisResultContainer = $("analysisResult");
+    const analysisResultContainer = dom.$("analysisResult");
     analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div></div><div></div><div></div> </div><h3 class="text-xl font-semibold text-white mb-4">Performing Visualization Analysis...</h3><p class="text-white/80 mb-2">Loading data, performing calculations, and generating insights...</p></div>`;
     setLoading("generate", true);
-    $("analysisActions").classList.add("hidden");
+    dom.$("analysisActions").classList.add("hidden");
 
     const API_URL = "https://analysis.data2int.com/api/visualization"; // Use your new endpoint
     const MODEL_NAME = "llama3.1:latest"; // Fallback model name for logging, not for direct call
 
     try {
         // 1. Gather Inputs
-        const vizRequestText = $("vizRequest").value.trim();
-        const dataFile = $("vizFile").files[0];
+        const vizRequestText = dom.$("vizRequest").value.trim();
+        const dataFile = dom.$("vizFile").files[0];
 
         if (!dataFile) {
             throw new Error("❌ Please upload a CSV data file.");
@@ -409,7 +414,7 @@ async function handleVisualizationAnalysis_DA() {
 
         // 6. Render Results
         // We now call the new renderer function that can handle the backend's JSON structure
-        renderVisualizationPage_DA(analysisResultContainer, parsedData);
+        renderDA.renderVisualizationPage_DA(analysisResultContainer, parsedData);
 
     } catch (error) {
         console.error(`Error in handleVisualizationAnalysis_DA (Backend) using ${MODEL_NAME}:`, error);
@@ -423,27 +428,27 @@ async function handleVisualizationAnalysis_DA() {
 
 
 async function handleRegressionAnalysis_DA() {
-    const analysisResultContainer = $("analysisResult");
+    const analysisResultContainer = dom.$("analysisResult");
     analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div></div><div></div><div></div> </div><h3 class="text-xl font-semibold text-white mb-4">Running scikit-learn Regression...</h3><p class="text-white/80 mb-2">Sending data to Python backend for statistical analysis...</p></div>`;
     setLoading("generate", true);
-    $("analysisActions").classList.add("hidden");
+    dom.$("analysisActions").classList.add("hidden");
 
     const API_URL = "https://analysis.data2int.com/api/regression"; // Your FastAPI endpoint
     
     // --- NEW: Get the warning div ---
-    const warningEl = $("regressionDataWarning");
+    const warningEl = dom.$("regressionDataWarning");
     if (warningEl) warningEl.textContent = ""; // Clear previous warnings
 
     try {
         // --- 1. Gather Inputs from NEW UI Elements ---
-        const dependentVar = $("dependentVar").value;
+        const dependentVar = dom.$("dependentVar").value;
         
         // Get all checked independent variables
         const independentVarCheckboxes = document.querySelectorAll("#independentVarsContainer .independent-var-checkbox:checked");
         const independentVarsList = Array.from(independentVarCheckboxes).map(cb => cb.value);
 
-        const dataFile = $("regressionFile").files[0];
-        const contextFile = $("regressionContextFile").files[0];
+        const dataFile = dom.$("regressionFile").files[0];
+        const contextFile = dom.$("regressionContextFile").files[0];
 
         // 2. Validate Inputs
         if (!dataFile) {
@@ -461,7 +466,7 @@ async function handleRegressionAnalysis_DA() {
 
         // --- VALIDATION BLOCK (uses the new error strings) ---
         const numFeatures = independentVarsList.length;
-        const numObservations = currentRegressionRowCount; // Get stored row count
+        const numObservations = appState.currentRegressionRowCount; // Get stored row count
         const ratio = numObservations / numFeatures;
 
         console.log(`Validation: ${numObservations} observations, ${numFeatures} features. Ratio: ${ratio}`);
@@ -542,172 +547,106 @@ async function handleRegressionAnalysis_DA() {
 
 
 
+/**
+ * Handles the PLS-SEM analysis request to the backend.
+ * Reads from the advanced UI (file/text toggle, syntax boxes).
+ */
 async function handlePlsAnalysis_DA() {
-    const analysisResultContainer = dom.$("analysisResult");
-    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div></div><div></div><div></div> </div><h3 class="text-xl font-semibold text-white mb-4">Running Comprehensive PLS-SEM...</h3><p class="text-white/80 mb-2">Estimating paths, evaluating model fit, and generating insights...</p></div>`;
-    setLoading("generate", true);
-
-    // Define URL and Model
-    const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
-    // *** CHOOSE MODEL: qwen or llama ***
-    const MODEL_NAME = "qwen3:30b-a3b"; // Qwen might be better for structured analysis
-    // const MODEL_NAME = "llama3.1:latest"; // Alternative
+    const analysisResultContainer = dom.$("analysisResult"); // Get the results container element
+    // Display loading indicator
+    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div><h3 class="text-xl font-semibold text-white">Running PLS-SEM Analysis...</h3><p class="text-white/80 mb-2">Please wait while the model is estimated.</p></div>`;
+    setLoading("generate", true); // Assumes setLoading function exists
 
     try {
-        // 1. Gather Inputs
-        const measurementModel = dom.$("plsMeasurementModel").value.trim();
-        const structuralModel = dom.$("plsStructuralModel").value.trim();
-        const file = dom.$("plsFile").files[0];
+        // --- 1. Get Inputs from UI (using 'pls' IDs) ---
+        const measurementSyntax = dom.$("plsMeasurementSyntax").value.trim();
+        const structuralSyntax = dom.$("plsStructuralSyntax").value.trim();
+        const dataFile = dom.$("plsFile").files[0]; // Get the selected file object
+        const dataText = dom.$("plsDataText").value.trim(); // Get pasted text
+        const isUsingFile = dom.$("plsInputFileToggle").checked; // Check which input type is selected
 
-        if (!measurementModel || !structuralModel || !file) {
-            throw new Error("❌ Please define the Measurement Model, Structural Model, and upload a CSV data file.");
-        }
+        let fileToSend = null;
+        let dataContentToSend = null; 
 
-        const fileContent = await extractTextFromFile(file);
-
-        // Truncate if necessary
-        const MAX_DATA_LENGTH = 15000; // Keep reasonable for analysis
-        let truncatedNote = "";
-        let dataSnippet = fileContent;
-        if (fileContent.length > MAX_DATA_LENGTH) {
-            dataSnippet = fileContent.substring(0, MAX_DATA_LENGTH);
-            truncatedNote = `(Note: Analysis based on the first ${MAX_DATA_LENGTH} characters of the data file.)`;
-            console.warn(`PLS-SEM analysis data truncated.`);
-        }
-
-        // 2. Construct Enhanced Prompt
-        const prompt = `
-            You are an expert data scientist specializing in Partial Least Squares Structural Equation Modeling (PLS-SEM). Analyze the user's defined model and data snippet with high accuracy and provide detailed, actionable interpretations.
-
-            **ANALYSIS INPUTS:**
-            * **Measurement Model (Syntax):** \`${measurementModel}\`
-            * **Structural Model (Syntax):** \`${structuralModel}\`
-            * **Data Snippet:** ${truncatedNote}\n\`\`\`csv\n${dataSnippet}\n\`\`\`
-
-            **DETAILED TASKS:**
-            1.  **Model Evaluation (R-squared):** Calculate R-squared values for all endogenous (dependent) latent variables. For each:
-                * Provide: Variable Name, R-squared Value.
-                * **Interpretation:** Explain *precisely* what percentage of the variance in that variable is explained by its predictors within the model. Assess the explanatory power (e.g., >0.75 substantial, >0.5 moderate, >0.25 weak based on context, adjust if needed).
-
-            2.  **Path Coefficients Analysis:** Estimate and analyze the structural paths. For *each* path:
-                * Provide: Path (e.g., "ConstructA -> ConstructB"), Coefficient (β) value, T-Statistic, P-value.
-                * **Interpretation:** Explain the practical meaning of the coefficient (e.g., "A one-unit increase in ConstructA is associated with a [β] unit [increase/decrease] in ConstructB, holding other paths constant.").
-                * **Significance:** State clearly whether the path is statistically significant (typically p < 0.05) and its implication (we are confident this relationship exists in the data).
-
-            3.  **Reliability & Validity Assessment:** Calculate key metrics for *each* latent construct defined in the measurement model.
-                * Provide: Construct Name, Cronbach's Alpha, Composite Reliability (CR), Average Variance Extracted (AVE).
-                * **Assessment:** For each metric, state whether it meets common thresholds (Cronbach's Alpha > 0.7, CR > 0.7, AVE > 0.5) and interpret the result (e.g., "AVE of [value] indicates [good/poor] convergent validity, meaning the indicators measure the construct well/poorly.").
-
-            4.  **Business Recommendations (3-4 recommendations):** Based *only* on the **significant path coefficients** and the likely business context implied by the construct names:
-                * **\`recommendation\`:** A clear, actionable title.
-                * **\`insight_link\`:** State which specific significant path(s) drive this recommendation.
-                * **\`action_items\`:** List 2-3 concrete steps a business could take based on this finding.
-                * **\`kpis_to_track\`:** List 2-3 KPIs to measure the success of the implemented action, related to the constructs involved.
-
-            5.  **Self-Correction:** Before outputting JSON, meticulously check: Are R² interpretations correct? Are path coefficient p-values interpreted correctly? Do reliability/validity assessments correctly compare against thresholds? Are recommendations directly linked ONLY to significant paths? Fix all errors.
-
-            **ABSOLUTE CONSTRAINTS:**
-            - **DATA GROUNDING:** All results (coefficients, R², metrics) and interpretations MUST derive *solely* from the analysis of the provided data snippet and model structure. No fabrication.
-            - **STATISTICAL ACCURACY:** Interpretations of R², p-values, and reliability/validity metrics must be statistically sound and use standard thresholds.
-            - **ACTIONABILITY & LINKAGE:** Recommendations must be practical and clearly linked back to specific, significant path results.
-            - **JSON FORMAT:** Adhere EXACTLY. Include all specified keys and sub-keys.
-
-            **RETURN FORMAT:**
-            Provide ONLY a valid JSON object. **CRITICAL: Include ALL keys specified below.**
-            {
-              "model_evaluation": { // R-squared results
-                "r_squared_values": [ // Array for each endogenous variable
-                  { "variable": "EndogenousVar1", "r_squared": 0.0 }
-                ],
-                "interpretation": "Overall interpretation of model's explanatory power..." // Generated
-              },
-              "path_coefficients": [ // Array for each structural path
-                {
-                  "path": "ConstructA -> ConstructB", "coefficient": 0.0, "t_statistic": 0.0, "p_value": 0.0,
-                  "interpretation": "Practical meaning and significance...", "significant": true/false // Added boolean flag
-                } // ... for all paths ...
-              ],
-              "reliability_validity": [ // Array for each construct
-                {
-                  "construct": "ConstructA", "cronbachs_alpha": 0.0, "composite_reliability": 0.0, "ave": 0.0,
-                  "assessment": "Assessment vs. thresholds (e.g., Good internal consistency (Alpha > 0.7)... Convergent validity met (AVE > 0.5)..." // Generated assessment
-                } // ... for all constructs ...
-              ],
-              // "visual_data" might be hard for LLM, can omit if unreliable, or simplify
-              // "visual_data": { "nodes": [ { "id": "<construct_name>" } ] }, // Simplified - just node names
-              "business_recommendations": [ // 3-4 recommendations
-                {
-                  "recommendation": "Action Title",
-                  "insight_link": "Driven by significant path [Path Name]...",
-                  "action_items": ["Step 1...", "Step 2..."],
-                  "kpis_to_track": ["KPI related to ConstructA...", "KPI related to ConstructB..."]
-                } // ...
-              ]
+        // --- 2. Validate Inputs & Prepare Data Source ---
+        if (isUsingFile) {
+            if (!dataFile) {
+                throw new Error("Please upload a data file (.csv or .xlsx).");
             }
-        `;
+            fileToSend = dataFile;
+        } else {
+            if (!dataText) {
+                throw new Error("Please paste your CSV data into the text area.");
+            }
+            dataContentToSend = dataText; 
+        }
 
-        // 3. Send Request to Ollama
-        console.log(`Sending ENHANCED PLS-SEM prompt to ${MODEL_NAME}...`);
-        const response = await fetch(OLLAMA_URL, {
+        // Validate that at least one syntax part is provided
+        if (!measurementSyntax && !structuralSyntax) {
+            throw new Error("Please provide Measurement Model Syntax and/or Structural Model Syntax.");
+        }
+
+        // --- 3. Prepare FormData for Backend ---
+        const formData = new FormData();
+        formData.append("analysis_type", "pls"); // Identify the analysis type
+
+        // Send SYNTAX parts SEPARATELY
+        formData.append("measurement_syntax", measurementSyntax);
+        formData.append("structural_syntax", structuralSyntax);
+
+        // Append the data source (either the file or the text content)
+        if (fileToSend) {
+            // If sending a file
+            formData.append("data_file", fileToSend, fileToSend.name);
+        } else if (dataContentToSend) {
+            // If sending raw text content
+             formData.append("data_text", dataContentToSend);
+        } else {
+            throw new Error("No data source (file or text) could be prepared.");
+        }
+
+
+        // --- 4. Send Request to Backend API ---
+        // *** This now points to your PLS endpoint ***
+        const API_URL = "https://analysis.data2int.com/api/pls"; 
+
+        const response = await fetch(API_URL, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ model: MODEL_NAME, prompt: prompt, stream: false, format: "json", options: { num_ctx: 32768 } }) // Increased context
+            body: formData,
+            // headers: { 'Authorization': `Bearer ${your_auth_token}` } // Add if needed
         });
 
+        // --- 5. Handle Backend Response ---
         if (!response.ok) {
-            let errorBody = `API error ${response.status}`;
-            try { errorBody += `: ${await response.text()}`; } catch (e) {}
-            throw new Error(errorBody);
+            // Attempt to get detailed error message from backend
+            let errorDetail = `API request failed (${response.status})`;
+            try {
+                const errorJson = await response.json(); // Assumes backend sends JSON errors
+                errorDetail += `: ${errorJson.detail || JSON.stringify(errorJson)}`; // Use specific 'detail' field
+            } catch (e) {
+                // If response is not JSON, use the raw text
+                try {
+                    errorDetail += `: ${await response.text()}`;
+                } catch (readErr) {}
+            }
+            throw new Error(errorDetail); // Throw error to be caught below
         }
 
-        const data = await response.json();
-        let parsedData;
-        try {
-            parsedData = JSON.parse(data.response);
-             // *** Robust Validation ***
-             console.log('--- RAW AI JSON RESPONSE (Parsed - Enhanced PLS-SEM) ---');
-             console.log(JSON.stringify(parsedData, null, 2));
-             console.log('------------------------------------');
+        // If response is OK (2xx status)
+        const parsedData = await response.json(); // Expecting JSON response with results
 
-             if (!parsedData ||
-                 !parsedData.model_evaluation || typeof parsedData.model_evaluation !== 'object' || !parsedData.model_evaluation.hasOwnProperty('r_squared_values') || !Array.isArray(parsedData.model_evaluation.r_squared_values) ||
-                 !parsedData.path_coefficients || !Array.isArray(parsedData.path_coefficients) || parsedData.path_coefficients.length === 0 ||
-                 (parsedData.path_coefficients.length > 0 && (typeof parsedData.path_coefficients[0] !== 'object' || !parsedData.path_coefficients[0].hasOwnProperty('p_value'))) ||
-                 !parsedData.reliability_validity || !Array.isArray(parsedData.reliability_validity) || parsedData.reliability_validity.length === 0 ||
-                 (parsedData.reliability_validity.length > 0 && (typeof parsedData.reliability_validity[0] !== 'object' || !parsedData.reliability_validity[0].hasOwnProperty('cronbachs_alpha'))) ||
-                 !parsedData.business_recommendations || !Array.isArray(parsedData.business_recommendations) || parsedData.business_recommendations.length < 2 || // Expect >= 2 recommendations
-                 (parsedData.business_recommendations.length > 0 && (typeof parsedData.business_recommendations[0] !== 'object' || !parsedData.business_recommendations[0].hasOwnProperty('insight_link')))
-                 // visual_data is optional
-                )
-             {
-                  console.error("Validation Failed (PLS-SEM): Required fields missing or invalid structure/count.", parsedData);
-                  throw new Error(`AI response structure is incorrect. Missing/invalid fields (model_evaluation, path_coefficients, reliability_validity, or business_recommendations [>=2]). Check console.`);
-             }
-             console.log(`Successfully parsed ENHANCED PLS-SEM JSON using ${MODEL_NAME}. Found ${parsedData.path_coefficients.length} paths, ${parsedData.reliability_validity.length} constructs, ${parsedData.business_recommendations.length} recommendations.`);
+        // Render the results using the PLS-specific rendering function
+        renderPlsPage_DA(analysisResultContainer, parsedData);
 
-        } catch (e) {
-            console.error(`Failed to parse/validate ENHANCED PLS-SEM JSON using ${MODEL_NAME}:`, data?.response, e);
-            throw new Error(`Invalid JSON received or required fields missing in AI response: ${e.message}. Check console logs.`);
-        }
-
-        // Add user inputs to parsedData for rendering the diagram accurately
-        parsedData.userInput = { measurementModel, structuralModel };
-
-
-        // 4. Render Results
-        renderDA.renderPlsPage_DA(analysisResultContainer, parsedData);
-
-    } catch (error) {
-        console.error(`Error in handlePlsAnalysis_DA (Enhanced) using ${MODEL_NAME}:`, error);
-        analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
-        setLoading("generate", false);
+    } catch (error) { // Catch errors from input validation, fetch, or response handling
+        console.error("Error during PLS-SEM analysis:", error);
+        // Display the error message in the results container
+        analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400"><strong>Error:</strong> ${error.message}</div>`;
     } finally {
-        // Ensure loading stops
-         if (dom.$("generateSpinner") && !dom.$("generateSpinner").classList.contains("hidden")) {
-            setLoading("generate", false);
-         }
+        // Ensure loading indicator is turned off regardless of success or failure
+        setLoading("generate", false);
     }
-}    
+}   
 
 
 
@@ -811,7 +750,7 @@ async function handleSemAnalysis() {
 
         // Render the results using the SEM-specific rendering function
         // Assumes renderSemAnalysisPage exists and handles the parsedData structure
-        renderSEM.renderSemAnalysisPage(analysisResultContainer, parsedData);
+        renderSemAnalysisPage(analysisResultContainer, parsedData);
 
     } catch (error) { // Catch errors from input validation, fetch, or response handling
         console.error("Error during SEM analysis:", error);
@@ -989,7 +928,7 @@ async function handleDematelAnalysis() {
 
         // Check for the *data* object, not the HTML
         if (finalResults.analysis_insights && finalResults.chart_data) {
-            renderDA.renderDematelAnalysisPage(finalResults);
+            renderDematelAnalysisPage(finalResults);
         } else {
             throw new Error("Received an invalid response from the Python backend.");
         }

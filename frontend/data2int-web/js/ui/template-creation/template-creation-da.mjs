@@ -815,46 +815,108 @@ function createPrescriptiveLayout_DA(template) {
     const contentContainer = dom.$("templateDetailContent");
     contentContainer.className = "grid lg:grid-cols-1 gap-12";
     contentContainer.innerHTML = `
-                <div class="lg:col-span-1">
-                        <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
-                        <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">${template.description}</p>
-                    <div class="glass-container max-w-2xl mx-auto w-full p-6 space-y-4">
-                            <h3 class="text-xl font-bold mb-4 text-white">Analysis Setup</h3>
-                        <div class="space-y-4">
-                            <div>
-                                <label for="prescriptiveGoal" class="block text-sm font-medium text-gray-200 mb-2">Business Goal</label>
-                                <textarea id="prescriptiveGoal" class="input-field h-24" placeholder="Describe the business outcome you want to achieve. Example: 'Increase customer retention by 15% in the next quarter.'"></textarea>
-                            </div>
-                            <div>
-                                <label for="prescriptiveFile" class="block text-sm font-medium text-gray-200 mb-2">Upload Data File (.csv)</label>
-                                <div class="input-file-wrapper">
-                                    <label for="prescriptiveFile" id="prescriptiveFileLabel" class="input-file-btn">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
-                                        <span class="file-name">Select .csv file...</span>
-                                    </label>
-                                    <input type="file" id="prescriptiveFile" class="input-file" accept=".csv">
+                    <div class="lg:col-span-1">
+                         <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
+                         <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">${template.description}</p>
+                        <div class="glass-container max-w-2xl mx-auto w-full p-6 space-y-4">
+                         
+                             <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-xl font-bold text-white">Prescriptive Setup</h3>
+                                <div class="flex items-center space-x-2">
+                                    <button type="button" id="prescriptiveExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
+                                    <a href="data-files/prescriptive/prescriptive-sample-doc.txt" download="Prescriptive_Sample_Context.txt" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .txt</a>
+                                    <a href="data-files/prescriptive/prescriptive-sample-data.csv" download="Prescriptive_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>
                                 </div>
                             </div>
+
+                            <div id="prescriptiveExamples" class="hidden mb-4 p-3 bg-black/20 border border-white/15 rounded-lg">
+                                <div id="prescriptiveExampleContent" class="text-white/80">Loading example...</div>
+                            </div>
+                            
+                            <div class="space-y-4">
+                                <div>
+                                    <label for="prescriptiveGoal" class="block text-sm font-medium text-gray-200 mb-2">What is your business goal? (This is your context)</label>
+                                    <textarea id="prescriptiveGoal" class="input-field h-24" placeholder="Be specific. For example: 'Increase customer retention by 15% in the next quarter.' or 'Reduce operational costs in the logistics department by 10%.'"></textarea>
+                                </div>
+                                <div>
+                                    <label for="prescriptiveFile" class="block text-sm font-medium text-gray-200 mb-2">Upload Data File (.csv)</label>
+                                    <div class="input-file-wrapper">
+                                        <label for="prescriptiveFile" id="prescriptiveFileLabel" class="input-file-btn">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                                            <span class="file-name">Select .csv file...</span>
+                                        </label>
+                                        <input type="file" id="prescriptiveFile" class="input-file" accept=".csv">
+                                    </div>
+                                </div>
+                            </div>
+                            <button id="generateBtn" class="btn btn-primary w-full text-lg py-3 mt-4">
+                                <span id="generateBtnText">💡 Generate Prescriptions</span>
+                                <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
+                            </button>
+                            <div class="text-center mt-4">
+	                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                            </div>
                         </div>
-                        <button id="generateBtn" class="btn btn-primary w-full text-lg py-3 mt-4">
-                            <span id="generateBtnText"> prescribe Actions</span>
-                            <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
-                        </button>
-                        <div class="text-center mt-4">
-                            <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                        <div class="mt-12">
+                             <h2 class="text-3xl font-bold mb-4 text-center">Prescriptive Analysis Results</h2>
+                             <div id="analysisResult" class="glass-container min-h-[500px] overflow-x-auto"></div>
+                             <div id="analysisActions" class="text-center mt-4 space-x-2 hidden">
+                                <button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>
+                                <button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
+                            </div>
                         </div>
                     </div>
-                    <div class="mt-12">
-                            <h2 class="text-3xl font-bold mb-4 text-center">Prescriptive Analysis Results</h2>
-                            <div id="analysisResult" class="glass-container min-h-[500px] overflow-x-auto"></div>
-                            <div id="analysisActions" class="text-center mt-4 space-x-2 hidden">
-                            <button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>
-                            <button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
-                        </div>
-                    </div>
-                </div>
-            `;
+                `;
+    // This helper function is fine and doesn't need changes
     setupInputToggle("prescriptiveFile", "prescriptiveFileLabel", null, null);
+
+    // --- NEW: Add listener for the examples button ---
+    const examplesBtn = dom.$("prescriptiveExamplesBtn");
+    const examplesDiv = dom.$("prescriptiveExamples");
+    const exampleContentEl = dom.$("prescriptiveExampleContent");
+
+    if (examplesBtn && examplesDiv && exampleContentEl) {
+        examplesBtn.addEventListener("click", () => {
+            const isHidden = examplesDiv.classList.toggle("hidden");
+            examplesBtn.textContent = isHidden ? "View Examples" : "Hide Examples";
+
+            if (!isHidden && exampleContentEl.textContent === "Loading example...") {
+                // Populate with relevant prescriptive example
+                exampleContentEl.innerHTML = `
+                    <div class="mb-4">
+                        <div class="flex items-center mb-2">
+                            <span class="text-green-400 mr-2">✅</span>
+                            <span class="text-sm font-medium text-green-400">GOOD EXAMPLE</span>
+                            <span class="text-xs text-white/60 ml-2">(Results in specific, data-driven actions)</span>
+                        </div>
+                        <div class="bg-green-900/20 border border-green-500/30 rounded p-3">
+                            <div class="text-xs text-white/90 mb-2"><strong>Business Goal (Context):</strong></div>
+                            <div class="text-xs text-white/80 mb-3">
+                                "We need to reduce customer churn by 10% this quarter."
+                            </div>
+                            <div class="text-xs text-white/90 mb-2"><strong>CSV Data (Snippet):</strong></div>
+                            <div class="bg-black/30 p-2 rounded font-mono text-xs text-white/90">
+CustomerID,Tenure_Months,Support_Tickets,Used_Feature_X,Churned<br>
+1001,24,1,Yes,No<br>
+1002,3,8,No,Yes<br>
+1003,36,2,Yes,No<br>
+1004,6,5,No,Yes
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="border-t border-white/20 pt-3">
+                        <div class="text-xs font-medium text-white/90 mb-2">💡 How to Get the Best Results:</div>
+                        <div class="text-xs text-white/80 space-y-1">
+                            <div>• <strong>Have a clear goal.</strong> "Reduce churn" is better than "Analyze customers".</div>
+                            <div>• <strong>Include an outcome column.</strong> The data should have the variable you want to affect (e.g., 'Churned', 'Sales', 'Cost').</div>
+                            <div>• <strong>Include driver columns.</strong> The data needs factors you can control or influence (e.g., 'Support_Tickets', 'Used_Feature_X').</div>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+    }
 
     // Attach listener for the feedback link
     const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
@@ -863,10 +925,10 @@ function createPrescriptiveLayout_DA(template) {
             e.preventDefault();
             
             // This just calls the navigateTo function.
-            // It relies on your main `MapsTo` function to be
-            // the *simplified one* (without memory logic)
-            // and your `submitFeedbackPageBtn` listener
-            // to be the *simplified one* (that just goes home).
+            // It relies on the main `MapsTo` function to be
+            // the simplified one (without memory logic)
+            // and the `submitFeedbackPageBtn` listener
+            // to be the simplified one (that just goes home).
             if (typeof navigateTo === 'function') {
                 navigateTo('feedback');
             } else {
@@ -1771,65 +1833,583 @@ Feb 1, "$52,000", "$5.2k", "15,500 visitors"
 
 function createPlsLayout_DA(template) {
     const contentContainer = dom.$("templateDetailContent");
-    contentContainer.className = "grid lg:grid-cols-1 gap-12";
+    contentContainer.className = "grid lg:grid-cols-1 gap-12"; // Single column layout
+
+    // --- HTML Structure (Unchanged) ---
     contentContainer.innerHTML = `
-                <div class="lg:col-span-1">
-                        <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
-                        <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">${template.description}</p>
-                    <div class="glass-container max-w-2xl mx-auto w-full p-6 space-y-4">
-                            <h3 class="text-xl font-bold mb-4 text-white">PLS-SEM Model Setup</h3>
-                        <div class="space-y-4">
+        <div class="lg:col-span-1">
+            <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
+            <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">${template.description}</p>
+
+        <div class="max-w-2xl mx-auto w-full">
+            <div class="glass-container p-6 space-y-6">
+                
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-xl font-bold text-white">Analysis Configuration</h3>
+                    <div class="flex items-center space-x-2">
+                        <button type="button" id="plsConfigExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
+                        <a href="data-files/pls/pls-sample-data.csv" download="PLS_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>
+                    </div>
+                </div>
+
+                <div id="plsConfigExamples" class="hidden mb-4 p-3 bg-black/20 border border-white/15 rounded-lg">
+                    <div class="text-xs font-medium text-white/90 mb-2">📋 Configuration Examples</div>
+                    <div class="space-y-2 text-xs">
+                        <div id="exampleContent" class="text-white/80">Loading example...</div>
+                    </div>
+                </div>
+
+                    <div class="input-radio-group">
+                        <input type="radio" name="plsInputType" id="plsInputFileToggle" class="input-radio" checked>
+                        <label for="plsInputFileToggle" class="input-radio-label">File Upload</label>
+                        <input type="radio" name="plsInputType" id="plsInputTextToggle" class="input-radio">
+                        <label for="plsInputTextToggle" class="input-radio-label">Paste Text</label>
+                    </div>
+
+                    <div id="plsFileUploadArea">
+                        <label for="plsFile" class="block text-sm font-medium text-gray-200 mb-2">Data File (.csv, .xlsx)</label>
+                        <div class="input-file-wrapper">
+                            <label for="plsFile" id="plsFileLabel" class="input-file-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                                <span class="file-name">Select data file...</span>
+                            </label>
+                            <input type="file" id="plsFile" class="input-file" accept=".csv,.xlsx">
+                        </div>
+                        <div id="plsFileError" class="text-red-400 text-sm mt-2"></div>
+                    </div>
+
+                    <div id="plsTextInputArea" class="hidden">
+                        <label for="plsDataText" class="block text-sm font-medium text-gray-200 mb-2">Paste CSV Data</label>
+                        <textarea id="plsDataText" class="input-field h-48" placeholder="Date,Var1,Var2...\n2023-01-01,10,20..."></textarea>
+                        <div id="plsTextError" class="text-red-400 text-sm mt-2"></div>
+                    </div>
+
+                    <div id="plsDataPreview" class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-200">Data Preview (First 5 Rows)</label>
+                        <div class="overflow-x-auto rounded-lg border border-white/20">
+                            <table class="min-w-full text-left text-sm text-white/90" id="plsPreviewTable">
+                                <tbody>
+                                    <tr>
+                                        <td class="p-4 text-center text-white/60" colspan="100%">Upload or paste data to see a preview.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="plsModelTemplate" class="block text-sm font-medium text-gray-200 mb-2">Model Template</label>
+                        <select id="plsModelTemplate" class="input-field" disabled>
+                            <option value="">-- Upload or paste data first --</option>
+                        </select>
+                    </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label for="plsMeasurementSyntax" class="block text-sm font-medium text-gray-200">Measurement Model Syntax</label>
+                        <button type="button" id="plsMeasurementExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
+                    </div>
+                    <div id="plsMeasurementExamples" class="hidden mb-2 p-3 bg-black/20 border border-white/15 rounded-lg">
+                        <div class="text-xs font-medium text-white/90 mb-2">📊 Measurement Model Examples</div>
+                        <div class="space-y-2 text-xs">
                             <div>
-                                <label for="plsMeasurementModel" class="block text-sm font-medium text-gray-200 mb-2">Measurement Model</label>
-                                <textarea id="plsMeasurementModel" class="input-field h-32" placeholder="Define latent variables and their indicators. Example:\nBrandImage = BI1, BI2, BI3\nLoyalty = LOY1, LOY2, LOY3"></textarea>
+                                <div class="text-white/80 mb-1">Basic Factor Structure:</div>
+                                <div class="bg-black/30 p-2 rounded font-mono text-white/90 relative">
+                                    Quality =~ qual1 + qual2 + qual3 + qual4<br>Loyalty =~ loy1 + loy2 + loy3
+                                </div>
                             </div>
                             <div>
-                                <label for="plsStructuralModel" class="block text-sm font-medium text-gray-200 mb-2">Structural Model (Paths)</label>
-                                <textarea id="plsStructuralModel" class="input-field h-24" placeholder="Define hypothesized paths between latent variables. Example:\nBrandImage -> Loyalty"></textarea>
-                            </div>
-                            <div>
-                                <label for="plsFile" class="block text-sm font-medium text-gray-200 mb-2">Upload Data File (.csv)</label>
-                                <div class="input-file-wrapper">
-                                    <label for="plsFile" id="plsFileLabel" class="input-file-btn">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
-                                        <span class="file-name">Select .csv file...</span>
-                                    </label>
-                                    <input type="file" id="plsFile" class="input-file" accept=".csv">
+                                <div class="text-white/80 mb-1">With Fixed Loadings (if needed):</div>
+                                <div class="bg-black/30 p-2 rounded font-mono text-white/90 relative">
+                                    Performance =~ 1*perf1 + perf2 + perf3<br>Satisfaction =~ 1*sat1 + sat2 + sat3
                                 </div>
                             </div>
                         </div>
-                        <button id="generateBtn" class="btn btn-primary w-full text-lg py-3 mt-4">
-                            <span id="generateBtnText">📊 Run PLS-SEM Analysis</span>
-                            <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
-                        </button>
-                        <div class="text-center mt-4">
-                            <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                    </div>
+                    <textarea id="plsMeasurementSyntax" class="input-field h-32" placeholder="e.g., Factor1 =~ varA + varB\nFactor2 =~ varC + varD..."></textarea>
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label for="plsStructuralSyntax" class="block text-sm font-medium text-gray-200">Structural Model Syntax</label>
+                        <button type="button" id="plsStructuralExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
+                    </div>
+                    <div id="plsStructuralExamples" class="hidden mb-2 p-3 bg-black/20 border border-white/15 rounded-lg">
+                        <div class="text-xs font-medium text-white/90 mb-2">🔗 Structural Model Examples</div>
+                        <div class="space-y-2 text-xs">
+                            <div>
+                                <div class="text-white/80 mb-1">Simple Regression:</div>
+                                <div class="bg-black/30 p-2 rounded font-mono text-white/90 relative">
+                                    Loyalty ~ Quality + Satisfaction
+                                </div>
+                            </div>
+                            <div>
+                                <div class="text-white/80 mb-1">Mediation Model:</div>
+                                <div class="bg-black/30 p-2 rounded font-mono text-white/90 relative">
+                                    Loyalty ~ c*Quality + b*Satisfaction<br>Satisfaction ~ a*Quality<br><br>indirect := a*b<br>total := c + (a*b)
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="mt-12">
-                            <h2 class="text-3xl font-bold mb-4 text-center">PLS-SEM Results</h2>
-                            <div id="analysisResult" class="glass-container min-h-[500px] overflow-x-auto"></div>
-                            <div id="analysisActions" class="text-center mt-4 space-x-2 hidden">
-                            <button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>
-                            <button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
-                        </div>
+                    <textarea id="plsStructuralSyntax" class="input-field h-32" placeholder="e.g., Factor1 ~ Factor2\nObservedVar ~ Factor1..."></textarea>
+                </div>
+
+                    <button id="generateBtn" class="btn btn-primary w-full text-lg py-3">
+                        <span id="generateBtnText">📊 Run PLS-SEM Analysis</span>
+                        <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
+                    </button>
+                    <div class="text-center mt-4">
+                            <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
                     </div>
                 </div>
-            `;
+            </div>
 
-    setupInputToggle("plsFile", "plsFileLabel", null, null);
+            <div class="mt-12">
+                <h2 class="text-3xl font-bold mb-4 text-center">Analysis Results</h2>
+                <div id="analysisResult" class="glass-container min-h-[300px] overflow-x-auto"> {/* Results will be injected here */} </div>
+                <div id="analysisActions" class="text-center mt-4 space-x-2 hidden">
+                    <button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>
+                    <button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
+                </div>
+            </div>
+        </div>`;
+
+    // --- Attach Core Event Listeners ---
+    dom.$("generateBtn").addEventListener("click", handleGenerate); 
+    reattachActionListeners(); 
+
+    // --- Add Example Toggle Event Listeners ---
+    dom.$("plsConfigExamplesBtn").addEventListener("click", function() {
+        const exampleDiv = dom.$("plsConfigExamples");
+        const isHidden = exampleDiv.classList.contains("hidden");
+        
+        if (isHidden) {
+            // Display hardcoded example content immediately
+            const exampleContent = dom.$("exampleContent");
+            const exampleText = `qual1,qual2,qual3,sat1,sat2,loy1,loy2
+5,6,5,4,5,5,6
+7,7,6,6,7,7,6
+4,5,4,3,4,4,4
+6,6,7,5,6,6,7
+5,4,5,4,4,5,5`;
+
+            exampleContent.innerHTML = `
+                <div class="bg-black/30 p-2 rounded font-mono text-white/90 text-xs whitespace-pre-wrap">${exampleText}</div>
+                <div class="text-white/60 text-xs mt-2 space-y-1">
+                    <div class="font-medium text-white/80">PLS-SEM Data Requirements:</div>
+                    <div>• <strong>Clean column names:</strong> No spaces or symbols (use underscores)</div>
+                    <div>• <strong>Numeric data only:</strong> All measurement variables must be numbers</div>
+                    <div>• <strong>Sample size:</strong> PLS is flexible, but 100+ rows is recommended for stability</div>
+                    <div>• <strong>No missing values:</strong> Ensure data is complete</div>
+                </div>
+            `;
+        }
+        
+        exampleDiv.classList.toggle("hidden");
+        this.textContent = isHidden ? "Hide Examples" : "View Examples";
+    });
+
+    dom.$("plsMeasurementExamplesBtn").addEventListener("click", function() {
+        const exampleDiv = dom.$("plsMeasurementExamples");
+        const isHidden = exampleDiv.classList.contains("hidden");
+        exampleDiv.classList.toggle("hidden");
+        this.textContent = isHidden ? "Hide Examples" : "View Examples";
+    });
+
+    dom.$("plsStructuralExamplesBtn").addEventListener("click", function() {
+        const exampleDiv = dom.$("plsStructuralExamples");
+        const isHidden = exampleDiv.classList.contains("hidden");
+        exampleDiv.classList.toggle("hidden");
+        this.textContent = isHidden ? "Hide Examples" : "View Examples";
+    });
+
+        // --- Restore Cached Results (if any) ---
+        if (appState.analysisCache[appState.currentTemplateId]) {
+            dom.$("analysisResult").innerHTML = appState.analysisCache[appState.currentTemplateId];
+            dom.$("analysisActions").classList.remove("hidden");
+            reattachTabListeners(dom.$("analysisResult")); 
+        } else {
+            dom.$("analysisResult").innerHTML = '<div class="text-white/60 p-8 text-center">Your generated analysis will appear here.</div>';
+            dom.$("analysisActions").classList.add("hidden");
+        }
+
+        // --- Get References to PLS-Specific DOM Elements ---
+        const fileInput = dom.$("plsFile");
+        const textInput = dom.$("plsDataText");
+        const measurementSyntaxBox = dom.$("plsMeasurementSyntax");
+        const structuralSyntaxBox = dom.$("plsStructuralSyntax");
+        const fileError = dom.$("plsFileError");
+        const textError = dom.$("plsTextError");
+        const fileToggle = dom.$("plsInputFileToggle");
+        const textToggle = dom.$("plsInputTextToggle");
+        const fileArea = dom.$("plsFileUploadArea");
+        const textArea = dom.$("plsTextInputArea");
+        const dataPreviewContainer = dom.$("plsDataPreview");
+        const previewTable = dom.$("plsPreviewTable");
+        const modelTemplateSelect = dom.$("plsModelTemplate");
+        let fullHeaders = []; 
+
+        // --- PLS Helper Functions (Copied & Renamed from SEM) ---
+
+        const getHeadersFromText = (text) => {
+            if (!text || typeof text !== 'string' || !text.trim()) throw new Error("Input text is empty.");
+            const firstLine = text.split(/[\r\n]+/)[0];
+            if (!firstLine || !firstLine.trim()) throw new Error("First line (header) is empty.");
+
+            let headers = firstLine.split(',').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+            if (headers.length <= 1) headers = firstLine.split(';').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+            if (headers.length <= 1) headers = firstLine.split('\t').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+            if (headers.length === 0) throw new Error("Could not parse headers (tried comma, semicolon, tab).");
+            return headers;
+        };
+
+        const showDataPreview = (csvText) => {
+            try {
+                const lines = csvText.split(/[\r\n]+/).filter(Boolean); 
+                const rows = lines.slice(0, 6); 
+                
+                if (rows.length < 2) { 
+                    previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Data file is empty or has no data rows.</td></tr></tbody>';
+                    dataPreviewContainer.classList.remove("hidden"); 
+                    return; 
+                }
+
+                const headers = getHeadersFromText(rows[0]);
+                let tableHTML = '<thead class="bg-white/10 text-xs uppercase"><tr>';
+                headers.forEach(h => { tableHTML += `<th scope="col" class="px-4 py-2">${h}</th>`; });
+                tableHTML += '</tr></thead><tbody>';
+
+                rows.slice(1).forEach((line, rowIndex) => {
+                    let cells = line.split(',');
+                    if (cells.length !== headers.length) cells = line.split(';');
+                    if (cells.length !== headers.length) cells = line.split('\t');
+
+                    tableHTML += `<tr class="border-t border-white/10 ${rowIndex % 2 === 0 ? 'bg-white/5' : ''}">`;
+                    headers.forEach((_, cellIndex) => {
+                        tableHTML += `<td class="px-4 py-2">${cells[cellIndex] === undefined ? '' : cells[cellIndex]}</td>`;
+                    });
+                    tableHTML += '</tr>';
+                });
+                tableHTML += '</tbody>';
+                previewTable.innerHTML = tableHTML;
+                dataPreviewContainer.classList.remove("hidden"); // Ensure it's visible
+            } catch (e) {
+                console.error("Error showing data preview:", e);
+                previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-red-400" colspan="100%">Error reading data preview.</td></tr></tbody>';
+                dataPreviewContainer.classList.remove("hidden"); // Ensure it's visible
+            }
+        };
+
+    /**
+     * This function is no longer used by the "auto-suggest" but
+     * is kept in case you want to add a "Recommended for Sample" button back.
+     */
+    const generateRecommendedSyntax = () => {
+        const fullSyntax = `
+# Measurement Model (Sample)
+Quality =~ qual1 + qual2 + qual3 + qual4
+Satisfaction =~ sat1 + sat2 + sat3
+Loyalty =~ loy1 + loy2 + loy3
+
+# Structural Model (Sample)
+Satisfaction ~ Quality
+Loyalty ~ Quality + Satisfaction`;
+        populateSyntaxBoxes(fullSyntax);
+    };
+
+    /**
+     * --- *** THIS IS THE NEW, SMARTER "Auto-Suggest" FUNCTION *** ---
+     * It groups variables by prefix (e.g., "qual1", "qual2" -> "qual")
+     * and builds a valid model.
+     */
+    const generateSyntax = () => {
+        if (fullHeaders.length === 0) { 
+            alert("Data headers not found for auto-suggestion."); 
+            return; 
+        }
+        const excludePatterns = ['id', 'date', 'time', 'timestamp', 'index', 'row'];
+        const analyticalHeaders = fullHeaders.filter(h => 
+            !excludePatterns.some(pattern => h.toLowerCase().includes(pattern))
+        );
+        
+        // --- NEW SMARTER LOGIC ---
+        const groupedFactors = new Map();
+        // This regex finds the non-numeric prefix of a variable name.
+        const prefixRegex = /^([a-zA-Z_]+)/; // Matches leading letters/underscores
+
+        analyticalHeaders.forEach(header => {
+            const match = header.match(prefixRegex);
+            if (match) {
+                const prefix = match[1]; // e.g., "qual"
+                if (!groupedFactors.has(prefix)) {
+                    groupedFactors.set(prefix, []);
+                }
+                groupedFactors.get(prefix).push(header);
+            }
+        });
+
+        // Filter out groups with fewer than 2 indicators (good practice)
+        const validFactors = new Map();
+        for (const [prefix, indicators] of groupedFactors.entries()) {
+            // Only create a factor if it has 2 or more indicators
+            if (indicators.length > 1) { 
+                // Capitalize the prefix for the Factor name (e.g., "qual" -> "Quality")
+                const factorName = prefix.charAt(0).toUpperCase() + prefix.slice(1);
+                validFactors.set(factorName, indicators);
+            }
+        }
+
+        if (validFactors.size < 2) {
+            populateSyntaxBoxes(`# Could not auto-group headers by prefix.\n# Need at least 2 groups with 2+ items each.\n# Available: ${analyticalHeaders.join(', ')}`);
+            return;
+        }
+
+        let measurementPart = `# Auto-suggested model based on column prefixes\n`;
+        const factorNames = [];
+        for (const [factorName, indicators] of validFactors.entries()) {
+            measurementPart += `${factorName} =~ ${indicators.join(' + ')}\n`;
+            factorNames.push(factorName);
+        }
+
+        let structuralPart = `# Auto-suggested structural paths (chain model)\n`;
+        if (factorNames.length === 2) {
+            // Simple regression if only two factors
+            structuralPart += `${factorNames[1]} ~ ${factorNames[0]}`;
+        } else {
+            // Create a "chain" model: F2~F1, F3~F2, etc.
+            for (let i = 1; i < factorNames.length; i++) {
+                structuralPart += `${factorNames[i]} ~ ${factorNames[i-1]}\n`;
+            }
+            // Add a direct path from F1 to F-Last for a simple mediation check
+            if (factorNames.length > 2) {
+                 structuralPart += `${factorNames[factorNames.length-1]} ~ ${factorNames[0]}\n`;
+            }
+        }
+        
+        let fullSyntax = measurementPart.trim() + '\n\n' + structuralPart.trim();
+        populateSyntaxBoxes(fullSyntax);
+        // --- END NEW SMARTER LOGIC ---
+    };
+
+    /**
+     * This helper populates the syntax boxes. (Unchanged)
+     */
+    const populateSyntaxBoxes = (fullSyntax) => {
+        // Find where the structural model starts (first line with ~ but not =~)
+        const lines = fullSyntax.split('\n');
+        let structuralStartIndex = -1;
+        
+        for(let i=0; i < lines.length; i++) {
+            const trimmedLine = lines[i].trim();
+            if (trimmedLine.includes('~') && !trimmedLine.includes('=~')) {
+                structuralStartIndex = i;
+                break;
+            }
+        }
+
+        let measurement = [];
+        let structural = [];
+
+        if (structuralStartIndex === -1) {
+            // No structural model found, assume all is measurement
+            measurement = lines;
+        } else {
+            measurement = lines.slice(0, structuralStartIndex);
+            structural = lines.slice(structuralStartIndex);
+        }
+        
+        // Remove comments for the final text boxes
+        const filterComments = (arr) => arr.filter(line => !line.trim().startsWith('#')).join('\n').trim();
+
+        measurementSyntaxBox.value = filterComments(measurement);
+        structuralSyntaxBox.value = filterComments(structural);
+        
+        measurementSyntaxBox.placeholder = measurementSyntaxBox.value ? measurementSyntaxBox.placeholder : "e.g., F1 =~ x1+x2";
+        structuralSyntaxBox.placeholder = structuralSyntaxBox.value ? structuralSyntaxBox.placeholder : "e.g., F1 ~ F2";
+    };
+
+    /**
+     * --- *** THIS IS THE UPDATED FUNCTION *** ---
+     * Renamed "Auto-Suggest (2-Factor Model)" to "Auto-Suggest (Group by Prefix)"
+     */
+    const updateModelTemplates = (headers) => {
+        fullHeaders = headers;
+        modelTemplateSelect.innerHTML = '';
+        modelTemplateSelect.add(new Option("Select a model template...", ""));
+        modelTemplateSelect.add(new Option("Custom Syntax (Type below)", "custom"));
+        modelTemplateSelect.add(new Option("Auto-Suggest (Group by Prefix)", "autosuggest")); // <-- Text Updated
+        // The "Recommended" option has been removed
+        modelTemplateSelect.disabled = false;
+    };
+
+    /**
+     * --- *** THIS IS THE UPDATED FUNCTION *** ---
+     * Now defaults to "autosuggest"
+     */
+    const processDataInput = async (isFileInput) => {
+        let textContent = null;
+        let originalHeaders = [];
+        const errorEl = isFileInput === null ? null : (isFileInput ? fileError : textError);
+        const inputEl = isFileInput === null ? null : (isFileInput ? fileInput : textInput);
+
+        if (fileError) fileError.textContent = "";
+        if (textError) textError.textContent = "";
+
+        modelTemplateSelect.disabled = true;
+        modelTemplateSelect.innerHTML = '<option value="">-- Processing data... --</option>';
+        previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Processing data...</td></tr></tbody>';
+        dataPreviewContainer.classList.remove("hidden"); // Make sure it's visible
+        
+        measurementSyntaxBox.value = ""; 
+        structuralSyntaxBox.value = "";
+        measurementSyntaxBox.placeholder = "Upload or paste data to see model templates...";
+        structuralSyntaxBox.placeholder = "";
+
+        if (isFileInput === null) {
+            modelTemplateSelect.innerHTML = '<option value="">-- Upload or paste data first --</option>';
+            previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Upload or paste data to see a preview.</td></tr></tbody>';
+            return;
+        }
+
+        try {
+            if (isFileInput) {
+                const file = inputEl.files[0];
+                if (!file) {
+                    modelTemplateSelect.innerHTML = '<option value="">-- Upload or paste data first --</option>';
+                    previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Upload or paste data to see a preview.</td></tr></tbody>';
+                    return;
+                }
+                textContent = await extractTextFromFile(file);
+            } else {
+                textContent = textInput.value;
+                if (!textContent.trim()) {
+                    modelTemplateSelect.innerHTML = '<option value="">-- Upload or paste data first --</option>';
+                    previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Upload or paste data to see a preview.</td></tr></tbody>';
+                    return;
+                }
+            }
+
+        originalHeaders = getHeadersFromText(textContent);
+
+        const lines = textContent.split(/[\r\n]+/).filter(Boolean);
+        const dataRows = lines.slice(1); 
+        
+        if (dataRows.length < 10) {
+            if (errorEl) errorEl.textContent = "Warning: Very small dataset. Need at least 10 rows for reliable analysis.";
+        }
+        
+        let numericColumnsCount = 0;
+        if (dataRows.length > 0) {
+                const firstRow = dataRows[0].split(/[,;\t]/);
+            firstRow.forEach((cell, index) => {
+                // Check if cell is numeric.
+                if (!isNaN(parseFloat(cell)) && isFinite(cell)) {
+                    numericColumnsCount++;
+                }
+            });
+        }
+        
+        let nonDateHeaders = originalHeaders.filter(h => !h.toLowerCase().includes('date') && !h.toLowerCase().includes('id'));
+        if (nonDateHeaders.length > 0 && numericColumnsCount < nonDateHeaders.length) {
+                if (errorEl) errorEl.textContent = "Warning: Some columns appear non-numeric. PLS-SEM requires numeric data for all indicators.";
+        }
+
+            showDataPreview(textContent);
+            updateModelTemplates(originalHeaders); // This now only has 2 options
+
+        if (dataRows.length >= 10 && numericColumnsCount >= 3) {
+            // --- THIS IS THE CHANGE ---
+            // Always default to "autosuggest" now
+            modelTemplateSelect.value = "autosuggest";
+            // --- END CHANGE ---
+            modelTemplateSelect.dispatchEvent(new Event('change'));
+        }
+
+        } catch (err) {
+            console.error("Input processing failed:", err);
+            if (errorEl) errorEl.textContent = `Error: ${err.message}.`;
+            modelTemplateSelect.disabled = true;
+            modelTemplateSelect.innerHTML = '<option value="">-- Error reading data --</option>';
+            previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-red-400" colspan="100%">Error reading data preview.</td></tr></tbody>';
+            dataPreviewContainer.classList.remove("hidden");
+            measurementSyntaxBox.placeholder = "Error reading input data.";
+            structuralSyntaxBox.placeholder = "";
+        }
+    };
+
+    // --- Attach Input Event Listeners (Copied & Renamed from SEM) ---
+
+    fileToggle.addEventListener("change", () => {
+        fileArea.classList.remove("hidden");
+        textArea.classList.add("hidden");
+        processDataInput(fileInput.files.length > 0 ? true : null); 
+    });
+    textToggle.addEventListener("change", () => {
+        fileArea.classList.add("hidden");
+        textArea.classList.remove("hidden");
+        processDataInput(textInput.value.trim() ? false : null); 
+    });
+
+    if (fileInput) {
+        fileInput.addEventListener("change", () => {
+            const label = dom.$("plsFileLabel");
+            const fileNameSpan = label.querySelector(".file-name");
+            if (fileInput.files.length > 0) {
+                fileNameSpan.textContent = fileInput.files[0].name;
+                label.classList.add("has-file");
+                processDataInput(true); 
+            } else { 
+                fileNameSpan.textContent = "Select data file...";
+                label.classList.remove("has-file");
+                processDataInput(null); 
+            }
+        });
+    }
+
+    if (textInput) {
+        textInput.addEventListener("blur", () => { 
+            if (!textArea.classList.contains("hidden")) {
+                processDataInput(textInput.value.trim() ? false : null);
+            }
+        });
+    }
+
+    /**
+     * --- *** THIS IS THE UPDATED LISTENER *** ---
+     * This listener now only handles custom and autosuggest.
+     */
+    if (modelTemplateSelect) {
+        modelTemplateSelect.addEventListener("change", async () => { 
+            const selected = modelTemplateSelect.value;
+            measurementSyntaxBox.value = ""; 
+            structuralSyntaxBox.value = "";
+
+            switch (selected) {
+                case "custom":
+                    measurementSyntaxBox.placeholder = "Type measurement model syntax here...";
+                    structuralSyntaxBox.placeholder = "Type structural model syntax here...";
+                    measurementSyntaxBox.focus(); 
+                    break;
+                case "autosuggest":
+                    measurementSyntaxBox.placeholder = "Auto-suggesting generic model...";
+                    structuralSyntaxBox.placeholder = "Auto-suggesting generic model...";
+                    generateSyntax(); // Calls the DYNAMIC auto-suggest
+                    measurementSyntaxBox.placeholder = measurementSyntaxBox.value ? "Review auto-suggested syntax." : "Could not auto-suggest.";
+                    structuralSyntaxBox.placeholder = structuralSyntaxBox.value ? "Review auto-suggested syntax." : "";
+                    break;
+                // --- "recommended" case has been removed ---
+                default:
+                    measurementSyntaxBox.placeholder = "Select a model template or type syntax...";
+                    structuralSyntaxBox.placeholder = "";
+            }
+        });
+    }
 
     // Attach listener for the feedback link
     const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
     if (feedbackLink) {
         feedbackLink.addEventListener("click", (e) => {
             e.preventDefault();
-            
-            // This just calls the navigateTo function.
-            // It relies on your main `MapsTo` function to be
-            // the *simplified one* (without memory logic)
-            // and your `submitFeedbackPageBtn` listener
-            // to be the *simplified one* (that just goes home).
             if (typeof navigateTo === 'function') {
                 navigateTo('feedback');
             } else {
@@ -1837,7 +2417,7 @@ function createPlsLayout_DA(template) {
             }
         });
     } else {
-        console.warn("Feedback link not found inside createPlsLayout_DA");
+        console.warn("Feedback link not found in createPlsLayout_DA");
     }
 }
 

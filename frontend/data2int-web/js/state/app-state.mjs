@@ -18,8 +18,9 @@ let pendingN8nResult = null;
 let currentAnalysisMessageId = null;
 let currentAnalysisContext = null;
 
-// --- Admin Dashboard Stats Timer ---
-let statsInterval = null;
+// --- Admin Dashboard ---
+let statsInterval = null; // Admin Dashboard Stats Timer
+let currentFeedbackItems = []; // Caches the feedback list
 
 // --- Regression Analysis ---
 let currentRegressionRowCount = 0; // Stores the row count for ratio validation
@@ -39,5 +40,6 @@ export const appState = {
     currentAnalysisMessageId,
     currentAnalysisContext,
     statsInterval,
-    currentRegressionRowCount
+    currentRegressionRowCount,
+    currentFeedbackItems
 }

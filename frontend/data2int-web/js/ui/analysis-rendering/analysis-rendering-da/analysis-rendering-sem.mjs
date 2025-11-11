@@ -2,8 +2,8 @@
 // ===================            SEM Analysis Page Rendering Functions             ====================
 // =====================================================================================================
 
-import { dom } from '../../utils/dom-utils.mjs';
-import { appState } from '../../state/app-state.mjs';
+import { dom } from '../../../utils/dom-utils.mjs';
+import { appState } from '../../../state/app-state.mjs';
 
 
 /**

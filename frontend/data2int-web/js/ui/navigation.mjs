@@ -2,11 +2,11 @@ import { appState } from '../state/app-state.mjs';
 import { dom } from '../utils/dom-utils.mjs';
 import { handleLogout } from '../services/auth-service.mjs';
 import { fetchAndDisplayStatistics } from '../services/stats-service.mjs';
-import { createAdminDashboardTabs } from './template-creation/template-creation.mjs';
+import { createAdminDashboardTabs } from '../admin-dashboard/admin-dashboard.mjs';
 
 // --- Navigation Logic ---
     function navigateTo(pageId) {
-        dom.pages.forEach((page) => {
+        dom.pages().forEach((page) => {
             page.classList.remove("active", "flex", "block");
             page.style.display = "none";
         });

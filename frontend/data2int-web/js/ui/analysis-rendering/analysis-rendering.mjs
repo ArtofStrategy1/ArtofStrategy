@@ -1,7 +1,7 @@
 import { dom } from '../../utils/dom-utils.mjs';
 import { appState } from '../../state/app-state.mjs';
 import { setLoading } from '../../utils/ui-utils.mjs';
-import * as renderSP from '../analysis-rendering/analysis-rendering-sp.mjs';
+import * as renderSP from './analysis-rendering-sp/analysis-rendering-sp.mjs';
 
 /**
  * UNIVERSAL MERGE FUNCTION (v7.1 - FIX)
