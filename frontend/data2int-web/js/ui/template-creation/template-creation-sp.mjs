@@ -7,6 +7,7 @@ import { handleGenerate } from "../../analysis/analysis-helpers.mjs"
 import { reattachActionListeners, reattachTabListeners } from "./template-creation.mjs";
 import { extractTextFromFile } from "../../utils/file-utils.mjs";
 import { setupInputToggle } from "../../utils/ui-utils.mjs";
+import { navigateTo } from "../navigation.mjs";
 
 /**
  * Creates the UI for the Mission Vision tool.
@@ -165,6 +166,9 @@ function createFactorAnalysisLayout(template) {
                                 <span id="generateBtnText">🔍 Analyze Factors</span>
                                 <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                             </button>
+                            <div class="text-center mt-4">
+                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                            </div> 
                         </div>
                     </div>
                     
@@ -227,6 +231,27 @@ function createFactorAnalysisLayout(template) {
             }
         });
     }
+
+    // Attach listener for the feedback link
+    const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+    if (feedbackLink) {
+        feedbackLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            
+            // This just calls the navigateTo function.
+            // It relies on your main `MapsTo` function to be
+            // the *simplified one* (without memory logic)
+            // and your `submitFeedbackPageBtn` listener
+            // to be the *simplified one* (that just goes home).
+            if (typeof navigateTo === 'function') {
+                navigateTo('feedback');
+            } else {
+                console.error("navigateTo function is not defined.");
+            }
+        });
+    } else {
+        console.warn("Feedback link not found inside createFactorAnalysisLayout");
+    }
 }
 
 
@@ -265,6 +290,9 @@ function createSwotTowsLayout(template) {
                                 <span id="generateBtnText">Run SWOT/TOWS Analysis</span>
                                 <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                             </button>
+                            <div class="text-center mt-4">
+                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                            </div>
                         </div>
                     </div>
 
@@ -318,6 +346,27 @@ function createSwotTowsLayout(template) {
             }
         });
     }
+
+    // Attach listener for the feedback link
+    const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+    if (feedbackLink) {
+        feedbackLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            
+            // This just calls the navigateTo function.
+            // It relies on your main `MapsTo` function to be
+            // the *simplified one* (without memory logic)
+            // and your `submitFeedbackPageBtn` listener
+            // to be the *simplified one* (that just goes home).
+            if (typeof navigateTo === 'function') {
+                navigateTo('feedback');
+            } else {
+                console.error("navigateTo function is not defined.");
+            }
+        });
+    } else {
+        console.warn("Feedback link not found inside createSwotTowsLayout");
+    }
 }
 
 
@@ -353,6 +402,9 @@ function createGoalsAndInitiativesLayout_SP(template) {
                             <span id="generateBtnText">📋 Build Strategic Plan</span>
                             <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                         </button>
+                        <div class="text-center mt-4">
+                            <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                        </div>
                     </div>
                     <div class="mt-12">
                             <h2 class="text-3xl font-bold mb-4 text-center">Analysis Results</h2>
@@ -365,6 +417,26 @@ function createGoalsAndInitiativesLayout_SP(template) {
                 </div>
             `;
     setupInputToggle("goalsFile", "goalsFileLabel", "textInputArea", "docUploadArea");
+
+    const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+    if (feedbackLink) {
+        feedbackLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            
+            // This just calls the navigateTo function.
+            // It relies on your main `MapsTo` function to be
+            // the *simplified one* (without memory logic)
+            // and your `submitFeedbackPageBtn` listener
+            // to be the *simplified one* (that just goes home).
+            if (typeof navigateTo === 'function') {
+                navigateTo('feedback');
+            } else {
+                console.error("navigateTo function is not defined.");
+            }
+        });
+    } else {
+        console.warn("Feedback link not found inside createGoalsAndInitiativesLayout_SP");
+    }
 }
 
 
@@ -520,6 +592,9 @@ function createActionPlansLayout_AP(template) {
                             <span id="generateBtnText">🗓️ Create Action Plan</span>
                             <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                         </button>
+                        <div class="text-center mt-4">
+                            <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                        </div>
                     </div>
                     <div class="mt-12">
                             <h2 class="text-3xl font-bold mb-4 text-center">Generated Action Plan</h2>
@@ -532,6 +607,27 @@ function createActionPlansLayout_AP(template) {
                 </div>
             `;
     setupInputToggle("actionPlanFile", "actionPlanFileLabel", "textInputArea", "docUploadArea");
+
+    // Attach listener for the feedback link
+    const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+    if (feedbackLink) {
+        feedbackLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            
+            // This just calls the navigateTo function.
+            // It relies on your main `MapsTo` function to be
+            // the *simplified one* (without memory logic)
+            // and your `submitFeedbackPageBtn` listener
+            // to be the *simplified one* (that just goes home).
+            if (typeof navigateTo === 'function') {
+                navigateTo('feedback');
+            } else {
+                console.error("navigateTo function is not defined.");
+            }
+        });
+    } else {
+        console.warn("Feedback link not found inside createActionPlansLayout_AP");
+    }
 }
 
 
@@ -567,6 +663,9 @@ function createKpiLayout_KE(template) {
                             <span id="generateBtnText">📊 Define KPIs & Events</span>
                             <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                         </button>
+                        <div class="text-center mt-4">
+                            <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                        </div>
                     </div>
                     <div class="mt-12">
                             <h2 class="text-3xl font-bold mb-4 text-center">Performance Framework</h2>
@@ -579,6 +678,26 @@ function createKpiLayout_KE(template) {
                 </div>
             `;
     setupInputToggle("kpiFile", "kpiFileLabel", "textInputArea", "docUploadArea");
+    // Attach listener for the feedback link
+    const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+    if (feedbackLink) {
+        feedbackLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            
+            // This just calls the navigateTo function.
+            // It relies on your main `MapsTo` function to be
+            // the *simplified one* (without memory logic)
+            // and your `submitFeedbackPageBtn` listener
+            // to be the *simplified one* (that just goes home).
+            if (typeof navigateTo === 'function') {
+                navigateTo('feedback');
+            } else {
+                console.error("navigateTo function is not defined.");
+            }
+        });
+    } else {
+        console.warn("Feedback link not found inside createKpiLayout_KE");
+    }
 }
 
 
@@ -614,6 +733,9 @@ function createMiscLayout_MSC(template) {
                             <span id="generateBtnText">📝 Compile Final Report</span>
                             <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                         </button>
+                        <div class="text-center mt-4">
+                            <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                        </div>
                     </div>
                     <div class="mt-12">
                             <h2 class="text-3xl font-bold mb-4 text-center">Final Sections</h2>
@@ -626,6 +748,26 @@ function createMiscLayout_MSC(template) {
                 </div>
             `;
     setupInputToggle("miscFile", "miscFileLabel", "textInputArea", "docUploadArea");
+
+    const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+    if (feedbackLink) {
+        feedbackLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            
+            // This just calls the navigateTo function.
+            // It relies on your main `MapsTo` function to be
+            // the *simplified one* (without memory logic)
+            // and your `submitFeedbackPageBtn` listener
+            // to be the *simplified one* (that just goes home).
+            if (typeof navigateTo === 'function') {
+                navigateTo('feedback');
+            } else {
+                console.error("navigateTo function is not defined.");
+            }
+        });
+    } else {
+        console.warn("Feedback link not found inside createMiscLayout_MSC");
+    }
 }
 
 

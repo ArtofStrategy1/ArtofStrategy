@@ -1,10 +1,11 @@
 // =====================================================================================================
 // ===================      Novel Strategies Page Template Creation Functions       ====================
 // =====================================================================================================
-import { handleGenerate } from "../../analysis/analysis-helpers.mjs"
+import { handleGenerate } from "../../analysis/analysis-helpers.mjs";
 import { reattachActionListeners } from "./template-creation.mjs";
 import { dom } from "../../utils/dom-utils.mjs";
 import { setupInputToggle } from "../../utils/ui-utils.mjs";
+import { navigateTo } from "../navigation.mjs";
 
 function createNovelGoalsLayout_NS(template) {
     const contentContainer = dom.$("templateDetailContent");
@@ -37,6 +38,9 @@ function createNovelGoalsLayout_NS(template) {
                             <span id="generateBtnText">🗺️ Map Strategic Horizons</span>
                             <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                         </button>
+                        <div class="text-center mt-4">
+                            <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                        </div>
                     </div>
                     <div class="mt-12">
                             <h2 class="text-3xl font-bold mb-4 text-center">Horizons of Growth Analysis</h2>
@@ -49,6 +53,27 @@ function createNovelGoalsLayout_NS(template) {
                 </div>
             `;
     setupInputToggle("novelGoalsFile", "novelGoalsFileLabel", "textInputArea", "docUploadArea");
+
+    // Attach listener for the feedback link
+    const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+    if (feedbackLink) {
+        feedbackLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            
+            // This just calls the navigateTo function.
+            // It relies on your main `MapsTo` function to be
+            // the *simplified one* (without memory logic)
+            // and your `submitFeedbackPageBtn` listener
+            // to be the *simplified one* (that just goes home).
+            if (typeof navigateTo === 'function') {
+                navigateTo('feedback');
+            } else {
+                console.error("navigateTo function is not defined.");
+            }
+        });
+    } else {
+        console.warn("Feedback link not found inside createNovelGoalsLayout_NS");
+    }
 }
 
 
@@ -149,6 +174,9 @@ function createCreativeDissonanceLayout_NS(template) {
                             <span id="generateBtnText">⚡️ Generate Creative Strategies</span>
                             <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                         </button>
+                        <div class="text-center mt-4">
+                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                        </div>
                     </div>
                     <div class="mt-12">
                             <h2 class="text-3xl font-bold mb-4 text-center">Creative Dissonance Analysis</h2>
@@ -178,6 +206,27 @@ function createCreativeDissonanceLayout_NS(template) {
     attachListener("dissonanceDataFile", "dissonanceDataFileLabel");
     dom.$("generateBtn").addEventListener("click", handleGenerate);
     reattachActionListeners();
+
+    // Attach listener for the feedback link
+    const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+    if (feedbackLink) {
+        feedbackLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            
+            // This just calls the navigateTo function.
+            // It relies on your main `MapsTo` function to be
+            // the *simplified one* (without memory logic)
+            // and your `submitFeedbackPageBtn` listener
+            // to be the *simplified one* (that just goes home).
+            if (typeof navigateTo === 'function') {
+                navigateTo('feedback');
+            } else {
+                console.error("navigateTo function is not defined.");
+            }
+        });
+    } else {
+        console.warn("Feedback link not found inside createCreativeDissonanceLayout_NS");
+    }
 }
 
 
@@ -231,6 +280,9 @@ function createLivingSystemLayout_NS(template) {
                             <span id="generateBtnText">🔬 Diagnose Living System</span>
                             <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                         </button>
+                        <div class="text-center mt-4">
+                            <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                        </div>
                     </div>
                     <div class="mt-12">
                             <h2 class="text-3xl font-bold mb-4 text-center">System Health Analysis</h2>
@@ -243,6 +295,27 @@ function createLivingSystemLayout_NS(template) {
                 </div>
             `;
     setupInputToggle("lsFile", "lsFileLabel", "textInputArea", "docUploadArea");
+
+    // Attach listener for the feedback link
+    const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+    if (feedbackLink) {
+        feedbackLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            
+            // This just calls the navigateTo function.
+            // It relies on your main `MapsTo` function to be
+            // the *simplified one* (without memory logic)
+            // and your `submitFeedbackPageBtn` listener
+            // to be the *simplified one* (that just goes home).
+            if (typeof navigateTo === 'function') {
+                navigateTo('feedback');
+            } else {
+                console.error("navigateTo function is not defined.");
+            }
+        });
+    } else {
+        console.warn("Feedback link not found inside createLivingSystemLayout_NS");
+    }
 }
 
 
@@ -278,6 +351,9 @@ function createThinkingSystemLayout_NS(template) {
                             <span id="generateBtnText">🧠 Deconstruct Thinking</span>
                             <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                         </button>
+                        <div class="text-center mt-4">
+                            <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                        </div>
                     </div>
                     <div class="mt-12">
                             <h2 class="text-3xl font-bold mb-4 text-center">Analysis of Your Thinking System</h2>
@@ -290,6 +366,27 @@ function createThinkingSystemLayout_NS(template) {
                 </div>
             `;
     setupInputToggle("tsFile", "tsFileLabel", "textInputArea", "docUploadArea");
+
+    // Attach listener for the feedback link
+    const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+    if (feedbackLink) {
+        feedbackLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            
+            // This just calls the navigateTo function.
+            // It relies on your main `MapsTo` function to be
+            // the *simplified one* (without memory logic)
+            // and your `submitFeedbackPageBtn` listener
+            // to be the *simplified one* (that just goes home).
+            if (typeof navigateTo === 'function') {
+                navigateTo('feedback');
+            } else {
+                console.error("navigateTo function is not defined.");
+            }
+        });
+    } else {
+        console.warn("Feedback link not found inside createThinkingSystemLayout_NS");
+    }
 }
 
 

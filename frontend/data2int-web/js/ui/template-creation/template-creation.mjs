@@ -4,10 +4,11 @@
 import { appState } from "../../state/app-state.mjs";
 import { dom } from "../../utils/dom-utils.mjs";
 import { templateConfig } from "./template-config.mjs";
-import { handleGenerate } from "../../analysis/analysis-helpers.mjs"
-import { handleSaveAsPdf, handleSaveAsDocx } from "../../utils/file-utils.mjs"
+import { handleGenerate } from "../../analysis/analysis-helpers.mjs";
+import { handleSaveAsPdf, handleSaveAsDocx } from "../../utils/file-utils.mjs";
 import { navigateTo } from '../navigation.mjs';
 import { configureFrameworkSelector, frameworkCheckboxChangeHandler } from "./framework-selection.mjs";
+import { renderContactApprovalsTab } from "../general-rendering.mjs";
 import * as createSP from "./template-creation-sp.mjs";
 import * as createST from "./template-creation-st.mjs";
 import * as createNS from "./template-creation-ns.mjs";
@@ -201,6 +202,10 @@ function createDefaultLayout(template, rule) {
                             <span id="generateBtnText">Generate Analysis</span>
                             <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                         </button>
+
+                        <div class="text-center mt-4">
+                            <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                        </div>
                     </div>
                 </div>
                 <div>
@@ -249,6 +254,27 @@ function createDefaultLayout(template, rule) {
     dom.$("generateBtn").addEventListener("click", handleGenerate);
     reattachActionListeners();
     configureFrameworkSelector(appState.currentSelectionLimit);
+
+    // Attach listener for the feedback link
+    const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+    if (feedbackLink) {
+        feedbackLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            
+            // This just calls the navigateTo function.
+            // It relies on your main `MapsTo` function to be
+            // the *simplified one* (without memory logic)
+            // and your `submitFeedbackPageBtn` listener
+            // to be the *simplified one* (that just goes home).
+            if (typeof navigateTo === 'function') {
+                navigateTo('feedback');
+            } else {
+                console.error("navigateTo function is not defined.");
+            }
+        });
+    } else {
+        console.warn("Feedback link not found inside createDefaultLayout");
+    }
 }
 
 
@@ -312,8 +338,97 @@ function populateDefaultFormFields(templateId) {
 }
 
 
+
+// --- NEW FUNCTION TO CREATE DYNAMIC DASHBOARD LAYOUT ---
+function createAdminDashboardTabs() {
+    const dashboardContainer = dom.$("adminDashboard");
+    if (!dashboardContainer) return;
+
+    // 1. Capture existing static content (metrics and stats panels)
+    const usersOnlineGrid = dashboardContainer.querySelector('.grid.md\\:grid-cols-3');
+    const statsContainer = dashboardContainer.querySelector('.glass-container.mt-8');
+
+    // 2. Clear the dashboard content
+    dashboardContainer.innerHTML = '';
+
+    // 3. Define Tab Navigation
+    const tabNav = document.createElement("div");
+    tabNav.id = "adminTabsNav";
+    tabNav.className = "flex flex-wrap space-x-2 border-b-2 border-white/10 mt-8 mb-8";
+    tabNav.innerHTML = `
+        <button class="home-tab-btn active" data-tab="metrics">📊 Metrics & Stats</button>
+        <button class="home-tab-btn" data-tab="approvals">📧 Contact Approvals</button>
+        <button class="home-tab-btn" data-tab="tickets">🎫 Ticket System</button>
+        <button class="home-tab-btn" data-tab="dbView">💾 View DB Content</button>
+    `;
+    
+    // 4. Define Tab Content Panels
+    const tabContent = document.createElement("div");
+    tabContent.id = "adminTabsContent";
+    tabContent.innerHTML = `
+        <div id="metricsPanel" class="home-tab-panel active grid grid-cols-1 gap-8">
+            ${usersOnlineGrid ? usersOnlineGrid.outerHTML : ''}
+            ${statsContainer ? statsContainer.outerHTML : ''}
+        </div>
+        <div id="approvalsPanel" class="home-tab-panel"></div>
+        <div id="ticketsPanel" class="home-tab-panel"></div>
+        <div id="dbViewPanel" class="home-tab-panel"></div>
+    `;
+
+    // 5. Append new elements to the dashboard
+    dashboardContainer.appendChild(tabNav);
+    dashboardContainer.appendChild(tabContent);
+    
+    // 6. Attach the common tab switching listener
+    setupAdminTabsListeners();
+}
+
+// --- NEW FUNCTION TO HANDLE TAB SWITCHING LOGIC ---
+function setupAdminTabsListeners() {
+    const tabsNav = dom.$("adminTabsNav");
+    const tabPanels = document.querySelectorAll("#adminTabsContent .home-tab-panel");
+    const tabBtns = document.querySelectorAll("#adminTabsNav .home-tab-btn");
+
+    // Ensure the initial state is correct for the metrics panel
+    tabPanels.forEach(panel => {
+         if (panel.id === "metricsPanel") {
+             panel.style.display = "grid"; 
+         } else {
+             panel.style.display = "none";
+         }
+    });
+
+    tabsNav.addEventListener("click", (e) => {
+        if (e.target.tagName !== "BUTTON") return;
+        const targetTab = e.target.dataset.tab;
+
+        tabBtns.forEach((btn) => {
+            // Apply home-tab-btn active styles
+            btn.classList.toggle("active", btn.dataset.tab === targetTab);
+        });
+
+        tabPanels.forEach((panel) => {
+            panel.classList.remove("active");
+            if (panel.id === targetTab + "Panel") {
+                panel.classList.add("active");
+                panel.style.display = "grid"; // Show grid for content pages
+                
+                // *CRUCIAL: Trigger loading for specific tabs upon activation*
+                if (targetTab === 'approvals') renderContactApprovalsTab();
+                if (targetTab === 'tickets') renderTicketSystemTab();
+                if (targetTab === 'dbView') renderViewDatabaseTab();
+
+            } else {
+                panel.style.display = "none";
+            }
+        });
+    });
+}
+
 export {
     showTemplateDetail,
     reattachTabListeners,
     reattachActionListeners,
+    createAdminDashboardTabs,
+    setupAdminTabsListeners
 }
