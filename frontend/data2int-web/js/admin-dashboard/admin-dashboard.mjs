@@ -2,7 +2,8 @@ import { dom } from '../utils/dom-utils.mjs';
 import { appState } from '../state/app-state.mjs';
 import { appConfig } from '../config.mjs';
 import { showMessage } from '../utils/ui-utils.mjs';
-import { renderFeedbackTab } from '../feedback-modal/feedback-modal.mjs';
+import { renderFeedbackTab } from './feedback-modal.mjs';
+import { renderContactsTab } from './contacts-modal.mjs';
 
 function createAdminDashboardTabs() {
     const dashboardContainer = dom.$("adminDashboard");
@@ -23,6 +24,7 @@ function createAdminDashboardTabs() {
         <button class="home-tab-btn active" data-tab="dbStats">📊 Database Statistics</button>
         <button class="home-tab-btn" data-tab="users">👥 Users</button>
         <button class="home-tab-btn" data-tab="feedback">🎫 Feedback</button> 
+        <button class="home-tab-btn" data-tab="contacts">📨 Contacts</button>
     `;
     
     // 4. Define Tab Content Panels (MODIFIED - Added feedbackPanel)
@@ -39,6 +41,9 @@ function createAdminDashboardTabs() {
         </div>
 
         <div id="feedbackPanel" class="home-tab-panel">
+        </div>
+
+        <div id="contactsPanel" class="home-tab-panel">
         </div>
     `;
 
@@ -80,6 +85,7 @@ function setupAdminTabsListeners() {
                 // --- MODIFIED: Added check for 'feedback' ---
                 if (targetTab === 'users') renderViewDatabaseTab(); 
                 if (targetTab === 'feedback') renderFeedbackTab(); // <-- NEW
+                if (targetTab === 'contacts') renderContactsTab();
                 // 'dbStats' is pre-filled
 
             } else {

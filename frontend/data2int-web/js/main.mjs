@@ -2,7 +2,7 @@ import { appConfig } from './config.mjs';
 import { appState } from './state/app-state.mjs';
 import { dom } from './utils/dom-utils.mjs';
 import { setLoading, showMessage, proceedFromModal } from './utils/ui-utils.mjs';
-import { closeFeedbackModal } from './feedback-modal/feedback-modal.mjs';
+import { closeFeedbackModal } from './admin-dashboard/feedback-modal.mjs';
 import { initializeWebSocket } from './services/websocket-service.mjs';
 import { updateNavBar, navigateTo } from './ui/navigation.mjs';
 import { setupHomeTabs, attachHomeCardListeners } from './ui/home.mjs';

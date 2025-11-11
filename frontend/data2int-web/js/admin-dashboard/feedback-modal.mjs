@@ -112,57 +112,59 @@ async function fetchAndRenderFeedback() {
     container.innerHTML = `
         <div class="flex items-center justify-center p-10">
             <div class="loading-spinner mr-3"></div>
-            <span class="text-white/80">Fetching feedback...</span>
+            <span class="text-white/80">Fetching secure feedback...</span>
         </div>
     `;
 
     try {
+        // 1. Get session token
+        const { data: { session }, error: sessionError } = await appConfig.supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!session) throw new Error("You are not logged in.");
+
+        // 2. Get filter values
         const status = document.querySelector("#feedbackStatusTabs .active").dataset.status || "";
         const searchTerm = dom.$("feedbackSearch").value.trim();
-        const type = dom.$("feedbackTypeFilter").value;
+        const reason = dom.$("feedbackTypeFilter").value; // 'reason' matches the new function
+        
+        console.log(`DEBUG: Fetching with filters: Status='${status}', Search='${searchTerm}', Reason='${reason}'`); 
 
-        console.log(`DEBUG: Fetching with filters: Status='${status}', Search='${searchTerm}', Type='${type}'`); 
+        // 3. Build URL with query parameters
+        const params = new URLSearchParams({
+            page: 1, // Add pagination later if needed
+            limit: 50,
+            sortBy: 'priority',
+            sortOrder: 'asc'
+        });
+        if (status) params.append('status', status);
+        if (reason) params.append('reason', reason);
+        if (searchTerm) params.append('search', searchTerm);
 
-        let query = appConfig.supabase
-            .from('feedback')
-            .select(`
-                *,
-                users (
-                    first_name,
-                    last_name,
-                    email
-                )
-            `, { count: 'exact' });
+        const url = `${appConfig.SUPABASE_URL}/functions/v1/admin-feedback-secure/feedback?${params.toString()}`;
 
-        if (status) {
-            query = query.eq('status', status); 
-        }
-        if (type) {
-            query = query.eq('reason', type); 
-        }
-        if (searchTerm) {
-            query = query.ilike('content', `%${searchTerm}%`); 
-        }
-
-        query = query.order('priority', { ascending: true, nullsFirst: false }); 
-        query = query.order('created_at', { ascending: false });
-
-        const { data, error, count } = await query.limit(50); 
-
-        if (error) {
-            console.error("DEBUG: Supabase fetch error:", error); 
-            if (error.code === "42703") { 
-                throw new Error("Database error. Did you add the `status` and `priority` columns to your `publicv2.feedback` table?");
+        // 4. Call the secure Edge Function
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
             }
-            throw error;
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || `Failed to fetch feedback: ${response.statusText}`);
         }
 
-        console.log(`DEBUG: Supabase fetch success. Received ${data ? data.length : 0} items. Total count: ${count}`); 
+        const feedbackItems = data.data || [];
+        const count = data.pagination?.total || 0;
 
-        appState.currentFeedbackItems = data || [];
-        console.log("DEBUG: Updated 'appState.currentFeedbackItems' cache.", appState.currentFeedbackItems); 
+        console.log(`DEBUG: Supabase fetch success. Received ${feedbackItems.length} items. Total count: ${count}`); 
 
-        renderFeedbackCards(container, data, count);
+        appState.currentFeedbackItems = feedbackItems;
+        console.log("DEBUG: Updated 'currentFeedbackItems' cache.", appState.currentFeedbackItems); 
+
+        renderFeedbackCards(container, feedbackItems, count);
 
     } catch (error) {
         console.error("Error fetching feedback:", error);
@@ -306,25 +308,6 @@ function openFeedbackModal(feedbackId) {
                     <div class="modal-info-value">${item.tool_name}</div>
                 </div>
             </div>
-            
-            <div class="modal-actions-section">
-                <h4 class="modal-section-title">Actions</h4>
-                <div id="modalMessage" class="modal-message" style="display: none;"></div>
-                <div class="modal-action-buttons">
-                    <button class="modal-btn modal-btn-primary" id="modalReplyBtn">
-                        <span class="modal-btn-icon">↩️</span>
-                        Reply to User
-                    </button>
-                    <button class="modal-btn modal-btn-success" id="modalResolveBtn">
-                        <span class="modal-btn-icon">✅</span>
-                        Mark as Resolved
-                    </button>
-                    <button class="modal-btn modal-btn-secondary" id="modalArchiveBtn">
-                        <span class="modal-btn-icon">📁</span>
-                        Archive (Soon)
-                    </button>
-                </div>
-            </div>
 
             <div class="modal-status-section">
                 <h4 class="modal-section-title">Update Status</h4>
@@ -341,7 +324,7 @@ function openFeedbackModal(feedbackId) {
             
             <div class="modal-notes-section">
                 <h4 class="modal-section-title">Internal Notes</h4>
-                <textarea id="modalNotes" class="modal-textarea" placeholder="Add internal notes about this feedback..."></textarea>
+                <textarea id="modalNotes" class="modal-textarea" placeholder="Add internal notes about this feedback...">${item.admin_notes || ''}</textarea>
                 <button id="modalSaveNotesBtn" class="modal-btn modal-btn-secondary">Save Notes (Soon)</button>
             </div>
         </div>
@@ -352,10 +335,7 @@ function openFeedbackModal(feedbackId) {
     // Attach event listeners
     setTimeout(() => {
         const closeBtn = dom.$("modalCloseBtn");
-        const replyBtn = dom.$("modalReplyBtn");
-        const resolveBtn = dom.$("modalResolveBtn");
         const updateBtn = dom.$("modalUpdateBtn");
-        const archiveBtn = dom.$("modalArchiveBtn");
         const saveNotesBtn = dom.$("modalSaveNotesBtn");
         
         // Close button handler
@@ -363,20 +343,6 @@ function openFeedbackModal(feedbackId) {
             closeBtn.onclick = () => {
                 console.log("DEBUG: Close button clicked");
                 closeFeedbackModal();
-            };
-        }
-        
-        if (replyBtn) {
-            replyBtn.onclick = () => {
-                console.log("DEBUG: 'Reply' clicked");
-                showModalMessage("Reply feature is not yet connected.", "error");
-            };
-        }
-
-        if (resolveBtn) {
-            resolveBtn.onclick = async () => {
-                console.log("DEBUG: 'Resolve' clicked");
-                await handleUpdateFeedbackStatus(item.id, 'Resolved', closeFeedbackModal);
             };
         }
 
@@ -389,17 +355,13 @@ function openFeedbackModal(feedbackId) {
             };
         }
 
-        if (archiveBtn) {
-            archiveBtn.onclick = () => {
-                console.log("DEBUG: 'Archive' clicked");
-                showModalMessage("Archive feature is not yet connected.", "error");
-            };
-        }
-
         if (saveNotesBtn) {
+            // Make the button functional and remove "(Soon)"
+            saveNotesBtn.textContent = "Save Notes";
             saveNotesBtn.onclick = () => {
                 console.log("DEBUG: 'Save Notes' clicked");
-                showModalMessage("Internal notes are not yet connected.", "error");
+                // Pass the feedback item's ID to your new handler
+                handleSaveFeedbackNotes(item.id); 
             };
         }
     }, 100);
@@ -441,30 +403,36 @@ function showModalMessage(message, type) {
 async function handleUpdateFeedbackStatus(feedbackId, newStatus, closeCallback) {
     console.log(`DEBUG: handleUpdateFeedbackStatus() called. ID: ${feedbackId}, New Status: ${newStatus}`); 
     const updateBtn = dom.$("modalUpdateBtn");
-    const resolveBtn = dom.$("modalResolveBtn");
     
     if(updateBtn) updateBtn.disabled = true;
-    if(resolveBtn) resolveBtn.disabled = true;
     showModalMessage("Updating...", "success");
     
     try {
+        // 1. Get session token
         const { data: { session }, error: sessionError } = await appConfig.supabase.auth.getSession();
         if (sessionError) throw sessionError;
         if (!session) throw new Error("Not logged in");
 
-        const { data, error } = await appConfig.supabase
-            .from('feedback')
-            .update({ status: newStatus })
-            .eq('id', feedbackId)
-            .select();
-            
-        if (error) {
-            console.error("DEBUG: Supabase update error:", error); 
-            throw error;
-        }
+        // 2. Call the secure Edge Function
+        const url = `${appConfig.SUPABASE_URL}/functions/v1/admin-feedback-secure/feedback/${feedbackId}`;
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify({ status: newStatus })
+        });
         
-        console.log("DEBUG: Supabase update success:", data); 
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || "Failed to update status");
+        }
+            
+        console.log("DEBUG: Supabase update success:", data.data); 
         showModalMessage(`Status updated to "${newStatus}"!`, "success");
+        
+        // 3. Refresh the list from the server
         await fetchAndRenderFeedback();
         
         if (closeCallback) {
@@ -476,7 +444,66 @@ async function handleUpdateFeedbackStatus(feedbackId, newStatus, closeCallback) 
         showModalMessage(error.message, "error");
     } finally {
         if(updateBtn) updateBtn.disabled = false;
-        if(resolveBtn) resolveBtn.disabled = false;
+    }
+}
+
+/**
+ * Handles saving the internal admin notes via the SECURE EDGE FUNCTION.
+ */
+async function handleSaveFeedbackNotes(feedbackId) {
+    console.log(`DEBUG: handleSaveFeedbackNotes() called for ID: ${feedbackId}`);
+    
+    const notesText = dom.$("modalNotes").value.trim();
+    const saveBtn = dom.$("modalSaveNotesBtn");
+    if (!saveBtn) return;
+
+    const originalBtnText = saveBtn.textContent;
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="loading-spinner mr-2"></span> Saving...';
+    
+    showModalMessage("Saving notes...", "success"); 
+
+    try {
+        // 1. Get session token
+        const { data: { session }, error: sessionError } = await appConfig.supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!session) throw new Error("You are not authenticated.");
+
+        // 2. Call the secure Edge Function
+        const url = `${appConfig.SUPABASE_URL}/functions/v1/admin-feedback-secure/feedback/${feedbackId}`;
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify({ admin_notes: notesText }) // Send only the notes
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || "Failed to save notes");
+        }
+        
+        const updatedNotes = data.data?.admin_notes;
+
+        // 3. Update the local cache
+        const index = appState.currentFeedbackItems.findIndex(f => f.id == feedbackId);
+        if (index !== -1) {
+            appState.currentFeedbackItems[index].admin_notes = updatedNotes;
+            console.log("DEBUG: Local cache updated with new notes.");
+        }
+        
+        // 4. Show success
+        showModalMessage("Notes saved successfully!", "success");
+
+    } catch (error) {
+        console.error("Error saving notes:", error);
+        showModalMessage(error.message, "error");
+    } finally {
+        // 5. Reset button
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalBtnText;
     }
 }
 
