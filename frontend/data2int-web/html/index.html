@@ -1448,7 +1448,7 @@ select.input-field option {
 
 .feedback-modal-container {
     width: 90vw;
-    max-width: 700px;
+    max-width: 1000px;
     max-height: 90vh;
     background: linear-gradient(-45deg, var(--grad-1), var(--grad-2));
     background-size: 400% 400%;
@@ -1467,7 +1467,7 @@ select.input-field option {
 }
 
 .modal-header {
-    padding: 2rem;
+    padding: 1rem;
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -1482,7 +1482,7 @@ select.input-field option {
 }
 
 .modal-title {
-    font-size: 2rem;
+    font-size: 1.5rem;
     font-weight: bold;
     color: white;
     margin: 0 0 0.5rem 0;
@@ -1519,8 +1519,8 @@ select.input-field option {
 }
 
 .modal-body {
-    padding: 2rem;
-    max-height: 60vh;
+    padding: 1.5rem 1.5rem 3.5rem;
+    max-height: 80vh;
     overflow-y: auto;
     /* Custom scrollbar */
     scrollbar-width: thin;
@@ -1548,11 +1548,11 @@ select.input-field option {
     display: flex;
     flex-wrap: wrap;
     gap: 0.75rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
 }
 
 .modal-content-section {
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
 }
 
 .modal-section-title {
@@ -1569,7 +1569,7 @@ select.input-field option {
     -webkit-backdrop-filter: blur(15px);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 1rem;
-    padding: 1.5rem;
+    padding: 1rem;
     color: rgba(255, 255, 255, 0.95);
     line-height: 1.6;
     font-size: 1.1rem;
@@ -1579,7 +1579,7 @@ select.input-field option {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 1rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
 }
 
 .modal-info-card {
@@ -1587,8 +1587,8 @@ select.input-field option {
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 0.75rem;
-    padding: 1.25rem;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
     text-align: center;
     transition: all 0.3s ease;
 }
@@ -1603,13 +1603,13 @@ select.input-field option {
     font-size: 0.875rem;
     font-weight: 600;
     color: rgba(255, 255, 255, 0.7);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 .modal-info-value {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: bold;
     color: white;
     margin-bottom: 0.25rem;
@@ -1618,12 +1618,16 @@ select.input-field option {
 .modal-info-sub {
     font-size: 0.875rem;
     color: rgba(255, 255, 255, 0.6);
+    overflow-wrap: break-word;
 }
 
 .modal-actions-section,
-.modal-status-section,
+.modal-status-section {
+    margin-bottom: 1.25rem;
+}
+
 .modal-notes-section {
-    margin-bottom: 2rem;
+    margin-bottom: 0;
 }
 
 .modal-action-buttons {
@@ -1709,7 +1713,7 @@ select.input-field option {
 
 .modal-select {
     flex: 1;
-    padding: 1rem;
+    padding: 0.75rem;
     border: 1px solid rgba(255, 255, 255, 0.25);
     border-radius: 0.75rem;
     background: rgba(255, 255, 255, 0.1);
@@ -1735,7 +1739,7 @@ select.input-field option {
 .modal-textarea {
     width: 100%;
     min-height: 100px;
-    padding: 1rem;
+    padding: 0.75rem;
     border: 1px solid rgba(255, 255, 255, 0.25);
     border-radius: 0.75rem;
     background: rgba(255, 255, 255, 0.1);
@@ -1814,7 +1818,7 @@ select.input-field option {
     }
     
     .modal-header {
-        padding: 1.5rem;
+        padding: 1rem;
         flex-direction: column;
         align-items: flex-start;
         gap: 1rem;
@@ -1828,8 +1832,8 @@ select.input-field option {
     }
     
     .modal-body {
-        padding: 1.5rem;
-        max-height: 70vh;
+        padding: 1.5rem 1.5rem 3.5rem; /* <-- Add the 3.5rem bottom padding */
+        max-height: 80vh; /* <-- Match your 80vh height */
     }
     
     .modal-title {
@@ -4252,25 +4256,6 @@ function openFeedbackModal(feedbackId) {
                     <div class="modal-info-value">${item.tool_name}</div>
                 </div>
             </div>
-            
-            <div class="modal-actions-section">
-                <h4 class="modal-section-title">Actions</h4>
-                <div id="modalMessage" class="modal-message" style="display: none;"></div>
-                <div class="modal-action-buttons">
-                    <button class="modal-btn modal-btn-primary" id="modalReplyBtn">
-                        <span class="modal-btn-icon">↩️</span>
-                        Reply to User
-                    </button>
-                    <button class="modal-btn modal-btn-success" id="modalResolveBtn">
-                        <span class="modal-btn-icon">✅</span>
-                        Mark as Resolved
-                    </button>
-                    <button class="modal-btn modal-btn-secondary" id="modalArchiveBtn">
-                        <span class="modal-btn-icon">📁</span>
-                        Archive (Soon)
-                    </button>
-                </div>
-            </div>
 
             <div class="modal-status-section">
                 <h4 class="modal-section-title">Update Status</h4>
@@ -4287,7 +4272,7 @@ function openFeedbackModal(feedbackId) {
             
             <div class="modal-notes-section">
                 <h4 class="modal-section-title">Internal Notes</h4>
-                <textarea id="modalNotes" class="modal-textarea" placeholder="Add internal notes about this feedback..."></textarea>
+                <textarea id="modalNotes" class="modal-textarea" placeholder="Add internal notes about this feedback...">${item.admin_notes || ''}</textarea>
                 <button id="modalSaveNotesBtn" class="modal-btn modal-btn-secondary">Save Notes (Soon)</button>
             </div>
         </div>
@@ -4298,10 +4283,7 @@ function openFeedbackModal(feedbackId) {
     // Attach event listeners
     setTimeout(() => {
         const closeBtn = $("modalCloseBtn");
-        const replyBtn = $("modalReplyBtn");
-        const resolveBtn = $("modalResolveBtn");
         const updateBtn = $("modalUpdateBtn");
-        const archiveBtn = $("modalArchiveBtn");
         const saveNotesBtn = $("modalSaveNotesBtn");
         
         // Close button handler
@@ -4309,20 +4291,6 @@ function openFeedbackModal(feedbackId) {
             closeBtn.onclick = () => {
                 console.log("DEBUG: Close button clicked");
                 closeFeedbackModal();
-            };
-        }
-        
-        if (replyBtn) {
-            replyBtn.onclick = () => {
-                console.log("DEBUG: 'Reply' clicked");
-                showModalMessage("Reply feature is not yet connected.", "error");
-            };
-        }
-
-        if (resolveBtn) {
-            resolveBtn.onclick = async () => {
-                console.log("DEBUG: 'Resolve' clicked");
-                await handleUpdateFeedbackStatus(item.id, 'Resolved', closeFeedbackModal);
             };
         }
 
@@ -4335,17 +4303,13 @@ function openFeedbackModal(feedbackId) {
             };
         }
 
-        if (archiveBtn) {
-            archiveBtn.onclick = () => {
-                console.log("DEBUG: 'Archive' clicked");
-                showModalMessage("Archive feature is not yet connected.", "error");
-            };
-        }
-
         if (saveNotesBtn) {
+            // Make the button functional and remove "(Soon)"
+            saveNotesBtn.textContent = "Save Notes";
             saveNotesBtn.onclick = () => {
                 console.log("DEBUG: 'Save Notes' clicked");
-                showModalMessage("Internal notes are not yet connected.", "error");
+                // Pass the feedback item's ID to your new handler
+                handleSaveFeedbackNotes(item.id); 
             };
         }
     }, 100);
@@ -4423,6 +4387,69 @@ async function handleUpdateFeedbackStatus(feedbackId, newStatus, closeCallback) 
     } finally {
         if(updateBtn) updateBtn.disabled = false;
         if(resolveBtn) resolveBtn.disabled = false;
+    }
+}
+
+/**
+ * Handles saving the internal admin notes for a feedback item.
+ */
+async function handleSaveFeedbackNotes(feedbackId) {
+    console.log(`DEBUG: handleSaveFeedbackNotes() called for ID: ${feedbackId}`);
+    
+    // Get the new notes from the textarea
+    const notesText = $("modalNotes").value.trim();
+    const saveBtn = $("modalSaveNotesBtn");
+    if (!saveBtn) return;
+
+    const originalBtnText = saveBtn.textContent;
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="loading-spinner mr-2"></span> Saving...';
+    
+    // Use the modal's built-in message function
+    showModalMessage("Saving notes...", "success"); 
+
+    try {
+        // 1. Get admin session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!session) throw new Error("You are not authenticated.");
+        
+        // Optional: Check if user is an admin
+        if (currentUser?.app_metadata?.role !== 'admin') {
+            throw new Error("You do not have permission to save notes.");
+        }
+
+        // 2. Call Supabase to update the admin_notes column
+        const { data, error } = await supabase
+            .from('feedback')
+            .update({ admin_notes: notesText }) // Update the new column
+            .eq('id', feedbackId)
+            .select() // Select the updated row
+            .single(); // We only expect one row
+
+        if (error) {
+            throw error;
+        }
+
+        if (data) {
+            // 3. Update the local cache (currentFeedbackItems)
+            const index = currentFeedbackItems.findIndex(f => f.id == feedbackId);
+            if (index !== -1) {
+                currentFeedbackItems[index].admin_notes = notesText;
+                console.log("DEBUG: Local cache updated with new notes.");
+            }
+            
+            // 4. Show success
+            showModalMessage("Notes saved successfully!", "success");
+        }
+
+    } catch (error) {
+        console.error("Error saving notes:", error);
+        showModalMessage(error.message, "error");
+    } finally {
+        // 5. Reset button
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalBtnText;
     }
 }
 
