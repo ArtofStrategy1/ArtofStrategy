@@ -74,6 +74,45 @@
             </div>
         </div>
 
+        <div id="userManagementModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] hidden">
+            <div class="glass-container w-full max-w-lg">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-3xl font-bold">Manage User</h2>
+                    <button id="closeUserModalBtn" class="text-2xl font-bold p-2 leading-none hover:text-white/70">&times;</button>
+                </div>
+        
+                <div id="userModalContent">
+                    <div class="flex items-center justify-center p-10">
+                        <div class="loading-spinner mr-3"></div>
+                        <span class="text-white/80">Fetching user data...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="bulkActionModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] hidden">
+            <div class="glass-container w-full max-w-md">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-3xl font-bold">Manage</h2>
+                    <button id="closeBulkModalBtn" class="text-2xl font-bold p-2 leading-none hover:text-white/70">&times;</button>
+                </div>
+        
+                <div class="space-y-4">
+                    <p>Select an action to apply to all <strong id="bulkUserCount">0</strong> selected users.</p>
+                    <div>
+                        <label for="bulkActionSelect" class="block text-sm font-medium text-gray-200 mb-2">Action</label>
+                        <select id="bulkActionSelect" class="input-field">
+                            <option value="">-- Select an action --</option>
+                            <option value="upgrade-to-premium">Upgrade to Premium</option>
+                            <option value="downgrade-to-basic">Downgrade to Basic</option>
+                        </select>
+                    </div>
+                    <div id="bulkModalMessage" class="hidden"></div>
+                    <button id="modalConfirmBulkBtn" class="btn btn-primary w-full">Apply Action</button>
+                </div>
+            </div>
+        </div>
+
         <div id="home" class="page active container mx-auto px-6 py-16">
             <div class="text-center">
                 <h1 class="text-5xl md:text-6xl font-extrabold text-white leading-tight mb-4">Unlock Your Strategic Potential</h1>
@@ -773,6 +812,25 @@
             <p>&copy; 2025 S.A.G.E. All rights reserved.</p>
         </div>
     </footer>
+    <div id="feedbackDetailModal" class="feedback-modal">
+        <div class="feedback-modal-container">
+            <div id="feedbackModalContent">
+                <!-- Content will be injected by JavaScript -->
+                <div class="modal-header">
+                    <div class="modal-title-section">
+                        <h3 class="modal-title">Loading...</h3>
+                    </div>
+                    <button class="modal-close-btn" id="modalCloseBtn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="flex items-center justify-center p-10">
+                        <div class="loading-spinner mr-3"></div>
+                        <span class="text-white/80">Loading details...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <script type="module" src="../js/main.mjs"></script>
 </body>
 </html>

@@ -2,6 +2,7 @@ import { appConfig } from './config.mjs';
 import { appState } from './state/app-state.mjs';
 import { dom } from './utils/dom-utils.mjs';
 import { setLoading, showMessage, proceedFromModal } from './utils/ui-utils.mjs';
+import { closeFeedbackModal } from './feedback-modal/feedback-modal.mjs';
 import { initializeWebSocket } from './services/websocket-service.mjs';
 import { updateNavBar, navigateTo } from './ui/navigation.mjs';
 import { setupHomeTabs, attachHomeCardListeners } from './ui/home.mjs';
@@ -23,6 +24,24 @@ document.addEventListener("DOMContentLoaded", () => {
             appState.currentUser = null;
         }
         updateNavBar();
+    });
+
+    // Global click handler to close modal when clicking outside
+    document.addEventListener('click', (e) => {
+        const modal = dom.$("feedbackDetailModal");
+        if (modal && e.target === modal) {
+            closeFeedbackModal();
+        }
+    });
+
+    // Global escape key handler
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const modal = dom.$("feedbackDetailModal");
+            if (modal && modal.style.display === 'flex') {
+                closeFeedbackModal();
+            }
+        }
     });
 
     // --- Admin Dashboard Stats Logic ---

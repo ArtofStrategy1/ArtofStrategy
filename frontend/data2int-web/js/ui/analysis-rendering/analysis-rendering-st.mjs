@@ -1145,6 +1145,179 @@ function renderArchetypeAnalysisPage(container, data) {
     });
 }
 
+function renderConceptsTab(concepts, containerId) {
+    const container = dom.$(containerId);
+    const positiveCount = concepts.filter((c) => c.effect === "+").length;
+    const negativeCount = concepts.filter((c) => c.effect === "-").length;
+    const neutralCount = concepts.filter((c) => c.effect === "0").length;
+    let tableHtml = `<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8"><div class="metric-card"><h4 class="font-bold">Positive Effects</h4><p class="text-3xl font-bold">${positiveCount}</p></div><div class="metric-card"><h4 class="font-bold">Negative Effects</h4><p class="text-3xl font-bold">${negativeCount}</p></div><div class="metric-card"><h4 class="font-bold">Neutral Effects</h4><p class="text-3xl font-bold">${neutralCount}</p></div></div><div id="effectPieChart" class="w-full h-[400px] mb-8 plotly-chart"></div><h3 class="text-2xl font-bold mb-4">Extracted Concepts</h3><div class="overflow-x-auto"><table class="w-full text-left"><thead class="border-b border-white/20"><tr><th class="p-2">Concept</th><th class="p-2">Description</th><th class="p-2">Effect</th><th class="p-2">Influence</th></tr></thead><tbody>`;
+    concepts.forEach((c) => {
+        tableHtml += `<tr class="border-b border-white/10"><td class="p-2 font-semibold">${c.name}</td><td class="p-2 text-sm text-white/80">${c.description}</td><td class="p-2 text-center">${c.effect}</td><td class="p-2">${c.influence}</td></tr>`;
+    });
+    tableHtml += "</tbody></table></div>";
+    container.innerHTML = tableHtml;
+    Plotly.newPlot(
+        "effectPieChart",
+        [
+            {
+                values: [positiveCount, negativeCount, neutralCount],
+                labels: ["Positive", "Negative", "Neutral"],
+                type: "pie",
+                marker: { colors: ["#2E8B57", "#CD5C5C", "#808080"] },
+                hole: 0.4
+            }
+        ],
+        {
+            title: "Distribution of Concept Effects",
+            paper_bgcolor: "rgba(0,0,0,0)",
+            plot_bgcolor: "rgba(0,0,0,0)",
+            font: { color: "white" },
+            legend: { orientation: "h", y: -0.1 }
+        },
+        { responsive: true }
+    );
+}
+
+function renderNetworkTab(concepts, containerId) {
+    const container = dom.$(containerId);
+    container.innerHTML = `<div id="conceptNetworkChart" class="w-full h-[600px] plotly-chart"></div>`;
+    const nodes = concepts.map((c) => ({ id: c.name, ...c }));
+    const edges = [];
+    for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+            edges.push({ source: nodes[i].id, target: nodes[j].id });
+        }
+    }
+    const positions = {};
+    nodes.forEach((node, i) => {
+        const angle = (i / nodes.length) * 2 * Math.PI;
+        positions[node.id] = { x: nodes.length * 15 * Math.cos(angle), y: nodes.length * 15 * Math.sin(angle) };
+    });
+    const edge_x = [];
+    const edge_y = [];
+    edges.forEach((edge) => {
+        edge_x.push(positions[edge.source].x, positions[edge.target].x, null);
+        edge_y.push(positions[edge.source].y, positions[edge.target].y, null);
+    });
+    const node_x = [];
+    const node_y = [];
+    const node_text = [];
+    const node_color = [];
+    nodes.forEach((node) => {
+        node_x.push(positions[node.id].x);
+        node_y.push(positions[node.id].y);
+        node_text.push(`${node.name}<br>Influence: ${node.influence}`);
+        if (node.effect === "+") node_color.push("green");
+        else if (node.effect === "-") node_color.push("red");
+        else node_color.push("gray");
+    });
+    const edgeTrace = {
+        x: edge_x,
+        y: edge_y,
+        mode: "lines",
+        line: { width: 0.5, color: "#888" },
+        hoverinfo: "none"
+    };
+    const nodeTrace = {
+        x: node_x,
+        y: node_y,
+        mode: "markers+text",
+        text: nodes.map((n) => n.name),
+        textposition: "bottom center",
+        hoverinfo: "text",
+        hovertext: node_text,
+        marker: { size: 20, color: node_color }
+    };
+    Plotly.newPlot(
+        "conceptNetworkChart",
+        [edgeTrace, nodeTrace],
+        {
+            title: "Concept Network Visualization",
+            showlegend: false,
+            hovermode: "closest",
+            paper_bgcolor: "rgba(0,0,0,0)",
+            plot_bgcolor: "rgba(0,0,0,0)",
+            font: { color: "white" },
+            xaxis: { showgrid: false, zeroline: false, showticklabels: false },
+            yaxis: { showgrid: false, zeroline: false, showticklabels: false }
+        },
+        { responsive: true }
+    );
+}
+
+function renderArchetypesTab(topArchetypes, containerId) {
+    const container = dom.$(containerId);
+    let contentHtml = `<h3 class="text-2xl font-bold mb-4">🎯 80/20 Analysis - Most Relevant Archetypes</h3><p class="text-white/70 mb-6">This analysis focuses on the top 20% of system archetypes that are most likely driving 80% of the system's behavior.</p><div id="archetypeBarChart" class="w-full h-[400px] mb-8 plotly-chart"></div>`;
+    topArchetypes.forEach((archetype) => {
+        contentHtml += `<div class="metric-card mb-4"><h4 class="text-xl font-bold">🏛️ ${archetype.name}</h4><p class="text-sm font-semibold text-yellow-300 mb-2">Relevance Score: ${archetype.relevance_score}/10</p><p class="text-sm text-white/80 mb-3">${archetype.description}</p><div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm"><div><h5 class="font-semibold">Leverage Points:</h5><ul class="list-disc list-inside">${archetype.leverage_points.map((lp) => `<li>${lp}</li>`).join("")}</ul></div><div><h5 class="font-semibold">Interventions:</h5><ul class="list-disc list-inside">${archetype.interventions.map((i) => `<li>${i}</li>`).join("")}</ul></div></div></div>`;
+    });
+    container.innerHTML = contentHtml;
+    const chartData = topArchetypes.map((a) => ({ Archetype: a.name, "Relevance Score": a.relevance_score || 0 }));
+    Plotly.newPlot(
+        "archetypeBarChart",
+        [
+            {
+                x: chartData.map((d) => d.Archetype),
+                y: chartData.map((d) => d["Relevance Score"]),
+                type: "bar",
+                marker: { color: chartData.map((d) => d["Relevance Score"]), colorscale: "Viridis" }
+            }
+        ],
+        {
+            title: "Archetype Relevance Scores (Top 20%)",
+            paper_bgcolor: "rgba(0,0,0,0)",
+            plot_bgcolor: "rgba(0,0,0,0)",
+            font: { color: "white" },
+            xaxis: { automargin: true },
+            yaxis: { title: "Relevance Score" }
+        },
+        { responsive: true }
+    );
+}
+
+function renderLeveragePointsTab(topLeveragePoints, containerId) {
+    const container = dom.$(containerId);
+    let contentHtml = `<h3 class="text-2xl font-bold mb-4">⚡ 80/20 Analysis - Top Leverage Points</h3><p class="text-white/70 mb-6">These are the top 20% of concepts where small changes can lead to the largest (80%) improvements in the system.</p><div id="leverageBarChart" class="w-full h-[400px] mb-8 plotly-chart"></div>`;
+    topLeveragePoints.forEach((point) => {
+        let priorityClass = "";
+        if (point.impact === "High" && point.score >= 8) priorityClass = "critical";
+        else if (point.score >= 6) priorityClass = "high";
+        contentHtml += `<div class="metric-card ${priorityClass} mb-4"><h4 class="text-xl font-bold">${point.concept}</h4><p class="text-sm font-semibold text-yellow-300 mb-2">Leverage Score: ${point.score}/10 | Expected Impact: ${point.impact}</p><p class="text-sm text-white/80 mb-3"><strong>Reasoning:</strong> ${point.reasoning}</p><div><h5 class="font-semibold text-sm">Recommended Actions:</h5><ul class="list-disc list-inside text-sm">${point.actions.map((a) => `<li>${a}</li>`).join("")}</ul></div></div>`;
+    });
+    container.innerHTML = contentHtml;
+    const chartData = topLeveragePoints.map((p) => ({
+        Concept: p.concept,
+        "Leverage Score": p.score || 0,
+        Impact: p.impact
+    }));
+    Plotly.newPlot(
+        "leverageBarChart",
+        [
+            {
+                x: chartData.map((d) => d.Concept),
+                y: chartData.map((d) => d["Leverage Score"]),
+                type: "bar",
+                marker: {
+                    color: chartData.map((d) => {
+                        if (d.Impact === "High") return "#2E8B57";
+                        if (d.Impact === "Medium") return "#FF8C00";
+                        return "#DC143C";
+                    })
+                }
+            }
+        ],
+        {
+            title: "Leverage Point Scores (Top 20%)",
+            paper_bgcolor: "rgba(0,0,0,0)",
+            plot_bgcolor: "rgba(0,0,0,0)",
+            font: { color: "white" },
+            xaxis: { automargin: true },
+            yaxis: { title: "Leverage Score" }
+        },
+        { responsive: true }
+    );
+}
+
 
 
 function renderSystemGoalsPage(container, data) {
@@ -1831,181 +2004,6 @@ function renderSystemActionsPage_ST(container, data) {
 
     dom.$("analysisActions").classList.remove("hidden"); // Show save buttons
     // setLoading('generate', false); // Handled in the calling function
-}
-
-
-
-function renderConceptsTab(concepts, containerId) {
-    const container = dom.$(containerId);
-    const positiveCount = concepts.filter((c) => c.effect === "+").length;
-    const negativeCount = concepts.filter((c) => c.effect === "-").length;
-    const neutralCount = concepts.filter((c) => c.effect === "0").length;
-    let tableHtml = `<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8"><div class="metric-card"><h4 class="font-bold">Positive Effects</h4><p class="text-3xl font-bold">${positiveCount}</p></div><div class="metric-card"><h4 class="font-bold">Negative Effects</h4><p class="text-3xl font-bold">${negativeCount}</p></div><div class="metric-card"><h4 class="font-bold">Neutral Effects</h4><p class="text-3xl font-bold">${neutralCount}</p></div></div><div id="effectPieChart" class="w-full h-[400px] mb-8 plotly-chart"></div><h3 class="text-2xl font-bold mb-4">Extracted Concepts</h3><div class="overflow-x-auto"><table class="w-full text-left"><thead class="border-b border-white/20"><tr><th class="p-2">Concept</th><th class="p-2">Description</th><th class="p-2">Effect</th><th class="p-2">Influence</th></tr></thead><tbody>`;
-    concepts.forEach((c) => {
-        tableHtml += `<tr class="border-b border-white/10"><td class="p-2 font-semibold">${c.name}</td><td class="p-2 text-sm text-white/80">${c.description}</td><td class="p-2 text-center">${c.effect}</td><td class="p-2">${c.influence}</td></tr>`;
-    });
-    tableHtml += "</tbody></table></div>";
-    container.innerHTML = tableHtml;
-    Plotly.newPlot(
-        "effectPieChart",
-        [
-            {
-                values: [positiveCount, negativeCount, neutralCount],
-                labels: ["Positive", "Negative", "Neutral"],
-                type: "pie",
-                marker: { colors: ["#2E8B57", "#CD5C5C", "#808080"] },
-                hole: 0.4
-            }
-        ],
-        {
-            title: "Distribution of Concept Effects",
-            paper_bgcolor: "rgba(0,0,0,0)",
-            plot_bgcolor: "rgba(0,0,0,0)",
-            font: { color: "white" },
-            legend: { orientation: "h", y: -0.1 }
-        },
-        { responsive: true }
-    );
-}
-
-function renderNetworkTab(concepts, containerId) {
-    const container = dom.$(containerId);
-    container.innerHTML = `<div id="conceptNetworkChart" class="w-full h-[600px] plotly-chart"></div>`;
-    const nodes = concepts.map((c) => ({ id: c.name, ...c }));
-    const edges = [];
-    for (let i = 0; i < nodes.length; i++) {
-        for (let j = i + 1; j < nodes.length; j++) {
-            edges.push({ source: nodes[i].id, target: nodes[j].id });
-        }
-    }
-    const positions = {};
-    nodes.forEach((node, i) => {
-        const angle = (i / nodes.length) * 2 * Math.PI;
-        positions[node.id] = { x: nodes.length * 15 * Math.cos(angle), y: nodes.length * 15 * Math.sin(angle) };
-    });
-    const edge_x = [];
-    const edge_y = [];
-    edges.forEach((edge) => {
-        edge_x.push(positions[edge.source].x, positions[edge.target].x, null);
-        edge_y.push(positions[edge.source].y, positions[edge.target].y, null);
-    });
-    const node_x = [];
-    const node_y = [];
-    const node_text = [];
-    const node_color = [];
-    nodes.forEach((node) => {
-        node_x.push(positions[node.id].x);
-        node_y.push(positions[node.id].y);
-        node_text.push(`${node.name}<br>Influence: ${node.influence}`);
-        if (node.effect === "+") node_color.push("green");
-        else if (node.effect === "-") node_color.push("red");
-        else node_color.push("gray");
-    });
-    const edgeTrace = {
-        x: edge_x,
-        y: edge_y,
-        mode: "lines",
-        line: { width: 0.5, color: "#888" },
-        hoverinfo: "none"
-    };
-    const nodeTrace = {
-        x: node_x,
-        y: node_y,
-        mode: "markers+text",
-        text: nodes.map((n) => n.name),
-        textposition: "bottom center",
-        hoverinfo: "text",
-        hovertext: node_text,
-        marker: { size: 20, color: node_color }
-    };
-    Plotly.newPlot(
-        "conceptNetworkChart",
-        [edgeTrace, nodeTrace],
-        {
-            title: "Concept Network Visualization",
-            showlegend: false,
-            hovermode: "closest",
-            paper_bgcolor: "rgba(0,0,0,0)",
-            plot_bgcolor: "rgba(0,0,0,0)",
-            font: { color: "white" },
-            xaxis: { showgrid: false, zeroline: false, showticklabels: false },
-            yaxis: { showgrid: false, zeroline: false, showticklabels: false }
-        },
-        { responsive: true }
-    );
-}
-
-function renderArchetypesTab(topArchetypes, containerId) {
-    const container = dom.$(containerId);
-    let contentHtml = `<h3 class="text-2xl font-bold mb-4">🎯 80/20 Analysis - Most Relevant Archetypes</h3><p class="text-white/70 mb-6">This analysis focuses on the top 20% of system archetypes that are most likely driving 80% of the system's behavior.</p><div id="archetypeBarChart" class="w-full h-[400px] mb-8 plotly-chart"></div>`;
-    topArchetypes.forEach((archetype) => {
-        contentHtml += `<div class="metric-card mb-4"><h4 class="text-xl font-bold">🏛️ ${archetype.name}</h4><p class="text-sm font-semibold text-yellow-300 mb-2">Relevance Score: ${archetype.relevance_score}/10</p><p class="text-sm text-white/80 mb-3">${archetype.description}</p><div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm"><div><h5 class="font-semibold">Leverage Points:</h5><ul class="list-disc list-inside">${archetype.leverage_points.map((lp) => `<li>${lp}</li>`).join("")}</ul></div><div><h5 class="font-semibold">Interventions:</h5><ul class="list-disc list-inside">${archetype.interventions.map((i) => `<li>${i}</li>`).join("")}</ul></div></div></div>`;
-    });
-    container.innerHTML = contentHtml;
-    const chartData = topArchetypes.map((a) => ({ Archetype: a.name, "Relevance Score": a.relevance_score || 0 }));
-    Plotly.newPlot(
-        "archetypeBarChart",
-        [
-            {
-                x: chartData.map((d) => d.Archetype),
-                y: chartData.map((d) => d["Relevance Score"]),
-                type: "bar",
-                marker: { color: chartData.map((d) => d["Relevance Score"]), colorscale: "Viridis" }
-            }
-        ],
-        {
-            title: "Archetype Relevance Scores (Top 20%)",
-            paper_bgcolor: "rgba(0,0,0,0)",
-            plot_bgcolor: "rgba(0,0,0,0)",
-            font: { color: "white" },
-            xaxis: { automargin: true },
-            yaxis: { title: "Relevance Score" }
-        },
-        { responsive: true }
-    );
-}
-
-function renderLeveragePointsTab(topLeveragePoints, containerId) {
-    const container = dom.$(containerId);
-    let contentHtml = `<h3 class="text-2xl font-bold mb-4">⚡ 80/20 Analysis - Top Leverage Points</h3><p class="text-white/70 mb-6">These are the top 20% of concepts where small changes can lead to the largest (80%) improvements in the system.</p><div id="leverageBarChart" class="w-full h-[400px] mb-8 plotly-chart"></div>`;
-    topLeveragePoints.forEach((point) => {
-        let priorityClass = "";
-        if (point.impact === "High" && point.score >= 8) priorityClass = "critical";
-        else if (point.score >= 6) priorityClass = "high";
-        contentHtml += `<div class="metric-card ${priorityClass} mb-4"><h4 class="text-xl font-bold">${point.concept}</h4><p class="text-sm font-semibold text-yellow-300 mb-2">Leverage Score: ${point.score}/10 | Expected Impact: ${point.impact}</p><p class="text-sm text-white/80 mb-3"><strong>Reasoning:</strong> ${point.reasoning}</p><div><h5 class="font-semibold text-sm">Recommended Actions:</h5><ul class="list-disc list-inside text-sm">${point.actions.map((a) => `<li>${a}</li>`).join("")}</ul></div></div>`;
-    });
-    container.innerHTML = contentHtml;
-    const chartData = topLeveragePoints.map((p) => ({
-        Concept: p.concept,
-        "Leverage Score": p.score || 0,
-        Impact: p.impact
-    }));
-    Plotly.newPlot(
-        "leverageBarChart",
-        [
-            {
-                x: chartData.map((d) => d.Concept),
-                y: chartData.map((d) => d["Leverage Score"]),
-                type: "bar",
-                marker: {
-                    color: chartData.map((d) => {
-                        if (d.Impact === "High") return "#2E8B57";
-                        if (d.Impact === "Medium") return "#FF8C00";
-                        return "#DC143C";
-                    })
-                }
-            }
-        ],
-        {
-            title: "Leverage Point Scores (Top 20%)",
-            paper_bgcolor: "rgba(0,0,0,0)",
-            plot_bgcolor: "rgba(0,0,0,0)",
-            font: { color: "white" },
-            xaxis: { automargin: true },
-            yaxis: { title: "Leverage Score" }
-        },
-        { responsive: true }
-    );
 }
 
 
