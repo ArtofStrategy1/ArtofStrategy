@@ -48,25 +48,39 @@ document.addEventListener("DOMContentLoaded", () => {
     const refreshStatsBtn = dom.$("refreshStatsBtn");
     if (refreshStatsBtn) {
         refreshStatsBtn.addEventListener("click", fetchAndDisplayStatistics);
-    }        
+    }
 
-    // --- Three.js Animation Logic ---
+    // --- Optimized Three.js Animation Logic ---
     let scene, camera, renderer, group;
     const particlesData = [];
-    let positions, colors;
     let particlesGeometry;
     let pointCloud;
     let particlePositions;
     let linesMesh;
     let animationFrameId;
 
-    const NUM_PARTICLES = 1000;
+    // Reduced particle count for better performance
+    const NUM_PARTICLES = 500; // Reduced from 1000
     const AREA_SIZE = 3000;
     const AREA_HALF = AREA_SIZE / 2;
     const MIN_DISTANCE = 200;
+    const MIN_DIST_SQ = MIN_DISTANCE * MIN_DISTANCE;
+    const MAX_CONNECTIONS_PER_PARTICLE = 5; // Limit connections per particle
 
-    let mouseX = 0,
-        mouseY = 0;
+    // Spatial partitioning grid
+    const GRID_SIZE = MIN_DISTANCE * 1.5;
+    let spatialGrid = {};
+
+    // Update connections every N frames for better performance
+    const CONNECTION_UPDATE_INTERVAL = 2;
+    let frameCounter = 0;
+
+    let mouseX = 0, mouseY = 0;
+
+    // Pre-allocate line buffers with reasonable size
+    const MAX_LINES = NUM_PARTICLES * MAX_CONNECTIONS_PER_PARTICLE;
+    let linePositions = new Float32Array(MAX_LINES * 6); // 2 vertices * 3 coords
+    let lineColors = new Float32Array(MAX_LINES * 6); // 2 vertices * 3 colors
 
     function createCircleTexture(size, color) {
         const canvas = document.createElement("canvas");
@@ -81,6 +95,55 @@ document.addEventListener("DOMContentLoaded", () => {
         context.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
         context.fill();
         return new THREE.CanvasTexture(canvas);
+    }
+
+    // Spatial grid functions for O(n) neighbor lookups
+    function getGridKey(x, y, z) {
+        const gx = Math.floor((x + AREA_HALF) / GRID_SIZE);
+        const gy = Math.floor((y + AREA_HALF) / GRID_SIZE);
+        const gz = Math.floor((z + AREA_HALF) / GRID_SIZE);
+        return `${gx},${gy},${gz}`;
+    }
+
+    function updateSpatialGrid() {
+        spatialGrid = {};
+        for (let i = 0; i < NUM_PARTICLES; i++) {
+            const x = particlePositions[i * 3];
+            const y = particlePositions[i * 3 + 1];
+            const z = particlePositions[i * 3 + 2];
+            const key = getGridKey(x, y, z);
+            
+            if (!spatialGrid[key]) {
+                spatialGrid[key] = [];
+            }
+            spatialGrid[key].push(i);
+        }
+    }
+
+    function getNearbyParticles(particleIndex) {
+        const x = particlePositions[particleIndex * 3];
+        const y = particlePositions[particleIndex * 3 + 1];
+        const z = particlePositions[particleIndex * 3 + 2];
+        
+        const gx = Math.floor((x + AREA_HALF) / GRID_SIZE);
+        const gy = Math.floor((y + AREA_HALF) / GRID_SIZE);
+        const gz = Math.floor((z + AREA_HALF) / GRID_SIZE);
+        
+        const nearby = [];
+        
+        // Check neighboring grid cells (3x3x3 cube around particle)
+        for (let dx = -1; dx <= 1; dx++) {
+            for (let dy = -1; dy <= 1; dy++) {
+                for (let dz = -1; dz <= 1; dz++) {
+                    const key = `${gx + dx},${gy + dy},${gz + dz}`;
+                    if (spatialGrid[key]) {
+                        nearby.push(...spatialGrid[key]);
+                    }
+                }
+            }
+        }
+        
+        return nearby;
     }
 
     function initThreeJS() {
@@ -106,6 +169,7 @@ document.addEventListener("DOMContentLoaded", () => {
         particlesGeometry = new THREE.BufferGeometry();
         particlePositions = new Float32Array(NUM_PARTICLES * 3);
 
+        // Initialize particles
         for (let i = 0; i < NUM_PARTICLES; i++) {
             const x = Math.random() * AREA_SIZE - AREA_HALF;
             const y = Math.random() * AREA_SIZE - AREA_HALF;
@@ -134,12 +198,10 @@ document.addEventListener("DOMContentLoaded", () => {
         pointCloud = new THREE.Points(particlesGeometry, pMaterial);
         group.add(pointCloud);
 
+        // Optimized line geometry with smaller buffers
         const lineGeometry = new THREE.BufferGeometry();
-        positions = new Float32Array(NUM_PARTICLES * NUM_PARTICLES * 3);
-        colors = new Float32Array(NUM_PARTICLES * NUM_PARTICLES * 3);
-
-        lineGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3).setUsage(THREE.DynamicDrawUsage));
-        lineGeometry.setAttribute("color", new THREE.BufferAttribute(colors, 3).setUsage(THREE.DynamicDrawUsage));
+        lineGeometry.setAttribute("position", new THREE.BufferAttribute(linePositions, 3).setUsage(THREE.DynamicDrawUsage));
+        lineGeometry.setAttribute("color", new THREE.BufferAttribute(lineColors, 3).setUsage(THREE.DynamicDrawUsage));
         lineGeometry.computeBoundingSphere();
         lineGeometry.setDrawRange(0, 0);
 
@@ -161,6 +223,9 @@ document.addEventListener("DOMContentLoaded", () => {
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.setSize(window.innerWidth, window.innerHeight);
 
+        // Build initial spatial grid
+        updateSpatialGrid();
+        
         startAnimationLoop();
 
         window.addEventListener("resize", onWindowResize);
@@ -179,63 +244,37 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function onDocumentMouseMove(event) {
         mouseX = (event.clientX / window.innerWidth) * 2 - 1;
-        mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+        mouseY = (event.clientY / window.innerHeight) * 2 - 1;
     }
 
     function animateThreeJS() {
-        let vertexpos = 0;
-        let colorpos = 0;
-        let numConnected = 0;
-
-        for (let i = 0; i < NUM_PARTICLES; i++) {
-            particlesData[i].numConnections = 0;
-        }
-
+        // Update particle positions
         for (let i = 0; i < NUM_PARTICLES; i++) {
             const particleData = particlesData[i];
             particlePositions[i * 3] += particleData.velocity.x;
             particlePositions[i * 3 + 1] += particleData.velocity.y;
             particlePositions[i * 3 + 2] += particleData.velocity.z;
 
+            // Boundary checking with velocity reversal
             if (particlePositions[i * 3 + 1] < -AREA_HALF || particlePositions[i * 3 + 1] > AREA_HALF)
                 particleData.velocity.y = -particleData.velocity.y;
             if (particlePositions[i * 3] < -AREA_HALF || particlePositions[i * 3] > AREA_HALF)
                 particleData.velocity.x = -particleData.velocity.x;
             if (particlePositions[i * 3 + 2] < -AREA_HALF || particlePositions[i * 3 + 2] > AREA_HALF)
                 particleData.velocity.z = -particleData.velocity.z;
-
-            for (let j = i + 1; j < NUM_PARTICLES; j++) {
-                const dx = particlePositions[i * 3] - particlePositions[j * 3];
-                const dy = particlePositions[i * 3 + 1] - particlePositions[j * 3 + 1];
-                const dz = particlePositions[i * 3 + 2] - particlePositions[j * 3 + 2];
-                const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-
-                if (dist < MIN_DISTANCE) {
-                    const alpha = 1.0 - dist / MIN_DISTANCE;
-                    positions[vertexpos++] = particlePositions[i * 3];
-                    positions[vertexpos++] = particlePositions[i * 3 + 1];
-                    positions[vertexpos++] = particlePositions[i * 3 + 2];
-                    positions[vertexpos++] = particlePositions[j * 3];
-                    positions[vertexpos++] = particlePositions[j * 3 + 1];
-                    positions[vertexpos++] = particlePositions[j * 3 + 2];
-
-                    const lineColor = new THREE.Color(0xadd8e6);
-                    colors[colorpos++] = lineColor.r * alpha;
-                    colors[colorpos++] = lineColor.g * alpha;
-                    colors[colorpos++] = lineColor.b * alpha;
-                    colors[colorpos++] = lineColor.r * alpha;
-                    colors[colorpos++] = lineColor.g * alpha;
-                    colors[colorpos++] = lineColor.b * alpha;
-                    numConnected++;
-                }
-            }
         }
 
-        linesMesh.geometry.setDrawRange(0, numConnected * 2);
-        linesMesh.geometry.attributes.position.needsUpdate = true;
-        linesMesh.geometry.attributes.color.needsUpdate = true;
+        // Update connections only every N frames
+        frameCounter++;
+        if (frameCounter >= CONNECTION_UPDATE_INTERVAL) {
+            frameCounter = 0;
+            updateConnections();
+        }
+
+        // Always update particle positions for smooth movement
         pointCloud.geometry.attributes.position.needsUpdate = true;
 
+        // Smooth rotation with mouse interaction
         const rotationSpeed = 0.03;
         group.rotation.y += (mouseX * 0.05 - group.rotation.y) * rotationSpeed;
         group.rotation.x += (mouseY * 0.05 - group.rotation.x) * rotationSpeed;
@@ -243,6 +282,81 @@ document.addEventListener("DOMContentLoaded", () => {
         group.rotation.x += 0.00005;
 
         renderer.render(scene, camera);
+    }
+
+    function updateConnections() {
+        // Rebuild spatial grid
+        updateSpatialGrid();
+        
+        let vertexpos = 0;
+        let colorpos = 0;
+        let numConnected = 0;
+        
+        // Reset connection counts
+        for (let i = 0; i < NUM_PARTICLES; i++) {
+            particlesData[i].numConnections = 0;
+        }
+
+        const processedPairs = new Set();
+        
+        // Use spatial partitioning for O(n) performance
+        for (let i = 0; i < NUM_PARTICLES; i++) {
+            if (particlesData[i].numConnections >= MAX_CONNECTIONS_PER_PARTICLE) continue;
+            
+            const nearbyIndices = getNearbyParticles(i);
+            
+            for (const j of nearbyIndices) {
+                if (j <= i) continue; // Skip self and already processed pairs
+                if (particlesData[j].numConnections >= MAX_CONNECTIONS_PER_PARTICLE) continue;
+                
+                // Create unique pair key
+                const pairKey = `${i}-${j}`;
+                if (processedPairs.has(pairKey)) continue;
+                
+                const dx = particlePositions[i * 3] - particlePositions[j * 3];
+                const dy = particlePositions[i * 3 + 1] - particlePositions[j * 3 + 1];
+                const dz = particlePositions[i * 3 + 2] - particlePositions[j * 3 + 2];
+                
+                // 1. Calculate squared distance (fast)
+                const distSq = dx * dx + dy * dy + dz * dz;
+
+                // 2. Check against the pre-calculated squared constant
+                if (distSq < MIN_DIST_SQ) { 
+                    // 3. Only call Math.sqrt() after we know we need it
+                    const dist = Math.sqrt(distSq);
+                    const alpha = 1.0 - dist / MIN_DISTANCE;
+                    
+                    linePositions[vertexpos++] = particlePositions[i * 3];
+                    linePositions[vertexpos++] = particlePositions[i * 3 + 1];
+                    linePositions[vertexpos++] = particlePositions[i * 3 + 2];
+                    linePositions[vertexpos++] = particlePositions[j * 3];
+                    linePositions[vertexpos++] = particlePositions[j * 3 + 1];
+                    linePositions[vertexpos++] = particlePositions[j * 3 + 2];
+
+                    const lineColor = new THREE.Color(0xadd8e6);
+                    lineColors[colorpos++] = lineColor.r * alpha;
+                    lineColors[colorpos++] = lineColor.g * alpha;
+                    lineColors[colorpos++] = lineColor.b * alpha;
+                    lineColors[colorpos++] = lineColor.r * alpha;
+                    lineColors[colorpos++] = lineColor.g * alpha;
+                    lineColors[colorpos++] = lineColor.b * alpha;
+                    
+                    numConnected++;
+                    particlesData[i].numConnections++;
+                    particlesData[j].numConnections++;
+                    processedPairs.add(pairKey);
+                    
+                    // Stop if we've hit buffer limits
+                    if (numConnected >= MAX_LINES) break;
+                }
+            }
+            
+            if (numConnected >= MAX_LINES) break;
+        }
+
+        linesMesh.geometry.setDrawRange(0, numConnected * 2);
+        linesMesh.geometry.attributes.position.needsUpdate = true;
+        linesMesh.geometry.attributes.color.needsUpdate = true;
     }
 
     function onWindowResize() {
