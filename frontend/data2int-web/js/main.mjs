@@ -8,7 +8,7 @@ import { updateNavBar, navigateTo } from './ui/navigation.mjs';
 import { setupHomeTabs, attachHomeCardListeners } from './ui/home.mjs';
 import { templateConfig } from './ui/template-creation/template-config.mjs';
 import { handleLogin, handleRegister, handleContactSubmit } from './services/auth-service.mjs';
-import { fetchAndDisplayStatistics } from './services/stats-service.mjs';
+import { fetchAndDisplayStatistics } from './admin-dashboard/admin-dashboard.mjs';
 
 document.addEventListener("DOMContentLoaded", () => {
     // Initialize WebSocket connection
