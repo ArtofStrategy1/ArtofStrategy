@@ -1,8 +1,7 @@
 import { appState } from '../state/app-state.mjs';
 import { dom } from '../utils/dom-utils.mjs';
 import { handleLogout } from '../services/auth-service.mjs';
-import { fetchAndDisplayStatistics } from '../services/stats-service.mjs';
-import { createAdminDashboardTabs } from '../admin-dashboard/admin-dashboard.mjs';
+import { createAdminDashboardTabs, fetchAndDisplayStatistics } from '../admin-dashboard/admin-dashboard.mjs';
 
 // --- Navigation Logic ---
     function navigateTo(pageId) {
