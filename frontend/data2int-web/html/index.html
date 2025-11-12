@@ -5,13 +5,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>S.A.G.E. - AI Strategy Assistant</title>
+    <link rel="stylesheet" href="../css/stylesheet.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" >
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
@@ -1885,6 +1885,7 @@ select.input-field option {
     <div class="main-content">
         <canvas id="threeJsCanvas"></canvas>
         <div id="wsStatus" class="ws-status disconnected">Disconnected</div>
+        <div id="adminModeIndicator" class="fixed top-40 right-5 p-2 px-3 bg-yellow-500 text-white text-xs font-bold rounded-full shadow-lg z-50" style="display: none;">ADMIN MODE</div>
 
         <div id="adminModeIndicator" class="fixed top-40 right-5 p-2 px-3 bg-yellow-500 text-white text-xs font-bold rounded-full shadow-lg z-50" style="display: none;">ADMIN MODE</div>
 
@@ -29040,46 +29041,6 @@ function renderSystemGoalsPage(container, data) {
             <h4 class="text-lg font-bold mb-2 text-indigo-300">Why System Goals?</h4>
             <p class="text-sm text-white/80">Traditional goal setting often focuses on isolated metrics. System goals consider the interconnected nature of the organization. They aim to influence the underlying structure (feedback loops, delays, stocks, flows) to achieve desired outcomes sustainably, rather than just treating symptoms.</p>
         </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-white/5 p-4 rounded-lg border border-white/10">
-                <h4 class="text-lg font-bold mb-2">Connecting Goals to Loops:</h4>
-                <ul class="list-disc list-inside space-y-2 text-sm">
-                    <li><strong>Identify Dynamics:</strong> First, understand the key reinforcing (growth) and balancing (limiting) loops driving current behavior related to your desired outcome.</li>
-                    <li><strong>Target Loops:</strong> Frame your goal and subsequent initiatives around manipulating these loops.
-                        <ul class="list-[circle] list-inside pl-4 text-xs">
-                           <li>To accelerate growth? -> Strengthen the reinforcing loop(s).</li>
-                           <li>To overcome constraints? -> Weaken the balancing loop(s) or increase their limits.</li>
-                           <li>To stabilize fluctuations? -> Strengthen balancing loops or add delays to reinforcing loops.</li>
-                        </ul>
-                    </li>
-                    <li><strong>Anticipate Side Effects:</strong> Consider how interventions might affect *other* parts of the system or create new loops.</li>
-                </ul>
-            </div>
-            <div class="bg-white/5 p-4 rounded-lg border border-white/10">
-                <h4 class="text-lg font-bold mb-2">From Goal to Action (System View):</h4>
-                 <ol class="list-decimal list-inside space-y-1 text-sm">
-                    <li><strong>Define System Goal:</strong> High-level desired state, considering system dynamics.</li>
-                    <li><strong>Analyze Loops:</strong> Identify key R & B loops influencing the goal.</li>
-                    <li><strong>Identify Leverage Points:</strong> Find where interventions will be most effective on the loops.</li>
-                    <li><strong>Develop Initiatives:</strong> Design actions specifically targeting those leverage points to manipulate loops.</li>
-                    <li><strong>Define Objectives:</strong> Break initiatives into smaller, measurable steps.</li>
-                    <li><strong>Select KPIs:</strong> Choose metrics that track both initiative progress *and* the behavior of the targeted loops/elements.</li>
-                    <li><strong>Monitor & Adapt:</strong> Observe system behavior and adjust interventions as needed.</li>
-                 </ol>
-            </div>
-        </div>
-
-        <details class="styled-details text-sm mt-4">
-            <summary class="font-semibold">Example: Reducing Customer Churn</summary>
-            <div class="bg-black/20 p-4 rounded-b-lg space-y-2">
-                <p><strong>Traditional Goal:</strong> Reduce churn by 15%.</p>
-                <p><strong>System Goal:</strong> Reduce churn by 15% by strengthening the 'Customer Loyalty' (R) loop and weakening the 'Support Strain' (B) loop.</p>
-                <p><strong>Initiative (Strengthen R):</strong> Improve product onboarding -> increases satisfaction -> increases loyalty.</p>
-                <p><strong>Initiative (Weaken B):</strong> Increase support staff -> increases capacity -> maintains service quality under load -> reduces frustration -> reduces churn.</p>
-                <p class="text-xs italic mt-2">Notice how initiatives explicitly link to loop manipulation.</p>
-            </div>
-        </details>
     </div>
     `;
 
