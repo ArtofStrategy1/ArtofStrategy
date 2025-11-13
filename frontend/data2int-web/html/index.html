@@ -4231,11 +4231,9 @@ async function openUserManagementModal(userId) {
                 </div>
                 <div id="userModalMessage" class="hidden"></div>
                 <div class="flex justify-between items-center mt-6">
-                    <div>
-                        <button id="modalDeleteUserBtn" class="btn btn-danger" ${user.tier === 'admin' ? 'disabled' : ''}>Delete User</button>
-                        <button id="modalDisableUserBtn" class="btn btn-secondary ml-2" ${user.tier === 'admin' ? 'disabled' : ''}>Disable User</button>
-                    </div>
-                    
+                    <div class="flex justify-end items-center mt-6 space-x-2">
+                    <button id="modalDeleteUserBtn" class="btn btn-danger" ${user.tier === 'admin' ? 'disabled' : ''}>Delete User</button>
+                    <button id="modalDisableUserBtn" class="btn btn-secondary" ${user.tier === 'admin' ? 'disabled' : ''}>Disable User</button>
                     <button id="modalUpdateUserBtn" class="btn btn-primary">Save Changes</button>
                 </div>
             </div>
