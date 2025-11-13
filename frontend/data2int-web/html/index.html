@@ -1988,7 +1988,7 @@ select.input-field option {
                 <div class="flex justify-between items-center mb-4">
                 <h2 class="text-3xl font-bold">Manage</h2>
                 <button id="closeBulkModalBtn" class="text-2xl font-bold p-2 leading-none hover:text-white/70">&times;</button>
-        </div>
+            </div>
         
         <div class="space-y-4">
             <p>Select an action to apply to all <strong id="bulkUserCount">0</strong> selected users.</p>
@@ -1998,6 +1998,8 @@ select.input-field option {
                     <option value="">-- Select an action --</option>
                     <option value="upgrade-to-premium">Upgrade to Premium</option>
                     <option value="downgrade-to-basic">Downgrade to Basic</option>
+                    <option value="disable-users">Disable Users</option>
+                    <option value="delete-users">Delete Users</option>
                 </select>
             </div>
             <div id="bulkModalMessage" class="hidden"></div>
@@ -3867,7 +3869,15 @@ function setupAdminTabsListeners() {
     });
 }
 
+// =========================================================
+// ===== ADMIN DASHBOARD - USERS TAB (COMPLETE) =====
+// =========================================================
+
+/**
+ * Builds the Users tab UI, including the new "Create New User" button.
+ */
 async function renderViewDatabaseTab() {
+    console.log("DEBUG: renderViewDatabaseTab() called");
     const usersPanel = $("usersPanel");
     if (!usersPanel) {
         console.error("Admin Dashboard: usersPanel not found.");
@@ -3898,13 +3908,19 @@ async function renderViewDatabaseTab() {
                 </div>
                 <div class="flex-shrink-0">
                     <button id="adminManageBtn" class="btn btn-primary w-full md:w-auto" disabled>
-                        Manage
+                         Manage
+                    </button>
+                </div>
+                <div class="flex-shrink-0">
+                    <button id="adminCreateUserBtn" class="btn btn-secondary w-full md:w-auto">
+                         Create New User
                     </button>
                 </div>
             </div>
 
             <div id="adminUserTableContainer" class="overflow-x-auto">
-                </div>
+                <p class="text-white/70 text-center p-10">Initializing users tab...</p>
+            </div>
         </div>
     `;
 
@@ -3915,6 +3931,7 @@ async function renderViewDatabaseTab() {
 
     let searchTimeout;
     searchInput.addEventListener('input', () => {
+        console.log("DEBUG: Search input changed");
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
             fetchAndRenderUsers(1); // Reset to page 1
@@ -3922,24 +3939,35 @@ async function renderViewDatabaseTab() {
     });
 
     tierFilter.addEventListener('change', () => {
+        console.log("DEBUG: Tier filter changed");
         fetchAndRenderUsers(1); // Reset to page 1
     });
 
     sortSelect.addEventListener('change', () => {
+        console.log("DEBUG: Sort select changed");
         fetchAndRenderUsers(1); // Reset to page 1
+    });
+
+    // --- *** NEW LISTENER FOR THE CREATE BUTTON *** ---
+    $("adminCreateUserBtn").addEventListener('click', () => {
+        console.log("DEBUG: 'Create New User' button clicked");
+        openCreateUserModal();
     });
 
     // 3. Initial data load
     await fetchAndRenderUsers();
 }
 
+/**
+ * Renders the user table and wires up the "Manage" button logic.
+ */
 function renderUserTable(container, users, pagination) {
+    console.log("DEBUG: renderUserTable() called");
     if (!Array.isArray(users) || users.length === 0) {
         container.innerHTML = `<p class="text-white/70 text-center p-10">No users found matching your criteria.</p>`;
         return;
     }
 
-    // --- HTML TABLE: "Actions" column is REMOVED ---
     let tableHtml = `
         <table class="w-full text-left styled-table">
             <thead>
@@ -3968,7 +3996,7 @@ function renderUserTable(container, users, pagination) {
                 <td class="p-3">${user.tier || 'N/A'}</td>
                 <td class="p-3 text-sm">${user.created_at ? new Date(user.created_at).toLocaleString() : 'N/A'}</td>
             </tr>
-        `; // The "Manage" button <td> is GONE
+        `;
     });
 
     tableHtml += `</tbody></table>`;
@@ -3989,18 +4017,15 @@ function renderUserTable(container, users, pagination) {
 
     container.innerHTML = tableHtml;
 
-    // --- NEW: "SMART BUTTON" LOGIC ---
-    const manageBtn = $("adminManageBtn"); // The button in the toolbar
+    // --- "SMART BUTTON" LOGIC ---
+    const manageBtn = $("adminManageBtn"); 
     const allUserCheckboxes = container.querySelectorAll('.user-checkbox');
     const selectAllCheckbox = container.querySelector('#selectAllUsers');
 
-    /**
-     * This function checks how many boxes are ticked and changes
-     * the text and click action of the main "Manage" button.
-     */
     function updateManageButtonState() {
         const checkedBoxes = container.querySelectorAll('.user-checkbox:checked');
         const checkedCount = checkedBoxes.length;
+        console.log(`DEBUG: updateManageButtonState() - ${checkedCount} boxes checked`);
 
         if (checkedCount === 0) {
             // 0 selected: Disable button
@@ -4008,19 +4033,20 @@ function renderUserTable(container, users, pagination) {
             manageBtn.textContent = "Manage";
             manageBtn.onclick = null;
         } else if (checkedCount === 1) {
-            // 1 selected: Set to "Manage 1 User" and open singular modal
+            // 1 selected: Set to "Manage" and open singular modal
             manageBtn.disabled = false;
             manageBtn.textContent = "Manage";
             manageBtn.onclick = () => {
                 const userId = checkedBoxes[0].dataset.id;
+                console.log("DEBUG: Manage button (single) clicked for userId:", userId);
                 openUserManagementModal(userId);
             };
         } else {
-            // 2+ selected: Set to "Bulk Actions (x)" and open bulk modal
+            // 2+ selected: Set to "Manage (x)" and open bulk modal
             manageBtn.disabled = false;
-            manageBtn.textContent = `Manage`;
+            manageBtn.textContent = `Manage (${checkedCount})`; // Show count
             manageBtn.onclick = () => {
-                // This is the logic we moved from renderViewDatabaseTab
+                console.log("DEBUG: Manage button (bulk) clicked");
                 const modal = $("bulkActionModal");
                 const countSpan = $("bulkUserCount");
                 const confirmBtn = $("modalConfirmBulkBtn");
@@ -4031,7 +4057,7 @@ function renderUserTable(container, users, pagination) {
                 const userIds = Array.from(checkedBoxes).map(cb => cb.dataset.id);
 
                 countSpan.textContent = userIds.length;
-                actionSelect.value = "";
+                actionSelect.value = ""; // Reset dropdown
                 messageEl.classList.add("hidden");
                 modal.classList.remove("hidden");
 
@@ -4043,23 +4069,18 @@ function renderUserTable(container, users, pagination) {
                         showMessage("bulkModalMessage", "Please select an action.", "error");
                         return;
                     }
-                    
-                    await handleBulkUserUpdate(action, userIds);
-                    
-                    if (!messageEl.classList.contains("error-message")) {
-                        await fetchAndRenderUsers(1); 
-                        modal.classList.add("hidden"); 
-                    }
+                    console.log("DEBUG: Bulk 'Apply Action' clicked for action:", action);
+                    await handleBulkUserUpdate(action, userIds); 
                 };
             };
         }
         
-        // Update "Select All" state
         selectAllCheckbox.checked = checkedCount > 0 && checkedCount === allUserCheckboxes.length;
     }
 
-    // --- ADD LISTENERS FOR ALL CHECKBOXES ---
+    // Add listeners for all checkboxes
     selectAllCheckbox.addEventListener('change', (e) => {
+        console.log("DEBUG: 'Select All' checkbox changed");
         const isChecked = e.target.checked;
         allUserCheckboxes.forEach(cb => cb.checked = isChecked);
         updateManageButtonState();
@@ -4073,12 +4094,10 @@ function renderUserTable(container, users, pagination) {
     container.querySelectorAll('.pagination-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const newPage = e.target.dataset.page;
+            console.log("DEBUG: Pagination button clicked for page:", newPage);
             fetchAndRenderUsers(parseInt(newPage));
         });
     });
-
-    // --- This listener block is no longer needed, as the buttons are gone ---
-    // container.querySelectorAll('.admin-manage-user-btn')...
     
     // Set the initial state of the button (disabled)
     updateManageButtonState();
@@ -4086,12 +4105,11 @@ function renderUserTable(container, users, pagination) {
 
 /**
  * Fetches user data from the API and calls the renderer.
- * This is now a standalone function.
  */
 async function fetchAndRenderUsers(page = 1, limit = 20) {
+    console.log("DEBUG: fetchAndRenderUsers() called for page:", page);
     const tableContainer = $("adminUserTableContainer");
     
-    // Show loading state
     tableContainer.innerHTML = `
         <div class="flex items-center justify-center p-10">
             <div class="loading-spinner mr-3"></div>
@@ -4110,7 +4128,6 @@ async function fetchAndRenderUsers(page = 1, limit = 20) {
         const sortByValue = $("adminSortBy").value;
         const sortOrderValue = 'desc';
 
-        // Build the URL with query parameters
         const params = new URLSearchParams({
             page: page,
             limit: limit,
@@ -4121,6 +4138,7 @@ async function fetchAndRenderUsers(page = 1, limit = 20) {
         if (tierValue) params.append('tier', tierValue);
 
         const url = `${SUPABASE_URL}/functions/v1/admin-users-secure/users?${params.toString()}`;
+        console.log("DEBUG: Fetching URL:", url);
         
         const response = await fetch(url, {
             method: 'GET',
@@ -4134,8 +4152,7 @@ async function fetchAndRenderUsers(page = 1, limit = 20) {
         if (!response.ok) {
             throw new Error(data.error || `Failed to fetch users: ${response.statusText}`);
         }
-
-        // Render the table with the new data
+        console.log("DEBUG: fetchAndRenderUsers() success, rendering table...");
         renderUserTable(tableContainer, data.data, data.pagination);
 
     } catch (error) {
@@ -4149,9 +4166,11 @@ async function fetchAndRenderUsers(page = 1, limit = 20) {
 }
 
 /**
- * NEW: Fetches a single user's data and opens the edit modal.
+ * UPDATED: Fetches a single user's data and opens the edit modal.
+ * Now includes the "Delete User" button.
  */
 async function openUserManagementModal(userId) {
+    console.log("DEBUG: openUserManagementModal() called for userId:", userId);
     const modal = $("userManagementModal");
     const modalContent = $("userModalContent");
     const closeModalBtn = $("closeUserModalBtn");
@@ -4160,7 +4179,6 @@ async function openUserManagementModal(userId) {
     modal.classList.remove("hidden");
     modalContent.innerHTML = `<div class="flex items-center justify-center p-10"><div class="loading-spinner mr-3"></div><span class="text-white/80">Fetching user data...</span></div>`;
     
-    // Assign close button listener
     const closeModal = () => modal.classList.add("hidden");
     closeModalBtn.onclick = closeModal;
 
@@ -4169,8 +4187,9 @@ async function openUserManagementModal(userId) {
         if (sessionError) throw sessionError;
         if (!session) throw new Error("Not logged in");
 
-        // Fetch specific user data (GET /users/:id) [cite: 254-279]
         const url = `${SUPABASE_URL}/functions/v1/admin-users-secure/users/${userId}`;
+        console.log("DEBUG: Fetching single user data from:", url);
+        
         const response = await fetch(url, {
             method: 'GET',
             headers: {
@@ -4182,9 +4201,10 @@ async function openUserManagementModal(userId) {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Failed to fetch user");
         
-        const user = data.data; // The user object
+        const user = data.data; 
+        console.log("DEBUG: Successfully fetched user data, building modal HTML...");
 
-        // Populate modal with form
+        // *** THIS IS THE UPDATED HTML FOR THE MODAL ***
         modalContent.innerHTML = `
             <div class="space-y-4">
                 <div>
@@ -4211,27 +4231,39 @@ async function openUserManagementModal(userId) {
                 </div>
                 <div id="userModalMessage" class="hidden"></div>
                 <div class="flex justify-between items-center mt-6">
-                    <button id="modalDisableUserBtn" class="btn btn-danger" ${user.tier === 'admin' ? 'disabled' : ''}>Disable User</button>
+                    <div>
+                        <button id="modalDeleteUserBtn" class="btn btn-danger" ${user.tier === 'admin' ? 'disabled' : ''}>Delete User</button>
+                        <button id="modalDisableUserBtn" class="btn btn-secondary ml-2" ${user.tier === 'admin' ? 'disabled' : ''}>Disable User</button>
+                    </div>
+                    
                     <button id="modalUpdateUserBtn" class="btn btn-primary">Save Changes</button>
                 </div>
             </div>
         `;
 
-        // Add listeners for the new buttons *inside* the modal
+        // *** UPDATED LISTENERS ***
+        console.log("DEBUG: Attaching modal button listeners...");
         $("modalUpdateUserBtn").onclick = () => handleUserUpdate(user.id);
+        
         if (user.tier !== 'admin') {
             $("modalDisableUserBtn").onclick = () => handleUserDisable(user.id, user.email, closeModal);
+            // Add the new delete listener
+            $("modalDeleteUserBtn").onclick = () => handleUserDelete(user.id, user.auth_user_id, user.email, closeModal);
+        } else {
+            console.log("DEBUG: User is admin, disabling delete/disable buttons.");
         }
 
     } catch (error) {
+        console.error("Error in openUserManagementModal:", error);
         modalContent.innerHTML = `<div class="error-message">${error.message}</div>`;
     }
 }
 
 /**
- * NEW: Handles the PUT /users/:id request to update a user.
+ * Handles the PUT /users/:id request to update a user.
  */
 async function handleUserUpdate(userId) {
+    console.log("DEBUG: handleUserUpdate() called for userId:", userId);
     const messageEl = $("userModalMessage");
     const updateBtn = $("modalUpdateUserBtn");
     const originalBtnText = updateBtn.innerHTML;
@@ -4247,11 +4279,12 @@ async function handleUserUpdate(userId) {
         const updatedData = {
             first_name: $("modalUserFirstName").value,
             last_name: $("modalUserLastName").value,
-            email: $("modalUserEmail").value, // Added email
+            email: $("modalUserEmail").value,
             tier: $("modalUserTier").value
         };
+        console.log("DEBUG: Sending update data:", updatedData);
 
-        // Call PUT /users/:id [cite: 282-351]
+        // Call PUT /users/:id
         const url = `${SUPABASE_URL}/functions/v1/admin-users-secure/users/${userId}`;
         const response = await fetch(url, {
             method: 'PUT',
@@ -4265,10 +4298,12 @@ async function handleUserUpdate(userId) {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Failed to update user");
 
+        console.log("DEBUG: User update successful");
         showMessage("userModalMessage", "User updated successfully!", "success");
         await fetchAndRenderUsers(); // Refresh the main user table
 
     } catch (error) {
+        console.error("Error in handleUserUpdate:", error);
         showMessage("userModalMessage", error.message, "error");
     } finally {
         updateBtn.disabled = false;
@@ -4277,10 +4312,12 @@ async function handleUserUpdate(userId) {
 }
 
 /**
- * NEW: Handles the PUT /users/:id/disable request.
+ * Handles the PUT /users/:id/disable request.
  */
 async function handleUserDisable(userId, userEmail, closeModalCallback) {
+    console.log("DEBUG: handleUserDisable() called for userId:", userId);
     if (!confirm(`Are you sure you want to disable this user?\n\nEmail: ${userEmail}\nID: ${userId}\n\nThis action is reversible and does NOT delete data.`)) {
+        console.log("DEBUG: Disable cancelled by user.");
         return;
     }
 
@@ -4295,8 +4332,10 @@ async function handleUserDisable(userId, userEmail, closeModalCallback) {
         if (sessionError) throw sessionError;
         if (!session) throw new Error("Not logged in");
         
-        // Call PUT /users/:id/disable [cite: 354-419]
+        // Call PUT /users/:id/disable
         const url = `${SUPABASE_URL}/functions/v1/admin-users-secure/users/${userId}/disable`;
+        console.log("DEBUG: Calling disable endpoint:", url);
+        
         const response = await fetch(url, {
             method: 'PUT',
             headers: { 
@@ -4308,17 +4347,253 @@ async function handleUserDisable(userId, userEmail, closeModalCallback) {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Failed to disable user");
 
+        console.log("DEBUG: User disable successful");
         showMessage("userModalMessage", `User ${data.disabled_user?.email || ''} disabled successfully.`, "success");
         await fetchAndRenderUsers(); // Refresh the main user table
         setTimeout(closeModalCallback, 1500); // Close modal on success
 
     } catch (error) {
+        console.error("Error in handleUserDisable:", error);
         showMessage("userModalMessage", error.message, "error");
     } finally {
         disableBtn.disabled = false;
         disableBtn.innerHTML = originalBtnText;
     }
 }
+
+/**
+ * NEW: Handles the DELETE /users/:id request to permanently delete a user.
+ */
+async function handleUserDelete(userId, authUserId, userEmail, closeModalCallback) {
+    console.log("DEBUG: handleUserDelete() called for userId:", userId);
+    const warningMessage = `ARE YOU SURE you want to PERMANENTLY DELETE this user?\n\nEmail: ${userEmail}\nID: ${userId}\n\nThis action is IRREVERSIBLE and will delete their auth record and all data.`;
+    
+    if (!confirm(warningMessage)) {
+        console.log("DEBUG: Delete cancelled by user.");
+        return;
+    }
+
+    const messageEl = $("userModalMessage");
+    const deleteBtn = $("modalDeleteUserBtn");
+    const originalBtnText = deleteBtn.innerHTML;
+    deleteBtn.disabled = true;
+    deleteBtn.innerHTML = '<span class="loading-spinner mr-2"></span> Deleting...';
+
+    try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!session) throw new Error("Not logged in");
+
+        // Call DELETE /users/:id
+        const url = `${SUPABASE_URL}/functions/v1/admin-users-secure/users/${userId}`;
+        console.log("DEBUG: Calling DELETE endpoint:", url);
+        
+        const response = await fetch(url, {
+            method: 'DELETE',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}` 
+            }
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Failed to delete user");
+
+        console.log("DEBUG: User delete successful");
+        showMessage("userModalMessage", "User permanently deleted.", "success");
+        await fetchAndRenderUsers(1); // Refresh the main user table
+        setTimeout(closeModalCallback, 1500); // Close modal on success
+
+    } catch (error) {
+        console.error("Error in handleUserDelete:", error);
+        showMessage("userModalMessage", error.message, "error");
+    } finally {
+        deleteBtn.disabled = false;
+        deleteBtn.innerHTML = originalBtnText;
+    }
+}
+
+/**
+ * NEW: Opens the user modal in "Create" mode.
+ */
+function openCreateUserModal() {
+    console.log("DEBUG: openCreateUserModal() called");
+    const modal = $("userManagementModal");
+    const modalContent = $("userModalContent");
+    const closeModalBtn = $("closeUserModalBtn");
+    if (!modal || !modalContent || !closeModalBtn) return;
+
+    modal.classList.remove("hidden");
+    
+    // Populate modal with a blank form for creation
+    modalContent.innerHTML = `
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-200 mb-2">Email</label>
+                <input type="email" id="modalUserEmail" class="input-field" placeholder="new.user@example.com">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-200 mb-2">Password</label>
+                <input type="password" id="modalUserPassword" class="input-field" placeholder="Set a temporary password">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="modalUserFirstName" class="block text-sm font-medium text-gray-200 mb-2">First Name</label>
+                    <input type="text" id="modalUserFirstName" class="input-field" value="">
+                </div>
+                <div>
+                    <label for="modalUserLastName" class="block text-sm font-medium text-gray-200 mb-2">Last Name</label>
+                    <input type="text" id="modalUserLastName" class="input-field" value="">
+                </div>
+            </div>
+            <div>
+                <label for="modalUserTier" class="block text-sm font-medium text-gray-200 mb-2">User Tier</label>
+                <select id="modalUserTier" class="input-field">
+                    <option value="basic" selected>Basic</option>
+                    <option value="premium">Premium</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+            <div id="userModalMessage" class="hidden"></div>
+            <div class="flex justify-end items-center mt-6">
+                <button id="modalCreateUserBtn" class="btn btn-primary">Create User</button>
+            </div>
+        </div>
+    `;
+
+    // Assign listeners for this new modal state
+    console.log("DEBUG: Attaching 'Create User' modal listeners...");
+    closeModalBtn.onclick = () => modal.classList.add("hidden");
+    $("modalCreateUserBtn").onclick = () => handleUserCreate();
+}
+
+/**
+ * NEW: Handles the POST request to create a new user.
+ */
+async function handleUserCreate() {
+    console.log("DEBUG: handleUserCreate() called");
+    const messageEl = $("userModalMessage");
+    const createBtn = $("modalCreateUserBtn");
+    const originalBtnText = createBtn.innerHTML;
+    createBtn.disabled = true;
+    createBtn.innerHTML = '<span class="loading-spinner mr-2"></span> Creating...';
+
+    try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!session) throw new Error("Not logged in");
+
+        // Get data from modal fields
+        const userData = {
+            email: $("modalUserEmail").value,
+            password: $("modalUserPassword").value,
+            first_name: $("modalUserFirstName").value,
+            last_name: $("modalUserLastName").value,
+            tier: $("modalUserTier").value
+        };
+        console.log("DEBUG: Creating user with data:", userData);
+
+        if (!userData.email || !userData.password) {
+            throw new Error("Email and Password are required.");
+        }
+
+        // Calls the new POST /users endpoint
+        const url = `${SUPABASE_URL}/functions/v1/admin-users-secure/users`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify(userData)
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Failed to create user");
+
+        console.log("DEBUG: User creation successful");
+        showMessage("userModalMessage", "User created successfully!", "success");
+        await fetchAndRenderUsers(1); // Refresh the main user table
+        
+        setTimeout(() => {
+            $("userManagementModal").classList.add("hidden");
+        }, 1500);
+
+    } catch (error) {
+        console.error("Error in handleUserCreate:", error);
+        showMessage("userModalMessage", error.message, "error");
+    } finally {
+        createBtn.disabled = false;
+        createBtn.innerHTML = originalBtnText;
+    }
+}
+
+/**
+ * NEW: Handles bulk actions from the bulk action modal.
+ */
+async function handleBulkUserUpdate(action, userIds) {
+    console.log("DEBUG: handleBulkUserUpdate() called for action:", action);
+    const messageEl = $("bulkModalMessage");
+    const confirmBtn = $("modalConfirmBulkBtn");
+    
+    // Add a confirmation for the delete action
+    if (action === 'delete-users') {
+        if (!confirm(`Are you sure you want to PERMANENTLY DELETE ${userIds.length} users? This action cannot be undone.`)) {
+            console.log("DEBUG: Bulk delete cancelled by user.");
+            return;
+        }
+    }
+    
+    // Set loading state
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<span class="loading-spinner mr-2"></span> Processing...';
+    showMessage("bulkModalMessage", "Processing... Please wait.", "success");
+
+    try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!session) throw new Error("Not logged in");
+
+        // Calls the new 'bulk-update' endpoint
+        const url = `${SUPABASE_URL}/functions/v1/admin-users-secure/users/bulk-update`;
+        console.log("DEBUG: Calling bulk update endpoint:", url);
+        
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify({
+                action: action,
+                userIds: userIds
+            })
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Failed to perform bulk action");
+
+        console.log("DEBUG: Bulk update successful");
+        showMessage("bulkModalMessage", `Successfully processed ${data.count || 0} users. ${data.skipped_admins?.length || 0} admins were skipped.`, "success");
+        await fetchAndRenderUsers(1); // Refresh the main user table
+
+        // Automatically close the modal on success
+        setTimeout(() => {
+            $("bulkActionModal").classList.add("hidden");
+        }, 1500);
+
+    } catch (error) {
+        console.error("Error in handleBulkUserUpdate:", error);
+        showMessage("bulkModalMessage", error.message, "error");
+    } finally {
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = 'Apply Action';
+    }
+}
+
+// =========================================================
+// ===== END OF ADMIN DASHBOARD - USERS TAB =====
+// =========================================================
 
 // --- BEAUTIFUL FEEDBACK MODAL IMPLEMENTATION ---
 
