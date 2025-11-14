@@ -4395,7 +4395,14 @@ async function handleUserDelete(userId, authUserId, userEmail, closeModalCallbac
         });
 
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "Failed to delete user");
+
+        // --- THIS IS THE FIX ---
+        // We now check for 'data.details' to get the *real* error message
+        // from the server's catch block.
+        if (!response.ok) {
+            throw new Error(data.details || data.error || "Failed to delete user");
+        }
+        // --- END OF FIX ---
 
         console.log("DEBUG: User delete successful");
         showMessage("userModalMessage", "User permanently deleted.", "success");
@@ -4404,6 +4411,7 @@ async function handleUserDelete(userId, authUserId, userEmail, closeModalCallbac
 
     } catch (error) {
         console.error("Error in handleUserDelete:", error);
+        // This will now show the *specific* server error
         showMessage("userModalMessage", error.message, "error");
     } finally {
         deleteBtn.disabled = false;
