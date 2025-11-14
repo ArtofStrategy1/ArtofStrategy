@@ -3522,11 +3522,31 @@ Profit_USD ~ Sales_Performance + Customer_Metrics`;
     // Initialize WebSocket connection
     initializeWebSocket();
 
-    // --- Session Management ---
+    // --- Session Management (With Email Confirmation Logic) ---
     supabase.auth.onAuthStateChange((event, session) => {
         if (event === "SIGNED_IN") {
             userLoggedIn = true;
             currentUser = session.user;
+
+            // --- START OF NEW CODE ---
+            // Check if this SIGNED_IN event was from an email confirmation hash
+            const hash = window.location.hash;
+            if (hash.includes("type=signup") && hash.includes("access_token")) {
+                // This was a new signup confirmation.
+                // Clear the messy token from the URL bar
+                window.history.replaceState(null, null, ' ');
+                // Navigate to the home page (which will happen anyway)
+                navigateTo("home");
+            } else if (hash.includes("type=recovery") && hash.includes("access_token")) {
+                // This was a password recovery.
+                // Clear the hash from the URL bar
+                window.history.replaceState(null, null, ' ');
+                // TODO: You could navigate to a "change password" page here
+                // For now, we'll just send them to the home page, logged in.
+                navigateTo("home");
+            }
+            // --- END OF NEW CODE ---
+
         } else if (event === "SIGNED_OUT") {
             userLoggedIn = false;
             currentUser = null;
@@ -30709,6 +30729,45 @@ function renderMiscPage_MSC(container, data) {
         navigateTo("login");
     }
 
+    console.log('=== PAGE LOAD DEBUG ===');
+    console.log('Current URL:', window.location.href);
+    console.log('Pathname:', window.location.pathname);
+    console.log('Search:', window.location.search);
+
+    // --- NEW FUNCTION TO HANDLE EMAIL CONFIRMATION ---
+    // Frontend: Send token to YOUR server
+async function handleEmailConfirmation() {
+    if (window.location.pathname === '/auth/confirm' || window.location.search.includes('token=')) {
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('token');
+        const type = params.get('type');
+        
+        navigateTo("login");
+        showMessage("loginMessage", "Verifying your email...", "success");
+        
+        try {
+            // Send to YOUR server, not Supabase directly
+            const response = await fetch('/api/verify-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token, type })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showMessage("loginMessage", "Email verified successfully! Welcome to Data2Int.", "success");
+                setTimeout(() => navigateTo("home"), 2000);
+            } else {
+                throw new Error(result.error);
+            }
+            
+        } catch (error) {
+            showMessage("loginMessage", `Verification failed: ${error.message}`, "error");
+        }
+    }
+}
+    
     // --- UI Helpers ---
     function setLoading(type, isLoading) {
         const btn = $(type + "Btn");
@@ -31088,21 +31147,36 @@ function renderMiscPage_MSC(container, data) {
     $("loginBtn").addEventListener("click", handleLogin);
     $("registerBtn").addEventListener("click", handleRegister);
 
-    if (window.location.hash.includes("access_token")) {
-        navigateTo("home");
-    } else {
-        navigateTo("home");
-    }
-    // *** FIX: Attach the Contact Submit Handler ***
-    const contactSubmitBtn = $("contactSubmitBtn");
-    if (contactSubmitBtn) {
-        contactSubmitBtn.addEventListener("click", handleContactSubmit);
-    }
+    // --- NEW Initial Page Load Logic ---
+    (async () => {
+        // Run the email confirmation check first
+        const confirmed = await handleEmailConfirmation();
 
-    setupHomeTabs();
-    attachHomeCardListeners();
+        // If a confirmation was NOT handled, proceed with normal page load
+        if (!confirmed) {
+            if (window.location.hash.includes("access_token")) {
+                // This handles other Supabase logins (like magic link)
+                navigateTo("home");
+            } else {
+                // This is the default load for a new visitor
+                navigateTo("home");
+            }
+        }
+        // If 'confirmed' is true, navigation is already handled by
+        // the handleEmailConfirmation function (it navigates to 'login' then 'home').
 
-    initThreeJS();
+        // *** FIX: Attach the Contact Submit Handler ***
+        const contactSubmitBtn = $("contactSubmitBtn");
+        if (contactSubmitBtn) {
+            contactSubmitBtn.addEventListener("click", handleContactSubmit);
+        }
+
+        // These should run regardless
+        setupHomeTabs();
+        attachHomeCardListeners();
+        initThreeJS();
+    })();
+    // --- END of New Initial Page Load Logic ---
 
     // --- Dashboard Widget ---
     (function initDashboardWidget() {
