@@ -3539,7 +3539,7 @@ Profit_USD ~ Sales_Performance + Customer_Metrics`;
                 navigateTo("home");
             } else if (hash.includes("type=recovery") && hash.includes("access_token")) {
                 // This was a password recovery.
-                // Clear the hash from the URL bar
+                 // Clear the hash from the URL bar
                 window.history.replaceState(null, null, ' ');
                 // TODO: You could navigate to a "change password" page here
                 // For now, we'll just send them to the home page, logged in.
@@ -30729,45 +30729,13 @@ function renderMiscPage_MSC(container, data) {
         navigateTo("login");
     }
 
+
+
     console.log('=== PAGE LOAD DEBUG ===');
     console.log('Current URL:', window.location.href);
     console.log('Pathname:', window.location.pathname);
     console.log('Search:', window.location.search);
-
-    // --- NEW FUNCTION TO HANDLE EMAIL CONFIRMATION ---
-    // Frontend: Send token to YOUR server
-async function handleEmailConfirmation() {
-    if (window.location.pathname === '/auth/confirm' || window.location.search.includes('token=')) {
-        const params = new URLSearchParams(window.location.search);
-        const token = params.get('token');
-        const type = params.get('type');
-        
-        navigateTo("login");
-        showMessage("loginMessage", "Verifying your email...", "success");
-        
-        try {
-            // Send to YOUR server, not Supabase directly
-            const response = await fetch('/api/verify-email', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token, type })
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                showMessage("loginMessage", "Email verified successfully! Welcome to Data2Int.", "success");
-                setTimeout(() => navigateTo("home"), 2000);
-            } else {
-                throw new Error(result.error);
-            }
-            
-        } catch (error) {
-            showMessage("loginMessage", `Verification failed: ${error.message}`, "error");
-        }
-    }
-}
-    
+   
     // --- UI Helpers ---
     function setLoading(type, isLoading) {
         const btn = $(type + "Btn");
@@ -31149,22 +31117,16 @@ async function handleEmailConfirmation() {
 
     // --- NEW Initial Page Load Logic ---
     (async () => {
-        // Run the email confirmation check first
-        const confirmed = await handleEmailConfirmation();
-
-        // If a confirmation was NOT handled, proceed with normal page load
-        if (!confirmed) {
-            if (window.location.hash.includes("access_token")) {
-                // This handles other Supabase logins (like magic link)
-                navigateTo("home");
-            } else {
-                // This is the default load for a new visitor
-                navigateTo("home");
-            }
+        // This code now runs by default:
+        if (window.location.hash.includes("access_token")) {
+            // This handles Supabase logins (magic link, email confirm, etc.)
+            // The onAuthStateChange listener will catch this and sign the user in.
+            navigateTo("home");
+        } else {
+            // This is the default load for a new visitor
+            navigateTo("home");
         }
-        // If 'confirmed' is true, navigation is already handled by
-        // the handleEmailConfirmation function (it navigates to 'login' then 'home').
-
+    
         // *** FIX: Attach the Contact Submit Handler ***
         const contactSubmitBtn = $("contactSubmitBtn");
         if (contactSubmitBtn) {
@@ -31177,7 +31139,7 @@ async function handleEmailConfirmation() {
         initThreeJS();
     })();
     // --- END of New Initial Page Load Logic ---
-
+    
     // --- Dashboard Widget ---
     (function initDashboardWidget() {
         const PRESENCE_PREFIX = "sage_presence_";
