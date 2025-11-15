@@ -87,7 +87,9 @@
 
         #login.active,
         #signup.active,
-        #emailVerification.active {
+        #emailVerification.active,
+        #emailVerifiedSuccess.active,  /* <-- ADD THIS LINE */
+        #emailVerifiedAlready.active { /* <-- ADD THIS LINE */
             display: flex;
             /* Centered pages */
         }
@@ -2705,6 +2707,33 @@ select.input-field option {
     </div>
 
     </div>
+
+    <div id="emailVerifiedSuccess" class="page flex-col items-center justify-center min-h-[80vh]">
+            <div class="w-full max-w-md">
+                <div class="glass-container text-center">
+                    <h2 class="text-3xl font-bold mb-6 text-white">✅ Email Verified!</h2>
+                    <p class="text-white/80 mb-6">
+                        Thank you! Your email has been successfully verified. You can now log in to your account.
+                    </p>
+                    <div class="text-center">
+                        <button class="btn btn-primary nav-link" data-page="login">Proceed to Login</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="emailVerifiedAlready" class="page flex-col items-center justify-center min-h-[80vh]">
+            <div class="w-full max-w-md">
+                <div class="glass-container text-center">
+                    <h2 class="text-3xl font-bold mb-6 text-white">👍 Already Verified</h2>
+                    <p class="text-white/80 mb-6">
+                        It looks like your email has already been verified. You're all set!
+                    </p>
+                    <div class="text-center">
+                        <button class="btn btn-primary nav-link" data-page="login">Return to Login</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
     <footer class="mt-auto py-8">
         <div class="container mx-auto text-center text-white/70">
@@ -31115,19 +31144,36 @@ function renderMiscPage_MSC(container, data) {
     $("loginBtn").addEventListener("click", handleLogin);
     $("registerBtn").addEventListener("click", handleRegister);
 
-    // --- NEW Initial Page Load Logic ---
+    // --- NEW Initial Page Load Logic (Updated) ---
     (async () => {
-        // This code now runs by default:
-        if (window.location.hash.includes("access_token")) {
-            // This handles Supabase logins (magic link, email confirm, etc.)
+        // Get URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const isSuccess = urlParams.get('success') === 'true';
+        const isAlready = urlParams.get('already') === 'true';
+
+        // Clear the parameters from the URL bar
+        if (isSuccess || isAlready || window.location.hash.includes("access_token")) {
+             window.history.replaceState(null, null, window.location.pathname);
+        }
+
+        // --- START OF MODIFIED LOGIC ---
+        if (isSuccess) {
+            // 1. Check for ?success=true
+            navigateTo("emailVerifiedSuccess");
+        } else if (isAlready) {
+            // 2. Check for ?already=true
+            navigateTo("emailVerifiedAlready");
+        } else if (window.location.hash.includes("access_token")) {
+            // 3. Handle Supabase auth links
             // The onAuthStateChange listener will catch this and sign the user in.
             navigateTo("home");
         } else {
-            // This is the default load for a new visitor
+            // 4. Default load for a new visitor
             navigateTo("home");
         }
+        // --- END OF MODIFIED LOGIC ---
     
-        // *** FIX: Attach the Contact Submit Handler ***
+        // Attach the Contact Submit Handler
         const contactSubmitBtn = $("contactSubmitBtn");
         if (contactSubmitBtn) {
             contactSubmitBtn.addEventListener("click", handleContactSubmit);
@@ -31139,7 +31185,7 @@ function renderMiscPage_MSC(container, data) {
         initThreeJS();
     })();
     // --- END of New Initial Page Load Logic ---
-    
+       
     // --- Dashboard Widget ---
     (function initDashboardWidget() {
         const PRESENCE_PREFIX = "sage_presence_";
