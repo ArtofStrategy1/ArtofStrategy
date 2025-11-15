@@ -89,7 +89,9 @@
         #signup.active,
         #emailVerification.active,
         #emailVerifiedSuccess.active,  /* <-- ADD THIS LINE */
-        #emailVerifiedAlready.active { /* <-- ADD THIS LINE */
+        #emailVerifiedAlready.active,  /* <-- ADD THIS LINE */
+        #passwordResetRequest.active,  /* <-- ADD THIS LINE */
+        #passwordResetUpdate.active {  /* <-- ADD THIS LINE */
             display: flex;
             /* Centered pages */
         }
@@ -2300,6 +2302,7 @@ select.input-field option {
                     <div class="text-center mt-6">
                         <p class="text-gray-300">Don't have an account?</p>
                         <button class="btn-tertiary nav-link" data-page="signup">Create Account</button>
+                        <button class="btn-tertiary nav-link text-sm mt-2" data-page="passwordResetRequest">Forgot Password?</button>
                     </div>
                 </div>
             </div>
@@ -2730,6 +2733,52 @@ select.input-field option {
                     </p>
                     <div class="text-center">
                         <button class="btn btn-primary nav-link" data-page="login">Return to Login</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="passwordResetRequest" class="page flex-col items-center justify-center min-h-[80vh]">
+            <div class="w-full max-w-md">
+                <div class="glass-container">
+                    <h2 class="text-3xl font-bold mb-6 text-center text-white">Reset Password</h2>
+                    <p class="text-white/80 mb-6 text-center">Enter your email address and we will send you a link to reset your password.</p>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="passwordResetEmail" class="block text-sm font-medium text-gray-200 mb-2">Email</label>
+                            <input type="email" id="passwordResetEmail" class="input-field" placeholder="Enter your email" required>
+                        </div>
+                        <button id="passwordResetRequestBtn" class="btn btn-primary w-full">
+                            <span id="passwordResetRequestBtnText">Send Reset Link</span>
+                            <span id="passwordResetRequestSpinner" class="loading-spinner hidden ml-2"></span>
+                        </button>
+                        <div id="passwordResetRequestMessage" class="hidden"></div>
+                    </div>
+                    <div class="text-center mt-6">
+                        <button class="btn-tertiary nav-link" data-page="login">Back to Login</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="passwordResetUpdate" class="page flex-col items-center justify-center min-h-[80vh]">
+            <div class="w-full max-w-md">
+                <div class="glass-container">
+                    <h2 class="text-3xl font-bold mb-6 text-center text-white">Create New Password</h2>
+                    <p class="text-white/80 mb-6 text-center">Enter your new password below. You will be logged out after completion.</p>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="passwordUpdatePassword" class="block text-sm font-medium text-gray-200 mb-2">New Password</label>
+                            <input type="password" id="passwordUpdatePassword" class="input-field" placeholder="Create a new password" required>
+                        </div>
+                        <div>
+                            <label for="passwordUpdateConfirmPassword" class="block text-sm font-medium text-gray-200 mb-2">Confirm New Password</label>
+                            <input type="password" id="passwordUpdateConfirmPassword" class="input-field" placeholder="Confirm your new password" required>
+                        </div>
+                        <button id="passwordUpdateBtn" class="btn btn-primary w-full">
+                            <span id="passwordUpdateBtnText">Update Password</span>
+                            <span id="passwordUpdateSpinner" class="loading-spinner hidden ml-2"></span>
+                        </button>
+                        <div id="passwordUpdateMessage" class="hidden"></div>
                     </div>
                 </div>
             </div>
@@ -30758,7 +30807,90 @@ function renderMiscPage_MSC(container, data) {
         navigateTo("login");
     }
 
+    /**
+     * Handles the password reset request form.
+     * Calls the new 'password-reset-request' edge function.
+     */
+    async function handlePasswordResetRequest() {
+        const email = $("passwordResetEmail").value.trim();
+        const messageEl = $("passwordResetRequestMessage");
 
+        if (!email) {
+            showMessage("passwordResetRequestMessage", "Please enter your email address", "error");
+            return;
+        }
+
+        setLoading("passwordResetRequest", true);
+        
+        try {
+            const { data, error } = await supabase.functions.invoke("password-reset-request", {
+                body: { email: email }
+            });
+
+            if (error) throw error;
+
+            // Always show a success message (for security, don't reveal if email exists)
+            showMessage("passwordResetRequestMessage", "If an account exists, a reset link has been sent to your email.", "success");
+            $("passwordResetEmail").value = ""; // Clear field
+
+        } catch (error) {
+            console.error("Password reset request error:", error);
+            // Show a generic error
+            showMessage("passwordResetRequestMessage", `Error: ${error.message || 'Could not send reset link.'}`, "error");
+        } finally {
+            setLoading("passwordResetRequest", false);
+        }
+    }
+
+    /**
+     * Handles the password update form.
+     * This runs on the client-side after the user clicks the email link.
+     */
+async function handlePasswordUpdate() {
+    const password = $("passwordUpdatePassword").value;
+    const confirmPassword = $("passwordUpdateConfirmPassword").value;
+    
+    if (!password || !confirmPassword) {
+        showMessage("passwordUpdateMessage", "Please fill in all fields", "error");
+        return;
+    }
+    if (password !== confirmPassword) {
+        showMessage("passwordUpdateMessage", "Passwords do not match", "error");
+        return;
+    }
+    if (password.length < 6) {
+        showMessage("passwordUpdateMessage", "Password must be at least 6 characters long", "error");
+        return;
+    }
+    
+    setLoading("passwordUpdate", true);
+    
+    try {
+        // Use the stored token and email from the URL
+        const { data, error } = await supabase.functions.invoke("password-reset-verify", {
+            body: { 
+                token: window.resetToken,
+                email: window.resetEmail,
+                newPassword: password 
+            }
+        });
+        
+        if (error) throw error;
+        
+        showMessage("passwordUpdateMessage", "Password updated successfully! Redirecting to login...", "success");
+        
+        // Clear the stored values
+        delete window.resetToken;
+        delete window.resetEmail;
+        
+        setTimeout(() => navigateTo("login"), 2000);
+    } catch (error) {
+        console.error("Password reset error:", error);
+        showMessage("passwordUpdateMessage", `Error: ${error.message || 'Could not update password.'}`, "error");
+    } finally {
+        setLoading("passwordUpdate", false);
+    }
+}   
 
     console.log('=== PAGE LOAD DEBUG ===');
     console.log('Current URL:', window.location.href);
@@ -31144,48 +31276,76 @@ function renderMiscPage_MSC(container, data) {
     $("loginBtn").addEventListener("click", handleLogin);
     $("registerBtn").addEventListener("click", handleRegister);
 
-    // --- NEW Initial Page Load Logic (Updated) ---
-    (async () => {
-        // Get URL parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const isSuccess = urlParams.get('success') === 'true';
-        const isAlready = urlParams.get('already') === 'true';
-
-        // Clear the parameters from the URL bar
-        if (isSuccess || isAlready || window.location.hash.includes("access_token")) {
-             window.history.replaceState(null, null, window.location.pathname);
-        }
-
-        // --- START OF MODIFIED LOGIC ---
-        if (isSuccess) {
-            // 1. Check for ?success=true
-            navigateTo("emailVerifiedSuccess");
-        } else if (isAlready) {
-            // 2. Check for ?already=true
-            navigateTo("emailVerifiedAlready");
-        } else if (window.location.hash.includes("access_token")) {
-            // 3. Handle Supabase auth links
-            // The onAuthStateChange listener will catch this and sign the user in.
-            navigateTo("home");
-        } else {
-            // 4. Default load for a new visitor
-            navigateTo("home");
-        }
-        // --- END OF MODIFIED LOGIC ---
+    // --- NEW Initial Page Load Logic (Updated for Password Reset) ---
+(async () => {
+    // Get URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const isSuccess = urlParams.get('success') === 'true';
+    const isAlready = urlParams.get('already') === 'true';
     
-        // Attach the Contact Submit Handler
-        const contactSubmitBtn = $("contactSubmitBtn");
-        if (contactSubmitBtn) {
-            contactSubmitBtn.addEventListener("click", handleContactSubmit);
-        }
-
-        // These should run regardless
-        setupHomeTabs();
-        attachHomeCardListeners();
-        initThreeJS();
-    })();
-    // --- END of New Initial Page Load Logic ---
-       
+    // NEW: Check for password reset parameters
+    const resetToken = urlParams.get('token');
+    const resetEmail = urlParams.get('email');
+    
+    // --- HASH CHECK ---
+    const hash = window.location.hash;
+    const hashParams = new URLSearchParams(hash.substring(1)); // remove #
+    const accessToken = hashParams.get('access_token');
+    const type = hashParams.get('type');
+    
+    // Clear URL parameters or hash
+    if (isSuccess || isAlready || accessToken || resetToken) {
+         window.history.replaceState(null, null, window.location.pathname);
+    }
+    
+    // --- NAVIGATION LOGIC ---
+    if (resetToken && resetEmail) {
+        // NEW: Handle password reset
+        console.log('Password reset link detected, navigating to reset form');
+        navigateTo("passwordResetUpdate");
+        // Store token and email for the reset form to use
+        window.resetToken = resetToken;
+        window.resetEmail = decodeURIComponent(resetEmail);
+        console.log('Stored reset token and email for form');
+    } else if (isSuccess) {
+        // From our custom email-verify function
+        navigateTo("emailVerifiedSuccess");
+    } else if (isAlready) {
+        // From our custom email-verify function
+        navigateTo("emailVerifiedAlready");
+    } else if (accessToken && type === 'recovery') {
+        // From Supabase password reset link (legacy)
+        // The supabase client will auto-set the session from the token.
+        navigateTo("passwordResetUpdate");
+    } else if (accessToken) {
+        // From any other Supabase magic link (like login or old verify)
+        // The onAuthStateChange listener will catch this
+        navigateTo("home");
+    } else {
+        // Default load for a new visitor
+        navigateTo("home");
+    }
+    
+    // Attach the Contact Submit Handler
+    const contactSubmitBtn = $("contactSubmitBtn");
+    if (contactSubmitBtn) {
+        contactSubmitBtn.addEventListener("click", handleContactSubmit);
+    }
+    
+    // Attach password button listeners
+    const resetBtn = $("passwordResetRequestBtn");
+    if (resetBtn) resetBtn.addEventListener("click", handlePasswordResetRequest);
+    
+    const updateBtn = $("passwordUpdateBtn");
+    if (updateBtn) updateBtn.addEventListener("click", handlePasswordUpdate);
+    
+    // These should run regardless
+    setupHomeTabs();
+    attachHomeCardListeners();
+    initThreeJS();
+})();
+// --- END of New Initial Page Load Logic ---         
+   
     // --- Dashboard Widget ---
     (function initDashboardWidget() {
         const PRESENCE_PREFIX = "sage_presence_";
