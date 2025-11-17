@@ -222,14 +222,14 @@
             justify-content: center;
 
             /* --- The New Prominent Style --- */
-            background-color: #10B981; [cite_start]/* Solid Success Green [cite: 34] */
+            background-color: #10B981;/* Solid Success Green [cite: 34] */
             color: white;
             border: 1px solid #10B981;
             text-shadow: 0 1px 2px rgba(0,0,0,0.3);
         }
 
         .btn-sample:hover {
-            background-color: #059669; [cite_start]/* Darker Green on hover [cite: 35] */
+            background-color: #059669;/* Darker Green on hover [cite: 35] */
             border-color: #047857;
             transform: translateY(-1px);
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
@@ -237,7 +237,7 @@
 
         /* Style for when it's loaded */
         .btn-sample:disabled {
-            background-color: rgba(5, 150, 105, 0.8); [cite_start]/* Connected Green [cite: 10] */
+            background-color: rgba(5, 150, 105, 0.8);/* Connected Green [cite: 10] */
             color: #a7f3d0;
             border-color: transparent;
             cursor: not-allowed;
@@ -6137,11 +6137,25 @@ async function handleContactSubmit() {
 
     // --- Template Detail Page Logic ---
 
+    // Helper function to reattach action listeners (you may already have this)
     function reattachActionListeners() {
-        const savePdfBtn = $("savePdfBtn");
-        const saveDocxBtn = $("saveDocxBtn");
-        if (savePdfBtn) savePdfBtn.addEventListener("click", handleSaveAsPdf);
-        if (saveDocxBtn) saveDocxBtn.addEventListener("click", handleSaveAsDocx);
+        // Add your existing save PDF/DOCX functionality here
+        const savePdfBtn = document.getElementById("savePdfBtn");
+        const saveDocxBtn = document.getElementById("saveDocxBtn");
+        
+        if (savePdfBtn) {
+            savePdfBtn.addEventListener("click", () => {
+                // Your existing PDF save functionality
+                console.log("Saving as PDF...");
+            });
+        }
+        
+        if (saveDocxBtn) {
+            saveDocxBtn.addEventListener("click", () => {
+                // Your existing DOCX save functionality
+                console.log("Saving as DOCX...");
+            });
+        }
     }
 
     function reattachTabListeners(container) {
@@ -14183,36 +14197,6 @@ function copyToClipboard(button, text) {
     });
 }
 
-// Helper function to extract text from files (you may already have this)
-async function extractTextFromFile(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (e) => resolve(e.target.result);
-        reader.onerror = (e) => reject(new Error("Failed to read file"));
-        reader.readAsText(file);
-    });
-}
-
-// Helper function to reattach action listeners (you may already have this)
-function reattachActionListeners() {
-    // Add your existing save PDF/DOCX functionality here
-    const savePdfBtn = document.getElementById("savePdfBtn");
-    const saveDocxBtn = document.getElementById("saveDocxBtn");
-    
-    if (savePdfBtn) {
-        savePdfBtn.addEventListener("click", () => {
-            // Your existing PDF save functionality
-            console.log("Saving as PDF...");
-        });
-    }
-    
-    if (saveDocxBtn) {
-        saveDocxBtn.addEventListener("click", () => {
-            // Your existing DOCX save functionality
-            console.log("Saving as DOCX...");
-        });
-    }
-}
 
     function createDematelLayout(template) {
     const contentContainer = $("templateDetailContent");
@@ -16074,79 +16058,6 @@ The AI will read this and build the matrix for you."></textarea>
     }
 
 
-    function createParetoChartJS(paretoData, containerId) {
-        const allCauses = (paretoData.vital_few || []).concat(paretoData.useful_many || []);
-        if (allCauses.length === 0) return;
-
-        allCauses.sort((a, b) => b.impact_score - a.impact_score);
-
-        const causes = allCauses.map((item) => item.cause);
-        const impacts = allCauses.map((item) => item.impact_score);
-        const categories = allCauses.map((item) => item.category);
-
-        const cumulative = impacts.reduce((acc, val) => {
-            acc.push((acc.length > 0 ? acc[acc.length - 1] : 0) + val);
-            return acc;
-        }, []);
-        const totalImpact = impacts.reduce((a, b) => a + b, 0);
-        const cumulativePct = cumulative.map((val) => (val / totalImpact) * 100);
-
-        const trace1 = {
-            x: causes,
-            y: impacts,
-            name: "Impact Score",
-            type: "bar",
-            text: impacts.map((imp) => `${imp}%`),
-            textposition: "outside",
-            marker: { color: "var(--primary)" },
-            hovertemplate: "<b>%{x}</b><br>Impact: %{y}%<br>Category: %{customdata}<extra></extra>",
-            customdata: categories
-        };
-
-        const trace2 = {
-            x: causes,
-            y: cumulativePct,
-            name: "Cumulative %",
-            type: "scatter",
-            mode: "lines+markers",
-            line: { color: "var(--accent)", width: 3 },
-            marker: { size: 8 },
-            yaxis: "y2",
-            hovertemplate: "<b>%{x}</b><br>Cumulative: %{y:.1f}%<extra></extra>"
-        };
-
-        const layout = {
-            title: "Pareto Analysis - 80/20 Root Cause Impact",
-            xaxis: { title: "Root Causes", tickangle: -45, automargin: true },
-            yaxis: { title: "Impact Score (%)" },
-            yaxis2: {
-                title: "Cumulative Impact (%)",
-                overlaying: "y",
-                side: "right",
-                range: [0, 101]
-            },
-            shapes: [
-                {
-                    type: "line",
-                    xref: "paper",
-                    x0: 0,
-                    x1: 1,
-                    yref: "y2",
-                    y0: 80,
-                    y1: 80,
-                    line: { color: "orange", width: 2, dash: "dash" }
-                }
-            ],
-            showlegend: true,
-            height: 500,
-            hovermode: "x unified",
-            paper_bgcolor: "rgba(0,0,0,0)",
-            plot_bgcolor: "rgba(0,0,0,0)",
-            font: { color: document.body.classList.contains("light-theme") ? "#1a202c" : "white" }
-        };
-
-        Plotly.newPlot(containerId, [trace1, trace2], layout, { responsive: true });
-    }
 
     // =========================================================================
     // ===== SPECIALIZED ANALYSIS LOGIC (SWOT, ARCHETYPE, FACTOR, etc.)   =====
@@ -20954,193 +20865,11 @@ function renderFitIndices(indices) {
     // ===== VISUALIZATION & RENDERING FUNCTIONS (FOR SEM) END             =====
     // =========================================================================
 
-    function applyParetoAnalysisJS(factors) {
-        if (!factors || factors.length === 0) return [];
-
-        const sorted_factors = [...factors].sort((a, b) => b.impact_score - a.impact_score);
-        const total_impact = sorted_factors.reduce((sum, f) => sum + f.impact_score, 0);
-
-        if (total_impact === 0) {
-            return sorted_factors.map((f, i) => ({ ...f, cumulative_percentage: 0, priority: "Low", rank: i + 1 }));
-        }
-
-        let cumulative_impact = 0;
-        return sorted_factors.map((factor, i) => {
-            cumulative_impact += factor.impact_score;
-            const cumulative_percentage = (cumulative_impact / total_impact) * 100;
-            return {
-                ...factor,
-                cumulative_percentage: parseFloat(cumulative_percentage.toFixed(1)),
-                priority: cumulative_percentage <= 80 ? "High" : "Low",
-                rank: i + 1
-            };
-        });
-    }
 
     // =========================================================================
     // ===== VISUALIZATION & RENDERING FUNCTIONS                          =====
     // =========================================================================
 
-   async function handleSystemThinkingAnalysis() {
-        const analysisResultContainer = $("analysisResult");
-        analysisResultContainer.innerHTML = `
-            <div class="text-center text-white/70 p-8">
-                <div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div>
-                <h3 class="text-xl font-semibold text-white mb-4">Analyzing System Context...</h3>
-                <p class="text-white/80 mb-2">Reading and interpreting your provided text...</p>
-            </div>`;
-        setLoading("generate", true);
-
-        // Define URL and Model
-        const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
-        const MODEL_NAME = "llama3.1:latest";
-
-        let text = "";
-        let truncatedNote = "";
-
-        try {
-            // 1. Gather Inputs
-            const useDoc = document.querySelector('input[name="inputType"]:checked').id === "docUpload";
-            if (useDoc) {
-                const file = $("systemFile").files[0];
-                if (!file) throw new Error("Please select a document to upload.");
-                text = await extractTextFromFile(file);
-            } else {
-                text = $("systemContent").value.trim();
-                if (!text.trim()) throw new Error("Please describe the system.");
-            }
-
-            // Truncate if necessary
-            const MAX_CONTEXT_LENGTH = 15000;
-            if (text.length > MAX_CONTEXT_LENGTH) {
-                text = text.substring(0, MAX_CONTEXT_LENGTH);
-                truncatedNote = `(Note: Analysis based on the first ${MAX_CONTEXT_LENGTH} characters.)`;
-                console.warn(`System Thinking analysis context truncated.`);
-            }
-
-            // 2. --- STEP 2: Run the NEW, ROBUST Unified Prompt ---
-            analysisResultContainer.querySelector("p").textContent = "Running unified analysis...";
-            
-            // This new prompt has explicit if-then logic to check for research plans first.
-            const analysis_prompt = `
-                You are a master systems thinking analyst. Your task is to intelligently analyze the provided text and extract its systemic components.
-                Base ALL output EXCLUSIVELY on the provided text. Do not invent information. ${truncatedNote}
-
-                **USER'S TEXT:**
-                \`\`\`
-                ${text}
-                \`\`\`
-
-                **DETAILED TASKS (Follow this order):**
-
-                **Task 1: Determine Text Intent.**
-                First, read the text to determine its intent.
-                - Is it a **Research Plan** (contains "hypothesis", "H1:", "H2:", "constructs", "research study", "SEM analysis", "drivers of")?
-                - OR is it a **Dynamic System Problem** (contains "sales are falling", "growth stalled", "bottleneck", "we have a problem with...")?
-                - OR is it **Unanalyzable** (a poem, a random story, a shopping list, or text with no clear factors, services, or problems)?
-
-                **Task 2: Generate JSON based on Intent (Ground all answers *strictly* in the text):**
-
-                **IF IT IS A RESEARCH PLAN (like the 'E-Commerce Customer Experience Research Study'):**
-                    - You MUST return \`feedback_loops: []\`.
-                    - You MUST return \`system_archetype: null\`.
-                    - You MUST return \`leverage_points: null\`.
-                    - You MUST populate \`elements\` with the constructs (e.g., "Service Quality", "Customer Satisfaction").
-                    - You MUST populate \`causal_links\` from the hypotheses (e.g., "H1: Service Quality...").
-                    - You MUST populate \`focus_areas\` from the "Research Objectives" or "Expected Business Impact" sections.
-                
-                **IF IT IS A DYNAMIC SYSTEM PROBLEM:**
-                    - You MUST populate \`feedback_loops\` with any R/B loops you find.
-                    - You MUST populate \`system_archetype\` (e.g., "Limits to Growth").
-                    - You MUST populate \`leverage_points\` with interventions.
-                    - You MUST return \`focus_areas: null\`.
-                    - You MUST populate \`causal_links\` from the loops.
-                
-                **IF IT IS UNANALYZABLE:**
-                1.  **Elements (\`elements\`):** This MUST be an empty array [].
-                2.  **Feedback Loops (\`feedback_loops\`):** This MUST be an empty array [].
-                3.  **Summary (\`summary\`):** A clear explanation of why the text cannot be analyzed (e.g., "The provided text appears to be a [poem/story/etc.] and does not contain analyzable system components...").
-                4.  **Causal Links (\`causal_links\`):** This MUST be an empty array [].
-                5.  **System Archetype (\`system_archetype\`):** This MUST be null.
-                6.  **Leverage Points (\`leverage_points\`):** This MUST be null.
-                7.  **Focus Areas (\`focus_areas\`):** This MUST be null.
-
-                **Task 3: Extract Components (Strictly from text):**
-                1.  \`summary\`: A concise summary explaining *what the text is* and its main objective (or the error message if unanalyzable).
-                2.  \`elements\`: Extract 5-8 key elements/constructs (or [] if unanalyzable). For each:
-                    * \`name\`: Concise name (e.g., "Service Quality").
-                    * \`type\`: Classify as "Stock" (an accumulation, e.g., "Brand Trust") or "Variable" (a factor, e.g., "Service Quality").
-                3.  \`feedback_loops\`: (See Task 2).
-                4.  \`causal_links\`: List ALL 1-to-1 causal links *stated in the text* (or [] if unanalyzable). For each:
-                    * \`from\`: Cause element.
-                    * \`to\`: Effect element.
-                    * \`polarity\`: "+" or "-".
-                    * \`loop_name\`: Loop name (e.g., "R1") or "H" (for Hypothesis).
-                    * \`description\`: The rationale/hypothesis from the text (e.g., "H1: ...").
-                5.  \`system_archetype\`: (See Task 2).
-                6.  \`leverage_points\`: (See Task 2).
-                7.  \`focus_areas\`: (See Task 2).
-
-                **RETURN FORMAT (Example for Unanalyzable Text):**
-                {
-                  "summary": "The provided text could not be analyzed. It appears to be a shopping list and does not contain any system elements, problems, or research hypotheses.",
-                  "elements": [],
-                  "feedback_loops": [],
-                  "causal_links": [],
-                  "system_archetype": null,
-                  "leverage_points": null,
-                  "focus_areas": null
-                }
-            `;
-
-            // 3. Send the chosen analysis prompt
-            const analysis_response = await fetch(OLLAMA_URL, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    model: MODEL_NAME,
-                    prompt: analysis_prompt,
-                    stream: false,
-                    format: "json",
-                    options: {
-                        num_ctx: 32768
-                    }
-                })
-            });
-
-            if (!analysis_response.ok) throw new Error(`AI Analysis Error: ${analysis_response.statusText}`);
-
-            const analysis_data = await analysis_response.json();
-            const finalParsedData = JSON.parse(analysis_data.response);
-
-            // 4. --- STEP 3: Render ---
-            analysisResultContainer.querySelector("p").textContent = "Step 3/3: Assembling analysis...";
-
-            // *** Validation for the final data (flexible) ***
-            if (!finalParsedData || !finalParsedData.summary || !finalParsedData.elements || !finalParsedData.causal_links ||
-                (finalParsedData.system_archetype === undefined && finalParsedData.focus_areas === undefined)
-            ) {
-                console.error("Validation Failed (Unified Handler): Final analysis data is missing key components.", finalParsedData);
-                throw new Error("AI response was incomplete. Missing summary, elements, or focus/leverage points.");
-            }
-
-            console.log("Successfully parsed unified analysis JSON:", finalParsedData);
-
-            // 5. Render Results
-            renderSystemThinkingPage(analysisResultContainer, finalParsedData); // Call the flexible renderer
-
-        } catch (error) {
-            console.error(`Error in handleSystemThinkingAnalysis (Unified v4):`, error);
-            analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
-            setLoading("generate", false);
-        } finally {
-            if ($("generateSpinner") && !$("generateSpinner").classList.contains("hidden")) {
-                setLoading("generate", false);
-            }
-        }
-    }
 /**
  * RENDERER: System Thinking Analysis
  * - NEW (v3): This renderer is now flexible.
@@ -22504,124 +22233,6 @@ function renderSummaryTab(containerId, external, internal) {
 // function extractInternalFactorsJS(...) {}
 // function calculateFactorImpactJS(...) {}
 
-    function renderParetoTab(containerId, allFactors) {
-        const container = $(containerId);
-        let contentHtml = `<h3 class="text-2xl font-bold mb-4">📈 80/20 Pareto Analysis</h3>`;
-
-        if (allFactors && allFactors.length > 0) {
-            contentHtml += `<div id="pareto-chart-container" class="w-full h-[600px] mb-8 plotly-chart"></div>`;
-
-            const highPriorityFactors = allFactors.filter((f) => f.priority === "High");
-            contentHtml += `<h4 class="text-xl font-semibold mt-8 mb-3">🎯 Priority Recommendations</h4>
-                                    <p class="p-4 rounded-lg bg-green-500/10 text-green-300 mb-6"><strong>80/20 Rule Application:</strong> Focus on the top ${highPriorityFactors.length} factors to address ~80% of the strategic impact.</p>`;
-
-            const extHigh = highPriorityFactors.filter((f) => f.type === "External").slice(0, 5);
-            const intHigh = highPriorityFactors.filter((f) => f.type === "Internal").slice(0, 5);
-
-            contentHtml += `<div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><h5 class="font-bold mb-2">Top External Priorities</h5>`;
-            extHigh.forEach((f) => {
-                contentHtml += `<div class="text-sm mb-2 p-2 bg-white/5 rounded"><strong>${f.category}:</strong> ${f.factor.substring(0, 60)}...</div>`;
-            });
-            contentHtml += `</div><div><h5 class="font-bold mb-2">Top Internal Priorities</h5>`;
-            intHigh.forEach((f) => {
-                contentHtml += `<div class="text-sm mb-2 p-2 bg-white/5 rounded"><strong>${f.category}:</strong> ${f.factor.substring(0, 60)}...</div>`;
-            });
-            contentHtml += `</div></div>`;
-        } else {
-            contentHtml += '<p class="text-white/70">No factors available for Pareto analysis.</p>';
-        }
-
-        container.innerHTML = contentHtml;
-
-        if (allFactors && allFactors.length > 0) {
-            const topFactors = [...allFactors].sort((a, b) => b.impact_score - a.impact_score).slice(0, 15);
-
-            const trace1 = {
-                x: topFactors.map((f) => `${f.type.substring(0, 3)}: ${f.factor.substring(0, 40)}...`),
-                y: topFactors.map((f) => f.impact_score),
-                name: "Impact Score",
-                type: "bar",
-                marker: { color: topFactors.map((f) => (f.priority === "High" ? "var(--accent)" : "var(--primary)")) }
-            };
-
-            const trace2 = {
-                x: topFactors.map((f) => `${f.type.substring(0, 3)}: ${f.factor.substring(0, 40)}...`),
-                y: topFactors.map((f) => f.cumulative_percentage),
-                name: "Cumulative %",
-                type: "scatter",
-                yaxis: "y2",
-                line: { color: "#FFF" }
-            };
-
-            const layout = {
-                title: "80/20 Pareto Analysis - Top Strategic Factors",
-                xaxis: { tickangle: -45, automargin: true },
-                yaxis: { title: "Impact Score" },
-                yaxis2: { title: "Cumulative %", overlaying: "y", side: "right", range: [0, 101] },
-                paper_bgcolor: "rgba(0,0,0,0)",
-                plot_bgcolor: "rgba(0,0,0,0)",
-                font: { color: "white" },
-                legend: { orientation: "h", y: -0.4 },
-                shapes: [
-                    {
-                        type: "line",
-                        xref: "paper",
-                        yref: "y2",
-                        x0: 0,
-                        y0: 80,
-                        x1: 1,
-                        y1: 80,
-                        line: { color: "orange", width: 2, dash: "dash" }
-                    }
-                ]
-            };
-
-            Plotly.newPlot("pareto-chart-container", [trace1, trace2], layout, { responsive: true });
-        }
-    }
-
-    function renderSummaryTab(containerId, external, internal) {
-        const container = $(containerId);
-        const highPriorityExternal = external.filter((f) => f.priority === "High").length;
-        const highPriorityInternal = internal.filter((f) => f.priority === "High").length;
-        const topExtCat =
-            external.length > 0
-                ? Object.entries(
-                      external.reduce((acc, f) => {
-                          acc[f.category] = (acc[f.category] || 0) + 1;
-                          return acc;
-                      }, {})
-                  ).sort((a, b) => b[1] - a[1])[0][0]
-                : "N/A";
-        const topIntCat =
-            internal.length > 0
-                ? Object.entries(
-                      internal.reduce((acc, f) => {
-                          acc[f.category] = (acc[f.category] || 0) + 1;
-                          return acc;
-                      }, {})
-                  ).sort((a, b) => b[1] - a[1])[0][0]
-                : "N/A";
-
-        container.innerHTML = `
-                    <h3 class="text-2xl font-bold mb-4">📋 Executive Summary</h3>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                        <div class="metric-card"><h4 class="font-bold">Total External Factors</h4><p class="text-3xl font-bold">${external.length}</p></div>
-                        <div class="metric-card"><h4 class="font-bold">Total Internal Factors</h4><p class="text-3xl font-bold">${internal.length}</p></div>
-                        <div class="metric-card critical"><h4 class="font-bold">High-Priority External</h4><p class="text-3xl font-bold">${highPriorityExternal}</p></div>
-                        <div class="metric-card critical"><h4 class="font-bold">High-Priority Internal</h4><p class="text-3xl font-bold">${highPriorityInternal}</p></div>
-                    </div>
-                    <div class="bg-white/5 p-4 rounded-lg">
-                        <h4 class="text-xl font-semibold mb-3">Key Insights</h4>
-                        <ul class="list-disc list-inside space-y-2">
-                            <li><strong>External Focus:</strong> The most dominant external factors fall under the <strong>${topExtCat}</strong> category.</li>
-                            <li><strong>Internal Focus:</strong> Internally, factors related to <strong>${topIntCat}</strong> are most prominent.</li>
-                            <li><strong>80/20 Application:</strong> A total of <strong>${highPriorityExternal + highPriorityInternal}</strong> factors have been identified as high-priority, representing the critical 20% that likely drive 80% of strategic impact.</li>
-                        </ul>
-                    </div>
-                 `;
-    }
-
 /**
  * HANDLER: KPI & Critical Events (Strategic Planning)
  * - NEW: Re-engineered to act as a "Research Plan Analyst".
@@ -23084,61 +22695,6 @@ function renderKpiPage_KE(container, data) {
          }
     }
 }
-
-
-    function renderFullSwotTowsPage(container, data) {
-        container.innerHTML = ""; // Clear loading state
-        const { swot_analysis, tows_strategies, key_insights_80_20 } = data;
-        if (!swot_analysis || !tows_strategies || !key_insights_80_20) {
-            container.innerHTML = `<div class="p-4 text-center text-red-400">Incomplete analysis data received.</div>`;
-            return;
-        }
-
-        const tabNav = document.createElement("div");
-        tabNav.className = "flex flex-wrap border-b border-white/20 -mx-6 px-6";
-        tabNav.innerHTML = `
-                    <button class="analysis-tab-btn active" data-tab="swot">SWOT Matrix</button>
-                    <button class="analysis-tab-btn" data-tab="tows">TOWS Strategies</button>
-                    <button class="analysis-tab-btn" data-tab="insights">80/20 Key Insights</button>
-                    <button class="analysis-tab-btn" data-tab="details">Detailed Analysis</button>
-                `;
-        container.appendChild(tabNav);
-
-        const tabContent = document.createElement("div");
-        container.appendChild(tabContent);
-
-        tabContent.innerHTML = `
-                    <div id="swotPanel" class="analysis-tab-panel active"></div>
-                    <div id="towsPanel" class="analysis-tab-panel"></div>
-                    <div id="insightsPanel" class="analysis-tab-panel"></div>
-                    <div id="detailsPanel" class="analysis-tab-panel"></div>
-                `;
-
-        renderSwotVisualization(swot_analysis, "swotPanel");
-        renderTowsVisualization(tows_strategies, "towsPanel");
-        render8020Visualization(key_insights_80_20, "insightsPanel");
-        renderDetailedAnalysis(swot_analysis, tows_strategies, "detailsPanel");
-
-        // --- NEW: Animate the new content ---
-        const newElementsToAnimate = container.querySelectorAll(
-            '.glass-container, .feature-card, .project-card, .kpi-card, .summary-stat-card, .prescription-card, .insight-card, .action-card, .ladder-rung, .dissonance-pole, .cascade-objective, .cascade-goal-card, .st-objective-card, .st-goal-card, .feedback-card, .plotly-chart, .styled-table'
-        );
-        animateElements(newElementsToAnimate);
-
-        analysisCache[currentTemplateId] = container.innerHTML;
-
-        tabNav.addEventListener("click", (e) => {
-            if (e.target.tagName === "BUTTON") {
-                tabNav.querySelectorAll(".analysis-tab-btn").forEach((btn) => btn.classList.remove("active"));
-                tabContent.querySelectorAll(".analysis-tab-panel").forEach((pnl) => pnl.classList.remove("active"));
-                e.target.classList.add("active");
-                const targetPanel = $(e.target.dataset.tab + "Panel");
-                targetPanel.classList.add("active");
-                const chart = targetPanel.querySelector(".plotly-chart");
-                if (chart) Plotly.Plots.resize(chart);
-            }
-        });
-    }
 
 
 
@@ -26480,442 +26036,6 @@ async function handleSystemThinkingAnalysis() {
 }
 
 
-/**
- * RENDERER: System Thinking Analysis
- * - NEW (v3): This renderer is now flexible.
- * - It checks if `system_archetype` exists. If not, it assumes a "research_plan"
- * and displays `focus_areas` instead of `leverage_points` and archetypes.
- * - This function *replaces* the old renderSystemThinkingPage.
- * - FIX (v4): Added checks for loop.type, finalFocusAreas, and system_archetype before access.
- */
-function renderSystemThinkingPage(container, data) {
-    container.innerHTML = ""; // Clear the loading indicator
-
-    // --- Validation for the flexible structure ---
-    if (!data || !data.summary || !data.elements || !data.causal_links ||
-        (data.system_archetype === undefined && data.focus_areas === undefined)) {
-        console.error("Incomplete data passed to renderSystemThinkingPage (v3):", data);
-        container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render results.</div>`;
-        $("analysisActions").classList.add("hidden");
-        return;
-    }
-    // Destructure all possible fields
-    const {
-        elements,
-        feedback_loops,
-        summary,
-        causal_links,
-        system_archetype,
-        focus_areas,
-        leverage_points
-    } = data;
-
-    // Determine which mode we are in
-    // A research model is identified by having `focus_areas` and no `system_archetype`.
-    const isResearchModel = (!!focus_areas && !system_archetype);
-    // Use leverage_points OR focus_areas. Ensure finalFocusAreas is an array.
-    const finalFocusAreas = focus_areas || leverage_points || [];
-
-    // --- Create Tab Navigation (5 Tabs) ---
-    const tabNav = document.createElement("div");
-    tabNav.className = "flex flex-wrap border-b border-white/20 -mx-6 px-6";
-    // Customize tab name based on input type
-    const focusTabName = isResearchModel ? "⚡ Key Research Questions" : "⚡ Elements & Leverage";
-    const loopTabName = (feedback_loops && feedback_loops.length > 0) ? "🔄 Feedback Loops" : "🔗 Causal Links (Hypotheses)"; // <-- Use feedback_loops to decide name
-    tabNav.innerHTML = `
-        <button class="analysis-tab-btn active" data-tab="dashboard">📊 Dashboard</button>
-        <button class="analysis-tab-btn" data-tab="diagram">🗺️ Causal Diagram</button>
-        <button class="analysis-tab-btn" data-tab="loops">${loopTabName}</button>
-        <button class="analysis-tab-btn" data-tab="focus">${focusTabName}</button>
-        <button class="analysis-tab-btn" data-tab="learn">🎓 Learn System Thinking</button>
-    `;
-    container.appendChild(tabNav);
-
-    // --- Create Tab Panels (5 Panels) ---
-    const tabContent = document.createElement("div");
-    container.appendChild(tabContent);
-    tabContent.innerHTML = `
-        <div id="dashboardPanel" class="analysis-tab-panel active"></div>
-        <div id="diagramPanel" class="analysis-tab-panel"></div>
-        <div id="loopsPanel" class="analysis-tab-panel"></div>
-        <div id="focusPanel" class="analysis-tab-panel"></div>
-        <div id="learnPanel" class="analysis-tab-panel"></div>
-    `;
-
-    // --- 1. Populate Dashboard Panel ---
-    const dashboardPanel = $("dashboardPanel");
-
-    // Find the top focus area/leverage point
-    let topFocusHtml = "";
-    if (finalFocusAreas && finalFocusAreas.length > 0) { // <-- Added check for finalFocusAreas
-        // Find the first item (either ranked "High" or just the first in the list)
-        const topFocus = [...finalFocusAreas].sort((a, b) => { // <-- Use spread to avoid mutating original
-            const order = {
-                "High": 1,
-                "Medium": 2,
-                "Low": 3
-            };
-            // Handle both 'impact' and 'potential_impact_rank' keys
-            const rankA = order[a.potential_impact_rank || a.impact] || 4;
-            const rankB = order[b.potential_impact_rank || b.impact] || 4;
-            return rankA - rankB;
-        })[0];
-
-        const title = isResearchModel ? "Top Research Question" : "Top Leverage Point";
-        // Handle both 'description'/'intervention' and 'area_name'/'point_name'
-        const desc = topFocus.description || topFocus.intervention || "No description provided.";
-        const pointName = topFocus.area_name || topFocus.point_name || "Unnamed Point";
-
-        topFocusHtml = `
-            <div class="prescription-card border-l-4 border-red-500">
-                <h3 class="text-lg font-bold text-red-300">${title}</h3>
-                <p class="text-xl font-semibold mt-1">${pointName}</p>
-                <p class="text-sm text-white/80 mt-2"><strong>Description:</strong> ${desc}</p>
-            </div>`;
-    }
-
-    // Find the archetype (if it exists)
-    let archetypeHtml = "";
-    // Check for archetype *object* and *name property*
-    if (system_archetype && typeof system_archetype === 'object' && system_archetype.name) {
-        archetypeHtml = `
-            <div class="archetype-card">
-                <h3 class="text-lg font-bold text-indigo-300">Dominant System Archetype</h3>
-                <p class="text-2xl font-semibold mt-1">${system_archetype.name}</p>
-                <p class="text-sm text-white/80 mt-2 italic">${system_archetype.description || 'No description provided.'}</p>
-            </div>`;
-    } else if (isResearchModel) {
-        // If it's a research model, create a simpler card
-        archetypeHtml = `
-            <div class="archetype-card">
-                <h3 class="text-lg font-bold text-indigo-300">Analysis Type</h3>
-                <p class="text-2xl font-semibold mt-1">Hypothesis Model</p>
-                <p class="text-sm text-white/80 mt-2 italic">The system is a set of hypothesized causal links to be tested, not a dynamic problem archetype.</p>
-            </div>`;
-    } else {
-        // Fallback if archetype is null/undefined but not a research model
-        archetypeHtml = `
-            <div class="archetype-card">
-                <h3 class="text-lg font-bold text-indigo-300">Dominant System Archetype</h3>
-                <p class="text-2xl font-semibold mt-1">Not Identified</p>
-                <p class="text-sm text-white/80 mt-2 italic">No single dominant archetype was identified from the text.</p>
-            </div>`;
-    }
-
-    dashboardPanel.innerHTML = `
-        <div class="p-4 space-y-6">
-            <h3 class="text-2xl font-bold mb-4 text-center">System Analysis Dashboard</h3>
-            <blockquote class="p-4 italic border-l-4 border-gray-500 bg-black/20 text-white/90 text-sm">
-                <strong>Analysis Summary:</strong> ${summary}
-            </blockquote>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                ${archetypeHtml}
-                ${topFocusHtml}
-            </div>
-        </div>`;
-
-    // --- 2. Populate Causal Loop Diagram Panel ---
-    const diagramPanel = $("diagramPanel");
-    const diagramTitle = isResearchModel ? "Hypothesis Model Diagram" : "Causal Loop Diagram (CLD)";
-    diagramPanel.innerHTML = `
-        <div class="p-4">
-            <h3 class="text-2xl font-bold mb-4 text-center">${diagramTitle}</h3>
-            <p class="text-sm text-white/70 text-center mb-4 italic">This diagram shows the causal relationships between system elements.</p>
-            <div id="cldGraphContainer" class="w-full min-h-[600px] flex justify-center items-center bg-black/10 rounded-lg">
-                <p class="text-white/70">Rendering diagram...</p>
-            </div>
-            <div id="cldKey" class="mt-4 text-xs text-white/70 text-center space-x-4"></div>
-        </div>`;
-
-    try {
-        // This assumes buildDotString is available in the global scope and has the fix
-        const dotString = buildDotString(elements, causal_links, feedback_loops);
-        const viz = new Viz();
-        viz.renderSVGElement(dotString)
-            .then(svgElement => {
-                const container = $("cldGraphContainer");
-                container.innerHTML = "";
-                svgElement.style.width = "100%";
-                svgElement.style.height = "auto";
-                container.appendChild(svgElement);
-
-                // Add key
-                const keyContainer = $("cldKey");
-                let keyHtml = "";
-                if (feedback_loops && feedback_loops.length > 0) {
-                    // Check for loop types again with safety
-                    const hasR = feedback_loops.some(l => l && l.type && typeof l.type === 'string' && l.type.toLowerCase() === 'reinforcing');
-                    const hasB = feedback_loops.some(l => l && l.type && typeof l.type === 'string' && l.type.toLowerCase() === 'balancing');
-                    if (hasR) keyHtml += `<span><span class="inline-block w-3 h-3 rounded-full bg-green-400 mr-1"></span> Reinforcing Loop</span> `;
-                    if (hasB) keyHtml += `<span><span class="inline-block w-3 h-3 rounded-full bg-yellow-400 mr-1"></span> Balancing Loop</span>`;
-                }
-                keyHtml += `<span><span class="inline-block w-3 h-0.5 bg-white mr-1" style="transform: translateY(-2px);"></span> (+) Same Direction</span> <span><span class="inline-block w-3 h-0.5 bg-white mr-1" style="transform: translateY(-2px); clip-path: polygon(0% 0%, 75% 0%, 75% 100%, 0% 100%);">T</span> (-) Opposite Direction</span>`;
-                keyContainer.innerHTML = keyHtml;
-            })
-            .catch(error => {
-                console.error("Viz.js rendering error:", error);
-                $("cldGraphContainer").innerHTML = `<p class="text-red-400">Error rendering diagram: ${error.message}</p>`;
-            });
-    } catch (e) {
-        console.error("Error creating DOT string or initializing Viz.js:", e);
-        $("cldGraphContainer").innerHTML = `<p class="text-red-400">Error initializing diagram: ${e.message}</p>`;
-    }
-
-
-    // --- 3. Populate Feedback Loops / Causal Links Panel ---
-    const loopsPanel = $("loopsPanel");
-    let loopsHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4 text-center">${loopTabName}</h3><div class="space-y-6">`;
-    if (feedback_loops && feedback_loops.length > 0) {
-        // Mode A: Dynamic Problem
-        feedback_loops.forEach((loop) => {
-            // --- START FIX ---
-            // Check if loop and loop.type are valid before calling toLowerCase()
-            const loopType = (loop && loop.type && typeof loop.type === 'string') ? loop.type.toLowerCase() : 'unknown';
-            const isReinforcing = loopType === "reinforcing";
-            // --- END FIX ---
-
-            const loopIcon = isReinforcing ? "📈" : "⚖️";
-            const loopColor = isReinforcing ? "border-green-400" : "border-yellow-400";
-            const elementsList = Array.isArray(loop.elements) ? loop.elements.join(", ") : 'Elements not specified';
-            const loopTypeName = loop.type || 'Type N/A'; // <-- Use safe value for display
-            const loopName = loop.name || loop.loop_name || "Unnamed Loop"; // <-- Handle missing name
-
-            loopsHtml += `
-                <div class="bg-black/20 p-4 rounded-lg border-l-4 ${loopColor}">
-                    <h4 class="text-lg font-bold flex items-center gap-2">${loopIcon} ${loopName} <span class="text-xs font-light text-white/60">(${loopTypeName})</span></h4>
-                    <p class="text-sm text-white/80 my-3 italic"><strong>Causal Chain:</strong> ${loop.description}</p>
-                    <div class="text-xs text-white/60"><strong>Key Elements Involved:</strong> ${elementsList}</div>
-                </div>`;
-        });
-    } else if (isResearchModel && causal_links.length > 0) {
-        // Mode B: Research Plan
-        causal_links.forEach((link) => {
-            loopsHtml += `
-                <div class="bg-black/20 p-4 rounded-lg border-l-4 border-blue-400">
-                    <h4 class="text-lg font-bold flex items-center gap-2">🔗 ${link.description || `${link.from} -> ${link.to}`}</h4>
-                    <p class="text-sm text-white/80 my-3 font-mono"><code>${link.from}</code> --( ${link.polarity} )--> <code>${link.to}</code></p>
-                </div>`;
-        });
-    } else {
-        loopsHtml += `<p class="text-center text-white/70 italic">No feedback loops or causal links were identified from the text.</p>`;
-    }
-    loopsHtml += `</div></div>`;
-    loopsPanel.innerHTML = loopsHtml;
-
-    // --- 4. Populate Elements & Focus Panel ---
-    const focusPanel = $("focusPanel");
-    let focusHtml = `<div class="p-4 space-y-8">
-                        <div>
-                            <h3 class="text-2xl font-bold mb-4 text-center">Key System Elements</h3>
-                            <div class="overflow-x-auto">
-                                <table class="coeff-table styled-table text-sm">
-                                    <thead><tr><th>Element Name</th><th>Type</th><th>Role in Model</th></tr></thead>
-                                    <tbody>`;
-    elements.forEach(el => {
-        let description = "A key construct in the model.";
-        if (causal_links.some(l => l.from === el.name) && !causal_links.some(l => l.to === el.name)) {
-            description = "Exogenous Driver (Predictor)";
-        } else if (!causal_links.some(l => l.from === el.name) && causal_links.some(l => l.to === el.name)) {
-            description = "Endogenous Outcome (Result)";
-        } else if (causal_links.some(l => l.from === el.name) && causal_links.some(l => l.to === el.name)) {
-            description = "Mediating Variable (Driver & Outcome)";
-        }
-
-        focusHtml += `<tr>
-                            <td class="font-semibold">${el.name}</td>
-                            <td class="font-mono text-xs">${el.type}</td>
-                            <td class="text-white/70">${description}</td>
-                         </tr>`;
-    });
-    focusHtml += `</tbody></table></div></div>`;
-
-    // Focus Areas / Leverage Points Section
-    focusHtml += `<div><h3 class="text-2xl font-bold mb-4 text-center">${focusTabName}</h3><div class="space-y-6">`;
-    const sortedFocusAreas = [...finalFocusAreas].sort((a, b) => {
-        const order = {
-            "High": 1,
-            "Medium": 2,
-            "Low": 3
-        };
-        const rankA = order[a.potential_impact_rank || a.impact] || 4;
-        const rankB = order[b.potential_impact_rank || b.impact] || 4;
-        return rankA - rankB;
-    });
-    sortedFocusAreas.forEach((point, index) => {
-        const impact = point.potential_impact_rank || point.impact;
-        let borderColor = "border-indigo-400";
-        if (impact === "High") borderColor = "border-red-500";
-        else if (impact === "Medium") borderColor = "border-yellow-500";
-        else if (impact === "Low") borderColor = "border-blue-500";
-
-        const pointName = point.area_name || point.point_name;
-        const pointDesc = point.description || point.intervention;
-        const pointRationale = point.rationale;
-        const pointOutcome = point.expected_outcome;
-
-        focusHtml += `
-            <div class="prescription-card ${borderColor}">
-                 <h4 class="text-xl font-bold">${index + 1}. ${pointName}</h4>
-                 ${impact ? `<p class="text-xs font-semibold my-1 ${borderColor.replace('border-', 'text-')}">${impact}</p>` : ''}
-                 <p class="rationale mt-3"><strong>Description/Intervention:</strong> ${pointDesc}</p>
-                 ${pointRationale ? `<p class="text-sm text-white/80 mt-2 italic"><strong>Rationale:</strong> ${pointRationale}</p>` : ''}
-                 ${pointOutcome ? `<div class="p-3 bg-black/20 rounded mt-3 text-sm"><p><strong>Expected Outcome:</strong> ${pointOutcome}</p></div>` : ''}
-            </div>`;
-    });
-    focusHtml += `</div></div></div>`;
-    focusPanel.innerHTML = focusHtml;
-
-    // --- 5. Populate Learn System Thinking Panel (Unchanged) ---
-    const learnPanel = $("learnPanel");
-    learnPanel.innerHTML = `
-    <div class="p-6 space-y-6 text-white/90">
-        <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding System Thinking</h3>
-        
-        <div class="bg-black/20 p-4 rounded-lg">
-            <h4 class="text-lg font-bold mb-2 text-indigo-300">What is System Thinking?</h4>
-            <p class="text-sm text-white/80">System thinking is a holistic approach to analysis that focuses on how a system's constituent parts interrelate and how systems work over time and within the context of larger systems. It contrasts with traditional analysis, which studies systems by breaking them down into their separate elements.</p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-white/5 p-4 rounded-lg border border-white/10">
-                <h4 class="text-lg font-bold mb-2">Key Concepts:</h4>
-                <ul class="list-disc list-inside space-y-2 text-sm">
-                    <li><strong>Interconnectedness:</strong> Elements within a system are interconnected; changing one part affects others.</li>
-                    <li><strong>Feedback Loops:</strong> Circular causal relationships that amplify (reinforcing) or stabilize (balancing) change. </li>
-                    <li><strong>Stocks & Flows:</strong> Stocks are accumulations (like water in a tub); Flows are the rates that change stocks (like the faucet and drain).</li>
-                    <li><strong>Delays:</strong> Time lags between actions and their effects, often causing oscillations or overshoots.</li>
-                    <li><strong>Leverage Points:</strong> Places in a system where a small change can have a large effect.</li>
-                </ul>
-            </div>
-            <div class="bg-white/5 p-4 rounded-lg border border-white/10">
-                <h4 class="text-lg font-bold mb-2">Why Use System Thinking?</h4>
-                 <ul class="list-disc list-inside space-y-1 text-sm">
-                    <li><strong>See the Bigger Picture:</strong> Understand context and connections.</li>
-                    <li><strong>Identify Root Causes:</strong> Move beyond addressing symptoms to find underlying structural issues.</li>
-                    <li><strong>Find High-Leverage Interventions:</strong> Identify points where small efforts yield significant results.</li>
-                    <li><strong>Anticipate Unintended Consequences:</strong> Recognize how changes might ripple through the system.</li>
-                 </ul>
-            </div>
-        </div>
-
-         <details class="styled-details text-sm mt-4" open>
-            <summary class="font-semibold">Common System Archetypes (Recurring Patterns)</summary>
-            <div class="bg-black/20 p-4 rounded-b-lg space-y-2">
-                <p><strong>Limits to Growth:</strong> Growth eventually slows or stops due to a limiting factor (a balancing loop).</p>
-                <p><strong>Shifting the Burden:</strong> Using a short-term fix distracts from or undermines a fundamental long-term solution.</p>
-                <p><strong>Fixes that Fail:</strong> A solution creates unintended consequences elsewhere that worsen the original problem later.</p>
-                <p><strong>Tragedy of the Commons:</strong> Individuals overusing a shared resource deplete it for everyone.</p>
-            </div>
-        </details>
-         <p class="text-xs text-center text-white/60 mt-4">This tool analyzes your text to identify elements, causal links, and key focus areas to help you understand the structure of your system.</p>
-    </div>
-    `;
-
-    // --- NEW: Animate the new content ---
-    const newElementsToAnimate = container.querySelectorAll(
-        '.glass-container, .feature-card, .project-card, .kpi-card, .summary-stat-card, .prescription-card, .insight-card, .action-card, .ladder-rung, .dissonance-pole, .cascade-objective, .cascade-goal-card, .st-objective-card, .st-goal-card, .feedback-card, .plotly-chart, .styled-table'
-    );
-    animateElements(newElementsToAnimate);
-
-    // --- Final Touches ---
-    analysisCache[currentTemplateId] = container.innerHTML; // Cache result
-
-    // Tab switching logic
-    tabNav.addEventListener("click", (e) => {
-        if (e.target.tagName === "BUTTON") {
-            tabNav.querySelectorAll(".analysis-tab-btn").forEach((btn) => btn.classList.remove("active"));
-            tabContent.querySelectorAll(".analysis-tab-panel").forEach((pnl) => pnl.classList.remove("active"));
-            e.target.classList.add("active");
-            const targetPanelId = e.target.dataset.tab + "Panel";
-            const targetPanel = $(targetPanelId);
-            if (targetPanel) {
-                targetPanel.classList.add("active");
-                // Resize diagram if its tab is clicked
-                if (targetPanelId === "diagramPanel") {
-                    const svg = targetPanel.querySelector("svg");
-                    if (svg) {
-                        // Viz.js SVG should resize automatically
-                    }
-                }
-            } else {
-                console.warn("Target panel not found:", targetPanelId);
-            }
-        }
-    });
-
-    $("analysisActions").classList.remove("hidden"); // Show save buttons
-}
-
-function buildDotString(elements, causal_links, feedback_loops) {
-            if (!elements || !causal_links) return "digraph G {}"; // Return empty graph if data is missing
-            
-            let dot = 'digraph G {\n';
-            dot += '  layout=dot;\n'; 
-            dot += '  overlap=false;\n';
-            dot += '  splines=true;\n';
-            dot += '  sep="+15,15";\n'; 
-            dot += '  bgcolor="transparent";\n';
-            dot += '  node [style=filled, shape=oval, fillcolor="rgba(0,0,0,0.3)", fontcolor="white", color="rgba(255,255,255,0.3)"];\n';
-            dot += '  edge [fontcolor="white", fontsize=10];\n\n';
-
-            // Define nodes
-            elements.forEach(el => {
-                if (el.type.toLowerCase() === 'stock') {
-                    dot += `  "${el.name}" [shape=box, style="filled,bold", color="var(--primary)"];\n`;
-                } else {
-                    dot += `  "${el.name}";\n`;
-                }
-            });
-
-            // Get loop colors
-            const loopColors = {};
-            const colors = ["#2ECC71", "#E74C3C", "#3498DB", "#F39C12", "#9B59B6", "#1ABC9C"];
-            let colorIndex = 0;
-            
-            if (feedback_loops) {
-                // --- START FIX ---
-                // Added checks for loop, loop.type, and typeof loop.type
-                feedback_loops.forEach(loop => {
-                    if (loop && loop.type && typeof loop.type === 'string' && loop.type.toLowerCase() === 'reinforcing') {
-                        loopColors[loop.name] = colors[colorIndex % colors.length];
-                        colorIndex++;
-                    }
-                });
-                feedback_loops.forEach(loop => {
-                     if (loop && loop.type && typeof loop.type === 'string' && loop.type.toLowerCase() === 'balancing') {
-                        loopColors[loop.name] = colors[colorIndex % colors.length];
-                        colorIndex++;
-                    }
-                });
-                // --- END FIX ---
-            }
-
-            // Define edges
-            dot += '\n';
-            causal_links.forEach(link => {
-                // Use loop color if available, otherwise default
-                const color = loopColors[link.loop_name] || (link.loop_name === 'H' ? "rgba(100,100,255,0.6)" : "rgba(255,255,255,0.4)");
-                let style = `color="${color}"`;
-                if (link.polarity === '-') {
-                    style += ', arrowhead=tee';
-                }
-                dot += `  "${link.from}" -> "${link.to}" [label=" ${link.polarity} ${link.description || ''}", ${style}];\n`;
-            });
-
-            // Add loop labels (if they exist)
-            if (feedback_loops && feedback_loops.length > 0) {
-                dot += '\n  labelloc="b";\n';
-                let label = 'Key: ';
-                Object.entries(loopColors).forEach(([name, color]) => {
-                     label += `<font color="${color}">${name}</font>  `;
-                });
-                dot += `  label = <${label}>;\n`;
-            }
-
-            dot += '}';
-            return dot;
-        }
-
     /**
  * Handles the PLS-SEM analysis request to the backend.
  * Reads from the advanced UI (file/text toggle, syntax boxes).
@@ -29069,25 +28189,6 @@ function renderPrescriptivePage_DA(container, data) {
     setLoading("generate", false);
 }
 
-    function parseCSV(csvText) {
-        const lines = csvText.trim().split("\n");
-        const header = lines[0].split(",").map((h) => h.trim());
-        const rows = [];
-        for (let i = 1; i < lines.length; i++) {
-            const values = lines[i].split(",").map((v) => v.trim());
-            if (values.length === header.length) {
-                const row = {};
-                for (let j = 0; j < header.length; j++) {
-                    const value = values[j];
-                    // Attempt to convert to number if possible
-                    const numValue = parseFloat(value);
-                    row[header[j]] = isNaN(numValue) ? value : numValue;
-                }
-                rows.push(row);
-            }
-        }
-        return { header, rows };
-    }
 
     async function handleActionPlansAnalysis_AP() {
         const analysisResultContainer = $("analysisResult");
