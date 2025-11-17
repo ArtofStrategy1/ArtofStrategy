@@ -10,6 +10,7 @@ import * as handleST from "./analysis-handling-st.mjs";
 import * as handleNS from "./analysis-handling-ns.mjs";
 import * as handleDA from "./analysis-handling-da.mjs";
 import * as renderST from "../ui/analysis-rendering/analysis-rendering-st.mjs";
+import { useContext } from "react";
 async function handleGenerate() {
     if (!appState.currentTemplateId) return;
 
@@ -45,7 +46,7 @@ async function handleGenerate() {
         // <-- ADD THIS BLOCK
         await handleNS.handleCreativeDissonanceAnalysis_NS();
     } else if (appState.currentTemplateId === "pareto-fishbone") {
-        await handleST.handleParetoFishboneAnalysis();
+        await handleST.handleParetoFishboneAnalysisGroq();
     } else if (appState.currentTemplateId === "system-actions") {
         // <-- ADD THIS BLOCK
         await handleST.handleSystemActionsAnalysis_ST();
@@ -169,6 +170,85 @@ async function handleGenerate() {
     }
 }
 
+const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
+const OLLAMA_MODEL = "llama3.1:latest";
+const GROQ_URL = "https://matt-groq.data2int.com/api/groq/chat";
+const GROQ_MODEL = "llama-3.1-8b-instant";
+const MAX_CONTEXT_LENGTH = 15000;
+
+async function fetchOllama(systemPrompt, userContext, analysisType) {
+    let userPrompt = userContext;
+    let truncatedNote = "";
+
+    if (userPrompt.length > MAX_CONTEXT_LENGTH) {
+        userPrompt = userPrompt.substring(0, MAX_CONTEXT_LENGTH);
+        truncatedNote = `(Note: Analysis based on the first ${MAX_CONTEXT_LENGTH} characters.)`;
+    }
+
+    const fullPrompt = `${systemPrompt}\n\n${userPrompt}\n\n${truncatedNote}`;
+    const response = await fetch(OLLAMA_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            model: OLLAMA_MODEL,
+            prompt: fullPrompt,
+            stream: false,
+            format: "json",
+            options: { num_ctx: 32768 }
+        })
+    });
+    
+    if (!response.ok) {
+        throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log(`Raw AI Response ${analysisType}:`, data.response); // Log raw response
+    return JSON.parse(data.response);
+}
+
+
+async function fetchGroq(systemPrompt, userContext, analysisType) {
+    const messages = [
+            {"role": "system", "content": `${systemPrompt}`},
+            {"role": "user", "content": `${userContext}`}
+        ]
+
+        const response = await fetch(GROQ_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                model: GROQ_MODEL, 
+                messages: messages, 
+                stream: false, 
+                response_format: { type: "json_object" }
+            })
+        });
+
+        if (!response.ok) {
+            let errorBody = `API error ${response.status}`;
+            try { errorBody += `: ${await response.text()}`; } catch (e) {}
+            throw new Error(errorBody);
+        }
+        
+        const data = await response.json();
+        console.log(`Raw AI Response ${analysisType}:`, data.response); // Log raw response
+        return JSON.parse(data.choices[0].message.content);
+}
+
+
+async function fetchLLM(provider, systemPrompt, userContext, analysisType) {
+    try {
+        if (provider === "ollama") {
+            return await fetchOllama(systemPrompt, userContext, analysisType);
+        } else if (provider === "groq") {
+            return await fetchGroq(systemPrompt, userContext, analysisType);
+        }
+    } catch (error) {
+        console.error(`Error calling ${provider}:`, error);
+        throw error;
+    }
+}
 
 
 /**
@@ -415,5 +495,8 @@ export {
     handleGenerate,
     enrichN8nGoal,
     applyParetoAnalysisJS,
-    handleWebSocketMessage
+    handleWebSocketMessage,
+    fetchOllama,
+    fetchGroq,
+    fetchLLM
 }
