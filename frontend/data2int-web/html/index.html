@@ -87,7 +87,11 @@
 
         #login.active,
         #signup.active,
-        #emailVerification.active {
+        #emailVerification.active,
+        #emailVerifiedSuccess.active,  /* <-- ADD THIS LINE */
+        #emailVerifiedAlready.active,  /* <-- ADD THIS LINE */
+        #passwordResetRequest.active,  /* <-- ADD THIS LINE */
+        #passwordResetUpdate.active {  /* <-- ADD THIS LINE */
             display: flex;
             /* Centered pages */
         }
@@ -202,6 +206,43 @@
 
         .btn-tertiary:hover {
             color: #fff;
+        }
+
+        /* --- NEW: Button for Use Sample --- */
+        .btn-sample {
+            padding: 0.25rem 0.75rem; /* Small padding */
+            font-size: 0.75rem;        /* Small text */
+            border-radius: 0.5rem;     /* Matches .btn */
+            font-weight: 600;          /* Matches .btn */
+            cursor: pointer;
+            transition: all .2s;
+            text-align: center;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            /* --- The New Prominent Style --- */
+            background-color: #10B981; [cite_start]/* Solid Success Green [cite: 34] */
+            color: white;
+            border: 1px solid #10B981;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .btn-sample:hover {
+            background-color: #059669; [cite_start]/* Darker Green on hover [cite: 35] */
+            border-color: #047857;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Style for when it's loaded */
+        .btn-sample:disabled {
+            background-color: rgba(5, 150, 105, 0.8); [cite_start]/* Connected Green [cite: 10] */
+            color: #a7f3d0;
+            border-color: transparent;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
 
         /* --- Forms & Inputs --- */
@@ -2097,7 +2138,7 @@
                 <div class="flex justify-between items-center mb-4">
                 <h2 class="text-3xl font-bold">Manage</h2>
                 <button id="closeBulkModalBtn" class="text-2xl font-bold p-2 leading-none hover:text-white/70">&times;</button>
-        </div>
+            </div>
         
         <div class="space-y-4">
             <p>Select an action to apply to all <strong id="bulkUserCount">0</strong> selected users.</p>
@@ -2107,6 +2148,8 @@
                     <option value="">-- Select an action --</option>
                     <option value="upgrade-to-premium">Upgrade to Premium</option>
                     <option value="downgrade-to-basic">Downgrade to Basic</option>
+                    <option value="disable-users">Disable Users</option>
+                    <option value="delete-users">Delete Users</option>
                 </select>
             </div>
             <div id="bulkModalMessage" class="hidden"></div>
@@ -2405,6 +2448,7 @@
                     <div class="text-center mt-6">
                         <p class="text-gray-300">Don't have an account?</p>
                         <button class="btn-tertiary nav-link" data-page="signup">Create Account</button>
+                        <button class="btn-tertiary nav-link text-sm mt-2" data-page="passwordResetRequest">Forgot Password?</button>
                     </div>
                 </div>
             </div>
@@ -2847,6 +2891,81 @@
         </div>
     </div>
 
+    </div>
+
+    <div id="emailVerifiedSuccess" class="page flex-col items-center justify-center min-h-[80vh]">
+            <div class="w-full max-w-md">
+                <div class="glass-container text-center">
+                    <h2 class="text-3xl font-bold mb-6 text-white">✅ Email Verified!</h2>
+                    <p class="text-white/80 mb-6">
+                        Thank you! Your email has been successfully verified. You can now log in to your account.
+                    </p>
+                    <div class="text-center">
+                        <button class="btn btn-primary nav-link" data-page="login">Proceed to Login</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="emailVerifiedAlready" class="page flex-col items-center justify-center min-h-[80vh]">
+            <div class="w-full max-w-md">
+                <div class="glass-container text-center">
+                    <h2 class="text-3xl font-bold mb-6 text-white">👍 Already Verified</h2>
+                    <p class="text-white/80 mb-6">
+                        It looks like your email has already been verified. You're all set!
+                    </p>
+                    <div class="text-center">
+                        <button class="btn btn-primary nav-link" data-page="login">Return to Login</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="passwordResetRequest" class="page flex-col items-center justify-center min-h-[80vh]">
+            <div class="w-full max-w-md">
+                <div class="glass-container">
+                    <h2 class="text-3xl font-bold mb-6 text-center text-white">Reset Password</h2>
+                    <p class="text-white/80 mb-6 text-center">Enter your email address and we will send you a link to reset your password.</p>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="passwordResetEmail" class="block text-sm font-medium text-gray-200 mb-2">Email</label>
+                            <input type="email" id="passwordResetEmail" class="input-field" placeholder="Enter your email" required>
+                        </div>
+                        <button id="passwordResetRequestBtn" class="btn btn-primary w-full">
+                            <span id="passwordResetRequestBtnText">Send Reset Link</span>
+                            <span id="passwordResetRequestSpinner" class="loading-spinner hidden ml-2"></span>
+                        </button>
+                        <div id="passwordResetRequestMessage" class="hidden"></div>
+                    </div>
+                    <div class="text-center mt-6">
+                        <button class="btn-tertiary nav-link" data-page="login">Back to Login</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="passwordResetUpdate" class="page flex-col items-center justify-center min-h-[80vh]">
+            <div class="w-full max-w-md">
+                <div class="glass-container">
+                    <h2 class="text-3xl font-bold mb-6 text-center text-white">Create New Password</h2>
+                    <p class="text-white/80 mb-6 text-center">Enter your new password below. You will be logged out after completion.</p>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="passwordUpdatePassword" class="block text-sm font-medium text-gray-200 mb-2">New Password</label>
+                            <input type="password" id="passwordUpdatePassword" class="input-field" placeholder="Create a new password" required>
+                        </div>
+                        <div>
+                            <label for="passwordUpdateConfirmPassword" class="block text-sm font-medium text-gray-200 mb-2">Confirm New Password</label>
+                            <input type="password" id="passwordUpdateConfirmPassword" class="input-field" placeholder="Confirm your new password" required>
+                        </div>
+                        <button id="passwordUpdateBtn" class="btn btn-primary w-full">
+                            <span id="passwordUpdateBtnText">Update Password</span>
+                            <span id="passwordUpdateSpinner" class="loading-spinner hidden ml-2"></span>
+                        </button>
+                        <div id="passwordUpdateMessage" class="hidden"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     <footer class="mt-auto py-8">
         <div class="container mx-auto text-center text-white/70">
             <div class="flex justify-center space-x-6 mb-4">
@@ -3138,6 +3257,328 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // --- NEW HELPER: Fetches a sample file and returns a File object ---
+    async function fetchFileAsObject(url) {
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
+            }
+            const blob = await response.blob();
+            const fileName = url.substring(url.lastIndexOf('/') + 1);
+            return new File([blob], fileName, { type: blob.type });
+        } catch (error) {
+            console.error("Error fetching sample file:", error);
+            return null; // Return null on failure
+        }
+    }
+
+    // --- NEW MASTER HANDLER: For all "Use Sample" buttons (v5 - Preload Only) ---
+    async function handleUseSampleClick(e) {
+        const button = e.currentTarget;
+        const templateId = button.dataset.templateId;
+        if (!templateId) return;
+
+        // Set loading state
+        const originalText = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = `<span class="loading-spinner" style="width: 12px; height: 12px; margin-right: 5px;"></span> Loading...`;
+        
+        // --- THIS IS THE NEW FLAG ---
+        window.isSampleModeActive = false; // Reset flag at start
+        
+        let dataFile, contextFile, dataText, contextText;
+
+        // --- Helper logic to build preview (inline) ---
+        const buildPreview = (csvText) => {
+            if (!csvText) return '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Sample file is empty.</td></tr></tbody>';
+            const lines = csvText.split(/[\r\n]+/).filter(Boolean);
+            if (lines.length < 1) return '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">No data in sample file.</td></tr></tbody>';
+            
+            const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+            if (headers.length === 0) return '<tbody><tr><td class="p-4 text-center text-red-400" colspan="100%">Could not parse headers from sample file.</td></tr></tbody>';
+
+            let tableHtml = '<thead class="bg-white/10 text-xs uppercase"><tr>';
+            headers.forEach(h => { tableHtml += `<th class="px-4 py-2">${h}</th>`; });
+            tableHtml += '</tr></thead><tbody>';
+
+            const rows = lines.slice(1, 6); // Get up to 5 data rows
+            if (rows.length === 0) {
+                 tableHtml += `<tr><td class="p-4 text-center text-white/60" colspan="${headers.length}">No data rows found in sample.</td></tr>`;
+            } else {
+                rows.forEach((line, rowIndex) => {
+                    const values = line.split(',');
+                    tableHtml += `<tr class="border-t border-white/10 ${rowIndex % 2 === 0 ? 'bg-white/5' : ''}">`;
+                    headers.forEach((_, cellIndex) => {
+                        const val = values[cellIndex] ? values[cellIndex].trim().replace(/^"|"$/g, '') : '';
+                        tableHtml += `<td class="px-4 py-2 whitespace-nowrap">${val}</td>`;
+                    });
+                    tableHtml += '</tr>';
+                });
+            }
+            tableHtml += '</tbody>';
+            return tableHtml;
+        };
+
+        try {
+            switch (templateId) {
+                
+                case "descriptive-analysis":
+                    // 1. Fetch files
+                    dataFile = await fetchFileAsObject('data-files/descriptive/descriptive-sample-data.csv');
+                    contextFile = await fetchFileAsObject('data-files/descriptive/descriptive-sample-doc.txt');
+                    if (!dataFile || !contextFile) throw new Error("Sample file(s) failed to load.");
+                                        
+                    // 2. Read text content
+                    dataText = await dataFile.text();
+                    contextText = await contextFile.text();
+
+                    // 3. Update UI
+                    $("descriptiveFileLabel").querySelector(".file-name").textContent = dataFile.name;
+                    $("descriptiveFileLabel").classList.add("has-file");
+                    $("descriptivePreviewTable").innerHTML = buildPreview(dataText); // Use real data
+                    $("descriptiveDataPreview").classList.remove("hidden");
+                    $("descriptiveContextText").value = contextText;
+                    $("textInput").checked = true; // Select the text input radio
+                    $("docUpload").checked = false;
+                    $("descriptiveContextTextArea").classList.remove("hidden");
+                    $("descriptiveContextFileArea").classList.add("hidden");
+                    break;
+                
+                case "predictive-analysis":
+                    dataFile = await fetchFileAsObject('data-files/predictive/predictive-sample-data.csv');
+                    if (!dataFile) throw new Error("Sample data file failed to load.");
+
+                    dataText = await dataFile.text();
+                    const predHeaders = dataText.split(/[\r\n]+/)[0].split(',').map(h => h.trim());
+
+                    // 1. Update file label
+                    $("predictiveFileLabel").querySelector(".file-name").textContent = dataFile.name;
+                    $("predictiveFileLabel").classList.add("has-file");
+
+                    // 2. Update assumed date column
+                    $("assumedDateColName").textContent = predHeaders[0] || "N/A";
+
+                    // 3. Manually populate dropdowns
+                    const targetSelect = $("predictiveTargetColumn");
+                    if (targetSelect) {
+                        targetSelect.innerHTML = ""; // Clear
+                        predHeaders.slice(1).forEach(h => { // Add all headers except the first one
+                            targetSelect.add(new Option(h, h));
+                        });
+                        targetSelect.value = "Revenue"; // Select sample default
+                        targetSelect.disabled = false;
+                    }
+                    
+                    // 4. Show the preview table
+                    $("predictivePreviewTable").innerHTML = buildPreview(dataText);
+                    $("predictiveDataPreview").classList.remove("hidden");
+                    break;
+
+                case "prescriptive-analysis":
+                    // 1. Fetch files
+                    dataFile = await fetchFileAsObject('data-files/prescriptive/prescriptive-sample-data.csv');
+                    contextFile = await fetchFileAsObject('data-files/prescriptive/prescriptive-sample-doc.txt');
+                    if (!dataFile || !contextFile) throw new Error("Sample file(s) failed to load.");
+                    
+                    // 2. Read text content
+                    dataText = await dataFile.text();
+                    contextText = await contextFile.text();
+
+                    // 3. Update UI
+                    $("prescriptiveFileLabel").querySelector(".file-name").textContent = dataFile.name;
+                    $("prescriptiveFileLabel").classList.add("has-file");
+                    $("prescriptivePreviewTable").innerHTML = buildPreview(dataText);
+                    $("prescriptiveDataPreview").classList.remove("hidden");
+                    $("prescriptiveGoalText").value = contextText;
+                    $("prescriptiveInputTextToggle").checked = true; // Select text input
+                    $("prescriptiveInputFileToggle").checked = false;
+                    $("prescriptiveTextInputArea").classList.remove("hidden");
+                    $("prescriptiveFileInputArea").classList.add("hidden");
+                    break;
+
+                case "visualization":
+                    // 1. Fetch files
+                    dataFile = await fetchFileAsObject('data-files/visualization/visualization-sample.csv');
+                    contextFile = await fetchFileAsObject('data-files/visualization/visualization-sample-doc.txt');
+                    if (!dataFile || !contextFile) throw new Error("Sample file(s) failed to load.");
+                    
+                    // 2. Read text content
+                    dataText = await dataFile.text();
+                    contextText = await contextFile.text();
+
+                    // 3. Update UI
+                    $("vizFileLabel").querySelector(".file-name").textContent = dataFile.name;
+                    $("vizFileLabel").classList.add("has-file");
+                    $("vizPreviewTable").innerHTML = buildPreview(dataText);
+                    $("vizDataPreview").classList.remove("hidden");
+                    $("vizRequestText").value = contextText;
+                    $("vizInputTextToggle").checked = true; // Select text input
+                    $("vizInputFileToggle").checked = false;
+                    $("vizTextInputArea").classList.remove("hidden");
+                    $("vizFileInputArea").classList.add("hidden");
+                    break;
+
+                case "regression-analysis":
+    // 1. Fetch files
+    dataFile = await fetchFileAsObject('data-files/regression/regression-sample.csv');
+    contextFile = await fetchFileAsObject('data-files/regression/regression-sample-doc.txt');
+    if (!dataFile || !contextFile) throw new Error("Sample file(s) failed to load.");
+    
+    // 2. Read text content
+    dataText = await dataFile.text();
+    contextText = await contextFile.text();
+    
+    // 3. Update UI (File Label, Preview, Context Text)
+    $("regressionFileLabel").querySelector(".file-name").textContent = dataFile.name;
+    $("regressionFileLabel").classList.add("has-file");
+    $("regressionPreviewTable").innerHTML = buildPreview(dataText);
+    $("regressionDataPreview").classList.remove("hidden");
+    $("regressionContextText").value = contextText;
+    $("textInput").checked = true; // Select text input
+    $("docUpload").checked = false;
+    $("regressionContextTextArea").classList.remove("hidden");
+    $("regressionContextFileArea").classList.add("hidden");
+
+    // 4. Update dropdowns - Use exact column names: marketing_spend,product_price,customer_rating,region,sales_revenue
+    const regHeaders = ["marketing_spend", "product_price", "customer_rating", "region", "sales_revenue"];
+    console.log("Using exact column names:", regHeaders); // Debug log
+    
+    const regDepSelect = $("dependentVar");
+    const regIndepContainer = $("independentVarsContainer");
+    
+    regDepSelect.innerHTML = ""; // Clear
+    regIndepContainer.innerHTML = ""; // Clear
+    
+    // Add all columns to both dependent and independent options
+    regHeaders.forEach(h => {
+        regDepSelect.add(new Option(h, h));
+        regIndepContainer.innerHTML += `
+            <label class="flex items-center space-x-2"><input type="checkbox" class="method-checkbox independent-var-checkbox" value="${h}"><span>${h}</span></label>
+        `;
+    });
+    
+    // Set defaults based on what's actually selected in your UI
+    regDepSelect.value = "marketing_spend"; // Match the actual selection
+    regDepSelect.disabled = false;
+    
+    // Check the correct boxes based on actual UI selections
+    regIndepContainer.querySelectorAll('.independent-var-checkbox').forEach(cb => {
+        // Check these specific columns that are selected in your screenshot
+        if (cb.value === "product_price" || cb.value === "customer_rating" || 
+            cb.value === "region" || cb.value === "sales_revenue") {
+            cb.checked = true;
+        }
+        // Disable the dependent variable checkbox
+        if (cb.value === "marketing_spend") {
+            cb.disabled = true;
+        }
+    });
+    
+    currentRegressionRowCount = dataText.split(/[\r\n]+/).filter(Boolean).length - 1;
+    break;
+                    
+                case "pls-analysis":
+                    // 1. Fetch file
+                    dataFile = await fetchFileAsObject('data-files/pls/pls-sample-data.csv');
+                    if (!dataFile) throw new Error("Sample data file failed to load.");
+                    
+                    dataText = await dataFile.text();
+                    
+                    // 2. Update UI
+                    $("plsFileLabel").querySelector(".file-name").textContent = dataFile.name;
+                    $("plsFileLabel").classList.add("has-file");
+                    $("plsPreviewTable").innerHTML = buildPreview(dataText);
+                    $("plsDataPreview").classList.remove("hidden");
+                    $("plsInputFileToggle").checked = true; // Select file input
+                    $("plsInputTextToggle").checked = false;
+                    $("plsFileUploadArea").classList.remove("hidden");
+                    $("plsTextInputArea").classList.add("hidden");
+
+                    // 3. Update syntax boxes
+                    $("plsModelTemplate").disabled = true;
+                    $("plsModelTemplate").innerHTML = `<option value="custom">Custom Syntax</option>`;
+                    $("plsModelTemplate").value = "custom";
+                    $("plsMeasurementSyntax").value = "Quality =~ qual1 + qual2 + qual3\nSatisfaction =~ sat1 + sat2 + sat3\nLoyalty =~ loy1 + loy2 + loy3";
+                    $("plsStructuralSyntax").value = "Satisfaction ~ Quality\nLoyalty ~ Satisfaction + Quality";
+                    break;
+
+                case "sem-analysis":
+    // 1. Fetch file
+    dataFile = await fetchFileAsObject('data-files/sem/sem-sample-data.csv');
+    if (!dataFile) throw new Error("Sample data file failed to load.");
+
+    dataText = await dataFile.text();
+
+    // 2. Update UI
+    $("semFileLabel").querySelector(".file-name").textContent = dataFile.name;
+    $("semFileLabel").classList.add("has-file");
+    $("semPreviewTable").innerHTML = buildPreview(dataText);
+    $("semDataPreview").classList.remove("hidden");
+    $("semInputFileToggle").checked = true; // Select file input
+    $("semInputTextToggle").checked = false;
+    $("semFileUploadArea").classList.remove("hidden");
+    $("semTextInputArea").classList.add("hidden");
+
+    // 3. Update syntax boxes with actual column names
+    // Column names: Date,Year,Month,Quarter,Ad_Spend_USD,Ad_Spend_Level,Brand_Awareness_Pct,Brand_Awareness_Level,
+    // Online_Sales_USD,Retail_Sales_USD,Total_Sales_USD,New_Customers_Count,Profit_USD,ROI_Pct,
+    // Customer_Acquisition_Cost,Sales_Per_Customer,Online_Sales_Ratio
+    
+    $("semModelTemplate").disabled = true;
+    $("semModelTemplate").innerHTML = `<option value="custom">Custom Syntax</option>`;
+    $("semModelTemplate").value = "custom";
+    
+    // Set measurement syntax using actual column names
+    $("semMeasurementSyntax").value = `Marketing_Performance =~ Ad_Spend_USD + Brand_Awareness_Pct
+Sales_Performance =~ Online_Sales_USD + Retail_Sales_USD + Total_Sales_USD
+Customer_Metrics =~ New_Customers_Count + Sales_Per_Customer`;
+
+    // Set structural syntax using actual column names and latent variables
+    $("semStructuralSyntax").value = `Sales_Performance ~ Marketing_Performance
+Customer_Metrics ~ Marketing_Performance + Sales_Performance
+Profit_USD ~ Sales_Performance + Customer_Metrics`;
+    break;
+
+                case "dematel-analysis":
+                    // 1. Fetch file and text
+                    contextFile = await fetchFileAsObject('data-files/dematel/dematel-sample-doc.txt');
+                    if (!contextFile) throw new Error("Sample context file failed to load.");
+
+                    contextText = await contextFile.text();
+
+                    // 2. Update UI
+                    $("dematelFileLabel").querySelector(".file-name").textContent = contextFile.name;
+                    $("dematelFileLabel").classList.add("has-file");
+                    $("dematelContent").value = contextText;
+                    $("dematelFilePreview").textContent = contextText.split('\n').slice(0, 10).join('\n');
+                    $("dematelFilePreviewContainer").classList.remove("hidden");
+                    $("dematelInputTextToggle").checked = true; // Select text input
+                    $("dematelInputFileToggle").checked = false;
+                    $("dematelTextInputArea").classList.remove("hidden");
+                    $("dematelFileUploadArea").classList.add("hidden");
+                    break;
+            }
+
+            // --- THIS IS THE KEY CHANGE ---
+            // DO NOT call handleGenerate().
+            // Instead, set the flag and update the button text.
+            window.isSampleModeActive = true;
+            button.innerHTML = `✓ Sample Loaded!`;
+            // We leave it disabled so the user can't click it again.
+            // The user will now click the main "Generate Analysis" button.
+
+        } catch (error) {
+            console.error("Error in handleUseSampleClick:", error);
+            alert(`Failed to load sample data: ${error.message}`);
+            window.isSampleModeActive = false; // Clear flag on error
+            // Restore button on error
+            button.disabled = false;
+            button.innerHTML = originalText;
+        } 
+        // NO finally block. We want the button to *stay* in its new state.
+    }
+
    // =========================================================
     // ===== REVISED EXPORT FUNCTIONS (Using html2canvas) =====
     // =========================================================
@@ -3342,11 +3783,31 @@ document.addEventListener("DOMContentLoaded", () => {
     // Initialize WebSocket connection
     initializeWebSocket();
 
-    // --- Session Management ---
+    // --- Session Management (With Email Confirmation Logic) ---
     supabase.auth.onAuthStateChange((event, session) => {
         if (event === "SIGNED_IN") {
             userLoggedIn = true;
             currentUser = session.user;
+
+            // --- START OF NEW CODE ---
+            // Check if this SIGNED_IN event was from an email confirmation hash
+            const hash = window.location.hash;
+            if (hash.includes("type=signup") && hash.includes("access_token")) {
+                // This was a new signup confirmation.
+                // Clear the messy token from the URL bar
+                window.history.replaceState(null, null, ' ');
+                // Navigate to the home page (which will happen anyway)
+                navigateTo("home");
+            } else if (hash.includes("type=recovery") && hash.includes("access_token")) {
+                // This was a password recovery.
+                 // Clear the hash from the URL bar
+                window.history.replaceState(null, null, ' ');
+                // TODO: You could navigate to a "change password" page here
+                // For now, we'll just send them to the home page, logged in.
+                navigateTo("home");
+            }
+            // --- END OF NEW CODE ---
+
         } else if (event === "SIGNED_OUT") {
             userLoggedIn = false;
             currentUser = null;
@@ -3691,7 +4152,15 @@ function setupAdminTabsListeners() {
     });
 }
 
+// =========================================================
+// ===== ADMIN DASHBOARD - USERS TAB (COMPLETE) =====
+// =========================================================
+
+/**
+ * Builds the Users tab UI, including the new "Create New User" button.
+ */
 async function renderViewDatabaseTab() {
+    console.log("DEBUG: renderViewDatabaseTab() called");
     const usersPanel = $("usersPanel");
     if (!usersPanel) {
         console.error("Admin Dashboard: usersPanel not found.");
@@ -3722,13 +4191,19 @@ async function renderViewDatabaseTab() {
                 </div>
                 <div class="flex-shrink-0">
                     <button id="adminManageBtn" class="btn btn-primary w-full md:w-auto" disabled>
-                        Manage
+                         Manage
+                    </button>
+                </div>
+                <div class="flex-shrink-0">
+                    <button id="adminCreateUserBtn" class="btn btn-secondary w-full md:w-auto">
+                         Create New User
                     </button>
                 </div>
             </div>
 
             <div id="adminUserTableContainer" class="overflow-x-auto">
-                </div>
+                <p class="text-white/70 text-center p-10">Initializing users tab...</p>
+            </div>
         </div>
     `;
 
@@ -3739,6 +4214,7 @@ async function renderViewDatabaseTab() {
 
     let searchTimeout;
     searchInput.addEventListener('input', () => {
+        console.log("DEBUG: Search input changed");
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
             fetchAndRenderUsers(1); // Reset to page 1
@@ -3746,24 +4222,35 @@ async function renderViewDatabaseTab() {
     });
 
     tierFilter.addEventListener('change', () => {
+        console.log("DEBUG: Tier filter changed");
         fetchAndRenderUsers(1); // Reset to page 1
     });
 
     sortSelect.addEventListener('change', () => {
+        console.log("DEBUG: Sort select changed");
         fetchAndRenderUsers(1); // Reset to page 1
+    });
+
+    // --- *** NEW LISTENER FOR THE CREATE BUTTON *** ---
+    $("adminCreateUserBtn").addEventListener('click', () => {
+        console.log("DEBUG: 'Create New User' button clicked");
+        openCreateUserModal();
     });
 
     // 3. Initial data load
     await fetchAndRenderUsers();
 }
 
+/**
+ * Renders the user table and wires up the "Manage" button logic.
+ */
 function renderUserTable(container, users, pagination) {
+    console.log("DEBUG: renderUserTable() called");
     if (!Array.isArray(users) || users.length === 0) {
         container.innerHTML = `<p class="text-white/70 text-center p-10">No users found matching your criteria.</p>`;
         return;
     }
 
-    // --- HTML TABLE: "Actions" column is REMOVED ---
     let tableHtml = `
         <table class="w-full text-left styled-table">
             <thead>
@@ -3792,7 +4279,7 @@ function renderUserTable(container, users, pagination) {
                 <td class="p-3">${user.tier || 'N/A'}</td>
                 <td class="p-3 text-sm">${user.created_at ? new Date(user.created_at).toLocaleString() : 'N/A'}</td>
             </tr>
-        `; // The "Manage" button <td> is GONE
+        `;
     });
 
     tableHtml += `</tbody></table>`;
@@ -3813,18 +4300,15 @@ function renderUserTable(container, users, pagination) {
 
     container.innerHTML = tableHtml;
 
-    // --- NEW: "SMART BUTTON" LOGIC ---
-    const manageBtn = $("adminManageBtn"); // The button in the toolbar
+    // --- "SMART BUTTON" LOGIC ---
+    const manageBtn = $("adminManageBtn"); 
     const allUserCheckboxes = container.querySelectorAll('.user-checkbox');
     const selectAllCheckbox = container.querySelector('#selectAllUsers');
 
-    /**
-     * This function checks how many boxes are ticked and changes
-     * the text and click action of the main "Manage" button.
-     */
     function updateManageButtonState() {
         const checkedBoxes = container.querySelectorAll('.user-checkbox:checked');
         const checkedCount = checkedBoxes.length;
+        console.log(`DEBUG: updateManageButtonState() - ${checkedCount} boxes checked`);
 
         if (checkedCount === 0) {
             // 0 selected: Disable button
@@ -3832,19 +4316,20 @@ function renderUserTable(container, users, pagination) {
             manageBtn.textContent = "Manage";
             manageBtn.onclick = null;
         } else if (checkedCount === 1) {
-            // 1 selected: Set to "Manage 1 User" and open singular modal
+            // 1 selected: Set to "Manage" and open singular modal
             manageBtn.disabled = false;
             manageBtn.textContent = "Manage";
             manageBtn.onclick = () => {
                 const userId = checkedBoxes[0].dataset.id;
+                console.log("DEBUG: Manage button (single) clicked for userId:", userId);
                 openUserManagementModal(userId);
             };
         } else {
-            // 2+ selected: Set to "Bulk Actions (x)" and open bulk modal
+            // 2+ selected: Set to "Manage (x)" and open bulk modal
             manageBtn.disabled = false;
-            manageBtn.textContent = `Manage`;
+            manageBtn.textContent = `Manage (${checkedCount})`; // Show count
             manageBtn.onclick = () => {
-                // This is the logic we moved from renderViewDatabaseTab
+                console.log("DEBUG: Manage button (bulk) clicked");
                 const modal = $("bulkActionModal");
                 const countSpan = $("bulkUserCount");
                 const confirmBtn = $("modalConfirmBulkBtn");
@@ -3855,7 +4340,7 @@ function renderUserTable(container, users, pagination) {
                 const userIds = Array.from(checkedBoxes).map(cb => cb.dataset.id);
 
                 countSpan.textContent = userIds.length;
-                actionSelect.value = "";
+                actionSelect.value = ""; // Reset dropdown
                 messageEl.classList.add("hidden");
                 modal.classList.remove("hidden");
 
@@ -3867,23 +4352,18 @@ function renderUserTable(container, users, pagination) {
                         showMessage("bulkModalMessage", "Please select an action.", "error");
                         return;
                     }
-                    
-                    await handleBulkUserUpdate(action, userIds);
-                    
-                    if (!messageEl.classList.contains("error-message")) {
-                        await fetchAndRenderUsers(1); 
-                        modal.classList.add("hidden"); 
-                    }
+                    console.log("DEBUG: Bulk 'Apply Action' clicked for action:", action);
+                    await handleBulkUserUpdate(action, userIds); 
                 };
             };
         }
         
-        // Update "Select All" state
         selectAllCheckbox.checked = checkedCount > 0 && checkedCount === allUserCheckboxes.length;
     }
 
-    // --- ADD LISTENERS FOR ALL CHECKBOXES ---
+    // Add listeners for all checkboxes
     selectAllCheckbox.addEventListener('change', (e) => {
+        console.log("DEBUG: 'Select All' checkbox changed");
         const isChecked = e.target.checked;
         allUserCheckboxes.forEach(cb => cb.checked = isChecked);
         updateManageButtonState();
@@ -3897,12 +4377,10 @@ function renderUserTable(container, users, pagination) {
     container.querySelectorAll('.pagination-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const newPage = e.target.dataset.page;
+            console.log("DEBUG: Pagination button clicked for page:", newPage);
             fetchAndRenderUsers(parseInt(newPage));
         });
     });
-
-    // --- This listener block is no longer needed, as the buttons are gone ---
-    // container.querySelectorAll('.admin-manage-user-btn')...
     
     // Set the initial state of the button (disabled)
     updateManageButtonState();
@@ -3910,12 +4388,11 @@ function renderUserTable(container, users, pagination) {
 
 /**
  * Fetches user data from the API and calls the renderer.
- * This is now a standalone function.
  */
 async function fetchAndRenderUsers(page = 1, limit = 20) {
+    console.log("DEBUG: fetchAndRenderUsers() called for page:", page);
     const tableContainer = $("adminUserTableContainer");
     
-    // Show loading state
     tableContainer.innerHTML = `
         <div class="flex items-center justify-center p-10">
             <div class="loading-spinner mr-3"></div>
@@ -3934,7 +4411,6 @@ async function fetchAndRenderUsers(page = 1, limit = 20) {
         const sortByValue = $("adminSortBy").value;
         const sortOrderValue = 'desc';
 
-        // Build the URL with query parameters
         const params = new URLSearchParams({
             page: page,
             limit: limit,
@@ -3945,6 +4421,7 @@ async function fetchAndRenderUsers(page = 1, limit = 20) {
         if (tierValue) params.append('tier', tierValue);
 
         const url = `${SUPABASE_URL}/functions/v1/admin-users-secure/users?${params.toString()}`;
+        console.log("DEBUG: Fetching URL:", url);
         
         const response = await fetch(url, {
             method: 'GET',
@@ -3958,8 +4435,7 @@ async function fetchAndRenderUsers(page = 1, limit = 20) {
         if (!response.ok) {
             throw new Error(data.error || `Failed to fetch users: ${response.statusText}`);
         }
-
-        // Render the table with the new data
+        console.log("DEBUG: fetchAndRenderUsers() success, rendering table...");
         renderUserTable(tableContainer, data.data, data.pagination);
 
     } catch (error) {
@@ -3973,9 +4449,11 @@ async function fetchAndRenderUsers(page = 1, limit = 20) {
 }
 
 /**
- * NEW: Fetches a single user's data and opens the edit modal.
+ * UPDATED: Fetches a single user's data and opens the edit modal.
+ * Now includes the "Delete User" button.
  */
 async function openUserManagementModal(userId) {
+    console.log("DEBUG: openUserManagementModal() called for userId:", userId);
     const modal = $("userManagementModal");
     const modalContent = $("userModalContent");
     const closeModalBtn = $("closeUserModalBtn");
@@ -3984,7 +4462,6 @@ async function openUserManagementModal(userId) {
     modal.classList.remove("hidden");
     modalContent.innerHTML = `<div class="flex items-center justify-center p-10"><div class="loading-spinner mr-3"></div><span class="text-white/80">Fetching user data...</span></div>`;
     
-    // Assign close button listener
     const closeModal = () => modal.classList.add("hidden");
     closeModalBtn.onclick = closeModal;
 
@@ -3993,8 +4470,9 @@ async function openUserManagementModal(userId) {
         if (sessionError) throw sessionError;
         if (!session) throw new Error("Not logged in");
 
-        // Fetch specific user data (GET /users/:id) [cite: 254-279]
         const url = `${SUPABASE_URL}/functions/v1/admin-users-secure/users/${userId}`;
+        console.log("DEBUG: Fetching single user data from:", url);
+        
         const response = await fetch(url, {
             method: 'GET',
             headers: {
@@ -4006,9 +4484,10 @@ async function openUserManagementModal(userId) {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Failed to fetch user");
         
-        const user = data.data; // The user object
+        const user = data.data; 
+        console.log("DEBUG: Successfully fetched user data, building modal HTML...");
 
-        // Populate modal with form
+        // *** THIS IS THE UPDATED HTML FOR THE MODAL ***
         modalContent.innerHTML = `
             <div class="space-y-4">
                 <div>
@@ -4035,27 +4514,37 @@ async function openUserManagementModal(userId) {
                 </div>
                 <div id="userModalMessage" class="hidden"></div>
                 <div class="flex justify-between items-center mt-6">
-                    <button id="modalDisableUserBtn" class="btn btn-danger" ${user.tier === 'admin' ? 'disabled' : ''}>Disable User</button>
+                    <div class="flex justify-end items-center mt-6 space-x-2">
+                    <button id="modalDeleteUserBtn" class="btn btn-danger" ${user.tier === 'admin' ? 'disabled' : ''}>Delete User</button>
+                    <button id="modalDisableUserBtn" class="btn btn-secondary" ${user.tier === 'admin' ? 'disabled' : ''}>Disable User</button>
                     <button id="modalUpdateUserBtn" class="btn btn-primary">Save Changes</button>
                 </div>
             </div>
         `;
 
-        // Add listeners for the new buttons *inside* the modal
+        // *** UPDATED LISTENERS ***
+        console.log("DEBUG: Attaching modal button listeners...");
         $("modalUpdateUserBtn").onclick = () => handleUserUpdate(user.id);
+        
         if (user.tier !== 'admin') {
             $("modalDisableUserBtn").onclick = () => handleUserDisable(user.id, user.email, closeModal);
+            // Add the new delete listener
+            $("modalDeleteUserBtn").onclick = () => handleUserDelete(user.id, user.auth_user_id, user.email, closeModal);
+        } else {
+            console.log("DEBUG: User is admin, disabling delete/disable buttons.");
         }
 
     } catch (error) {
+        console.error("Error in openUserManagementModal:", error);
         modalContent.innerHTML = `<div class="error-message">${error.message}</div>`;
     }
 }
 
 /**
- * NEW: Handles the PUT /users/:id request to update a user.
+ * Handles the PUT /users/:id request to update a user.
  */
 async function handleUserUpdate(userId) {
+    console.log("DEBUG: handleUserUpdate() called for userId:", userId);
     const messageEl = $("userModalMessage");
     const updateBtn = $("modalUpdateUserBtn");
     const originalBtnText = updateBtn.innerHTML;
@@ -4071,11 +4560,12 @@ async function handleUserUpdate(userId) {
         const updatedData = {
             first_name: $("modalUserFirstName").value,
             last_name: $("modalUserLastName").value,
-            email: $("modalUserEmail").value, // Added email
+            email: $("modalUserEmail").value,
             tier: $("modalUserTier").value
         };
+        console.log("DEBUG: Sending update data:", updatedData);
 
-        // Call PUT /users/:id [cite: 282-351]
+        // Call PUT /users/:id
         const url = `${SUPABASE_URL}/functions/v1/admin-users-secure/users/${userId}`;
         const response = await fetch(url, {
             method: 'PUT',
@@ -4089,10 +4579,12 @@ async function handleUserUpdate(userId) {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Failed to update user");
 
+        console.log("DEBUG: User update successful");
         showMessage("userModalMessage", "User updated successfully!", "success");
         await fetchAndRenderUsers(); // Refresh the main user table
 
     } catch (error) {
+        console.error("Error in handleUserUpdate:", error);
         showMessage("userModalMessage", error.message, "error");
     } finally {
         updateBtn.disabled = false;
@@ -4101,10 +4593,12 @@ async function handleUserUpdate(userId) {
 }
 
 /**
- * NEW: Handles the PUT /users/:id/disable request.
+ * Handles the PUT /users/:id/disable request.
  */
 async function handleUserDisable(userId, userEmail, closeModalCallback) {
+    console.log("DEBUG: handleUserDisable() called for userId:", userId);
     if (!confirm(`Are you sure you want to disable this user?\n\nEmail: ${userEmail}\nID: ${userId}\n\nThis action is reversible and does NOT delete data.`)) {
+        console.log("DEBUG: Disable cancelled by user.");
         return;
     }
 
@@ -4119,8 +4613,10 @@ async function handleUserDisable(userId, userEmail, closeModalCallback) {
         if (sessionError) throw sessionError;
         if (!session) throw new Error("Not logged in");
         
-        // Call PUT /users/:id/disable [cite: 354-419]
+        // Call PUT /users/:id/disable
         const url = `${SUPABASE_URL}/functions/v1/admin-users-secure/users/${userId}/disable`;
+        console.log("DEBUG: Calling disable endpoint:", url);
+        
         const response = await fetch(url, {
             method: 'PUT',
             headers: { 
@@ -4132,17 +4628,261 @@ async function handleUserDisable(userId, userEmail, closeModalCallback) {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Failed to disable user");
 
+        console.log("DEBUG: User disable successful");
         showMessage("userModalMessage", `User ${data.disabled_user?.email || ''} disabled successfully.`, "success");
         await fetchAndRenderUsers(); // Refresh the main user table
         setTimeout(closeModalCallback, 1500); // Close modal on success
 
     } catch (error) {
+        console.error("Error in handleUserDisable:", error);
         showMessage("userModalMessage", error.message, "error");
     } finally {
         disableBtn.disabled = false;
         disableBtn.innerHTML = originalBtnText;
     }
 }
+
+/**
+ * NEW: Handles the DELETE /users/:id request to permanently delete a user.
+ */
+async function handleUserDelete(userId, authUserId, userEmail, closeModalCallback) {
+    console.log("DEBUG: handleUserDelete() called for userId:", userId);
+    const warningMessage = `ARE YOU SURE you want to PERMANENTLY DELETE this user?\n\nEmail: ${userEmail}\nID: ${userId}\n\nThis action is IRREVERSIBLE and will delete their auth record and all data.`;
+    
+    if (!confirm(warningMessage)) {
+        console.log("DEBUG: Delete cancelled by user.");
+        return;
+    }
+
+    const messageEl = $("userModalMessage");
+    const deleteBtn = $("modalDeleteUserBtn");
+    const originalBtnText = deleteBtn.innerHTML;
+    deleteBtn.disabled = true;
+    deleteBtn.innerHTML = '<span class="loading-spinner mr-2"></span> Deleting...';
+
+    try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!session) throw new Error("Not logged in");
+
+        // Call DELETE /users/:id
+        const url = `${SUPABASE_URL}/functions/v1/admin-users-secure/users/${userId}`;
+        console.log("DEBUG: Calling DELETE endpoint:", url);
+        
+        const response = await fetch(url, {
+            method: 'DELETE',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}` 
+            }
+        });
+
+        const data = await response.json();
+
+        // --- THIS IS THE FIX ---
+        // We now check for 'data.details' to get the *real* error message
+        // from the server's catch block.
+        if (!response.ok) {
+            throw new Error(data.details || data.error || "Failed to delete user");
+        }
+        // --- END OF FIX ---
+
+        console.log("DEBUG: User delete successful");
+        showMessage("userModalMessage", "User permanently deleted.", "success");
+        await fetchAndRenderUsers(1); // Refresh the main user table
+        setTimeout(closeModalCallback, 1500); // Close modal on success
+
+    } catch (error) {
+        console.error("Error in handleUserDelete:", error);
+        // This will now show the *specific* server error
+        showMessage("userModalMessage", error.message, "error");
+    } finally {
+        deleteBtn.disabled = false;
+        deleteBtn.innerHTML = originalBtnText;
+    }
+}
+
+/**
+ * NEW: Opens the user modal in "Create" mode.
+ */
+function openCreateUserModal() {
+    console.log("DEBUG: openCreateUserModal() called");
+    const modal = $("userManagementModal");
+    const modalContent = $("userModalContent");
+    const closeModalBtn = $("closeUserModalBtn");
+    if (!modal || !modalContent || !closeModalBtn) return;
+
+    modal.classList.remove("hidden");
+    
+    // Populate modal with a blank form for creation
+    modalContent.innerHTML = `
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-200 mb-2">Email</label>
+                <input type="email" id="modalUserEmail" class="input-field" placeholder="new.user@example.com">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-200 mb-2">Password</label>
+                <input type="password" id="modalUserPassword" class="input-field" placeholder="Set a temporary password">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="modalUserFirstName" class="block text-sm font-medium text-gray-200 mb-2">First Name</label>
+                    <input type="text" id="modalUserFirstName" class="input-field" value="">
+                </div>
+                <div>
+                    <label for="modalUserLastName" class="block text-sm font-medium text-gray-200 mb-2">Last Name</label>
+                    <input type="text" id="modalUserLastName" class="input-field" value="">
+                </div>
+            </div>
+            <div>
+                <label for="modalUserTier" class="block text-sm font-medium text-gray-200 mb-2">User Tier</label>
+                <select id="modalUserTier" class="input-field">
+                    <option value="basic" selected>Basic</option>
+                    <option value="premium">Premium</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+            <div id="userModalMessage" class="hidden"></div>
+            <div class="flex justify-end items-center mt-6">
+                <button id="modalCreateUserBtn" class="btn btn-primary">Create User</button>
+            </div>
+        </div>
+    `;
+
+    // Assign listeners for this new modal state
+    console.log("DEBUG: Attaching 'Create User' modal listeners...");
+    closeModalBtn.onclick = () => modal.classList.add("hidden");
+    $("modalCreateUserBtn").onclick = () => handleUserCreate();
+}
+
+/**
+ * NEW: Handles the POST request to create a new user.
+ */
+async function handleUserCreate() {
+    console.log("DEBUG: handleUserCreate() called");
+    const messageEl = $("userModalMessage");
+    const createBtn = $("modalCreateUserBtn");
+    const originalBtnText = createBtn.innerHTML;
+    createBtn.disabled = true;
+    createBtn.innerHTML = '<span class="loading-spinner mr-2"></span> Creating...';
+
+    try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!session) throw new Error("Not logged in");
+
+        // Get data from modal fields
+        const userData = {
+            email: $("modalUserEmail").value,
+            password: $("modalUserPassword").value,
+            first_name: $("modalUserFirstName").value,
+            last_name: $("modalUserLastName").value,
+            tier: $("modalUserTier").value
+        };
+        console.log("DEBUG: Creating user with data:", userData);
+
+        if (!userData.email || !userData.password) {
+            throw new Error("Email and Password are required.");
+        }
+
+        // Calls the new POST /users endpoint
+        const url = `${SUPABASE_URL}/functions/v1/admin-users-secure/users`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify(userData)
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Failed to create user");
+
+        console.log("DEBUG: User creation successful");
+        showMessage("userModalMessage", "User created successfully!", "success");
+        await fetchAndRenderUsers(1); // Refresh the main user table
+        
+        setTimeout(() => {
+            $("userManagementModal").classList.add("hidden");
+        }, 1500);
+
+    } catch (error) {
+        console.error("Error in handleUserCreate:", error);
+        showMessage("userModalMessage", error.message, "error");
+    } finally {
+        createBtn.disabled = false;
+        createBtn.innerHTML = originalBtnText;
+    }
+}
+
+/**
+ * NEW: Handles bulk actions from the bulk action modal.
+ */
+async function handleBulkUserUpdate(action, userIds) {
+    console.log("DEBUG: handleBulkUserUpdate() called for action:", action);
+    const messageEl = $("bulkModalMessage");
+    const confirmBtn = $("modalConfirmBulkBtn");
+    
+    // Add a confirmation for the delete action
+    if (action === 'delete-users') {
+        if (!confirm(`Are you sure you want to PERMANENTLY DELETE ${userIds.length} users? This action cannot be undone.`)) {
+            console.log("DEBUG: Bulk delete cancelled by user.");
+            return;
+        }
+    }
+    
+    // Set loading state
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<span class="loading-spinner mr-2"></span> Processing...';
+    showMessage("bulkModalMessage", "Processing... Please wait.", "success");
+
+    try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!session) throw new Error("Not logged in");
+
+        // Calls the new 'bulk-update' endpoint
+        const url = `${SUPABASE_URL}/functions/v1/admin-users-secure/users/bulk-update`;
+        console.log("DEBUG: Calling bulk update endpoint:", url);
+        
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify({
+                action: action,
+                userIds: userIds
+            })
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Failed to perform bulk action");
+
+        console.log("DEBUG: Bulk update successful");
+        showMessage("bulkModalMessage", `Successfully processed ${data.count || 0} users. ${data.skipped_admins?.length || 0} admins were skipped.`, "success");
+        await fetchAndRenderUsers(1); // Refresh the main user table
+
+        // Automatically close the modal on success
+        setTimeout(() => {
+            $("bulkActionModal").classList.add("hidden");
+        }, 1500);
+
+    } catch (error) {
+        console.error("Error in handleBulkUserUpdate:", error);
+        showMessage("bulkModalMessage", error.message, "error");
+    } finally {
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = 'Apply Action';
+    }
+}
+
+// =========================================================
+// ===== END OF ADMIN DASHBOARD - USERS TAB =====
+// =========================================================
 
 // --- BEAUTIFUL FEEDBACK MODAL IMPLEMENTATION ---
 
@@ -5530,6 +6270,13 @@ async function handleContactSubmit() {
         } else {
             createDefaultLayout(template, rule);
         }
+
+        // --- NEW: Attach "Use Sample" button listeners ---
+        document.querySelectorAll(".btn-use-sample").forEach(btn => {
+            btn.removeEventListener("click", handleUseSampleClick); // Avoid duplicates
+            btn.addEventListener("click", handleUseSampleClick);
+        });
+
         navigateTo("templateDetail");
     }
 
@@ -6084,6 +6831,7 @@ async function handleContactSubmit() {
                                     <button type="button" id="regressionExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
                                     <a href="data-files/regression/regression-sample-doc.txt" download="Regression_Sample_Doc.txt" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .txt</a>
                                     <a href="data-files/regression/regression-sample.csv" download="Regression_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>
+                                    <button type="button" id="useRegressionSampleBtn" class="btn-sample btn-use-sample" data-template-id="regression-analysis">▶ Use Sample</button>
                                 </div>
                             </div>
 
@@ -6535,6 +7283,7 @@ Feb 1, "$52,000", "$5.2k", "15,500 visitors"
                     <div class="flex items-center space-x-2">
                         <button type="button" id="plsConfigExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
                         <a href="data-files/pls/pls-sample-data.csv" download="PLS_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>
+                        <button type="button" id="usePlsSampleBtn" class="btn-sample btn-use-sample" data-template-id="pls-analysis">▶ Use Sample</button>
                     </div>
                 </div>
 
@@ -7123,6 +7872,7 @@ Loyalty ~ Quality + Satisfaction`;
                                     <button type="button" id="descConfigExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
                                     <a href="data-files/descriptive/descriptive-sample-doc.txt" download="Descriptive_Sample_Doc.txt" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .txt</a>
                                     <a href="data-files/descriptive/descriptive-sample-data.csv" download="Descriptive_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>
+                                    <button type="button" id="useDescSampleBtn" class="btn-sample btn-use-sample" data-template-id="descriptive-analysis">▶ Use Sample</button>
                                 </div>
                             </div>
  
@@ -7423,6 +8173,7 @@ Q4_2023,16.9,325,4.8,145,West</div>
                                 <button type="button" id="prescriptiveExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
                                 <a href="data-files/prescriptive/prescriptive-sample-doc.txt" download="Prescriptive_Sample_Context.txt" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .txt</a>
                                 <a href="data-files/prescriptive/prescriptive-sample-data.csv" download="Prescriptive_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>
+                                <button type="button" id="usePrescriptiveSampleBtn" class="btn-sample btn-use-sample" data-template-id="prescriptive-analysis">▶ Use Sample</button>
                             </div>
                         </div>
 
@@ -7776,6 +8527,7 @@ CustomerID,Tenure_Months,Support_Tickets,Used_Feature_X,Churned<br>
             // Added the new .txt link
             '<a href="data-files/visualization/visualization-sample-doc.txt" download="Visualization_Sample_Doc.txt" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .txt</a>',
             '<a href="data-files/visualization/visualization-sample.csv" download="Visualization_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>',
+            '<button type="button" id="useVizSampleBtn" class="btn-sample btn-use-sample" data-template-id="visualization">▶ Use Sample</button>',
         '</div>',
         '</div>',
         // --- CHANGED BLOCK END ---
@@ -8746,94 +9498,80 @@ CustomerID,Tenure_Months,Support_Tickets,Used_Feature_X,Churned<br>
     }
 
     async function handleVisualizationAnalysis_DA() {
-    const analysisResultContainer = $("analysisResult");
-    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div></div><div></div><div></div> </div><h3 class="text-xl font-semibold text-white mb-4">Performing Visualization Analysis...</h3><p class="text-white/80 mb-2">Loading data, performing calculations, and generating insights...</p></div>`;
-    setLoading("generate", true);
-    $("analysisActions").classList.add("hidden");
-    const API_URL = "https://analysis.data2int.com/api/visualization";
-    const MODEL_NAME = "llama3.1:latest";
-    
-    try {
-        // 1. Gather Inputs
+        const analysisResultContainer = $("analysisResult");
+        analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div></div><div></div><div></div> </div><h3 class="text-xl font-semibold text-white mb-4">Performing Visualization Analysis...</h3><p class="text-white/80 mb-2">Loading data, performing calculations, and generating insights...</p></div>`;
+        setLoading("generate", true);
+        $("analysisActions").classList.add("hidden");
+        const API_URL = "https://analysis.data2int.com/api/visualization";
         
-        // === ADDED TOGGLE LOGIC START ===
-        // Check which input type is selected
-        const isUsingFile = $("vizInputFileToggle").checked;
-        let vizRequestText = "";
-        
-        if (isUsingFile) {
-            // User selected file upload - we'll handle the file differently
-            const contextFile = $("vizContextFile").files[0];
-            // For now, we'll leave vizRequestText empty when using file
-        } else {
-            // User selected text input - use the original logic
-            vizRequestText = $("vizRequestText").value.trim();
-        }
-        // === ADDED TOGGLE LOGIC END ===
-        
-        const dataFile = $("vizFile").files[0];
-        if (!dataFile) {
-            throw new Error("❌ Please upload a CSV data file.");
-        }
-        // 2. Prepare FormData
-        const formData = new FormData();
-        formData.append("data_file", dataFile, dataFile.name);
-        
-        // === MODIFIED CONTEXT HANDLING START ===
-        // 3. Cleverly handle the context text or file:
-        if (isUsingFile) {
-            // If user selected file upload, attach the context file directly
-            const contextFile = $("vizContextFile").files[0];
-            if (contextFile) {
+        try {
+            const formData = new FormData();
+
+            if (window.isSampleModeActive === true) {
+                // --- SAMPLE MODE ---
+                const dataFile = await fetchFileAsObject('data-files/visualization/visualization-sample.csv');
+                const contextFile = await fetchFileAsObject('data-files/visualization/visualization-sample-doc.txt');
+                if (!dataFile || !contextFile) throw new Error("Sample file(s) failed to load.");
+
+                formData.append("data_file", dataFile, dataFile.name);
                 formData.append("context_file", contextFile, contextFile.name);
-                console.log("Attaching user uploaded context file.");
+            } else {
+                // --- MANUAL MODE ---
+                const dataFile = $("vizFile").files[0];
+                if (!dataFile) {
+                    throw new Error("❌ Please upload a CSV data file.");
+                }
+                formData.append("data_file", dataFile, dataFile.name);
+
+                const isUsingFile = $("vizInputFileToggle").checked;
+                if (isUsingFile) {
+                    const contextFile = $("vizContextFile").files[0];
+                    if (contextFile) {
+                        formData.append("context_file", contextFile, contextFile.name);
+                    }
+                } else {
+                    const vizRequestText = $("vizRequestText").value.trim();
+                    if (vizRequestText) {
+                        const contextBlob = new Blob([vizRequestText], { type: 'text/plain' });
+                        formData.append("context_file", contextBlob, "visualization_context.txt");
+                    }
+                }
             }
-        } else {
-            // If user selected text input, convert the text from the <textarea> into a Blob
-            if (vizRequestText) {
-                const contextBlob = new Blob([vizRequestText], { type: 'text/plain' });
-                formData.append("context_file", contextBlob, "visualization_context.txt");
-                console.log("Attaching user request text as context_file.");
+            
+            // 4. Send Request
+            const response = await fetch(API_URL, {
+                method: "POST",
+                body: formData,
+            });
+            if (!response.ok) {
+                let errorDetail = `API Error: ${response.status}`;
+                try {
+                    const errorJson = await response.json();
+                    errorDetail = errorJson.detail || `API Error: ${response.status} - ${response.statusText}`;
+                } catch (e) {
+                    errorDetail = `API Error: ${response.status} - ${response.statusText}`;
+                }
+                throw new Error(errorDetail);
+            }
+            const parsedData = await response.json();
+            
+            if (parsedData.metadata && parsedData.metadata.error) {
+                throw new Error(`Backend Analysis Error: ${parsedData.metadata.error_message}`);
+            }
+            // 5. Render
+            renderVisualizationPage_DA(analysisResultContainer, parsedData);
+        } catch (error) {
+            console.error(`Error in handleVisualizationAnalysis_DA (Backend):`, error);
+            analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
+            setLoading("generate", false);
+        }
+        finally {
+            window.isSampleModeActive = false; // Reset the flag
+            if ($("generateSpinner") && !$("generateSpinner").classList.contains("hidden")) {
+                setLoading("generate", false);
             }
         }
-        // === MODIFIED CONTEXT HANDLING END ===
-        
-        // 4. We are NOT sending chart_configs, so the backend will auto-generate
-        // formData.append("chart_configs", JSON.stringify([...])); 
-        // 5. Send Request to Python Backend
-        console.log(`Sending Visualization request to Python backend at ${API_URL}...`);
-        const response = await fetch(API_URL, {
-            method: "POST",
-            body: formData,
-            // Add Authorization headers if your API requires them
-        });
-        if (!response.ok) {
-            let errorDetail = `API Error: ${response.status}`;
-            try {
-                const errorJson = await response.json();
-                errorDetail = errorJson.detail || `API Error: ${response.status} - ${response.statusText}`;
-            } catch (e) {
-                errorDetail = `API Error: ${response.status} - ${response.statusText}`;
-            }
-            throw new Error(errorDetail);
-        }
-        const parsedData = await response.json();
-        
-        // Check if the backend returned its *own* error
-        if (parsedData.metadata && parsedData.metadata.error) {
-            throw new Error(`Backend Analysis Error: ${parsedData.metadata.error_message}`);
-        }
-        // 6. Render Results
-        // We now call the new renderer function that can handle the backend's JSON structure
-        renderVisualizationPage_DA(analysisResultContainer, parsedData);
-    } catch (error) {
-        console.error(`Error in handleVisualizationAnalysis_DA (Backend) using ${MODEL_NAME}:`, error);
-        analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
-        setLoading("generate", false);
     }
-    // 'finally' block is not needed here; setLoading(false) is handled
-    // by the renderer on success and the catch block on error.
-}
 
     /**
      * --- UPDATED (V15) ---
@@ -12437,6 +13175,7 @@ function renderSystemActionsPage_ST(container, data) {
                         <div class="flex items-center space-x-2">
                             <button type="button" id="configExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
                             <a href="data-files/sem/sem-sample-data.csv" download="SEM_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>
+                            <button type="button" id="useSemSampleBtn" class="btn-sample btn-use-sample" data-template-id="sem-analysis">▶ Use Sample</button>
                         </div>
                     </div>
 
@@ -12949,6 +13688,7 @@ function createPredictiveAnalysisLayout(template) {
                         <div class="flex items-center space-x-2">
                             <button type="button" id="predictiveExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
                             <a href="data-files/predictive/predictive-sample-data.csv" download="Predictive_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>
+                            <button type="button" id="usePredSampleBtn" class="btn-sample btn-use-sample" data-template-id="predictive-analysis">▶ Use Sample</button>
                         </div>
                     </div>
 
@@ -13492,6 +14232,7 @@ contentContainer.innerHTML = `
                     <div class="flex items-center space-x-2">
                         <button type="button" id="configExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
                         <a href="data-files/dematel/dematel-sample-doc.txt" download="DEMATEL_Sample_Context.txt" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .txt</a>
+                        <button type="button" id="useDematelSampleBtn" class="btn-sample btn-use-sample" data-template-id="dematel-analysis">▶ Use Sample</button>
                     </div>
                 </div>
                 
@@ -14759,50 +15500,45 @@ The AI will read this and build the matrix for you."></textarea>
         setLoading("generate", true); // Set loading state
 
         try {
-            // --- 1. Gather Inputs (MODIFIED) ---
-            const dataFile = $("descriptiveFile").files[0];
-            
-            // --- NEW LOGIC: Check radio button ---
-            const useDoc = $("docUpload").checked;
-            let contextFile = null;
-            let contextText = "";
-
-            if (useDoc) {
-                contextFile = $("descriptiveContextFile").files[0];
-                if (!contextFile) {
-                    throw new Error("❌ You selected 'Document Upload' but did not select a context file.");
-                }
-            } else {
-                contextText = $("descriptiveContextText").value.trim();
-                if (!contextText) {
-                    throw new Error("❌ Please paste your context into the text area or select 'Document Upload' to upload a file.");
-                }
-            }
-            // --- END NEW LOGIC ---
-
-            if (!dataFile) {
-                throw new Error("❌ Please upload a CSV data file.");
-            }
-
-            // 2. Prepare FormData for your Python backend
             const formData = new FormData();
             formData.append("analysis_type", "descriptive");
-            formData.append("data_file", dataFile, dataFile.name);
+            
+            if (window.isSampleModeActive === true) {
+                // --- SAMPLE MODE ---
+                const dataFile = await fetchFileAsObject('data-files/descriptive/descriptive-sample-data.csv');
+                const contextFile = await fetchFileAsObject('data-files/descriptive/descriptive-sample-doc.txt');
+                if (!dataFile || !contextFile) throw new Error("Sample files not found.");
+                
+                formData.append("data_file", dataFile, dataFile.name);
+                formData.append("context_file", contextFile, contextFile.name);
 
-            // --- MODIFIED: Add context file or context text blob ---
-            if (contextFile) {
-                // Add the context file if it exists
-                formData.append("context_file", contextFile, contextFile.name); 
-            } else if (contextText) {
-                // Convert text to a Blob and append it as a file
-                const contextBlob = new Blob([contextText], { type: 'text/plain' });
-                formData.append("context_file", contextBlob, "context_input.txt");
+            } else {
+                // --- MANUAL MODE ---
+                const dataFile = $("descriptiveFile").files[0];
+                if (!dataFile) {
+                    throw new Error("❌ Please upload a CSV data file.");
+                }
+                formData.append("data_file", dataFile, dataFile.name);
+                
+                const useDoc = $("docUpload").checked;
+                if (useDoc) {
+                    const contextFile = $("descriptiveContextFile").files[0];
+                    if (!contextFile) {
+                        throw new Error("❌ You selected 'Document Upload' but did not select a context file.");
+                    }
+                    formData.append("context_file", contextFile, contextFile.name); 
+                } else {
+                    const contextText = $("descriptiveContextText").value.trim();
+                    if (!contextText) {
+                        throw new Error("❌ Please paste your context into the text area or select 'Document Upload' to upload a file.");
+                    }
+                    const contextBlob = new Blob([contextText], { type: 'text/plain' });
+                    formData.append("context_file", contextBlob, "context_input.txt");
+                }
             }
-            // --- END MODIFICATION ---
             
-            // 3. Call your FastAPI Backend (NOT Ollama)
-            const API_URL = "https://analysis.data2int.com/api/descriptive"; // Your main API endpoint
-            
+            // 3. Call your FastAPI Backend
+            const API_URL = "https://analysis.data2int.com/api/descriptive";
             const response = await fetch(API_URL, {
                 method: "POST",
                 body: formData,
@@ -14821,7 +15557,6 @@ The AI will read this and build the matrix for you."></textarea>
 
             const parsedData = await response.json();
             
-            // 4. Check if the backend returned its *own* error
             if (parsedData.error) {
                 throw new Error(`Backend Analysis Error: ${parsedData.error}`);
             }
@@ -14832,6 +15567,9 @@ The AI will read this and build the matrix for you."></textarea>
         } catch (error) {
             console.error(`Error in handleDescriptiveAnalysis_DA:`, error);
             analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
+            setLoading("generate", false);
+        } finally {
+            window.isSampleModeActive = false; // Reset the flag
             setLoading("generate", false);
         }
     }
@@ -16314,110 +17052,129 @@ The AI will read this and build the matrix for you."></textarea>
  * Sends data (file or text) and separate measurement/structural syntax.
  */
 async function handleSemAnalysis() {
-    const analysisResultContainer = $("analysisResult"); // Get the results container element
-    // Display loading indicator
+    const analysisResultContainer = $("analysisResult"); 
     analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div><h3 class="text-xl font-semibold text-white">Running Structural Equation Model...</h3></div>`;
-    setLoading("generate", true); // Assumes setLoading function exists to disable button and show spinner
-
+    setLoading("generate", true); 
+    
     try {
-        // --- 1. Get Inputs from UI ---
-        const measurementSyntax = $("semMeasurementSyntax").value.trim();
-        const structuralSyntax = $("semStructuralSyntax").value.trim();
-        const dataFile = $("semFile").files[0]; // Get the selected file object
-        const dataText = $("semDataText").value.trim(); // Get pasted text
-        const isUsingFile = $("semInputFileToggle").checked; // Check which input type is selected
+        const formData = new FormData();
+        formData.append("analysis_type", "sem");
+        let measurementSyntax, structuralSyntax;
+        
+        if (window.isSampleModeActive === true) {
+            // --- SAMPLE MODE ---
+            console.log("🔍 SEM Sample mode active - using hardcoded syntax");
+            
+            // HARDCODE the syntax based on actual column names:
+            // Date,Year,Month,Quarter,Ad_Spend_USD,Ad_Spend_Level,Brand_Awareness_Pct,Brand_Awareness_Level,
+            // Online_Sales_USD,Retail_Sales_USD,Total_Sales_USD,New_Customers_Count,Profit_USD,ROI_Pct,
+            // Customer_Acquisition_Cost,Sales_Per_Customer,Online_Sales_Ratio
+            
+            // Create latent variables using actual column names
+            measurementSyntax = `Marketing_Performance =~ Ad_Spend_USD + Brand_Awareness_Pct
+Sales_Performance =~ Online_Sales_USD + Retail_Sales_USD + Total_Sales_USD
+Customer_Metrics =~ New_Customers_Count + Sales_Per_Customer`;
 
-        let fileToSend = null;
-        let dataContentToSend = null; // Use this variable if your backend accepts raw text
+            structuralSyntax = `Sales_Performance ~ Marketing_Performance
+Customer_Metrics ~ Marketing_Performance + Sales_Performance
+Profit_USD ~ Sales_Performance + Customer_Metrics`;
 
-        // --- 2. Validate Inputs & Prepare Data Source ---
-        if (isUsingFile) {
-            if (!dataFile) {
-                throw new Error("Please upload a data file (.csv or .xlsx).");
+            console.log("📋 Using measurement syntax:", measurementSyntax);
+            console.log("📋 Using structural syntax:", structuralSyntax);
+            
+            // Fetch the sample data file
+            try {
+                const dataFile = await fetchFileAsObject('data-files/sem/sem-sample-data.csv');
+                if (!dataFile) throw new Error("Sample file not found.");
+                
+                console.log("✅ Sample SEM file loaded:", dataFile.name);
+                formData.append("data_file", dataFile, dataFile.name);
+                
+                // Verify the data has expected columns
+                const dataText = await dataFile.text();
+                const headers = dataText.split(/[\r\n]+/)[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+                console.log("📊 Available SEM columns:", headers);
+                
+                // Check if key columns exist
+                const requiredCols = ["Ad_Spend_USD", "Brand_Awareness_Pct", "Online_Sales_USD", "Retail_Sales_USD", "Total_Sales_USD", "New_Customers_Count", "Sales_Per_Customer", "Profit_USD"];
+                const missingCols = requiredCols.filter(col => !headers.includes(col));
+                if (missingCols.length > 0) {
+                    console.warn("⚠️ Missing expected columns:", missingCols);
+                }
+                
+            } catch (fileError) {
+                console.error("❌ Error loading SEM sample file:", fileError);
+                throw new Error(`SEM sample file loading failed: ${fileError.message}`);
             }
-            // Basic file type check (backend should also validate)
-            const allowedTypes = ['text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
-            //if (!allowedTypes.includes(dataFile.type) && !dataFile.name.toLowerCase().endsWith('.csv') && !dataFile.name.toLowerCase().endsWith('.xlsx')) {
-            //    throw new Error("Invalid file type. Please upload a CSV or Excel file.");
-            //}
-            fileToSend = dataFile;
+            
         } else {
-            if (!dataText) {
-                throw new Error("Please paste your CSV data into the text area.");
+            // --- MANUAL MODE ---
+            console.log("🔧 SEM Manual mode - reading from UI");
+            
+            // READ syntax from UI
+            measurementSyntax = $("semMeasurementSyntax").value.trim();
+            structuralSyntax = $("semStructuralSyntax").value.trim();
+            const dataFile = $("semFile").files[0]; 
+            const dataText = $("semDataText").value.trim(); 
+            const isUsingFile = $("semInputFileToggle").checked; 
+            
+            if (isUsingFile) { 
+                if (!dataFile) {
+                    throw new Error("Please upload a data file (.csv or .xlsx).");
+                }
+                formData.append("data_file", dataFile, dataFile.name);
+            } else {
+                if (!dataText) {
+                    throw new Error("Please paste your CSV data into the text area.");
+                }
+                formData.append("data_text", dataText);
             }
-            // Decide how to send text data based on backend requirements
-            dataContentToSend = dataText; // Sending raw text
-            // Alternative: If backend strictly expects a file, create a Blob
-            // fileToSend = new Blob([dataText], { type: 'text/csv' });
-            // fileToSend.name = "pasted_data.csv"; // Assign a default filename
         }
-
-        // Validate that at least one syntax part is provided
+        
+        // Validate syntax
         if (!measurementSyntax && !structuralSyntax) {
             throw new Error("Please provide Measurement Model Syntax and/or Structural Model Syntax.");
         }
-
-        // --- 3. Prepare FormData for Backend ---
-        const formData = new FormData();
-        formData.append("analysis_type", "sem"); // Identify the analysis type
-
-        // *** Send SYNTAX parts SEPARATELY ***
+        
+        console.log("🎯 Final SEM syntax - Measurement:", measurementSyntax);
+        console.log("🎯 Final SEM syntax - Structural:", structuralSyntax);
+        
         formData.append("measurement_syntax", measurementSyntax);
         formData.append("structural_syntax", structuralSyntax);
-
-        // Append the data source (either the file or the text content)
-        if (fileToSend) {
-            // If sending a file (uploaded or created from text via Blob)
-            formData.append("data_file", fileToSend, fileToSend.name);
-        } else if (dataContentToSend) {
-            // If sending raw text content under a specific form field name
-             formData.append("data_text", dataContentToSend);
-             // Make sure your backend (main.py) expects "data_text" if you use this
-        } else {
-            // This case should ideally not be reached if validation above is correct
-            throw new Error("No data source (file or text) could be prepared.");
-        }
-
-
+        
         // --- 4. Send Request to Backend API ---
-        // *** Replace with your actual backend API endpoint ***
-        const API_URL = "https://analysis.data2int.com/api/sem"; // Example URL
-
+        const API_URL = "https://analysis.data2int.com/api/sem"; 
+        console.log("🚀 Sending SEM request to backend...");
+        
         const response = await fetch(API_URL, {
             method: "POST",
             body: formData,
-            // Add Authorization header if your API requires authentication
-            // headers: { 'Authorization': `Bearer ${your_auth_token}` }
         });
-
+        
         // --- 5. Handle Backend Response ---
         if (!response.ok) {
-            // Attempt to get detailed error message from backend
             let errorDetail = `API request failed (${response.status})`;
             try {
-                const errorJson = await response.json(); // Assumes backend sends JSON errors
-                errorDetail += `: ${errorJson.detail || JSON.stringify(errorJson)}`; // Use specific 'detail' field if available
+                const errorJson = await response.json(); 
+                errorDetail += `: ${errorJson.detail || JSON.stringify(errorJson)}`; 
             } catch (e) {
-                // If response is not JSON, use the raw text
                 errorDetail += `: ${await response.text()}`;
             }
-            throw new Error(errorDetail); // Throw error to be caught below
+            throw new Error(errorDetail); 
         }
-
-        // If response is OK (2xx status)
-        const parsedData = await response.json(); // Expecting JSON response with results
-
-        // Render the results using the SEM-specific rendering function
-        // Assumes renderSemAnalysisPage exists and handles the parsedData structure
+        
+        const parsedData = await response.json(); 
+        console.log("📥 Received SEM response from backend");
+        console.log("✅ SEM analysis successful, rendering results...");
+        
         renderSemAnalysisPage(analysisResultContainer, parsedData);
-
-    } catch (error) { // Catch errors from input validation, fetch, or response handling
+        
+    } catch (error) { 
         console.error("Error during SEM analysis:", error);
-        // Display the error message in the results container
         analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400"><strong>Error:</strong> ${error.message}</div>`;
     } finally {
-        // Ensure loading indicator is turned off regardless of success or failure
-        setLoading("generate", false); // Assumes setLoading function exists
+        window.isSampleModeActive = false; // Reset the flag
+        setLoading("generate", false); 
     }
 }
 
@@ -16427,107 +17184,88 @@ async function handleSemAnalysis() {
  * sends them to the backend API, and calls the rendering function upon receiving results.
  */
 async function handlePredictiveAnalysis() {
-    const analysisResultContainer = $("analysisResult");
-    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div></div><div></div><div></div></div><h3 class="text-xl font-semibold text-white">Running Predictive Analysis...</h3><p class="text-white/80 mb-2">Please wait while the forecast is generated.</p></div>`;
-    setLoading("generate", true);
-    $("analysisActions").classList.add("hidden");
+        const analysisResultContainer = $("analysisResult");
+        analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div></div><div></div><div></div></div><h3 class="text-xl font-semibold text-white">Running Predictive Analysis...</h3><p class="text-white/80 mb-2">Please wait while the forecast is generated.</p></div>`;
+        setLoading("generate", true);
+        $("analysisActions").classList.add("hidden");
 
-    try {
-        // --- 1. Get Inputs from UI ---
-        const dataFile = $("predictiveFile").files[0];
-        const dataText = $("predictiveDataText").value.trim();
-        const isUsingFile = $("predictiveInputFileToggle").checked;
+        try {
+            const formData = new FormData();
+            formData.append("analysis_type", "predictive");
 
-        // --- *** MODIFICATION START *** ---
-        // Get the assumed date column name from the span where it's displayed
-        const assumedDateColNameSpan = $("assumedDateColName");
-        const dateColumn = assumedDateColNameSpan ? assumedDateColNameSpan.textContent : null;
-        // --- *** MODIFICATION END *** ---
+            // Get parameters from UI (these are set by the sample button)
+            const dateColumn = $("assumedDateColName").textContent;
+            const targetColumn = $("predictiveTargetColumn").value;
+            const forecastPeriods = $("predictiveForecastPeriods").value;
+            const confidenceLevel = $("predictiveConfidenceLevel").value;
+            const modelType = $("predictiveModelType").value;
 
-        // Get other selected parameters
-        const targetColumn = $("predictiveTargetColumn").value;
-        const forecastPeriods = $("predictiveForecastPeriods").value; // Send as string
-        const confidenceLevel = $("predictiveConfidenceLevel").value; // Send as string
-        const modelType = $("predictiveModelType").value; // Send as string
+            if (window.isSampleModeActive === true) {
+                // --- SAMPLE MODE ---
+                const dataFile = await fetchFileAsObject('data-files/predictive/predictive-sample-data.csv');
+                if (!dataFile) throw new Error("Sample file not found.");
+                formData.append("data_file", dataFile, dataFile.name);
+            } else {
+                // --- MANUAL MODE ---
+                const dataFile = $("predictiveFile").files[0];
+                const dataText = $("predictiveDataText").value.trim();
+                const isUsingFile = $("predictiveInputFileToggle").checked;
 
-        // --- 2. Validate Inputs ---
-        // --- *** MODIFICATION START *** ---
-        // Validate the *retrieved* date column name
-        if (!dateColumn || dateColumn === "..." || dateColumn === "N/A" || dateColumn === "Error") {
-            throw new Error("Could not determine the Date Column. Please ensure data is loaded correctly.");
+                if (isUsingFile) {
+                    if (!dataFile) { throw new Error("Please upload a data file (.csv or .xlsx)."); }
+                    formData.append("data_file", dataFile, dataFile.name);
+                } else {
+                    if (!dataText) { throw new Error("Please paste your CSV data into the text area."); }
+                    formData.append("data_text", dataText);
+                }
+            }
+
+            // --- Validate UI-driven parameters ---
+            if (!dateColumn || dateColumn === "..." || dateColumn === "N/A" || dateColumn === "Error") {
+                throw new Error("Could not determine the Date Column. Please ensure data is loaded correctly.");
+            }
+            if (!targetColumn) {
+                throw new Error("Please select the Target Variable column.");
+            }
+            if (dateColumn === targetColumn) {
+                 throw new Error("Date Column and Target Variable must be different.");
+            }
+
+            // Append parameters
+            formData.append("dateColumn", dateColumn);
+            formData.append("targetColumn", targetColumn);
+            formData.append("forecastPeriods", forecastPeriods);
+            formData.append("confidenceLevel", confidenceLevel);
+            formData.append("modelType", modelType);
+
+            // --- 4. Send Request to Backend API ---
+            const API_URL = "https://analysis.data2int.com/api/predictive";
+            const response = await fetch(API_URL, {
+                method: "POST",
+                body: formData,
+            });
+
+            // --- 5. Handle Backend Response ---
+            if (!response.ok) {
+                let errorDetail = `API request failed (${response.status} ${response.statusText})`;
+                try {
+                    const errorJson = await response.json();
+                    errorDetail += `: ${errorJson.detail || JSON.stringify(errorJson)}`;
+                } catch (e) { try { errorDetail += `: ${await response.text()}`; } catch(readErr) {} }
+                throw new Error(errorDetail);
+            }
+
+            const parsedData = await response.json();
+            renderPredictiveAnalysisPage($("analysisResult"), parsedData);
+
+        } catch (error) {
+            console.error("Error during Predictive Analysis:", error);
+            analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400"><strong>Error:</strong> ${error.message}</div>`;
+        } finally {
+            window.isSampleModeActive = false; // Reset the flag
+            setLoading("generate", false);
         }
-        // --- *** MODIFICATION END *** ---
-        if (!targetColumn) {
-            throw new Error("Please select the Target Variable column.");
-        }
-        if (dateColumn === targetColumn) {
-             throw new Error("Date Column and Target Variable must be different.");
-        }
-
-        let fileToSend = null;
-        let dataContentToSend = null;
-
-        // Determine data source (same as before)
-        if (isUsingFile) {
-            if (!dataFile) { throw new Error("Please upload a data file (.csv or .xlsx)."); }
-            const allowedExtensions = ['.csv', '.xlsx', '.xls'];
-            const fileExt = dataFile.name.substring(dataFile.name.lastIndexOf('.')).toLowerCase();
-            if (!allowedExtensions.includes(fileExt)) { throw new Error("Invalid file type. Please upload a CSV or Excel file."); }
-            fileToSend = dataFile;
-        } else {
-            if (!dataText) { throw new Error("Please paste your CSV data into the text area."); }
-            dataContentToSend = dataText;
-        }
-
-        // --- 3. Prepare FormData for Backend ---
-        const formData = new FormData();
-        formData.append("analysis_type", "predictive");
-
-        // Append data source (same as before)
-        if (fileToSend) { formData.append("data_file", fileToSend, fileToSend.name); }
-        else if (dataContentToSend) { formData.append("data_text", dataContentToSend); }
-        else { throw new Error("No data source (file or text) is available."); }
-
-        // Append parameters (sending the *retrieved* dateColumn)
-        formData.append("dateColumn", dateColumn); // Sends the assumed date column name
-        formData.append("targetColumn", targetColumn);
-        formData.append("forecastPeriods", forecastPeriods);
-        formData.append("confidenceLevel", confidenceLevel);
-        formData.append("modelType", modelType);
-
-        // --- 4. Send Request to Backend API ---
-        const API_URL = "https://analysis.data2int.com/api/predictive";
-        console.log("Sending Predictive Analysis request to:", API_URL);
-
-        const response = await fetch(API_URL, {
-            method: "POST",
-            body: formData,
-            // headers: { 'Authorization': `Bearer ${your_auth_token}` } // Add if needed
-        });
-
-        // --- 5. Handle Backend Response ---
-        if (!response.ok) {
-            let errorDetail = `API request failed (${response.status} ${response.statusText})`;
-            try {
-                const errorJson = await response.json();
-                errorDetail += `: ${errorJson.detail || JSON.stringify(errorJson)}`;
-            } catch (e) { try { errorDetail += `: ${await response.text()}`; } catch(readErr) {} }
-            throw new Error(errorDetail);
-        }
-
-        const parsedData = await response.json();
-        console.log("Received predictive analysis results:", parsedData);
-
-        // Call the rendering function
-        renderPredictiveAnalysisPage($("analysisResult"), parsedData); // Assumes this function exists and works
-
-    } catch (error) {
-        console.error("Error during Predictive Analysis:", error);
-        analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400"><strong>Error:</strong> ${error.message}</div>`;
-    } finally {
-        setLoading("generate", false); // Turn off loading state
     }
-}
 
 /**
  * Complete Enhanced renderPredictiveAnalysisPage function 
@@ -18217,56 +18955,85 @@ function renderPredictiveLearnPanel(learnPanel, data) {
  * Step 3: Renders the final result from the Python backend.
  */
 async function handleDematelAnalysis() {
-    // API URLs
     const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
     const PYTHON_BACKEND_URL = "https://analysis.data2int.com/api/dematel";
-    
-    // Model to use for AI analysis
-    const MODEL_NAME = "llama3.1:latest"; // Sticking with Llama 3.1
+    const MODEL_NAME = "llama3.1:latest"; 
 
     const analysisResultContainer = $("analysisResult");
     analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div></div><div></div><div></div></div><h3 class="text-xl font-semibold text-white">Starting DEMATEL Analysis...</h3><p class="text-white/80 mb-2">Please wait...</p></div>`;
     
-    // Get references to input elements
     const textInput = $("dematelContent");
     const fileInput = $("dematelFile");
     const textError = $("dematelTextError");
     const fileError = $("dematelFileError");
-
-    // Determine input type
-    const isFileInput = $("dematelInputFileToggle").checked;
     
-    // Clear previous errors
     textError.textContent = "";
     fileError.textContent = "";
 
     try {
-        // 1. Set loading state
         setLoading("generate", true); 
         analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div></div><div></div><div></div></div><h3 class="text-xl font-semibold text-white">Step 1/3: Reading and Understanding Text...</h3><p class="text-white/80 mb-2">Extracting key factors from your document...</p></div>`;
 
-        // 2. Get User Text (from file or textarea)
+        // 2. Get User Text (from sample, file, or text)
         let userText = "";
-        if (isFileInput) {
-            const file = fileInput.files[0];
-            if (!file) throw new Error("Please select a .txt or .docx file.");
-            userText = await extractTextFromFile(file); 
+        if (window.isSampleModeActive === true) {
+            // --- SAMPLE MODE ---
+            console.log("🔍 DEMATEL Sample mode active");
+            
+            try {
+                const file = await fetchFileAsObject('data-files/dematel/dematel-sample-doc.txt');
+                if (!file) throw new Error("Sample file not found.");
+                
+                console.log("✅ Sample DEMATEL file loaded:", file.name);
+                
+                // For .txt files, read directly as text instead of using extractTextFromFile
+                if (file.name.toLowerCase().endsWith('.txt')) {
+                    userText = await file.text();
+                    console.log("📄 Read .txt file directly");
+                } else {
+                    // For other file types, use the extractTextFromFile function
+                    userText = await extractTextFromFile(file);
+                    console.log("📄 Used extractTextFromFile function");
+                }
+                
+                console.log("📋 Sample text loaded, length:", userText.length);
+                
+            } catch (fileError) {
+                console.error("❌ Error loading DEMATEL sample file:", fileError);
+                throw new Error(`DEMATEL sample file loading failed: ${fileError.message}`);
+            }
+            
         } else {
-            userText = textInput.value.trim();
-            if (!userText) throw new Error("Please enter a system or problem description.");
+            // --- MANUAL MODE ---
+            console.log("🔧 DEMATEL Manual mode - reading from UI");
+            
+            const isFileInput = $("dematelInputFileToggle").checked;
+            if (isFileInput) { 
+                const file = fileInput.files[0]; 
+                if (!file) throw new Error("Please select a .txt or .docx file.");
+                
+                // Handle .txt files directly, use extractTextFromFile for others
+                if (file.name.toLowerCase().endsWith('.txt')) {
+                    userText = await file.text();
+                } else {
+                    userText = await extractTextFromFile(file);
+                }
+            } else {
+                userText = textInput.value.trim();
+                if (!userText) throw new Error("Please enter a system or problem description.");
+            }
         }
         
-        // Truncate if necessary (Llama 3.1 has a large context)
-        const MAX_CONTEXT_LENGTH = 16000;
-        if (userText.length > MAX_CONTEXT_LENGTH) {
-            console.warn(`Text truncated to ${MAX_CONTEXT_LENGTH} characters for analysis.`);
-            userText = userText.substring(0, MAX_CONTEXT_LENGTH);
+        // Validate that we have text
+        if (!userText || userText.trim().length === 0) {
+            throw new Error("No text content found in the file or input.");
         }
+        
+        console.log("🎯 Final DEMATEL text length:", userText.length);
 
-        // 3. --- STEP 1: CALL OLLAMA (with new, much better prompt) ---
+        // 3. --- STEP 1: CALL OLLAMA ---
         analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div></div><div></div><div></div></div><h3 class="text-xl font-semibold text-white">Step 2/3: Generating Influence Matrix...</h3><p class="text-white/80 mb-2">AI is quantifying the causal relationships (this may take a moment)...</p></div>`;
 
-        // --- NEW ADVANCED PROMPT ---
         const prompt = `
             You are a meticulous DEMATEL analyst. Your task is to perform a rigorous analysis of the provided text.
 
@@ -18318,7 +19085,8 @@ async function handleDematelAnalysis() {
               ]
             }
         `;
-        // --- END OF NEW PROMPT ---
+
+        console.log("🚀 Sending request to Ollama...");
 
         const ollamaResponse = await fetch(OLLAMA_URL, {
             method: "POST",
@@ -18331,6 +19099,8 @@ async function handleDematelAnalysis() {
         }
 
         const ollamaResult = await ollamaResponse.json();
+        console.log("📥 Received response from Ollama");
+        
         let aiData;
         try {
             aiData = JSON.parse(ollamaResult.response);
@@ -18340,6 +19110,7 @@ async function handleDematelAnalysis() {
             if (aiData.factors.length !== aiData.matrix.length) {
                 throw new Error("AI returned a matrix size that does not match the factors list.");
             }
+            console.log("✅ AI response validated successfully");
         } catch (e) {
             console.error("Failed to parse AI response:", ollamaResult.response);
             throw new Error(`AI returned invalid JSON. Error: ${e.message}`);
@@ -18352,6 +19123,8 @@ async function handleDematelAnalysis() {
         backendFormData.append("analysis_type", "dematel");
         backendFormData.append("dematel_factors", JSON.stringify(aiData.factors));
         backendFormData.append("dematel_matrix", JSON.stringify(aiData.matrix));
+
+        console.log("🚀 Sending request to Python backend...");
 
         const backendResponse = await fetch(PYTHON_BACKEND_URL, {
             method: "POST",
@@ -18369,12 +19142,13 @@ async function handleDematelAnalysis() {
 
         // 5. Process Final Response
         const finalResults = await backendResponse.json();
+        console.log("📥 Received response from Python backend");
 
-        // Check for the *data* object, not the HTML
         if (finalResults.analysis_insights && finalResults.chart_data) {
+            console.log("✅ DEMATEL analysis successful, rendering results...");
             renderDematelAnalysisPage(finalResults);
         } else {
-            throw new Error("Received an invalid response from the Python backend.");
+             throw new Error("Received an invalid response from the Python backend.");
         }
 
     } catch (error) {
@@ -18383,13 +19157,15 @@ async function handleDematelAnalysis() {
         
         analysisResultContainer.innerHTML = `<div class="error-message">${errorMessage}</div>`;
         
-        if (isFileInput) {
+        // Show error in the correct UI element
+        if (window.isSampleModeActive || $("dematelInputFileToggle").checked) {
             fileError.textContent = errorMessage;
         } else {
             textError.textContent = errorMessage;
         }
 
     } finally {
+        window.isSampleModeActive = false; // Reset the flag
         // 6. Reset loading state
         setLoading("generate", false);
     }
@@ -24319,128 +25095,199 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
     }
 
     async function handleRegressionAnalysis_DA() {
-        const analysisResultContainer = $("analysisResult");
-        analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div></div><div></div><div></div> </div><h3 class="text-xl font-semibold text-white mb-4">Running scikit-learn Regression...</h3><p class="text-white/80 mb-2">Sending data to Python backend for statistical analysis...</p></div>`;
-        setLoading("generate", true);
-        $("analysisActions").classList.add("hidden");
+    const analysisResultContainer = $("analysisResult");
+    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div></div><div></div><div></div> </div><h3 class="text-xl font-semibold text-white mb-4">Running scikit-learn Regression...</h3><p class="text-white/80 mb-2">Sending data to Python backend for statistical analysis...</p></div>`;
+    setLoading("generate", true);
+    $("analysisActions").classList.add("hidden");
 
-        const API_URL = "https://analysis.data2int.com/api/regression"; 
+    const API_URL = "https://analysis.data2int.com/api/regression"; 
+    
+    const warningEl = $("regressionDataWarning");
+    if (warningEl) warningEl.textContent = ""; 
+
+    try {
+        const formData = new FormData();
         
-        const warningEl = $("regressionDataWarning");
-        if (warningEl) warningEl.textContent = ""; 
+        let dependentVar, independentVarsList, dataFile, contextFile, contextText, numObservations;
 
-        try {
-            // --- 1. Gather Inputs from UI Elements ---
-            const dependentVar = $("dependentVar").value;
+        if (window.isSampleModeActive === true) {
+            // --- SAMPLE MODE ---
+            console.log("🔍 Sample mode active - using hardcoded values");
             
-            const independentVarCheckboxes = document.querySelectorAll("#independentVarsContainer .independent-var-checkbox:checked");
-            const independentVarsList = Array.from(independentVarCheckboxes).map(cb => cb.value);
-
-            const dataFile = $("regressionFile").files[0];
+            // HARDCODE the variables to match the actual UI selections
+            dependentVar = "marketing_spend"; 
+            independentVarsList = ["product_price", "customer_rating", "region", "sales_revenue"];
             
-            // --- MODIFIED BLOCK START: Get Context ---
-            const useDoc = $("docUpload").checked;
-            let contextFile = null;
-            let contextText = "";
-
-            if (useDoc) {
-                contextFile = $("regressionContextFile").files[0];
-                // Note: We don't require the context file, so no error if it's missing.
-            } else {
-                contextText = $("regressionContextText").value.trim();
-                // Note: We don't require the context text.
+            // Fetch the files
+            try {
+                dataFile = await fetchFileAsObject('data-files/regression/regression-sample.csv');
+                contextFile = await fetchFileAsObject('data-files/regression/regression-sample-doc.txt');
+                
+                if (!dataFile) {
+                    throw new Error("Failed to fetch sample data file");
+                }
+                if (!contextFile) {
+                    throw new Error("Failed to fetch sample context file");
+                }
+                
+                console.log("✅ Sample files loaded successfully");
+                console.log("📊 Data file:", dataFile.name);
+                console.log("📄 Context file:", contextFile.name);
+                
+            } catch (fileError) {
+                console.error("❌ Error loading sample files:", fileError);
+                throw new Error(`Sample file loading failed: ${fileError.message}`);
             }
-            // --- MODIFIED BLOCK END ---
+            
+            // Verify the sample data has the expected columns
+            try {
+                const dataText = await dataFile.text();
+                const headers = dataText.split(/[\r\n]+/)[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+                console.log("📋 Available columns:", headers);
+                
+                // Check if our hardcoded variables exist in the data
+                if (!headers.includes(dependentVar)) {
+                    console.warn(`⚠️ Dependent variable '${dependentVar}' not found in headers. Available: ${headers.join(', ')}`);
+                    // Try to find a similar column or use the first numeric-looking column
+                    const salesColumn = headers.find(h => h.toLowerCase().includes('sales') || h.toLowerCase().includes('revenue'));
+                    if (salesColumn) {
+                        dependentVar = salesColumn;
+                        console.log(`🔄 Using '${dependentVar}' as dependent variable instead`);
+                    }
+                }
+                
+                // Check independent variables
+                const missingVars = independentVarsList.filter(v => !headers.includes(v));
+                if (missingVars.length > 0) {
+                    console.warn(`⚠️ Missing independent variables: ${missingVars.join(', ')}`);
+                    // Filter to only include variables that exist
+                    independentVarsList = independentVarsList.filter(v => headers.includes(v));
+                    console.log(`🔄 Using available independent variables: ${independentVarsList.join(', ')}`);
+                }
+                
+                numObservations = dataText.split(/[\r\n]+/).filter(line => line.trim()).length - 1; // -1 for header
+                console.log(`📊 Number of observations: ${numObservations}`);
+                
+            } catch (dataError) {
+                console.error("❌ Error reading sample data:", dataError);
+                throw new Error(`Sample data validation failed: ${dataError.message}`);
+            }
 
-            // 2. Validate Inputs
+        } else {
+            // --- MANUAL MODE ---
+            console.log("🔧 Manual mode - reading from UI");
+            
+            // READ from UI as before
+            dependentVar = $("dependentVar").value;
+            const independentVarCheckboxes = document.querySelectorAll("#independentVarsContainer .independent-var-checkbox:checked");
+            independentVarsList = Array.from(independentVarCheckboxes).map(cb => cb.value);
+            
+            // Get files from UI
+            dataFile = $("regressionFile").files[0];
             if (!dataFile) {
                 throw new Error("❌ Please upload a CSV data file.");
             }
-            if (!dependentVar) {
-                 throw new Error("❌ Please select a Dependent Variable (Y).");
-            }
-            if (independentVarsList.length === 0) {
-                 throw new Error("❌ Please select at least one Independent Variable (X).");
-            }
-            if (independentVarsList.includes(dependentVar)) {
-                throw new Error("❌ The Dependent Variable cannot also be an Independent Variable.");
-            }
 
-            const numFeatures = independentVarsList.length;
-            const numObservations = currentRegressionRowCount; 
-            const ratio = numObservations / numFeatures;
-
-            console.log(`Validation: ${numObservations} observations, ${numFeatures} features. Ratio: ${ratio}`);
-
-            if (numObservations < 30) {
-                throw new Error(`❌ Insufficient Data: You have only ${numObservations} rows. A minimum of 30 is recommended for basic regression.`);
-            }
-            if (ratio < 10) {
-                throw new Error(`❌ Insufficient Data Ratio: You have ${numObservations} observations for ${numFeatures} features (a ratio of ${ratio.toFixed(1)}-to-1). A 10-to-1 ratio (or ${numFeatures * 10} rows) is recommended.`);
-            }
-
-            // 3. Prepare FormData for the backend
-            const formData = new FormData();
-            
-            formData.append("data_file", dataFile, dataFile.name);
-
-            // --- MODIFIED BLOCK START: Append Context ---
-            if (contextFile) {
-                // If user uploaded a file, append it
-                formData.append("context_file", contextFile, contextFile.name);
-            } else if (contextText) {
-                // If user typed text, create a Blob and append it as a file
-                const contextBlob = new Blob([contextText], { type: 'text/plain' });
-                formData.append("context_file", contextBlob, "context_input.txt");
-            }
-            // --- MODIFIED BLOCK END ---
-
-            formData.append("target_column", dependentVar);
-            formData.append("feature_columns", JSON.stringify(independentVarsList));
-            
-            // 4. Send Request to Python Backend
-            console.log(`Sending Regression request to Python backend at ${API_URL}...`);
-            
-            const response = await fetch(API_URL, {
-                method: "POST",
-                body: formData,
-            });
-
-            // 5. Handle Response
-            const parsedData = await response.json(); 
-
-            if (!response.ok) {
-                const errorMsg = parsedData.detail || `API Error: ${response.status} - ${response.statusText}`;
-                throw new Error(errorMsg);
-            }
-
-            if (parsedData.metadata && parsedData.metadata.error === true) {
-                console.error("Backend analysis failed:", parsedData.metadata.error_message);
-                throw new Error(`Backend Analysis Error: ${parsedData.metadata.error_message}`);
-            }
-
-            // 6. Render Results
-            renderAdvancedRegressionPage(analysisResultContainer, parsedData);
-
-        } catch (error) {
-            console.error(`Error in handleRegressionAnalysis_DA (Backend):`, error);
-            const errorMessage = error.message;
-
-            if (errorMessage.startsWith("❌")) {
-                 if (warningEl) {
-                    warningEl.textContent = errorMessage.substring(2); 
-                    warningEl.className = "text-red-400 text-sm mt-2"; 
-                 }
-                 analysisResultContainer.innerHTML = '<div class="text-white/60 p-8 text-center">Analysis stopped due to data issues.</div>'; 
+            const useDoc = $("docUpload").checked;
+            if (useDoc) {
+                contextFile = $("regressionContextFile").files[0];
             } else {
-                analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400"><strong>Error:</strong> ${errorMessage}</div>`;
+                contextText = $("regressionContextText").value.trim();
             }
-
-        } finally {
-            setLoading("generate", false);
+            numObservations = currentRegressionRowCount;
         }
-    }
+
+        // 2. Validate Inputs
+        if (!dataFile) {
+            throw new Error("❌ Data file is missing.");
+        }
+        if (!dependentVar) {
+             throw new Error("❌ Please select a Dependent Variable (Y).");
+        }
+        if (independentVarsList.length === 0) {
+             throw new Error("❌ Please select at least one Independent Variable (X).");
+        }
+        if (independentVarsList.includes(dependentVar)) {
+            throw new Error("❌ The Dependent Variable cannot also be an Independent Variable.");
+        }
+
+        console.log(`🎯 Final variables - Dependent: ${dependentVar}, Independent: ${independentVarsList.join(', ')}`);
+
+        const numFeatures = independentVarsList.length;
+        if (numObservations < 30) {
+            throw new Error(`❌ Insufficient Data: You have only ${numObservations} rows. A minimum of 30 is recommended for basic regression.`);
+        }
+        
+        const ratio = numObservations / numFeatures;
+        if (ratio < 10) {
+            if (warningEl) {
+                warningEl.textContent = `Warning: Data ratio is low (${ratio.toFixed(1)}-to-1). A 10-to-1 ratio is recommended. Results may be unstable.`;
+                warningEl.className = "text-yellow-400 text-sm mt-2";
+            }
+        }
     
+        // 3. Prepare FormData
+        formData.append("data_file", dataFile, dataFile.name);
+        console.log(`📤 Appended data file: ${dataFile.name}`);
+
+        if (contextFile) {
+            formData.append("context_file", contextFile, contextFile.name);
+            console.log(`📤 Appended context file: ${contextFile.name}`);
+        } else if (contextText) {
+            const contextBlob = new Blob([contextText], { type: 'text/plain' });
+            formData.append("context_file", contextBlob, "context_input.txt");
+            console.log("📤 Appended context text as blob");
+        }
+
+        formData.append("target_column", dependentVar);
+        formData.append("feature_columns", JSON.stringify(independentVarsList));
+        
+        console.log("🚀 Sending request to backend...");
+        
+        // 4. Send Request
+        const response = await fetch(API_URL, {
+            method: "POST",
+            body: formData,
+        });
+
+        // 5. Handle Response
+        const parsedData = await response.json(); 
+        console.log("📥 Received response from backend");
+
+        if (!response.ok) {
+            const errorMsg = parsedData.detail || `API Error: ${response.status} - ${response.statusText}`;
+            throw new Error(errorMsg);
+        }
+
+        if (parsedData.metadata && parsedData.metadata.error === true) {
+            console.error("Backend analysis failed:", parsedData.metadata.error_message);
+            throw new Error(`Backend Analysis Error: ${parsedData.metadata.error_message}`);
+        }
+
+        // 6. Render Results
+        console.log("✅ Analysis successful, rendering results...");
+        renderAdvancedRegressionPage(analysisResultContainer, parsedData);
+
+    } catch (error) {
+        console.error(`Error in handleRegressionAnalysis_DA (Backend):`, error);
+        const errorMessage = error.message;
+
+        if (errorMessage.startsWith("❌")) {
+             if (warningEl) {
+                warningEl.textContent = errorMessage.substring(2); 
+                warningEl.className = "text-red-400 text-sm mt-2"; 
+             }
+             analysisResultContainer.innerHTML = '<div class="text-white/60 p-8 text-center">Analysis stopped due to data issues.</div>'; 
+        } else {
+            analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400"><strong>Error:</strong> ${errorMessage}</div>`;
+        }
+
+    } finally {
+        window.isSampleModeActive = false; // Reset the flag
+        setLoading("generate", false);
+    }
+}
+
     /**
      * --- NEW RENDERER v5 (Null-Safe) ---
      * --- USER REQUESTED UPDATE V3 ---
@@ -26074,101 +26921,85 @@ function buildDotString(elements, causal_links, feedback_loops) {
  * Reads from the advanced UI (file/text toggle, syntax boxes).
  */
 async function handlePlsAnalysis_DA() {
-    const analysisResultContainer = $("analysisResult"); // Get the results container element
-    // Display loading indicator
-    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div><h3 class="text-xl font-semibold text-white">Running PLS-SEM Analysis...</h3><p class="text-white/80 mb-2">Please wait while the model is estimated.</p></div>`;
-    setLoading("generate", true); // Assumes setLoading function exists
+        const analysisResultContainer = $("analysisResult"); 
+        analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div><h3 class="text-xl font-semibold text-white">Running PLS-SEM Analysis...</h3><p class="text-white/80 mb-2">Please wait while the model is estimated.</p></div>`;
+        setLoading("generate", true); 
 
-    try {
-        // --- 1. Get Inputs from UI (using 'pls' IDs) ---
-        const measurementSyntax = $("plsMeasurementSyntax").value.trim();
-        const structuralSyntax = $("plsStructuralSyntax").value.trim();
-        const dataFile = $("plsFile").files[0]; // Get the selected file object
-        const dataText = $("plsDataText").value.trim(); // Get pasted text
-        const isUsingFile = $("plsInputFileToggle").checked; // Check which input type is selected
+        try {
+            const formData = new FormData();
+            formData.append("analysis_type", "pls"); 
 
-        let fileToSend = null;
-        let dataContentToSend = null; 
+            let measurementSyntax, structuralSyntax;
 
-        // --- 2. Validate Inputs & Prepare Data Source ---
-        if (isUsingFile) {
-            if (!dataFile) {
-                throw new Error("Please upload a data file (.csv or .xlsx).");
+            if (window.isSampleModeActive === true) {
+                // --- SAMPLE MODE ---
+                // HARDCODE the syntax as requested
+                measurementSyntax = "Quality =~ qual1 + qual2 + qual3\nSatisfaction =~ sat1 + sat2 + sat3\nLoyalty =~ loy1 + loy2 + loy3";
+                structuralSyntax = "Satisfaction ~ Quality\nLoyalty ~ Satisfaction + Quality";
+                
+                const dataFile = await fetchFileAsObject('data-files/pls/pls-sample-data.csv');
+                if (!dataFile) throw new Error("Sample file not found.");
+                formData.append("data_file", dataFile, dataFile.name);
+            } else {
+                // --- MANUAL MODE ---
+                // READ syntax from UI
+                measurementSyntax = $("plsMeasurementSyntax").value.trim();
+                structuralSyntax = $("plsStructuralSyntax").value.trim();
+
+                const dataFile = $("plsFile").files[0]; 
+                const dataText = $("plsDataText").value.trim(); 
+                const isUsingFile = $("plsInputFileToggle").checked; 
+
+                if (isUsingFile) { 
+                    if (!dataFile) {
+                        throw new Error("Please upload a data file (.csv or .xlsx).");
+                    }
+                    formData.append("data_file", dataFile, dataFile.name);
+                } else {
+                    if (!dataText) {
+                        throw new Error("Please paste your CSV data into the text area.");
+                    }
+                    formData.append("data_text", dataText);
+                }
             }
-            fileToSend = dataFile;
-        } else {
-            if (!dataText) {
-                throw new Error("Please paste your CSV data into the text area.");
+
+            // Validate syntax
+            if (!measurementSyntax && !structuralSyntax) {
+                throw new Error("Please provide Measurement Model Syntax and/or Structural Model Syntax.");
             }
-            dataContentToSend = dataText; 
-        }
+            formData.append("measurement_syntax", measurementSyntax);
+            formData.append("structural_syntax", structuralSyntax);
 
-        // Validate that at least one syntax part is provided
-        if (!measurementSyntax && !structuralSyntax) {
-            throw new Error("Please provide Measurement Model Syntax and/or Structural Model Syntax.");
-        }
+            // --- 4. Send Request to Backend API ---
+            const API_URL = "https://analysis.data2int.com/api/pls"; 
+            const response = await fetch(API_URL, {
+                method: "POST",
+                body: formData,
+            });
 
-        // --- 3. Prepare FormData for Backend ---
-        const formData = new FormData();
-        formData.append("analysis_type", "pls"); // Identify the analysis type
-
-        // Send SYNTAX parts SEPARATELY
-        formData.append("measurement_syntax", measurementSyntax);
-        formData.append("structural_syntax", structuralSyntax);
-
-        // Append the data source (either the file or the text content)
-        if (fileToSend) {
-            // If sending a file
-            formData.append("data_file", fileToSend, fileToSend.name);
-        } else if (dataContentToSend) {
-            // If sending raw text content
-             formData.append("data_text", dataContentToSend);
-        } else {
-            throw new Error("No data source (file or text) could be prepared.");
-        }
-
-
-        // --- 4. Send Request to Backend API ---
-        // *** This now points to your PLS endpoint ***
-        const API_URL = "https://analysis.data2int.com/api/pls"; 
-
-        const response = await fetch(API_URL, {
-            method: "POST",
-            body: formData,
-            // headers: { 'Authorization': `Bearer ${your_auth_token}` } // Add if needed
-        });
-
-        // --- 5. Handle Backend Response ---
-        if (!response.ok) {
-            // Attempt to get detailed error message from backend
-            let errorDetail = `API request failed (${response.status})`;
-            try {
-                const errorJson = await response.json(); // Assumes backend sends JSON errors
-                errorDetail += `: ${errorJson.detail || JSON.stringify(errorJson)}`; // Use specific 'detail' field
-            } catch (e) {
-                // If response is not JSON, use the raw text
+            // --- 5. Handle Backend Response ---
+            if (!response.ok) {
+                let errorDetail = `API request failed (${response.status})`;
                 try {
-                    errorDetail += `: ${await response.text()}`;
-                } catch (readErr) {}
+                    const errorJson = await response.json(); 
+                    errorDetail += `: ${errorJson.detail || JSON.stringify(errorJson)}`; 
+                } catch (e) {
+                    try { errorDetail += `: ${await response.text()}`; } catch (readErr) {} 
+                }
+                throw new Error(errorDetail); 
             }
-            throw new Error(errorDetail); // Throw error to be caught below
+
+            const parsedData = await response.json(); 
+            renderPlsPage_DA(analysisResultContainer, parsedData);
+
+        } catch (error) { 
+            console.error("Error during PLS-SEM analysis:", error);
+            analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400"><strong>Error:</strong> ${error.message}</div>`;
+        } finally {
+            window.isSampleModeActive = false; // Reset the flag
+            setLoading("generate", false);
         }
-
-        // If response is OK (2xx status)
-        const parsedData = await response.json(); // Expecting JSON response with results
-
-        // Render the results using the PLS-specific rendering function
-        renderPlsPage_DA(analysisResultContainer, parsedData);
-
-    } catch (error) { // Catch errors from input validation, fetch, or response handling
-        console.error("Error during PLS-SEM analysis:", error);
-        // Display the error message in the results container
-        analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400"><strong>Error:</strong> ${error.message}</div>`;
-    } finally {
-        // Ensure loading indicator is turned off regardless of success or failure
-        setLoading("generate", false);
     }
-}
 
 /**
  * RENDERER: PLS-SEM (v7 - 3-Tab Focused Version)
@@ -27115,7 +27946,6 @@ function renderPlsDiagnosticsTab(data_summary, model_evaluation, reliability_val
          const fileName = $("descriptiveFile")?.files[0]?.name || "N/A"; // Get filename if available
         summaryPanel.innerHTML = `<div class="p-4">
             <h3 class="text-2xl font-bold mb-6 text-center">Dataset Overview</h3>
-             <p class="text-sm text-center text-white/70 mb-6">Analysis based on file: ${fileName}</p>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto mb-8">
                 <div class="summary-stat-card"><div class="stat-value">${summary.rows}</div><div class="stat-label">Rows (Records)</div></div>
                 <div class="summary-stat-card"><div class="stat-value">${summary.columns}</div><div class="stat-label">Columns (Variables)</div></div>
@@ -27413,111 +28243,94 @@ function renderPlsDiagnosticsTab(data_summary, model_evaluation, reliability_val
     }
 
     async function handlePrescriptiveAnalysis_DA() {
-    const analysisResultContainer = $("analysisResult");
-    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div></div><div></div><div></div></div><h3 class="text-xl font-semibold text-white">Running Enhanced Prescriptive Analysis...</h3><p class="text-white/80 mb-2">Linking data insights directly to actionable recommendations...</p></div>`;
-    setLoading("generate", true);
-    $("analysisActions").classList.add("hidden");
-    
-    // Updated API URL for backend
-    const API_URL = "https://analysis.data2int.com/api/prescriptive";
+        const analysisResultContainer = $("analysisResult");
+        analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div></div><div></div><div></div></div><h3 class="text-xl font-semibold text-white">Running Enhanced Prescriptive Analysis...</h3><p class="text-white/80 mb-2">Linking data insights directly to actionable recommendations...</p></div>`;
+        setLoading("generate", true);
+        $("analysisActions").classList.add("hidden");
+        
+        const API_URL = "https://analysis.data2int.com/api/prescriptive";
 
-    try {
-        // 1. Gather Inputs
-        
-        // === TOGGLE LOGIC (UNCHANGED) ===
-        const isUsingFile = $("prescriptiveInputFileToggle").checked;
-        let businessGoal = "";
-        let contextFile = null;
-        
-        if (isUsingFile) {
-            // User selected file upload
-            contextFile = $("prescriptiveContextFile").files[0];
-            if (contextFile) {
-                // For backend, we'll send the file and let the backend extract the text
-                businessGoal = ""; // Backend will read from context_file
+        try {
+            const formData = new FormData();
+
+            if (window.isSampleModeActive === true) {
+                // --- SAMPLE MODE ---
+                const dataFile = await fetchFileAsObject('data-files/prescriptive/prescriptive-sample-data.csv');
+                const contextFile = await fetchFileAsObject('data-files/prescriptive/prescriptive-sample-doc.txt');
+                if (!dataFile || !contextFile) throw new Error("Sample file(s) failed to load.");
+
+                formData.append("data_file", dataFile, dataFile.name);
+                formData.append("context_file", contextFile, contextFile.name);
+                formData.append("business_goal", "See attached context file");
             } else {
-                throw new Error("❌ Please upload a context document when using file upload mode.");
+                // --- MANUAL MODE ---
+                const dataFile = $("prescriptiveFile").files[0];
+                if (!dataFile) {
+                    throw new Error("❌ Please upload a CSV data file.");
+                }
+                formData.append("data_file", dataFile, dataFile.name);
+
+                const isUsingFile = $("prescriptiveInputFileToggle").checked;
+                if (isUsingFile) {
+                    const contextFile = $("prescriptiveContextFile").files[0];
+                    if (!contextFile) {
+                        throw new Error("❌ Please upload a context document when using file upload mode.");
+                    }
+                    formData.append("context_file", contextFile, contextFile.name);
+                    formData.append("business_goal", "See attached context file");
+                } else {
+                    const businessGoal = $("prescriptiveGoalText").value.trim();
+                    if (!businessGoal) {
+                        throw new Error("❌ Please describe your business goal.");
+                    }
+                    formData.append("business_goal", businessGoal);
+                }
             }
-        } else {
-            // User selected text input
-            businessGoal = $("prescriptiveGoalText").value.trim();
-            if (!businessGoal) {
-                throw new Error("❌ Please describe your business goal.");
+            
+            // 3. Send Request
+            const response = await fetch(API_URL, {
+                method: "POST",
+                body: formData,
+            });
+
+            if (!response.ok) {
+                let errorDetail = `API Error: ${response.status}`;
+                try {
+                    const errorJson = await response.json();
+                    errorDetail = errorJson.detail || `API Error: ${response.status} - ${response.statusText}`;
+                } catch (e) {
+                    errorDetail = `API Error: ${response.status} - ${response.statusText}`;
+                }
+                throw new Error(errorDetail);
             }
-        }
-        // === END TOGGLE LOGIC ===
-        
-        const dataFile = $("prescriptiveFile").files[0];
-        if (!dataFile) {
-            throw new Error("❌ Please upload a CSV data file.");
-        }
 
-        // 2. Prepare FormData for backend API
-        const formData = new FormData();
-        formData.append("data_file", dataFile, dataFile.name);
-        
-        if (businessGoal) {
-            formData.append("business_goal", businessGoal);
-        } else {
-            // If using file upload mode, we need a placeholder business goal
-            // The backend will read the actual goal from context_file
-            formData.append("business_goal", "See attached context file");
-        }
-        
-        if (contextFile) {
-            formData.append("context_file", contextFile, contextFile.name);
-        }
-
-        // 3. Send Request to Python Backend
-        console.log(`Sending Prescriptive Analysis request to Python backend at ${API_URL}...`);
-        const response = await fetch(API_URL, {
-            method: "POST",
-            body: formData,
-        });
-
-        if (!response.ok) {
-            let errorDetail = `API Error: ${response.status}`;
-            try {
-                const errorJson = await response.json();
-                errorDetail = errorJson.detail || `API Error: ${response.status} - ${response.statusText}`;
-            } catch (e) {
-                errorDetail = `API Error: ${response.status} - ${response.statusText}`;
+            const parsedData = await response.json();
+            
+            if (parsedData.metadata && parsedData.metadata.error) {
+                throw new Error(`Backend Analysis Error: ${parsedData.metadata.error_message}`);
             }
-            throw new Error(errorDetail);
-        }
 
-        const parsedData = await response.json();
-        
-        // Check if the backend returned an error
-        if (parsedData.metadata && parsedData.metadata.error) {
-            throw new Error(`Backend Analysis Error: ${parsedData.metadata.error_message}`);
-        }
+            // 4. Validate
+            if (!parsedData.data_insights || !Array.isArray(parsedData.data_insights) || parsedData.data_insights.length < 1) {
+                throw new Error("Invalid response structure: Missing or insufficient data insights");
+            }
+            if (!parsedData.prescriptions || !Array.isArray(parsedData.prescriptions) || parsedData.prescriptions.length < 1) {
+                throw new Error("Invalid response structure: Missing or insufficient prescriptions");
+            }
+            // 5. Render
+            renderPrescriptivePage_DA(analysisResultContainer, parsedData);
 
-        // 4. Validate the response structure
-        if (!parsedData.data_insights || !Array.isArray(parsedData.data_insights) || parsedData.data_insights.length < 1) {
-            throw new Error("Invalid response structure: Missing or insufficient data insights");
-        }
-        
-        if (!parsedData.prescriptions || !Array.isArray(parsedData.prescriptions) || parsedData.prescriptions.length < 1) {
-            throw new Error("Invalid response structure: Missing or insufficient prescriptions");
-        }
-
-        console.log(`Successfully received prescriptive analysis with ${parsedData.data_insights.length} insights and ${parsedData.prescriptions.length} prescriptions.`);
-
-        // 5. Render Results using existing render function
-        renderPrescriptivePage_DA(analysisResultContainer, parsedData);
-
-    } catch (error) {
-        console.error(`Error in handlePrescriptiveAnalysis_DA (Backend):`, error);
-        analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
-        setLoading("generate", false);
-    } finally {
-        // Ensure loading stops
-        if ($("generateSpinner") && !$("generateSpinner").classList.contains("hidden")) {
+        } catch (error) {
+            console.error(`Error in handlePrescriptiveAnalysis_DA (Backend):`, error);
+            analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
             setLoading("generate", false);
+        } finally {
+            window.isSampleModeActive = false; // Reset the flag
+            if ($("generateSpinner") && !$("generateSpinner").classList.contains("hidden")) {
+                setLoading("generate", false);
+            }
         }
     }
-}
 
 function renderPrescriptivePage_DA(container, data) {
     container.innerHTML = ""; // Clear loading state
@@ -30210,6 +31023,96 @@ function renderSystemGoalsPage(container, data) {
         navigateTo("login");
     }
 
+    /**
+     * Handles the password reset request form.
+     * Calls the new 'password-reset-request' edge function.
+     */
+    async function handlePasswordResetRequest() {
+        const email = $("passwordResetEmail").value.trim();
+        const messageEl = $("passwordResetRequestMessage");
+
+        if (!email) {
+            showMessage("passwordResetRequestMessage", "Please enter your email address", "error");
+            return;
+        }
+
+        setLoading("passwordResetRequest", true);
+        
+        try {
+            const { data, error } = await supabase.functions.invoke("password-reset-request", {
+                body: { email: email }
+            });
+
+            if (error) throw error;
+
+            // Always show a success message (for security, don't reveal if email exists)
+            showMessage("passwordResetRequestMessage", "If an account exists, a reset link has been sent to your email.", "success");
+            $("passwordResetEmail").value = ""; // Clear field
+
+        } catch (error) {
+            console.error("Password reset request error:", error);
+            // Show a generic error
+            showMessage("passwordResetRequestMessage", `Error: ${error.message || 'Could not send reset link.'}`, "error");
+        } finally {
+            setLoading("passwordResetRequest", false);
+        }
+    }
+
+    /**
+     * Handles the password update form.
+     * This runs on the client-side after the user clicks the email link.
+     */
+async function handlePasswordUpdate() {
+    const password = $("passwordUpdatePassword").value;
+    const confirmPassword = $("passwordUpdateConfirmPassword").value;
+    
+    if (!password || !confirmPassword) {
+        showMessage("passwordUpdateMessage", "Please fill in all fields", "error");
+        return;
+    }
+    if (password !== confirmPassword) {
+        showMessage("passwordUpdateMessage", "Passwords do not match", "error");
+        return;
+    }
+    if (password.length < 6) {
+        showMessage("passwordUpdateMessage", "Password must be at least 6 characters long", "error");
+        return;
+    }
+    
+    setLoading("passwordUpdate", true);
+    
+    try {
+        // Use the stored token and email from the URL
+        const { data, error } = await supabase.functions.invoke("password-reset-verify", {
+            body: { 
+                token: window.resetToken,
+                email: window.resetEmail,
+                newPassword: password 
+            }
+        });
+        
+        if (error) throw error;
+        
+        showMessage("passwordUpdateMessage", "Password updated successfully! Redirecting to login...", "success");
+        
+        // Clear the stored values
+        delete window.resetToken;
+        delete window.resetEmail;
+        
+        setTimeout(() => navigateTo("login"), 2000);
+    } catch (error) {
+        console.error("Password reset error:", error);
+        showMessage("passwordUpdateMessage", `Error: ${error.message || 'Could not update password.'}`, "error");
+    } finally {
+        setLoading("passwordUpdate", false);
+    }
+}   
+
+    console.log('=== PAGE LOAD DEBUG ===');
+    console.log('Current URL:', window.location.href);
+    console.log('Pathname:', window.location.pathname);
+    console.log('Search:', window.location.search);
+   
     // --- UI Helpers ---
     function setLoading(type, isLoading) {
         const btn = $(type + "Btn");
@@ -30655,17 +31558,62 @@ function renderSystemGoalsPage(container, data) {
     $("loginBtn").addEventListener("click", handleLogin);
     $("registerBtn").addEventListener("click", handleRegister);
 
-    if (window.location.hash.includes("access_token")) {
+    // --- NEW Initial Page Load Logic (Updated for Password Reset) ---
+(async () => {
+    // Get URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const isSuccess = urlParams.get('success') === 'true';
+    const isAlready = urlParams.get('already') === 'true';
+    
+    // NEW: Check for password reset parameters
+    const resetToken = urlParams.get('token');
+    const resetEmail = urlParams.get('email');
+    
+    // --- HASH CHECK ---
+    const hash = window.location.hash;
+    const hashParams = new URLSearchParams(hash.substring(1)); // remove #
+    const accessToken = hashParams.get('access_token');
+    const type = hashParams.get('type');
+    
+    // Clear URL parameters or hash
+    if (isSuccess || isAlready || accessToken || resetToken) {
+         window.history.replaceState(null, null, window.location.pathname);
+    }
+    
+    // --- NAVIGATION LOGIC ---
+    if (resetToken && resetEmail) {
+        // NEW: Handle password reset
+        console.log('Password reset link detected, navigating to reset form');
+        navigateTo("passwordResetUpdate");
+        // Store token and email for the reset form to use
+        window.resetToken = resetToken;
+        window.resetEmail = decodeURIComponent(resetEmail);
+        console.log('Stored reset token and email for form');
+    } else if (isSuccess) {
+        // From our custom email-verify function
+        navigateTo("emailVerifiedSuccess");
+    } else if (isAlready) {
+        // From our custom email-verify function
+        navigateTo("emailVerifiedAlready");
+    } else if (accessToken && type === 'recovery') {
+        // From Supabase password reset link (legacy)
+        // The supabase client will auto-set the session from the token.
+        navigateTo("passwordResetUpdate");
+    } else if (accessToken) {
+        // From any other Supabase magic link (like login or old verify)
+        // The onAuthStateChange listener will catch this
         navigateTo("home");
     } else {
+        // Default load for a new visitor
         navigateTo("home");
     }
-    // *** FIX: Attach the Contact Submit Handler ***
+    
+    // Attach the Contact Submit Handler
     const contactSubmitBtn = $("contactSubmitBtn");
     if (contactSubmitBtn) {
         contactSubmitBtn.addEventListener("click", handleContactSubmit);
     }
-
+    
     // Hero Canvas Animation
 
     function initHeroAnimation() {
@@ -30832,11 +31780,20 @@ function renderSystemGoalsPage(container, data) {
         }
     }
 
+    // Attach password button listeners
+    const resetBtn = $("passwordResetRequestBtn");
+    if (resetBtn) resetBtn.addEventListener("click", handlePasswordResetRequest);
+    
+    const updateBtn = $("passwordUpdateBtn");
+    if (updateBtn) updateBtn.addEventListener("click", handlePasswordUpdate);
+    
+    // These should run regardless
     setupHomeTabs();
     attachHomeCardListeners();
-
     initThreeJS();
-
+})();
+// --- END of New Initial Page Load Logic ---         
+   
     // --- Dashboard Widget ---
     (function initDashboardWidget() {
         const PRESENCE_PREFIX = "sage_presence_";
