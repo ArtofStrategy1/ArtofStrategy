@@ -195,6 +195,24 @@ async function handleSaveAsDocx(filename = "SAGE_Analysis.docx") {
 
 
 
+// --- NEW HELPER: Fetches a sample file and returns a File object ---
+async function fetchFileAsObject(url) {
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
+        }
+        const blob = await response.blob();
+        const fileName = url.substring(url.lastIndexOf('/') + 1);
+        return new File([blob], fileName, { type: blob.type });
+    } catch (error) {
+        console.error("Error fetching sample file:", error);
+        return null; // Return null on failure
+    }
+}
+
+
+
 /**
  * Extracts text from a user-uploaded file. Supports .txt and .docx.
  */
@@ -281,6 +299,7 @@ function copyToClipboard(button, text) {
 export {
     handleSaveAsPdf,
     handleSaveAsDocx,
+    fetchFileAsObject,
     extractTextFromFile,
     parseCSV,
     copyToClipboard
