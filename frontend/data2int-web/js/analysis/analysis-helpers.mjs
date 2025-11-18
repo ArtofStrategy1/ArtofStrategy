@@ -1,9 +1,10 @@
 import { appState } from "../state/app-state.mjs";
 import { appConfig } from "../config.mjs";
 import { dom } from "../utils/dom-utils.mjs";
-import { setLoading } from "../utils/ui-utils.mjs";
+import { setLoading, animateElements } from "../utils/ui-utils.mjs";
 import { getFrameworkForTemplate, getSelectedSections } from "../ui/template-creation/framework-selection.mjs";
 import { attemptMergeAndRender } from "../ui/analysis-rendering/analysis-rendering.mjs";
+import { fetchFileAsObject } from "../utils/file-utils.mjs";
 import { parseMarkdownTable } from "../utils/text-utils.mjs";
 import * as handleSP from "./analysis-handling-sp.mjs";
 import * as handleST from "./analysis-handling-st.mjs";
@@ -287,14 +288,12 @@ function applyParetoAnalysisJS(factors) {
 
 /**
  * HANDLES ALL WEBSOCKET MESSAGES (v7.5 - JS PARSER)
- * - Uses the new `parseMarkdownTable` function for 'objectives'
- * - No longer needs to be `async` for the objectives path.
- * - All other logic remains the same.
+ * - Uses the new `parseMarkdownTable` function for 'objectives'.
  */
 async function handleWebSocketMessage(data) { // Still async for mission-vision
     console.log("Received WebSocket message:", data);
 
-    // --- Logic for 'mission-vision' (This is still correct) ---
+    // --- Logic for 'mission-vision' ---
     if (appState.currentTemplateId === "mission-vision" && data.result && typeof data.result === 'string') {
         
         if (!appState.currentAnalysisMessageId) {
@@ -306,13 +305,54 @@ async function handleWebSocketMessage(data) { // Still async for mission-vision
         
         try {
             const resultText = data.result;
-            const missionMatch = resultText.match(/Mission:\n([\s\S]*?)\n\nGoals:/i);
-            const mission = missionMatch && missionMatch[1] ? missionMatch[1].trim() : "";
-            const goalsMatch = resultText.match(/Goals:\n([\s\S]*)/i);
             
-            const goalStrings = goalsMatch && goalsMatch[1] ? 
-                goalsMatch[1].trim().split('\n').filter(g => g.trim() !== '' && !g.trim().toLowerCase().startsWith("processing time")) : 
-                [];
+            // 1. Extract Vision (Using "Our vision is" or "Vision:" as anchor)
+            let vision = "";
+            const visionMatch = resultText.match(/(?:Our vision is|Vision:)([\s\S]*?)(?:\n\n|\n(?=[A-Z])|$)/i);
+            if (visionMatch) {
+                // Re-add the prefix if it was part of the sentence structure
+                const prefix = resultText.match(/Our vision is/i) ? "Our vision is " : "";
+                vision = prefix + visionMatch[1].trim().replace(/^:\s*/, '');
+            }
+
+            // 2. Extract Mission (Context before Vision)
+            let mission = vision;
+            if (visionMatch && visionMatch.index > 0) {
+                // Take everything before the vision as the mission/context
+                mission = resultText.substring(0, visionMatch.index).trim();
+            } else {
+                // Fallback: Check for explicit "Mission:" or take first paragraph
+                const missionExplicit = resultText.match(/Mission:\s*([\s\S]*?)(?:\n\n|Vision:|$)/i);
+                mission = missionExplicit ? missionExplicit[1].trim() : resultText.split('\n\n')[0].trim();
+            }
+
+            // 3. Extract Goals (Prioritize bullet points)
+            let goalStrings = [];
+            // Look for lines starting with bullet points (•, -, *)
+            const bulletMatches = resultText.match(/(?:^|\n)\s*[•\-*]\s*(.+)/g);
+            
+            if (bulletMatches && bulletMatches.length > 0) {
+                goalStrings = bulletMatches.map(g => g.replace(/(?:^|\n)\s*[•\-*]\s*/, '').trim());
+            } else {
+                // --- NEW: Animate the new content ---
+                const newElementsToAnimate = container.querySelectorAll(
+                    '.glass-container, .feature-card, .project-card, .kpi-card, .summary-stat-card, .prescription-card, .insight-card, .action-card, .ladder-rung, .dissonance-pole, .cascade-objective, .cascade-goal-card, .st-objective-card, .st-goal-card, .feedback-card, .plotly-chart, .styled-table'
+                );
+                animateElements(newElementsToAnimate);
+                // Fallback: If no bullets, try to find a "Goals" section or parse lines after Vision
+                const goalsExplicit = resultText.match(/Goals:\s*([\s\S]*)/i);
+                const textToSearch = goalsExplicit ? goalsExplicit[1] : (visionMatch ? resultText.substring(visionMatch.index + visionMatch[0].length) : "");
+                
+                goalStrings = textToSearch.split('\n')
+                    .map(l => l.trim())
+                    // Filter out metadata lines, URLs, and short/empty lines
+                    .filter(l => l.length > 15 
+                        && !l.startsWith("Reference Links") 
+                        && !l.startsWith("Processing Time") 
+                        && !l.startsWith("Final Recommendation")
+                        && !l.startsWith("[")
+                        && !l.includes("http"));
+            }
 
             if (!appState.currentAnalysisContext) {
                 throw new Error("Cannot enrich goals, analysis context is missing.");
@@ -329,7 +369,7 @@ async function handleWebSocketMessage(data) { // Still async for mission-vision
                 goals: enrichedGoals
             };
 
-            console.log("WebSocket: n8n data parsed and enriched. Stored in appState.pendingN8nResult.");
+            console.log("WebSocket: n8n data parsed and enriched. Stored in pendingN8nResult.");
             attemptMergeAndRender();
 
         } catch (parseError) {
@@ -358,7 +398,7 @@ async function handleWebSocketMessage(data) { // Still async for mission-vision
             
             appState.pendingN8nResult = tableJson; // This is the array of table rows
             
-            console.log("WebSocket: n8n table data parsed. Stored in appState.pendingN8nResult.");
+            console.log("WebSocket: n8n table data parsed. Stored in pendingN8nResult.");
             attemptMergeAndRender();
 
         } catch (parseError) {
@@ -373,7 +413,7 @@ async function handleWebSocketMessage(data) { // Still async for mission-vision
     // This is your OLD logic for all *other* WebSocket messages
     const container = appState.pendingAnalysisRequests.get(parseInt(data.messageId));
     if (!container) {
-        console.warn("WebSocket: Received message with no matching container in appState.pendingAnalysisRequests. ID:", data.messageId);
+        console.warn("WebSocket: Received message with no matching container in pendingAnalysisRequests. ID:", data.messageId);
         return;
     }
 
@@ -411,9 +451,318 @@ async function handleWebSocketMessage(data) { // Still async for mission-vision
     setLoading("generate", false);
 }
 
+
+
+// --- NEW MASTER HANDLER: For all "Use Sample" buttons (v5 - Preload Only) ---
+async function handleUseSampleClick(e) {
+    const button = e.currentTarget;
+    const templateId = button.dataset.templateId;
+    if (!templateId) return;
+
+    // Set loading state
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = `<span class="loading-spinner" style="width: 12px; height: 12px; margin-right: 5px;"></span> Loading...`;
+    
+    // --- THIS IS THE NEW FLAG ---
+    window.isSampleModeActive = false; // Reset flag at start
+    
+    let dataFile, contextFile, dataText, contextText;
+
+    // --- Helper logic to build preview (inline) ---
+    const buildPreview = (csvText) => {
+        if (!csvText) return '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Sample file is empty.</td></tr></tbody>';
+        const lines = csvText.split(/[\r\n]+/).filter(Boolean);
+        if (lines.length < 1) return '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">No data in sample file.</td></tr></tbody>';
+        
+        const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
+        if (headers.length === 0) return '<tbody><tr><td class="p-4 text-center text-red-400" colspan="100%">Could not parse headers from sample file.</td></tr></tbody>';
+
+        let tableHtml = '<thead class="bg-white/10 text-xs uppercase"><tr>';
+        headers.forEach(h => { tableHtml += `<th class="px-4 py-2">${h}</th>`; });
+        tableHtml += '</tr></thead><tbody>';
+
+        const rows = lines.slice(1, 6); // Get up to 5 data rows
+        if (rows.length === 0) {
+                tableHtml += `<tr><td class="p-4 text-center text-white/60" colspan="${headers.length}">No data rows found in sample.</td></tr>`;
+        } else {
+            rows.forEach((line, rowIndex) => {
+                const values = line.split(',');
+                tableHtml += `<tr class="border-t border-white/10 ${rowIndex % 2 === 0 ? 'bg-white/5' : ''}">`;
+                headers.forEach((_, cellIndex) => {
+                    const val = values[cellIndex] ? values[cellIndex].trim().replace(/^"|"$/g, '') : '';
+                    tableHtml += `<td class="px-4 py-2 whitespace-nowrap">${val}</td>`;
+                });
+                tableHtml += '</tr>';
+            });
+        }
+        tableHtml += '</tbody>';
+        return tableHtml;
+    };
+
+    try {
+        switch (templateId) {
+            
+            case "descriptive-analysis":
+                // 1. Fetch files
+                dataFile = await fetchFileAsObject('data-files/descriptive/descriptive-sample-data.csv');
+                contextFile = await fetchFileAsObject('data-files/descriptive/descriptive-sample-doc.txt');
+                if (!dataFile || !contextFile) throw new Error("Sample file(s) failed to load.");
+                                    
+                // 2. Read text content
+                dataText = await dataFile.text();
+                contextText = await contextFile.text();
+
+                // 3. Update UI
+                dom.$("descriptiveFileLabel").querySelector(".file-name").textContent = dataFile.name;
+                dom.$("descriptiveFileLabel").classList.add("has-file");
+                dom.$("descriptivePreviewTable").innerHTML = buildPreview(dataText); // Use real data
+                dom.$("descriptiveDataPreview").classList.remove("hidden");
+                dom.$("descriptiveContextText").value = contextText;
+                dom.$("textInput").checked = true; // Select the text input radio
+                dom.$("docUpload").checked = false;
+                dom.$("descriptiveContextTextArea").classList.remove("hidden");
+                dom.$("descriptiveContextFileArea").classList.add("hidden");
+                break;
+            
+            case "predictive-analysis":
+                dataFile = await fetchFileAsObject('data-files/predictive/predictive-sample-data.csv');
+                if (!dataFile) throw new Error("Sample data file failed to load.");
+
+                dataText = await dataFile.text();
+                const predHeaders = dataText.split(/[\r\n]+/)[0].split(',').map(h => h.trim());
+
+                // 1. Update file label
+                dom.$("predictiveFileLabel").querySelector(".file-name").textContent = dataFile.name;
+                dom.$("predictiveFileLabel").classList.add("has-file");
+
+                // 2. Update assumed date column
+                dom.$("assumedDateColName").textContent = predHeaders[0] || "N/A";
+
+                // 3. Manually populate dropdowns
+                const targetSelect = dom.$("predictiveTargetColumn");
+                if (targetSelect) {
+                    targetSelect.innerHTML = ""; // Clear
+                    predHeaders.slice(1).forEach(h => { // Add all headers except the first one
+                        targetSelect.add(new Option(h, h));
+                    });
+                    targetSelect.value = "Revenue"; // Select sample default
+                    targetSelect.disabled = false;
+                }
+                
+                // 4. Show the preview table
+                dom.$("predictivePreviewTable").innerHTML = buildPreview(dataText);
+                dom.$("predictiveDataPreview").classList.remove("hidden");
+                break;
+
+            case "prescriptive-analysis":
+                // 1. Fetch files
+                dataFile = await fetchFileAsObject('data-files/prescriptive/prescriptive-sample-data.csv');
+                contextFile = await fetchFileAsObject('data-files/prescriptive/prescriptive-sample-doc.txt');
+                if (!dataFile || !contextFile) throw new Error("Sample file(s) failed to load.");
+                
+                // 2. Read text content
+                dataText = await dataFile.text();
+                contextText = await contextFile.text();
+
+                // 3. Update UI
+                dom.$("prescriptiveFileLabel").querySelector(".file-name").textContent = dataFile.name;
+                dom.$("prescriptiveFileLabel").classList.add("has-file");
+                dom.$("prescriptivePreviewTable").innerHTML = buildPreview(dataText);
+                dom.$("prescriptiveDataPreview").classList.remove("hidden");
+                dom.$("prescriptiveGoalText").value = contextText;
+                dom.$("prescriptiveInputTextToggle").checked = true; // Select text input
+                dom.$("prescriptiveInputFileToggle").checked = false;
+                dom.$("prescriptiveTextInputArea").classList.remove("hidden");
+                dom.$("prescriptiveFileInputArea").classList.add("hidden");
+                break;
+
+            case "visualization":
+                // 1. Fetch files
+                dataFile = await fetchFileAsObject('data-files/visualization/visualization-sample.csv');
+                contextFile = await fetchFileAsObject('data-files/visualization/visualization-sample-doc.txt');
+                if (!dataFile || !contextFile) throw new Error("Sample file(s) failed to load.");
+                
+                // 2. Read text content
+                dataText = await dataFile.text();
+                contextText = await contextFile.text();
+
+                // 3. Update UI
+                dom.$("vizFileLabel").querySelector(".file-name").textContent = dataFile.name;
+                dom.$("vizFileLabel").classList.add("has-file");
+                dom.$("vizPreviewTable").innerHTML = buildPreview(dataText);
+                dom.$("vizDataPreview").classList.remove("hidden");
+                dom.$("vizRequestText").value = contextText;
+                dom.$("vizInputTextToggle").checked = true; // Select text input
+                dom.$("vizInputFileToggle").checked = false;
+                dom.$("vizTextInputArea").classList.remove("hidden");
+                dom.$("vizFileInputArea").classList.add("hidden");
+                break;
+
+            case "regression-analysis":
+                // 1. Fetch files
+                dataFile = await fetchFileAsObject('data-files/regression/regression-sample.csv');
+                contextFile = await fetchFileAsObject('data-files/regression/regression-sample-doc.txt');
+                if (!dataFile || !contextFile) throw new Error("Sample file(s) failed to load.");
+
+                // 2. Read text content
+                dataText = await dataFile.text();
+                contextText = await contextFile.text();
+
+                // 3. Update UI (File Label, Preview, Context Text)
+                dom.$("regressionFileLabel").querySelector(".file-name").textContent = dataFile.name;
+                dom.$("regressionFileLabel").classList.add("has-file");
+                dom.$("regressionPreviewTable").innerHTML = buildPreview(dataText);
+                dom.$("regressionDataPreview").classList.remove("hidden");
+                dom.$("regressionContextText").value = contextText;
+                dom.$("textInput").checked = true; // Select text input
+                dom.$("docUpload").checked = false;
+                dom.$("regressionContextTextArea").classList.remove("hidden");
+                dom.$("regressionContextFileArea").classList.add("hidden");
+
+                // 4. Update dropdowns - Use exact column names: marketing_spend,product_price,customer_rating,region,sales_revenue
+                const regHeaders = ["marketing_spend", "product_price", "customer_rating", "region", "sales_revenue"];
+                console.log("Using exact column names:", regHeaders); // Debug log
+
+                const regDepSelect = dom.$("dependentVar");
+                const regIndepContainer = dom.$("independentVarsContainer");
+
+                regDepSelect.innerHTML = ""; // Clear
+                regIndepContainer.innerHTML = ""; // Clear
+
+                // Add all columns to both dependent and independent options
+                regHeaders.forEach(h => {
+                    regDepSelect.add(new Option(h, h));
+                    regIndepContainer.innerHTML += `
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="method-checkbox independent-var-checkbox" value="${h}"><span>${h}</span></label>
+                    `;
+                });
+
+                // Set defaults based on what's actually selected in your UI
+                regDepSelect.value = "marketing_spend"; // Match the actual selection
+                regDepSelect.disabled = false;
+
+                // Check the correct boxes based on actual UI selections
+                regIndepContainer.querySelectorAll('.independent-var-checkbox').forEach(cb => {
+                    // Check these specific columns that are selected in your screenshot
+                    if (cb.value === "product_price" || cb.value === "customer_rating" || 
+                        cb.value === "region" || cb.value === "sales_revenue") {
+                        cb.checked = true;
+                    }
+                    // Disable the dependent variable checkbox
+                    if (cb.value === "marketing_spend") {
+                        cb.disabled = true;
+                    }
+                });
+
+                appState.currentRegressionRowCount = dataText.split(/[\r\n]+/).filter(Boolean).length - 1;
+                break;
+                
+            case "pls-analysis":
+                // 1. Fetch file
+                dataFile = await fetchFileAsObject('data-files/pls/pls-sample-data.csv');
+                if (!dataFile) throw new Error("Sample data file failed to load.");
+                
+                dataText = await dataFile.text();
+                
+                // 2. Update UI
+                dom.$("plsFileLabel").querySelector(".file-name").textContent = dataFile.name;
+                dom.$("plsFileLabel").classList.add("has-file");
+                dom.$("plsPreviewTable").innerHTML = buildPreview(dataText);
+                dom.$("plsDataPreview").classList.remove("hidden");
+                dom.$("plsInputFileToggle").checked = true; // Select file input
+                dom.$("plsInputTextToggle").checked = false;
+                dom.$("plsFileUploadArea").classList.remove("hidden");
+                dom.$("plsTextInputArea").classList.add("hidden");
+
+                // 3. Update syntax boxes
+                dom.$("plsModelTemplate").disabled = true;
+                dom.$("plsModelTemplate").innerHTML = `<option value="custom">Custom Syntax</option>`;
+                dom.$("plsModelTemplate").value = "custom";
+                dom.$("plsMeasurementSyntax").value = "Quality =~ qual1 + qual2 + qual3\nSatisfaction =~ sat1 + sat2 + sat3\nLoyalty =~ loy1 + loy2 + loy3";
+                dom.$("plsStructuralSyntax").value = "Satisfaction ~ Quality\nLoyalty ~ Satisfaction + Quality";
+                break;
+
+            case "sem-analysis":
+                // 1. Fetch file
+                dataFile = await fetchFileAsObject('data-files/sem/sem-sample-data.csv');
+                if (!dataFile) throw new Error("Sample data file failed to load.");
+
+                dataText = await dataFile.text();
+
+                // 2. Update UI
+                dom.$("semFileLabel").querySelector(".file-name").textContent = dataFile.name;
+                dom.$("semFileLabel").classList.add("has-file");
+                dom.$("semPreviewTable").innerHTML = buildPreview(dataText);
+                dom.$("semDataPreview").classList.remove("hidden");
+                dom.$("semInputFileToggle").checked = true; // Select file input
+                dom.$("semInputTextToggle").checked = false;
+                dom.$("semFileUploadArea").classList.remove("hidden");
+                dom.$("semTextInputArea").classList.add("hidden");
+
+                // 3. Update syntax boxes with actual column names
+                // Column names: Date,Year,Month,Quarter,Ad_Spend_USD,Ad_Spend_Level,Brand_Awareness_Pct,Brand_Awareness_Level,
+                // Online_Sales_USD,Retail_Sales_USD,Total_Sales_USD,New_Customers_Count,Profit_USD,ROI_Pct,
+                // Customer_Acquisition_Cost,Sales_Per_Customer,Online_Sales_Ratio
+
+                dom.$("semModelTemplate").disabled = true;
+                dom.$("semModelTemplate").innerHTML = `<option value="custom">Custom Syntax</option>`;
+                dom.$("semModelTemplate").value = "custom";
+
+                // Set measurement syntax using actual column names
+                dom.$("semMeasurementSyntax").value = `Marketing_Performance =~ Ad_Spend_USD + Brand_Awareness_Pct
+                Sales_Performance =~ Online_Sales_USD + Retail_Sales_USD + Total_Sales_USD
+                Customer_Metrics =~ New_Customers_Count + Sales_Per_Customer`;
+
+                // Set structural syntax using actual column names and latent variables
+                dom.$("semStructuralSyntax").value = `Sales_Performance ~ Marketing_Performance
+                Customer_Metrics ~ Marketing_Performance + Sales_Performance
+                Profit_USD ~ Sales_Performance + Customer_Metrics`;
+                break;
+
+            case "dematel-analysis":
+                // 1. Fetch file and text
+                contextFile = await fetchFileAsObject('data-files/dematel/dematel-sample-doc.txt');
+                if (!contextFile) throw new Error("Sample context file failed to load.");
+
+                contextText = await contextFile.text();
+
+                // 2. Update UI
+                dom.$("dematelFileLabel").querySelector(".file-name").textContent = contextFile.name;
+                dom.$("dematelFileLabel").classList.add("has-file");
+                dom.$("dematelContent").value = contextText;
+                dom.$("dematelFilePreview").textContent = contextText.split('\n').slice(0, 10).join('\n');
+                dom.$("dematelFilePreviewContainer").classList.remove("hidden");
+                dom.$("dematelInputTextToggle").checked = true; // Select text input
+                dom.$("dematelInputFileToggle").checked = false;
+                dom.$("dematelTextInputArea").classList.remove("hidden");
+                dom.$("dematelFileUploadArea").classList.add("hidden");
+                break;
+        }
+
+        // --- THIS IS THE KEY CHANGE ---
+        // DO NOT call handleGenerate().
+        // Instead, set the flag and update the button text.
+        window.isSampleModeActive = true;
+        button.innerHTML = `✓ Sample Loaded!`;
+        // We leave it disabled so the user can't click it again.
+        // The user will now click the main "Generate Analysis" button.
+
+    } catch (error) {
+        console.error("Error in handleUseSampleClick:", error);
+        alert(`Failed to load sample data: ${error.message}`);
+        window.isSampleModeActive = false; // Clear flag on error
+        // Restore button on error
+        button.disabled = false;
+        button.innerHTML = originalText;
+    } 
+    // NO finally block. We want the button to *stay* in its new state.
+}
+
 export {
     handleGenerate,
     enrichN8nGoal,
     applyParetoAnalysisJS,
-    handleWebSocketMessage
+    handleWebSocketMessage,
+    handleUseSampleClick
 }

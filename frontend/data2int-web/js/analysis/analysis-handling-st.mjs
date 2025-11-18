@@ -377,6 +377,14 @@ async function handleParetoFishboneAnalysis() {
 
 
 
+/**
+ * HANDLER: System Thinking Analysis
+ * - NEW (v4 - Unified Prompt): Abandons rigid classification.
+ * - This single, intelligent prompt asks the AI to find *all* components.
+ * - It instructs the AI that if the text is a research plan, `feedback_loops`
+ * and `system_archetype` will be null, and it should populate `causal_links`
+ * and `focus_areas` instead. This forces accuracy based on the *context*.
+ */
 async function handleSystemThinkingAnalysis() {
     const analysisResultContainer = dom.$("analysisResult");
     analysisResultContainer.innerHTML = `
@@ -393,7 +401,7 @@ async function handleSystemThinkingAnalysis() {
 
     let text = "";
     let truncatedNote = "";
-
+    
     try {
         // 1. Gather Inputs
         const useDoc = document.querySelector('input[name="inputType"]:checked').id === "docUpload";
@@ -414,114 +422,89 @@ async function handleSystemThinkingAnalysis() {
             console.warn(`System Thinking analysis context truncated.`);
         }
 
-        // 2. --- STEP 2: Run the NEW, ROBUST Unified Prompt ---
+        // 2. --- STEP 2: Run the Unified Analysis Prompt ---
         analysisResultContainer.querySelector("p").textContent = "Running unified analysis...";
         
-        // This new prompt has explicit if-then logic to check for research plans first.
         const analysis_prompt = `
             You are a master systems thinking analyst. Your task is to intelligently analyze the provided text and extract its systemic components.
-            Base ALL output EXCLUSIVELY on the provided text. Do not invent information. ${truncatedNote}
+            You MUST first determine the text's *intent*.
+            - If the text is a **research plan or hypothesis list** (e.g., "H1: X -> Y", "Our study will..."), your job is to map *that* model. ` +
+              `You will find causal_links and focus_areas. In this case, feedback_loops MUST be an empty array [] and system_archetype MUST be null.
+            - If the text is a **dynamic system problem** (e.g., "Sales are up but quality is down..."), your job is to find the problem's structure. ` +
+              `You will find feedback_loops, causal_links (for those loops), a system_archetype, and leverage_points. In this case, focus_areas MUST be null.
+            
+            Analyze the text and return ONLY a valid JSON object based on what you find. ${truncatedNote}
 
             **USER'S TEXT:**
             \`\`\`
             ${text}
             \`\`\`
 
-            **DETAILED TASKS (Follow this order):**
-
-            **Task 1: Determine Text Intent.**
-            First, read the text to determine its intent.
-            - Is it a **Research Plan** (contains "hypothesis", "H1:", "H2:", "constructs", "research study", "SEM analysis", "drivers of")?
-            - OR is it a **Dynamic System Problem** (contains "sales are falling", "growth stalled", "bottleneck", "we have a problem with...")?
-            - OR is it **Unanalyzable** (a poem, a random story, a shopping list, or text with no clear factors, services, or problems)?
-
-            **Task 2: Generate JSON based on Intent (Ground all answers *strictly* in the text):**
-
-            **IF IT IS A RESEARCH PLAN (like the 'E-Commerce Customer Experience Research Study'):**
-                - You MUST return \`feedback_loops: []\`.
-                - You MUST return \`system_archetype: null\`.
-                - You MUST return \`leverage_points: null\`.
-                - You MUST populate \`elements\` with the constructs (e.g., "Service Quality", "Customer Satisfaction").
-                - You MUST populate \`causal_links\` from the hypotheses (e.g., "H1: Service Quality...").
-                - You MUST populate \`focus_areas\` from the "Research Objectives" or "Expected Business Impact" sections.
-            
-            **IF IT IS A DYNAMIC SYSTEM PROBLEM:**
-                - You MUST populate \`feedback_loops\` with any R/B loops you find.
-                - You MUST populate \`system_archetype\` (e.g., "Limits to Growth").
-                - You MUST populate \`leverage_points\` with interventions.
-                - You MUST return \`focus_areas: null\`.
-                - You MUST populate \`causal_links\` from the loops.
-            
-            **IF IT IS UNANALYZABLE:**
-            1.  **Elements (\`elements\`):** This MUST be an empty array [].
-            2.  **Feedback Loops (\`feedback_loops\`):** This MUST be an empty array [].
-            3.  **Summary (\`summary\`):** A clear explanation of why the text cannot be analyzed (e.g., "The provided text appears to be a [poem/story/etc.] and does not contain analyzable system components...").
-            4.  **Causal Links (\`causal_links\`):** This MUST be an empty array [].
-            5.  **System Archetype (\`system_archetype\`):** This MUST be null.
-            6.  **Leverage Points (\`leverage_points\`):** This MUST be null.
-            7.  **Focus Areas (\`focus_areas\`):** This MUST be null.
-
-            **Task 3: Extract Components (Strictly from text):**
-            1.  \`summary\`: A concise summary explaining *what the text is* and its main objective (or the error message if unanalyzable).
-            2.  \`elements\`: Extract 5-8 key elements/constructs (or [] if unanalyzable). For each:
-                * \`name\`: Concise name (e.g., "Service Quality").
-                * \`type\`: Classify as "Stock" (an accumulation, e.g., "Brand Trust") or "Variable" (a factor, e.g., "Service Quality").
-            3.  \`feedback_loops\`: (See Task 2).
-            4.  \`causal_links\`: List ALL 1-to-1 causal links *stated in the text* (or [] if unanalyzable). For each:
-                * \`from\`: Cause element.
-                * \`to\`: Effect element.
+            **DETAILED TASKS (Ground all answers *strictly* in the text):**
+            1.  **Summary (\`summary\`):** A concise summary explaining *what the text is* (a research plan, a problem, etc.) and its main objective.
+            2.  **Elements (\`elements\`):** Extract 5-8 key system elements/constructs. For each:
+                * \`name\`: Concise name (e.g., "Sales", "Customer Satisfaction").
+                * \`type\`: Classify as "Stock" (an accumulation) or "Variable" (a factor, state, or flow).
+            3.  **Feedback Loops (\`feedback_loops\`):** Identify any *circular* reinforcing (R) or balancing (B) loops *if they are explicitly described*. If the text is a linear hypothesis model, this MUST be an empty array [].
+            4.  **Causal Links (\`causal_links\`):** List ALL 1-to-1 causal links *stated in the text* (e.g., from hypotheses H1-H7, or from loop descriptions). For each link:
+                * \`from\`: The name of the cause element.
+                * \`to\`: The name of the effect element.
                 * \`polarity\`: "+" or "-".
-                * \`loop_name\`: Loop name (e.g., "R1") or "H" (for Hypothesis).
+                * \`loop_name\`: The loop name (e.g., "R1", "B1") or "H" (for Hypothesis).
                 * \`description\`: The rationale/hypothesis from the text (e.g., "H1: ...").
-            5.  \`system_archetype\`: (See Task 2).
-            6.  \`leverage_points\`: (See Task 2).
-            7.  \`focus_areas\`: (See Task 2).
+            5.  **System Archetype (\`system_archetype\`):** If the text describes a dynamic problem, identify the dominant archetype (e.g., "Limits to Growth"). If it is a research plan, this MUST be null.
+            6.  **Leverage Points (\`leverage_points\`):** If it is a dynamic problem, identify 3-4 problem-solving interventions, ranked by "High", "Medium", "Low" impact. If it is a research plan, this MUST be null.
+            7.  **Focus Areas (\`focus_areas\`):** If it is a research plan, extract the key research questions or goals from the text. If it is a dynamic problem, this MUST be null.
 
-            **RETURN FORMAT (Example for Unanalyzable Text):**
+            **ABSOLUTE CONSTRAINTS:**
+            - **NO HALLUCINATION:** Do NOT invent feedback loops, archetypes, or leverage points if the text is a research plan.
+            - **STICK TO CONTEXT:** All output MUST be based *exclusively* on the provided text.
+            - **JSON FORMAT:** Adhere EXACTLY.
+
+            **RETURN FORMAT (Example for a RESEARCH PLAN):**
             {
-                "summary": "The provided text could not be analyzed. It appears to be a shopping list and does not contain any system elements, problems, or research hypotheses.",
-                "elements": [],
-                "feedback_loops": [],
-                "causal_links": [],
-                "system_archetype": null,
-                "leverage_points": null,
-                "focus_areas": null
+              "summary": "This is a research plan to understand hypothesized drivers of loyalty (Service Quality, etc.) using SEM to guide a 3-year roadmap.",
+              "elements": [
+                {"name": "Service Quality", "type": "Variable"}, {"name": "Product Quality", "type": "Variable"}, {"name": "Brand Trust", "type": "Stock"},
+                {"name": "Customer Satisfaction", "type": "Variable"}, {"name": "Customer Loyalty", "type": "Stock"}
+              ],
+              "feedback_loops": [],
+              "causal_links": [
+                {"from": "Service Quality", "to": "Customer Satisfaction", "polarity": "+", "loop_name": "H", "description": "H1: Service Quality positively influences Customer Satisfaction"},
+                {"from": "Product Quality", "to": "Customer Satisfaction", "polarity": "+", "loop_name": "H", "description": "H2: Product Quality positively influences Customer Satisfaction"}
+              ],
+              "system_archetype": null,
+              "leverage_points": null,
+              "focus_areas": [
+                {"area_name": "Test Brand Trust Mediation", "description": "Understand if Brand Trust acts as a mediator..."},
+                {"area_name": "Prioritize Investment (Service vs. Product)", "description": "Compare path coefficients for H1 and H2..."}
+              ]
             }
         `;
-
+        
         // 3. Send the chosen analysis prompt
         const analysis_response = await fetch(OLLAMA_URL, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                model: MODEL_NAME,
-                prompt: analysis_prompt,
-                stream: false,
-                format: "json",
-                options: {
-                    num_ctx: 32768
-                }
-            })
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ model: MODEL_NAME, prompt: analysis_prompt, stream: false, format: "json", options: { num_ctx: 32768 } })
         });
-
+        
         if (!analysis_response.ok) throw new Error(`AI Analysis Error: ${analysis_response.statusText}`);
-
+        
         const analysis_data = await analysis_response.json();
         const finalParsedData = JSON.parse(analysis_data.response);
-
+        
         // 4. --- STEP 3: Render ---
         analysisResultContainer.querySelector("p").textContent = "Step 3/3: Assembling analysis...";
-
+        
         // *** Validation for the final data (flexible) ***
-        if (!finalParsedData || !finalParsedData.summary || !finalParsedData.elements || !finalParsedData.causal_links ||
+        if (!finalParsedData || !finalParsedData.summary || !finalParsedData.elements || !finalParsedData.causal_links || 
             (finalParsedData.system_archetype === undefined && finalParsedData.focus_areas === undefined)
-        ) {
-            console.error("Validation Failed (Unified Handler): Final analysis data is missing key components.", finalParsedData);
-            throw new Error("AI response was incomplete. Missing summary, elements, or focus/leverage points.");
+           ) {
+             console.error("Validation Failed (Unified Handler): Final analysis data is missing key components.", finalParsedData);
+             throw new Error("AI response was incomplete. Missing summary, elements, or focus/leverage points.");
         }
-
+        
         console.log("Successfully parsed unified analysis JSON:", finalParsedData);
 
         // 5. Render Results

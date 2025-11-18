@@ -1,5 +1,6 @@
 import { appState } from '../state/app-state.mjs';
 import { dom } from '../utils/dom-utils.mjs';
+import { setupPageAnimations } from '../utils/ui-utils.mjs';
 import { handleLogout } from '../services/auth-service.mjs';
 import { createAdminDashboardTabs, fetchAndDisplayStatistics } from '../admin-dashboard/admin-dashboard.mjs';
 
@@ -27,11 +28,13 @@ import { createAdminDashboardTabs, fetchAndDisplayStatistics } from '../admin-da
         const targetPage = dom.$(pageId);
         if (targetPage) {
             targetPage.classList.add("active");
-            if (["home", "templates", "templateDetail", "examplesPage", "adminDashboard", "about"].includes(pageId)) {
+            if (["home", "templates", "templateDetail", "examplesPage", "adminDashboard", "about", "blog", "blogDetail", "feedback"].includes(pageId)) {
                 targetPage.style.display = "block";
             } else {
                 targetPage.style.display = "flex";
             }
+
+            setupPageAnimations(pageId);
 
             if (pageId === "adminDashboard") {
                 // 1. Fetch the stats immediately on load

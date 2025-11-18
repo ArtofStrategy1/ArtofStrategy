@@ -3,6 +3,7 @@
 // =====================================================================================================
 import { dom } from "../../utils/dom-utils.mjs";
 import { appState } from "../../state/app-state.mjs";
+import { animateElements } from "../../utils/ui-utils.mjs";
 import { generateProcessMappingMermaidCode, parseFishboneData, buildDotString } from '../../diagrams/diagram-generation.mjs'
 import { renderMermaidDiagram, renderFishboneDiagram } from '../../diagrams/diagram-renderer.mjs'
 import { fitDiagram, resetZoom, exportPNG } from "../../diagrams/diagram-utils.mjs";
@@ -861,6 +862,12 @@ function renderSystemThinkingPage(container, data) {
          <p class="text-xs text-center text-white/60 mt-4">This tool analyzes your text to identify elements, causal links, and key focus areas to help you understand the structure of your system.</p>
     </div>
     `;
+
+    // --- NEW: Animate the new content ---
+    const newElementsToAnimate = container.querySelectorAll(
+        '.glass-container, .feature-card, .project-card, .kpi-card, .summary-stat-card, .prescription-card, .insight-card, .action-card, .ladder-rung, .dissonance-pole, .cascade-objective, .cascade-goal-card, .st-objective-card, .st-goal-card, .feedback-card, .plotly-chart, .styled-table'
+    );
+    animateElements(newElementsToAnimate);
 
     // --- Final Touches ---
     appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache result
@@ -1746,6 +1753,8 @@ function renderSystemObjectivesPage_ST(container, data) {
 
 
 
+// No changes needed to renderSystemActionsPage_ST as it already handles the structured data.
+// Keep the existing renderSystemActionsPage_ST function as it was.
 function renderSystemActionsPage_ST(container, data) {
     container.innerHTML = ""; // Clear loading state
 
@@ -1784,10 +1793,10 @@ function renderSystemActionsPage_ST(container, data) {
     const dashboardPanel = dom.$("dashboardPanel");
     let dashboardHtml = `<div class="p-4 space-y-8">
         <blockquote class="p-4 italic border-l-4 border-gray-500 bg-black/20 text-white/90">
-            <strong>Diagnosis/Goal:</strong> ${problem_diagnosis} <!-- Updated Label -->
+            <strong>Problem Diagnosis:</strong> ${problem_diagnosis}
         </blockquote>
         <div class="archetype-card text-center">
-            <h3 class="text-lg font-bold text-indigo-300">SYSTEM DYNAMIC/ARCHETYPE</h3> <!-- Updated Label -->
+            <h3 class="text-lg font-bold text-indigo-300">DOMINANT ARCHETYPE</h3>
             <p class="text-2xl font-semibold mt-1">${system_archetype.name}</p>
         </div>
         <h3 class="text-2xl font-bold text-center">Action Plan Summary</h3>
@@ -1879,7 +1888,7 @@ function renderSystemActionsPage_ST(container, data) {
     const dynamicsPanel = dom.$("dynamicsPanel");
     let dynamicsHtml = `<div class="p-4 space-y-6">
         <div class="archetype-card">
-            <h3 class="text-lg font-bold text-indigo-300">SYSTEM DYNAMIC / ARCHETYPE IDENTIFIED</h3> <!-- Updated Label -->
+            <h3 class="text-lg font-bold text-indigo-300">IDENTIFIED ARCHETYPE</h3>
             <p class="text-2xl font-semibold mt-1">${system_archetype.name}</p>
             <p class="text-sm text-white/80 mt-2 italic">${system_archetype.explanation}</p>
         </div>`;
@@ -1895,13 +1904,13 @@ function renderSystemActionsPage_ST(container, data) {
              });
              dynamicsHtml += `</ul></div>`;
         } else {
-             dynamicsHtml += `<p class="text-center text-white/70 italic">No specific leverage points explicitly identified for this archetype/dynamic in the context.</p>`; // Modified text
+             dynamicsHtml += `<p class="text-center text-white/70 italic">No specific leverage points explicitly identified for this archetype in the context.</p>`;
         }
      dynamicsHtml += `</div>`; // Close p-4 space-y-6
     dynamicsPanel.innerHTML = dynamicsHtml;
 
 
-    // --- 4. Populate Learn Actions & Archetypes Panel (Keep as is) ---
+    // --- 4. Populate Learn Actions & Archetypes Panel (New) ---
     const learnPanel = dom.$("learnPanel");
      learnPanel.innerHTML = `
     <div class="p-6 space-y-6 text-white/90">
@@ -1950,7 +1959,12 @@ function renderSystemActionsPage_ST(container, data) {
          <p class="text-xs text-center text-white/60 mt-4">This tool attempts to categorize actions and link them to the identified archetype's dynamics based on your input.</p>
     </div>
     `;
-
+    
+    // --- NEW: Animate the new content ---
+    const newElementsToAnimate = container.querySelectorAll(
+        '.glass-container, .feature-card, .project-card, .kpi-card, .summary-stat-card, .prescription-card, .insight-card, .action-card, .ladder-rung, .dissonance-pole, .cascade-objective, .cascade-goal-card, .st-objective-card, .st-goal-card, .feedback-card, .plotly-chart, .styled-table'
+    );
+    animateElements(newElementsToAnimate);
 
     // --- Final Touches ---
     appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache result

@@ -48,7 +48,9 @@ function attachHomeCardListeners() {
                 navigateTo("login");
             } else {
                 appState.selectedTemplateForModal = templateId;
-                dom.$("versionChoiceModal").classList.remove("hidden");
+                const modal = dom.$("versionChoiceModal");
+                modal.style.display = 'flex'; // Make it visible
+                setTimeout(() => modal.classList.add('modal-open'), 10); // Trigger animation
             }
         });
     });
