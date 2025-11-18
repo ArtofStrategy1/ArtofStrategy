@@ -167,7 +167,8 @@ async def run_sem_analysis(
     data_file: Optional[UploadFile] = File(None),
     data_text: Optional[str] = Form(None),
     measurement_syntax: Optional[str] = Form(None),
-    structural_syntax: Optional[str] = Form(None)
+    structural_syntax: Optional[str] = Form(None),
+    context_text: Optional[str] = Form("")  # <--- NEW FIELD
 ):
     """Runs Structural Equation Modeling (SEM) analysis."""
     try:
@@ -185,7 +186,8 @@ async def run_sem_analysis(
             is_file_upload=is_file_upload,
             input_filename=input_filename,
             measurement_syntax=measurement_syntax or "",
-            structural_syntax=structural_syntax or ""
+            structural_syntax=structural_syntax or "",
+            context_text=context_text  # <--- PASS TO MODULE
         )
         return JSONResponse(content=results)
 
