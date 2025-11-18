@@ -2072,7 +2072,6 @@
     <div class="main-content">
         <canvas id="threeJsCanvas"></canvas>
         <div id="wsStatus" class="ws-status disconnected">Disconnected</div>
-
         <div id="adminModeIndicator" class="fixed top-40 right-5 p-2 px-3 bg-yellow-500 text-white text-xs font-bold rounded-full shadow-lg z-50" style="display: none;">ADMIN MODE</div>
 
         <nav class="bg-black/10 backdrop-blur-sm p-4 sticky top-0 z-50">
@@ -2136,26 +2135,26 @@
         <div id="bulkActionModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] hidden">
             <div class="glass-container w-full max-w-md">
                 <div class="flex justify-between items-center mb-4">
-                <h2 class="text-3xl font-bold">Manage</h2>
-                <button id="closeBulkModalBtn" class="text-2xl font-bold p-2 leading-none hover:text-white/70">&times;</button>
+                    <h2 class="text-3xl font-bold">Manage</h2>
+                    <button id="closeBulkModalBtn" class="text-2xl font-bold p-2 leading-none hover:text-white/70">&times;</button>
+                </div>
+            
+                <div class="space-y-4">
+                    <p>Select an action to apply to all <strong id="bulkUserCount">0</strong> selected users.</p>
+                    <div>
+                        <label for="bulkActionSelect" class="block text-sm font-medium text-gray-200 mb-2">Action</label>
+                        <select id="bulkActionSelect" class="input-field">
+                            <option value="">-- Select an action --</option>
+                            <option value="upgrade-to-premium">Upgrade to Premium</option>
+                            <option value="downgrade-to-basic">Downgrade to Basic</option>
+                            <option value="disable-users">Disable Users</option>
+                            <option value="delete-users">Delete Users</option>
+                        </select>
+                    </div>
+                    <div id="bulkModalMessage" class="hidden"></div>
+                    <button id="modalConfirmBulkBtn" class="btn btn-primary w-full">Apply Action</button>
+                </div>
             </div>
-        
-        <div class="space-y-4">
-            <p>Select an action to apply to all <strong id="bulkUserCount">0</strong> selected users.</p>
-            <div>
-                <label for="bulkActionSelect" class="block text-sm font-medium text-gray-200 mb-2">Action</label>
-                <select id="bulkActionSelect" class="input-field">
-                    <option value="">-- Select an action --</option>
-                    <option value="upgrade-to-premium">Upgrade to Premium</option>
-                    <option value="downgrade-to-basic">Downgrade to Basic</option>
-                    <option value="disable-users">Disable Users</option>
-                    <option value="delete-users">Delete Users</option>
-                </select>
-            </div>
-            <div id="bulkModalMessage" class="hidden"></div>
-            <button id="modalConfirmBulkBtn" class="btn btn-primary w-full">Apply Action</button>
-        </div>
-    </div>
         </div>
 
         <div id="home" class="page active container mx-auto px-6 py-16">
@@ -2199,7 +2198,6 @@
                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="misc-summary">
                         <h3 class="text-xl font-bold mb-2">AI Strategic Planning</h3><p class="text-white/70 text-sm">Compile summaries, risk assessments, governance, and conclusions.</p>
                     </div>
-                    
                 </div>
 
                 <div id="systemThinking" class="home-tab-panel grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -2276,8 +2274,9 @@
                     </div>
                 </div>
             </div>
-            <!-- END OF BOOK SECTION!-->
-            <!-- START OF LEADERSHIP / SYSTEM BLAH BLAH FROM HIS BOOK SECTION!-->
+            <!-- END OF BOOK SECTION -->
+
+            <!-- START OF LEADERSHIP / SYSTEM SECTION -->
             <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div class="feature-card p-6">
                     <h3 class="text-xl font-bold mb-3">Strategic Leadership</h3>
@@ -2331,7 +2330,7 @@
                         <li>MOONSHOT Thinking</li>
                     </ul>
                 </div>
-                <!-- END OF LEADERSHIP / SYSTEM BLAH BLAH FROM HIS BOOK SECTION!-->
+                <!-- END OF LEADERSHIP / SYSTEM SECTION -->
             </div>
 
             <div class="glass-container mt-16 mb-12">
@@ -2886,7 +2885,7 @@
             <div id="blogDetailContent" class="glass-container p-6 md:p-10"></div>
         </div>
 
-    <div id="emailVerifiedSuccess" class="page flex-col items-center justify-center min-h-[80vh]">
+        <div id="emailVerifiedSuccess" class="page flex-col items-center justify-center min-h-[80vh]">
             <div class="w-full max-w-md">
                 <div class="glass-container text-center">
                     <h2 class="text-3xl font-bold mb-6 text-white">✅ Email Verified!</h2>
@@ -2960,7 +2959,6 @@
         </div>
 
         <!-- Feedback Modal -->
-        <!-- Replace your sidebar HTML with this beautiful modal HTML -->
         <div id="feedbackDetailModal" class="feedback-modal">
             <div class="feedback-modal-container">
                 <div id="feedbackModalContent">
