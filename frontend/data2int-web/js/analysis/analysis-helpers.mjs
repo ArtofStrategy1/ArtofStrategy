@@ -10,7 +10,7 @@ import * as handleST from "./analysis-handling-st.mjs";
 import * as handleNS from "./analysis-handling-ns.mjs";
 import * as handleDA from "./analysis-handling-da.mjs";
 import * as renderST from "../ui/analysis-rendering/analysis-rendering-st.mjs";
-import { useContext } from "react";
+
 async function handleGenerate() {
     if (!appState.currentTemplateId) return;
 
@@ -46,7 +46,7 @@ async function handleGenerate() {
         // <-- ADD THIS BLOCK
         await handleNS.handleCreativeDissonanceAnalysis_NS();
     } else if (appState.currentTemplateId === "pareto-fishbone") {
-        await handleST.handleParetoFishboneAnalysisGroq();
+        await handleST.handleParetoFishboneAnalysisComb();
     } else if (appState.currentTemplateId === "system-actions") {
         // <-- ADD THIS BLOCK
         await handleST.handleSystemActionsAnalysis_ST();
