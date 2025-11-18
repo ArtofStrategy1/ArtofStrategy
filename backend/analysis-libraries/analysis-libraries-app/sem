@@ -1,0 +1,17 @@
+digraph G {
+	overlap=scale splines=true
+	edge [fontsize=12]
+	node [fillcolor="#cae6df" shape=circle style=filled]
+	Factor2 [label=Factor2]
+	Factor1 [label=Factor1]
+	node [shape=box style=""]
+	Ad_Spend_USD [label=Ad_Spend_USD]
+	Month [label=Month]
+	Quarter [label=Quarter]
+	Year [label=Year]
+	Factor1 -> Factor2 [label="-29.616\np-val: 0.64"]
+	Factor1 -> Year [label=1.000]
+	Factor1 -> Month [label="-30.225\np-val: 0.65"]
+	Factor2 -> Quarter [label=1.000]
+	Factor2 -> Ad_Spend_USD [label="-0.563\np-val: 0.00"]
+}
