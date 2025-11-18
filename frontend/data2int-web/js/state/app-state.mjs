@@ -1,6 +1,7 @@
 // --- User Session State ---
 let userLoggedIn = false;
 let currentUser = null;
+let activeObservers = [];
 
 // --- Version Control State ---
 let pendingAnalysisRequests = new Map();
@@ -43,5 +44,6 @@ export const appState = {
     statsInterval,
     currentRegressionRowCount,
     currentFeedbackItems,
-    currentContactItems
+    currentContactItems,
+    activeObservers
 }

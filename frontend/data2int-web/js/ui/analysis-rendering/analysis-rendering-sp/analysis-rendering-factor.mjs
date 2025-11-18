@@ -635,7 +635,6 @@ function renderParetoTab(containerId, allFactors) {
 }
 
 
-
 // Modified renderSummaryTab to use AI factors
 function renderSummaryTab(containerId, external, internal) {
     const container = dom.$(containerId);
