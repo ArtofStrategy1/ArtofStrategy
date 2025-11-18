@@ -10,8 +10,10 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler
 from starlette.datastructures import UploadFile
 from fastapi import HTTPException
+
+# --- FIX: 'inspect' moved to submodule in newer semopy versions ---
 from semopy import Optimizer, calc_stats, semplot
-from semopy.inspector import inspect
+from semopy.inspector import inspect 
 
 # --- CONFIGURATION ---
 OLLAMA_URL = "https://ollama.data2int.com/api/generate"
@@ -37,6 +39,37 @@ def safe_float(value, default=np.nan):
     except (ValueError, TypeError):
         return default
 
+def clean_and_parse_json(raw_text: str) -> Dict[str, Any]:
+    """
+    Robustly extracts JSON from AI output. 
+    Strips Markdown (```json ... ```) and finds the first '{' and last '}'.
+    Returns a fallback error object if parsing fails.
+    """
+    try:
+        # 1. Remove markdown code blocks
+        text = re.sub(r'```json\s*', '', raw_text, flags=re.IGNORECASE)
+        text = re.sub(r'```', '', text)
+        
+        # 2. Find the JSON object boundaries
+        start_idx = text.find('{')
+        end_idx = text.rfind('}')
+        
+        if start_idx != -1 and end_idx != -1:
+            text = text[start_idx : end_idx + 1]
+        
+        # 3. Attempt to parse
+        return json.loads(text)
+        
+    except (json.JSONDecodeError, Exception) as e:
+        print(f"⚠️ JSON Parse Error: {e}")
+        # Fail gracefully so the UI doesn't break
+        return {
+            "model_fit_status": "AI Parse Error",
+            "fit_explanation": f"The AI returned invalid data. Raw output: {raw_text[:50]}...",
+            "key_findings": ["Could not parse AI insights."],
+            "strategic_implications": "Please review the statistical tables manually."
+        }
+
 async def generate_sem_interpretation(fit_indices, estimates_df, context_text=""):
     """
     Sends SEM statistics to Ollama to generate a business-friendly interpretation.
@@ -45,21 +78,16 @@ async def generate_sem_interpretation(fit_indices, estimates_df, context_text=""
         # 1. Summarize Model Fit
         fit_summary = "--- MODEL FIT METRICS ---\n"
         if not fit_indices.empty:
-            # Extract key metrics if available
             keys = ['CFI', 'TLI', 'RMSEA', 'SRMR', 'chi2_pvalue', 'GFI']
             for k in keys:
-                # Handle different naming conventions from semopy
                 col_name = next((col for col in fit_indices.columns if k.lower() in col.lower()), None)
                 if col_name:
                     val = fit_indices.iloc[0][col_name]
                     fit_summary += f"{k}: {val}\n"
         
-        # 2. Summarize Significant Relationships (Path Coefficients)
+        # 2. Summarize Significant Relationships
         path_summary = "\n--- SIGNIFICANT PATHS (p < 0.05) ---\n"
-        
-        # Filter for structural paths (op='~') that are significant
         if not estimates_df.empty:
-            # Ensure numerical columns are floats
             estimates_df['p-value'] = pd.to_numeric(estimates_df['p-value'], errors='coerce')
             estimates_df['Estimate'] = pd.to_numeric(estimates_df['Estimate'], errors='coerce')
             
@@ -70,7 +98,7 @@ async def generate_sem_interpretation(fit_indices, estimates_df, context_text=""
             
             if not sig_paths.empty:
                 for _, row in sig_paths.iterrows():
-                    path_summary += f"Path: {row['lval']} is influenced by {row['rval']} (Strength: {row['Estimate']:.3f})\n"
+                    path_summary += f"Path: {row['lval']} -> {row['rval']} (Strength: {row['Estimate']:.3f})\n"
             else:
                 path_summary += "No statistically significant structural paths found.\n"
         else:
@@ -78,35 +106,23 @@ async def generate_sem_interpretation(fit_indices, estimates_df, context_text=""
 
         # 3. Build Prompt
         prompt = f"""
-        You are an expert statistician and business strategy consultant. Interpret the following Structural Equation Model (SEM) results.
+        You are an expert statistician. Interpret these Structural Equation Model (SEM) results.
         
-        **BUSINESS CONTEXT:**
-        {context_text if context_text else "No specific context provided. Interpret generally."}
-
-        **STATISTICAL DATA:**
-        {fit_summary}
+        **BUSINESS CONTEXT:** {context_text if context_text else "General Context"}
+        **STATS:** {fit_summary}
         {path_summary}
 
         **TASK:**
-        Provide a structured interpretation in JSON format.
-        1. Evaluate Model Fit (Is it good? CFI>0.9, RMSEA<0.08 is generally good).
-        2. Explain the Key Findings (What drives what? Translate the paths into plain English).
-        3. Provide Strategic Implications (Based on the relationships, what should the business do?).
+        Provide a JSON object with:
+        1. "model_fit_status": "Good/Mixed/Poor" (Rule: CFI>0.9, RMSEA<0.08 is good).
+        2. "fit_explanation": Brief explanation.
+        3. "key_findings": List of 2-3 plain English findings from the paths.
+        4. "strategic_implications": What the business should do.
 
-        **RETURN FORMAT:**
-        Return ONLY a valid JSON object:
-        {{
-            "model_fit_status": "Good/Mixed/Poor",
-            "fit_explanation": "Brief explanation of fit indices...",
-            "key_findings": [
-                "Finding 1 based on paths...",
-                "Finding 2 based on paths..."
-            ],
-            "strategic_implications": "What this means for business strategy..."
-        }}
+        **IMPORTANT:** RETURN ONLY RAW JSON.
         """
 
-        # 4. Call Ollama
+        # 4. Call Ollama (Increased timeout to 120s)
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 OLLAMA_URL,
@@ -117,7 +133,7 @@ async def generate_sem_interpretation(fit_indices, estimates_df, context_text=""
                     "format": "json",
                     "options": {"num_ctx": 4096}
                 },
-                timeout=60.0
+                timeout=120.0
             )
             
             if response.status_code != 200:
@@ -125,10 +141,14 @@ async def generate_sem_interpretation(fit_indices, estimates_df, context_text=""
                 return None
             
             data = response.json()
-            return json.loads(data['response'])
+            # Use the robust cleaner instead of raw json.loads
+            return clean_and_parse_json(data['response'])
 
+    except httpx.ReadTimeout:
+        print("⚠️ AI Generation Timed Out.")
+        return None
     except Exception as e:
-        print(f"AI Interpretation Generation Failed: {e}")
+        print(f"AI Generation Failed: {e}")
         return None
 
 # --- Main SEM Function ---
@@ -138,10 +158,10 @@ async def perform_sem(
     input_filename: str,
     measurement_syntax: str,
     structural_syntax: str,
-    context_text: str = ""  # <--- NEW PARAMETER
+    context_text: str = ""
 ) -> Dict[str, Any]:
     
-    print("🚀 Starting SEM analysis in module...")
+    print("🚀 Starting SEM analysis...")
     
     # Combine Syntax
     model_syntax_combined = measurement_syntax.strip()
@@ -163,7 +183,6 @@ async def perform_sem(
         # --- 1. Load Data ---
         print(f"   Step 1: Loading data...")
         na_vals = ['-', '', ' ', 'NA', 'N/A', 'null', 'None', 'NaN', 'nan']
-        data_io_source = None
 
         if is_file_upload:
             if not isinstance(data_payload, UploadFile):
@@ -171,17 +190,15 @@ async def perform_sem(
             contents = await data_payload.read()
             if input_filename.lower().endswith('.csv'):
                 try:
-                    data_io_source = io.StringIO(contents.decode('utf-8'))
+                    df = pd.read_csv(io.StringIO(contents.decode('utf-8')), na_values=na_vals)
                 except:
-                    data_io_source = io.StringIO(contents.decode('latin1'))
-                df = pd.read_csv(data_io_source, na_values=na_vals)
+                    df = pd.read_csv(io.StringIO(contents.decode('latin1')), na_values=na_vals)
             elif input_filename.lower().endswith(('.xlsx', '.xls')):
                 df = pd.read_excel(io.BytesIO(contents), na_values=na_vals)
         else:
             if not isinstance(data_payload, str):
                  raise TypeError("Expected string for text input")
-            data_io_source = io.StringIO(data_payload)
-            df = pd.read_csv(data_io_source, na_values=na_vals)
+            df = pd.read_csv(io.StringIO(data_payload), na_values=na_vals)
 
         if df is None or df.empty:
             raise HTTPException(status_code=400, detail="Data loading failed or data is empty.")
@@ -197,7 +214,6 @@ async def perform_sem(
 
         # --- 4. Data Prep ---
         print("   Step 4: Preparing data...")
-        # Ensure all observed variables exist in data
         missing = obs_vars - set(df.columns)
         if missing:
             raise HTTPException(status_code=400, detail=f"Variables in syntax not found in data: {list(missing)}")
@@ -210,7 +226,7 @@ async def perform_sem(
         scaler = StandardScaler()
         df_std = pd.DataFrame(scaler.fit_transform(df_model), columns=df_model.columns)
 
-        # --- 6. Check Correlations (High Correlation Warning) ---
+        # --- 6. Check Correlations ---
         corr_matrix = df_std.corr().abs()
         upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
         high_corr = [column for column in upper.columns if any(upper[column] > 0.90)]
@@ -221,7 +237,7 @@ async def perform_sem(
         # --- 7. Fit Model ---
         print("   Step 7: Fitting model...")
         fit_res = model_obj.fit(df_std)
-        fit_success = getattr(fit_res, 'success', True) # semopy sometimes returns object, sometimes simple result
+        fit_success = getattr(fit_res, 'success', True)
 
         # --- 8. Inspect Estimates ---
         estimates_df = inspect(model_obj)
@@ -230,11 +246,10 @@ async def perform_sem(
         # --- 9. Calculate Fit Stats ---
         try:
             stats = calc_stats(model_obj)
-            # Handle different return types from calc_stats
             if isinstance(stats, dict):
                 fit_indices_df = pd.DataFrame([stats])
             elif isinstance(stats, pd.DataFrame):
-                fit_indices_df = stats.T if stats.shape[0] > 1 else stats # Ensure it's a single row
+                fit_indices_df = stats.T if stats.shape[0] > 1 else stats
             else:
                 fit_indices_df = pd.DataFrame()
         except Exception as e:
@@ -249,7 +264,7 @@ async def perform_sem(
         except Exception as e:
             print(f"   Warning: Diagram generation failed: {e}")
 
-        # --- 11. AI INTERPRETATION (NEW STEP) ---
+        # --- 11. AI INTERPRETATION (Robust) ---
         print("   Step 11: Generating AI Interpretation...")
         ai_result = await generate_sem_interpretation(
             fit_indices_df, 
@@ -275,7 +290,7 @@ async def perform_sem(
                 "rows_used": len(df_model),
                 "columns_used": list(df_model.columns)
             },
-            "ai_interpretation": ai_result  # <--- Include AI result in response
+            "ai_interpretation": ai_result
         }
 
         return response_data
