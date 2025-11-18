@@ -566,7 +566,7 @@ function renderSystemThinkingPage(container, data) {
     // Use leverage_points OR focus_areas. Ensure finalFocusAreas is an array.
     const finalFocusAreas = focus_areas || leverage_points || [];
 
-    // --- Create Tab Navigation (5 Tabs) ---
+    // --- Create Tab Navigation (6 Tabs) ---
     const tabNav = document.createElement("div");
     tabNav.className = "flex flex-wrap border-b border-white/20 -mx-6 px-6";
     // Customize tab name based on input type
@@ -575,18 +575,20 @@ function renderSystemThinkingPage(container, data) {
     tabNav.innerHTML = `
         <button class="analysis-tab-btn active" data-tab="dashboard">📊 Dashboard</button>
         <button class="analysis-tab-btn" data-tab="diagram">🗺️ Causal Diagram</button>
+        <button class="analysis-tab-btn" data-tab="network">🕸️ Network</button>
         <button class="analysis-tab-btn" data-tab="loops">${loopTabName}</button>
         <button class="analysis-tab-btn" data-tab="focus">${focusTabName}</button>
         <button class="analysis-tab-btn" data-tab="learn">🎓 Learn System Thinking</button>
     `;
     container.appendChild(tabNav);
 
-    // --- Create Tab Panels (5 Panels) ---
+    // --- Create Tab Panels (6 Panels) ---
     const tabContent = document.createElement("div");
     container.appendChild(tabContent);
     tabContent.innerHTML = `
         <div id="dashboardPanel" class="analysis-tab-panel active"></div>
         <div id="diagramPanel" class="analysis-tab-panel"></div>
+        <div id="networkPanel" class="analysis-tab-panel"></div>
         <div id="loopsPanel" class="analysis-tab-panel"></div>
         <div id="focusPanel" class="analysis-tab-panel"></div>
         <div id="learnPanel" class="analysis-tab-panel"></div>
@@ -713,8 +715,10 @@ function renderSystemThinkingPage(container, data) {
         dom.$("cldGraphContainer").innerHTML = `<p class="text-red-400">Error initializing diagram: ${e.message}</p>`;
     }
 
+    // --- 3. Populate Network Tab ---
+    renderSystemNetworkTab(elements, causal_links, "networkPanel");
 
-    // --- 3. Populate Feedback Loops / Causal Links Panel ---
+    // --- 4. Populate Feedback Loops / Causal Links Panel ---
     const loopsPanel = dom.$("loopsPanel");
     let loopsHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4 text-center">${loopTabName}</h3><div class="space-y-6">`;
     if (feedback_loops && feedback_loops.length > 0) {
@@ -754,7 +758,7 @@ function renderSystemThinkingPage(container, data) {
     loopsHtml += `</div></div>`;
     loopsPanel.innerHTML = loopsHtml;
 
-    // --- 4. Populate Elements & Focus Panel ---
+    // --- 5. Populate Elements & Focus Panel ---
     const focusPanel = dom.$("focusPanel");
     let focusHtml = `<div class="p-4 space-y-8">
                         <div>
@@ -817,7 +821,7 @@ function renderSystemThinkingPage(container, data) {
     focusHtml += `</div></div></div>`;
     focusPanel.innerHTML = focusHtml;
 
-    // --- 5. Populate Learn System Thinking Panel (Unchanged) ---
+    // --- 6. Populate Learn System Thinking Panel (Unchanged) ---
     const learnPanel = dom.$("learnPanel");
     learnPanel.innerHTML = `
     <div class="p-6 space-y-6 text-white/90">
@@ -888,6 +892,11 @@ function renderSystemThinkingPage(container, data) {
                     if (svg) {
                         // Viz.js SVG should resize automatically
                     }
+                }
+                // NEW: Resize plotly chart if its tab is clicked
+                const chart = targetPanel.querySelector(".plotly-chart");
+                if (chart && typeof Plotly !== 'undefined') {
+                    try { Plotly.Plots.resize(chart); } catch (err) { console.error("Resize err:", err); }
                 }
             } else {
                 console.warn("Target panel not found:", targetPanelId);
@@ -1121,6 +1130,98 @@ function renderLeveragePointsPage(container, data) {
 }
 
 
+
+function renderSystemNetworkTab(elements, causalLinks, containerId) {
+    const container = dom.$(containerId);
+    if (!container) return;
+    container.innerHTML = `<div id="systemNetworkChart" class="w-full h-[600px] plotly-chart"></div>`;
+
+    const nodes = elements.map(el => ({ id: el.name, ...el }));
+    
+    // Filter out causal links that don't have corresponding nodes
+    const validCausalLinks = causalLinks.filter(link => {
+        const sourceExists = nodes.some(node => node.id === link.from);
+        const targetExists = nodes.some(node => node.id === link.to);
+        return sourceExists && targetExists;
+    });
+
+    const edges = validCausalLinks.map(link => ({ source: link.from, target: link.to, polarity: link.polarity }));
+
+    const positions = {};
+    const nodeMap = new Map(nodes.map(node => [node.id, node]));
+
+    // Create positions for nodes in a circular layout
+    nodes.forEach((node, i) => {
+        const angle = (i / nodes.length) * 2 * Math.PI;
+        positions[node.id] = { x: nodes.length * 15 * Math.cos(angle), y: nodes.length * 15 * Math.sin(angle) };
+    });
+
+    const edge_x = [];
+    const edge_y = [];
+    edges.forEach(edge => {
+        const sourcePos = positions[edge.source];
+        const targetPos = positions[edge.target];
+        if (sourcePos && targetPos) {
+            edge_x.push(sourcePos.x, targetPos.x, null);
+            edge_y.push(sourcePos.y, targetPos.y, null);
+        }
+    });
+
+    const node_x = [];
+    const node_y = [];
+    const node_text = [];
+    const node_color = [];
+    nodes.forEach(node => {
+        const pos = positions[node.id];
+        if (pos) {
+            node_x.push(pos.x);
+            node_y.push(pos.y);
+            node_text.push(`${node.name}<br>Type: ${node.type}`);
+            // Color nodes based on their type for better visual distinction
+            switch (node.type) {
+                case 'Stock': node_color.push('#4285F4'); break; // Google Blue
+                case 'Flow': node_color.push('#34A853'); break; // Google Green
+                case 'Variable': node_color.push('#FBBC05'); break; // Google Yellow
+                case 'Parameter': node_color.push('#EA4335'); break; // Google Red
+                default: node_color.push('grey');
+            }
+        }
+    });
+
+    const edgeTrace = {
+        x: edge_x,
+        y: edge_y,
+        mode: 'lines',
+        line: { width: 1, color: '#888' },
+        hoverinfo: 'none'
+    };
+
+    const nodeTrace = {
+        x: node_x,
+        y: node_y,
+        mode: 'markers+text',
+        text: nodes.map(n => n.name),
+        textposition: 'bottom center',
+        hoverinfo: 'text',
+        hovertext: node_text,
+        marker: {
+            size: 20,
+            color: node_color,
+            symbol: 'circle'
+        }
+    };
+
+    Plotly.newPlot('systemNetworkChart', [edgeTrace, nodeTrace], {
+        title: 'System Elements Network',
+        showlegend: false,
+        hovermode: 'closest',
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        font: { color: 'white' },
+        xaxis: { showgrid: false, zeroline: false, showticklabels: false },
+        yaxis: { showgrid: false, zeroline: false, showticklabels: false }
+    }, { responsive: true });
+}
 
 function renderArchetypeAnalysisPage(container, data) {
     container.innerHTML = "";
