@@ -285,6 +285,7 @@ function renderParetoFishbonePage(container, data) {
         return;
     }
 
+    const fishboneElements = parseFishboneData(data);
     const { problem_statement, fishbone, pareto_analysis, action_plan } = data;
 
     // --- Create Tab Navigation ---
@@ -293,7 +294,6 @@ function renderParetoFishbonePage(container, data) {
     tabNav.innerHTML = `
         <button class="analysis-tab-btn active" data-tab="pareto">📊 Pareto Chart & Summary</button>
         <button class="analysis-tab-btn" data-tab="fishbone">🐟 Fishbone Diagram</button>
-        <button class="analysis-tab-btn" data-tab="fishboneDiagram">Fishbone DiagramC</button>
         <button class="analysis-tab-btn" data-tab="action">🎯 Action Plan (Vital Few)</button>
         <button class="analysis-tab-btn" data-tab="learn">🎓 Learn Techniques</button>
     `;
@@ -305,7 +305,6 @@ function renderParetoFishbonePage(container, data) {
     tabContent.innerHTML = `
         <div id="paretoPanel" class="analysis-tab-panel active"></div>
         <div id="fishbonePanel" class="analysis-tab-panel"></div>
-        <div id="fishboneDiagramPanel" class="analysis-tab-panel"></div>
         <div id="actionPanel" class="analysis-tab-panel"></div>
         <div id="learnPanel" class="analysis-tab-panel"></div>
     `;
@@ -372,6 +371,14 @@ function renderParetoFishbonePage(container, data) {
     });
 
     fishboneHtml += `</div></div>`; // Close grid and p-4
+    fishboneHtml += `
+        <div id="fishboneCy" class="fishboneCy"></div>
+        <div class="diagram-controls">
+            <button class="diagram-fit-btn" data-action="fit">Fit to View</button>
+            <button class="diagram-reset-btn" data-action="reset">Reset Zoom</button>
+            <button class="diagram-export-btn" data-action="export">Export as PNG</button>
+        </div>
+        `;
     fishbonePanel.innerHTML = fishboneHtml;
 
 
@@ -400,20 +407,6 @@ function renderParetoFishbonePage(container, data) {
     }
     actionHtml += `</div>`;
     actionPanel.innerHTML = actionHtml;
-
-    // Populate Fishbone Diagram Panel.
-    const fishboneDiagramPanel = dom.$("fishboneDiagramPanel");
-    const fishboneElements = parseFishboneData(data);
-    if (fishboneDiagramPanel) {
-        fishboneDiagramPanel.innerHTML = `
-        <div id="fishboneCy" class="fishboneCy"></div>
-        <div class="diagram-controls">
-            <button class="diagram-fit-btn" data-action="fit">Fit to View</button>
-            <button class="diagram-reset-btn" data-action="reset">Reset Zoom</button>
-            <button class="diagram-export-btn" data-action="export">Export as PNG</button>
-        </div>
-        `
-    }
     
 
     // --- 4. Populate Learn Techniques Tab ---
@@ -487,7 +480,7 @@ function renderParetoFishbonePage(container, data) {
                 console.warn("Target panel not found:", targetPanelId);
             }
 
-            if (e.target.dataset.tab === "fishboneDiagram") {
+            if (e.target.dataset.tab === "fishbone") {
                 const fishboneDiagramContainer = targetPanel.querySelector("#fishboneCy");
                 if (fishboneDiagramContainer && fishboneElements) {
                     let cy;
