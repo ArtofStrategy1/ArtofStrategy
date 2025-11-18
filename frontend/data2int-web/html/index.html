@@ -5722,8 +5722,8 @@ function openContactModal(contactId) {
     setTimeout(() => modal.classList.add('modal-open'), 10);
     
     const displayName = `${item.first_name || ''} ${item.last_name || ''}`.trim() || 'N/A';
-    const emailSubject = `Re: ${item.subject || 'Your Inquiry'}`;
 
+    // --- REPLACED: New Modal HTML with Reply Text Area ---
     modalContent.innerHTML = `
         <div class="modal-header">
             <div class="modal-title-section">
@@ -5760,26 +5760,25 @@ function openContactModal(contactId) {
                     <h5 class="modal-info-label" style="font-size: 0.7rem; margin-bottom: 0.25rem;">Status</h5>
                     <div class="modal-info-value" style="font-size: 0.875rem;">${item.status}</div>
                 </div>
-                <div class="modal-info-card" style="padding: 0.75rem 1rem;">
-                    <h5 class="modal-info-label" style="font-size: 0.7rem; margin-bottom: 0.25rem;">Phone</h5>
-                    <div class="modal-info-value" style="font-size: 0.875rem;">${item.phone || 'N/A'}</div>
+            </div>
+
+            <div class="modal-status-section" style="margin-bottom: 1.25rem; border-top: 1px solid rgba(255,255,255,0.1); paddingTop: 1rem;">
+                <h4 class="modal-section-title" style="font-size: 1rem; margin-bottom: 0.5rem;">Send Reply</h4>
+                <textarea id="adminReplyMessage" class="modal-textarea" style="min-height: 120px;" placeholder="Type your reply here..."></textarea>
+                <div class="flex justify-end">
+                    <button id="sendReplyBtn" class="btn btn-primary py-2 px-4 text-sm">
+                        <span id="sendReplyBtnText">🚀 Send Email via Resend</span>
+                        <span id="sendReplySpinner" class="loading-spinner hidden ml-2"></span>
+                    </button>
                 </div>
             </div>
             
             <div id="contactModalMessage" class="modal-message" style="display: none;"></div>
 
-            <div class="modal-status-section" style="margin-bottom: 1.25rem;">
-                <h4 class="modal-section-title" style="font-size: 1rem; margin-bottom: 0.5rem;">Actions</h4>
+            <div class="modal-status-section" style="margin-bottom: 1.25rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
+                <h4 class="modal-section-title" style="font-size: 1rem; margin-bottom: 0.5rem;">Update Status (Internal)</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <a href="mailto:${item.email}?subject=${encodeURIComponent(emailSubject)}" 
-                       id="modalReplyContactBtn" 
-                       class="modal-btn modal-btn-primary" 
-                       style="padding: 0.75rem 1.25rem; font-size: 0.9rem;">
-                       <span class="modal-btn-icon">↩️</span>
-                       Reply via Email
-                    </a>
-                    
-                    <div class="modal-status-controls">
+                    <div class="modal-status-controls w-full">
                         <select id="modalContactStatusSelect" class="modal-select" style="padding: 0.75rem 1rem;">
                             <option value="New" ${item.status === 'New' ? 'selected' : ''}>Mark as New</option>
                             <option value="Replied" ${item.status === 'Replied' ? 'selected' : ''}>Mark as Replied</option>
@@ -5792,31 +5791,81 @@ function openContactModal(contactId) {
         </div>
     `;
 
-    // Attach event listeners for the new modal
+    // Attach event listeners
     setTimeout(() => {
         const closeBtn = $("modalCloseContactBtn");
-        const replyBtn = $("modalReplyContactBtn");
         const updateBtn = $("modalUpdateContactBtn");
+        const sendReplyBtn = $("sendReplyBtn");
         
-        if (closeBtn) {
-            closeBtn.onclick = closeContactModal;
-        }
-        
-        if (replyBtn) {
-            // This is the corrected line:
-            replyBtn.onclick = () => {
-                // This is just a link, but we also update status
-                // in the background for a better UX.
-                handleUpdateContactStatus(item.id, 'Replied');
-            };
-        }
+        if (closeBtn) closeBtn.onclick = closeContactModal;
         
         if (updateBtn) {
             updateBtn.onclick = () => {
                 const statusSelect = $("modalContactStatusSelect");
                 const newStatus = statusSelect ? statusSelect.value : 'New';
-                // Pass the closeCallback so the modal closes on update
-                handleUpdateContactStatus(item.id, newStatus, closeContactModal); 
+                handleUpdateContactStatus(item.id, newStatus, null); // Don't close immediately on status update
+            };
+        }
+
+        // --- NEW: Handle Send Reply ---
+        if (sendReplyBtn) {
+            sendReplyBtn.onclick = async () => {
+                const replyMessage = $("adminReplyMessage").value.trim();
+                const messageEl = $("contactModalMessage");
+                const btnText = $("sendReplyBtnText");
+                const spinner = $("sendReplySpinner");
+
+                if (!replyMessage) {
+                    showContactModalMessage("Please enter a reply message.", "error");
+                    return;
+                }
+
+                // UI Loading State
+                sendReplyBtn.disabled = true;
+                btnText.textContent = "Sending...";
+                spinner.classList.remove("hidden");
+
+                try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (!session) throw new Error("Not logged in");
+
+                    // Call the new Edge Function
+                    const response = await fetch('https://supabase.data2int.com/functions/v1/admin-contacts-email-secure', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${session.access_token}`
+                        },
+                        body: JSON.stringify({
+                            to: item.email,
+                            message: replyMessage,
+                            original_subject: item.subject
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (!response.ok) throw new Error(result.error || "Failed to send email.");
+
+                    // Success!
+                    showContactModalMessage("Email sent successfully!", "success");
+                    $("adminReplyMessage").value = ""; // Clear textarea
+                    
+                    // Auto-update status to "Replied"
+                    await handleUpdateContactStatus(item.id, 'Replied', null);
+                    
+                    // Update the dropdown visually to match
+                    const statusSelect = $("modalContactStatusSelect");
+                    if(statusSelect) statusSelect.value = "Replied";
+
+                } catch (error) {
+                    console.error("Send Reply Error:", error);
+                    showContactModalMessage(error.message, "error");
+                } finally {
+                    sendReplyBtn.disabled = false;
+                    btnText.textContent = "🚀 Send Email via Resend";
+                    spinner.classList.add("hidden");
+                }
             };
         }
     }, 100);

@@ -27,11 +27,16 @@ app = FastAPI(docs_url="/")
 origins = [
     "https://data2int.com",       # Main domain
     "https://elijah.data2int.com",   # Dev domain
-    "https://matthew.data2int.com", # Add other subdomains as needed
+    "https://matthew.data2int.com", # Dev domain
     "http://localhost:8080",       # For local testing
     "http://127.0.0.1:8080",      # For local testing
     "http://localhost:8000",       # For python -m http.server
-    "http://10.0.0.243:8000"       # From server log
+    "http://10.0.0.243:8000",       # From server log
+    ## New sageaios.com ##
+    "https://sageaios.com",       # Main domain
+    "https://elijah.sageaios.com",   # Dev domain
+    "https://matthew.sageaios.com", # Dev domain
+    "https://khaled.sageaios.com"   
 ]
 
 app.add_middleware(
