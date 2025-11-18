@@ -4,7 +4,7 @@
 import { appState } from "../../state/app-state.mjs";
 import { dom } from "../../utils/dom-utils.mjs";
 import { templateConfig } from "./template-config.mjs";
-import { handleGenerate } from "../../analysis/analysis-helpers.mjs";
+import { handleGenerate, handleUseSampleClick } from "../../analysis/analysis-helpers.mjs";
 import { handleSaveAsPdf, handleSaveAsDocx } from "../../utils/file-utils.mjs";
 import { navigateTo } from '../navigation.mjs';
 import { configureFrameworkSelector, frameworkCheckboxChangeHandler } from "./framework-selection.mjs";
@@ -116,16 +116,33 @@ function showTemplateDetail(templateId) {
     } else {
         createDefaultLayout(template, rule);
     }
+
+    // --- NEW: Attach "Use Sample" button listeners ---
+    document.querySelectorAll(".btn-use-sample").forEach(btn => {
+        btn.removeEventListener("click", handleUseSampleClick); // Avoid duplicates
+        btn.addEventListener("click", handleUseSampleClick);
+    });
+    
     navigateTo("templateDetail");
 }
 
 
 
 function reattachActionListeners() {
-    const savePdfBtn = dom.$("savePdfBtn");
-    const saveDocxBtn = dom.$("saveDocxBtn");
-    if (savePdfBtn) savePdfBtn.addEventListener("click", handleSaveAsPdf);
-    if (saveDocxBtn) saveDocxBtn.addEventListener("click", handleSaveAsDocx);
+    const savePdfBtn = document.getElementById("savePdfBtn");
+    const saveDocxBtn = document.getElementById("saveDocxBtn");
+    
+    if (savePdfBtn) {
+        savePdfBtn.addEventListener("click", () => {
+            console.log("Saving as PDF...");
+        });
+    }
+    
+    if (saveDocxBtn) {
+        saveDocxBtn.addEventListener("click", () => {
+            console.log("Saving as DOCX...");
+        });
+    }
 }
 
 

@@ -4,6 +4,7 @@
 
 import { dom } from '../../../utils/dom-utils.mjs';
 import { appState } from '../../../state/app-state.mjs';
+import { animateElements } from '../../../utils/ui-utils.mjs';
 
 /**
  * RENDERER: Mission Vision (DEEP ANALYSIS v4 - LAYOUT FIX)
@@ -278,6 +279,7 @@ function renderMissionVisionPage(container, data) {
 
 
 
+// Modified renderFullSwotTowsPage to add Learn Tab and use detailed data
 function renderFullSwotTowsPage(container, data) {
     container.innerHTML = ""; // Clear loading state
 
@@ -365,6 +367,11 @@ function renderFullSwotTowsPage(container, data) {
     </div>
     `;
 
+    // --- NEW: Animate the new content ---
+    const newElementsToAnimate = container.querySelectorAll(
+        '.glass-container, .feature-card, .project-card, .kpi-card, .summary-stat-card, .prescription-card, .insight-card, .action-card, .ladder-rung, .dissonance-pole, .cascade-objective, .cascade-goal-card, .st-objective-card, .st-goal-card, .feedback-card, .plotly-chart, .styled-table'
+    );
+    animateElements(newElementsToAnimate);
 
     // --- Final Touches ---
     appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache result

@@ -7,7 +7,7 @@ import { initializeWebSocket } from './services/websocket-service.mjs';
 import { updateNavBar, navigateTo } from './ui/navigation.mjs';
 import { setupHomeTabs, attachHomeCardListeners } from './ui/home.mjs';
 import { templateConfig } from './ui/template-creation/template-config.mjs';
-import { handleLogin, handleRegister, handleContactSubmit } from './services/auth-service.mjs';
+import { handleLogin, handleRegister, handleContactSubmit, handlePasswordResetRequest, handlePasswordUpdate } from './services/auth-service.mjs';
 import { fetchAndDisplayStatistics } from './admin-dashboard/admin-dashboard.mjs';
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -19,6 +19,24 @@ document.addEventListener("DOMContentLoaded", () => {
         if (event === "SIGNED_IN") {
             appState.userLoggedIn = true;
             appState.currentUser = session.user;
+
+            // Check if this SIGNED_IN event was from an email confirmation hash
+            const hash = window.location.hash;
+            if (hash.includes("type=signup") && hash.includes("access_token")) {
+                // This was a new signup confirmation.
+                // Clear the messy token from the URL bar
+                window.history.replaceState(null, null, ' ');
+                // Navigate to the home page (which will happen anyway)
+                navigateTo("home");
+            } else if (hash.includes("type=recovery") && hash.includes("access_token")) {
+                // This was a password recovery.
+                 // Clear the hash from the URL bar
+                window.history.replaceState(null, null, ' ');
+                // TODO: You could navigate to a "change password" page here
+                // For now, we'll just send them to the home page, logged in.
+                navigateTo("home");
+            }
+
         } else if (event === "SIGNED_OUT") {
             appState.userLoggedIn = false;
             appState.currentUser = null;
@@ -418,7 +436,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     closeModalBtn.addEventListener("click", () => {
-        versionModal.classList.add("hidden");
+        versionModal.classList.remove('modal-open'); // Start fade-out
+        setTimeout(() => versionModal.style.display = 'none', 300); // Hide after animation
     });
 
 
@@ -503,23 +522,242 @@ document.addEventListener("DOMContentLoaded", () => {
     dom.$("loginBtn").addEventListener("click", handleLogin);
     dom.$("registerBtn").addEventListener("click", handleRegister);
 
-    if (window.location.hash.includes("access_token")) {
-        navigateTo("home");
-    } else {
-        navigateTo("home");
-    }
+    // --- NEW Initial Page Load Logic (Updated for Password Reset) ---
+    (async () => {
+        // Get URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const isSuccess = urlParams.get('success') === 'true';
+        const isAlready = urlParams.get('already') === 'true';
+        
+        // NEW: Check for password reset parameters
+        const resetToken = urlParams.get('token');
+        const resetEmail = urlParams.get('email');
+        
+        // --- HASH CHECK ---
+        const hash = window.location.hash;
+        const hashParams = new URLSearchParams(hash.substring(1)); // remove #
+        const accessToken = hashParams.get('access_token');
+        const type = hashParams.get('type');
+        
+        // Clear URL parameters or hash
+        if (isSuccess || isAlready || accessToken || resetToken) {
+            window.history.replaceState(null, null, window.location.pathname);
+        }
+        
+        // --- NAVIGATION LOGIC ---
+        if (resetToken && resetEmail) {
+            // NEW: Handle password reset
+            console.log('Password reset link detected, navigating to reset form');
+            navigateTo("passwordResetUpdate");
+            // Store token and email for the reset form to use
+            window.resetToken = resetToken;
+            window.resetEmail = decodeURIComponent(resetEmail);
+            console.log('Stored reset token and email for form');
+        } else if (isSuccess) {
+            // From our custom email-verify function
+            navigateTo("emailVerifiedSuccess");
+        } else if (isAlready) {
+            // From our custom email-verify function
+            navigateTo("emailVerifiedAlready");
+        } else if (accessToken && type === 'recovery') {
+            // From Supabase password reset link (legacy)
+            // The supabase client will auto-set the session from the token.
+            navigateTo("passwordResetUpdate");
+        } else if (accessToken) {
+            // From any other Supabase magic link (like login or old verify)
+            // The onAuthStateChange listener will catch this
+            navigateTo("home");
+        } else {
+            // Default load for a new visitor
+            navigateTo("home");
+        }
+        
+        // Attach the Contact Submit Handler
+        const contactSubmitBtn = dom.$("contactSubmitBtn");
+        if (contactSubmitBtn) {
+            contactSubmitBtn.addEventListener("click", handleContactSubmit);
+        }
+        
+        // Hero Canvas Animation
 
-    // *** Attach the Contact Submit Handler ***
-    const contactSubmitBtn = dom.$("contactSubmitBtn");
-    if (contactSubmitBtn) {
-        contactSubmitBtn.addEventListener("click", handleContactSubmit);
-    }
+        function initHeroAnimation() {
+            const canvas = document.getElementById('heroCanvas');
+            if (!canvas) return;
 
-    setupHomeTabs();
-    attachHomeCardListeners();
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            const particles = [];
+            const particleCount = 50;
+        
+            class Particle {
+                constructor() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                    this.vx = (Math.random() - 0.5) * 2;
+                    this.vy = (Math.random() - 0.5) * 2;
+                    this.radius = Math.random() * 3 + 1;
+                    this.color = `hsl(${Math.random() * 60 + 240}, 70%, 60%)`;
+                }
 
-    initThreeJS();
+                update() {
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    
+                    if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                    if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+                }
 
+                draw() {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = this.color;
+                    ctx.fill();
+                
+                    // Draw connections
+                    particles.forEach(particle => {
+                        const distance = Math.sqrt(
+                            Math.pow(this.x - particle.x, 2) + 
+                            Math.pow(this.y - particle.y, 2)
+                        );
+                        
+                        if (distance < 100) {
+                            ctx.beginPath();
+                            ctx.moveTo(this.x, this.y);
+                            ctx.lineTo(particle.x, particle.y);
+                            ctx.strokeStyle = `rgba(255, 255, 255, ${0.2 * (1 - distance / 100)})`;
+                            ctx.lineWidth = 1;
+                            ctx.stroke();
+                        }
+                    });
+                }
+            }
+
+            // Create particles
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+
+            // Animation loop
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach(particle => {
+                    particle.update();
+                    particle.draw();
+                });
+
+                requestAnimationFrame(animate);
+            }
+            
+            animate();
+            
+            // Resize handler
+            window.addEventListener('resize', () => {
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+            });
+        }
+
+        // Live Stats Counter Animation
+        function animateStats() {
+            const stats = [
+                { element: 'activeUsers', target: 127, suffix: '' },
+                { element: 'analysesCompleted', target: 342, suffix: '' },
+                { element: 'frameworksUsed', target: 28, suffix: '' },
+                { element: 'satisfactionRate', target: 94, suffix: '%' }
+            ];
+
+            stats.forEach(stat => {
+                const element = document.getElementById(stat.element);
+                if (!element) return;
+
+                let current = 0;
+                const increment = stat.target / 60; // 60 frames for 1 second animation
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= stat.target) {
+                        current = stat.target;
+                        clearInterval(timer);
+                    }
+
+                    element.textContent = Math.floor(current) + stat.suffix;
+                }, 16); // ~60fps
+            });
+        }
+
+        // Smooth Scroll to Tools
+        function scrollToTools() {
+            const toolsSection = document.getElementById('homeTabsNav');
+            if (toolsSection) {
+                toolsSection.scrollIntoView({ 
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        }
+
+        // Book Preview Modal
+        function showBookPreview() {
+            // Create modal for book preview
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="glass-container max-w-4xl max-h-[80vh] overflow-y-auto m-4 p-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-2xl font-bold">Book Preview</h3>
+                        <button onclick="this.closest('.fixed').remove()" class="text-white/70 hover:text-white text-2xl">&times;</button>
+                    </div>
+                    <div class="space-y-4 text-white/80">
+                        <h4 class="text-lg font-bold text-indigo-300">Table of Contents</h4>
+                        <ul class="list-disc list-inside space-y-2">
+                            <li>Part I: Science of Strategy - Fundamental frameworks</li>
+                            <li>Part II: Art of Strategy - Creative and adaptive approaches</li>
+                            <li>Part III: Execution - Implementation methodologies</li>
+                        </ul>
+                        <h4 class="text-lg font-bold text-indigo-300 mt-6">Sample Chapter</h4>
+                        <p class="italic">"Strategy is not just about planning, but about creating adaptive systems that can thrive in uncertainty..."</p>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            initHeroAnimation();
+            animateStats();
+        // Enhanced WebSocket status indicator
+        });
+
+        function updateWebSocketStatus(connected) {
+            const wsStatus = document.getElementById('wsStatus');
+            if (wsStatus) {
+                wsStatus.className = `ws-status ${connected ? 'connected' : 'disconnected'}`;
+                wsStatus.textContent = connected ? 'Connected' : 'Disconnected';
+                // Add pulse animation when connected
+                if (connected) {
+                    wsStatus.classList.add('animate-pulse');
+                } else {
+                    wsStatus.classList.remove('animate-pulse');
+                }
+            }
+        }
+
+        // Attach password button listeners
+        const resetBtn = dom.$("passwordResetRequestBtn");
+        if (resetBtn) resetBtn.addEventListener("click", handlePasswordResetRequest);
+        
+        const updateBtn = dom.$("passwordUpdateBtn");
+        if (updateBtn) updateBtn.addEventListener("click", handlePasswordUpdate);
+        
+        // These should run regardless
+        setupHomeTabs();
+        attachHomeCardListeners();
+        initThreeJS();
+    })();
+    // --- END of New Initial Page Load Logic ---         
+   
     // --- Dashboard Widget ---
     (function initDashboardWidget() {
         const PRESENCE_PREFIX = "sage_presence_";

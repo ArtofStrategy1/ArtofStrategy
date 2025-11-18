@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>S.A.G.E. - AI Strategy Assistant</title>
     <link rel="stylesheet" href="../css/stylesheet.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" >
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
@@ -50,8 +50,8 @@
             </div>
         </nav>
 
-        <div id="versionChoiceModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] hidden">
-            <div class="glass-container w-full max-w-lg text-center">
+        <div id="versionChoiceModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm items-center justify-center z-[100] feedback-modal">
+            <div class="glass-container w-full max-w-lg text-center feedback-modal-container">
                 <h2 class="text-3xl font-bold mb-4">Choose Your Version</h2>
                 <p class="text-white/80 mb-8">Select a version to proceed with your analysis.</p>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -105,6 +105,8 @@
                             <option value="">-- Select an action --</option>
                             <option value="upgrade-to-premium">Upgrade to Premium</option>
                             <option value="downgrade-to-basic">Downgrade to Basic</option>
+                            <option value="disable-users">Disable Users</option>
+                            <option value="delete-users">Delete Users</option>
                         </select>
                     </div>
                     <div id="bulkModalMessage" class="hidden"></div>
@@ -131,89 +133,89 @@
             <div id="homeTabsContent">
                 <div id="strategicPlanning" class="home-tab-panel active grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="mission-vision">
-                        <h3 class="text-xl font-bold mb-2">Mission Vision</h3><p class="text-white/70 text-sm">Define your organization's core purpose and future aspirations.</p>
+                        <h3 class="text-xl font-bold mb-2">AI Mission Vision</h3><p class="text-white/70 text-sm">Define your organization's core purpose and future aspirations.</p>
                     </div>
                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="factor-analysis">
-                        <h3 class="text-xl font-bold mb-2">Factor Analysis</h3><p class="text-white/70 text-sm">Assess internal strengths and weaknesses & external opportunities and threats.</p>
+                        <h3 class="text-xl font-bold mb-2">AI Factor Analysis</h3><p class="text-white/70 text-sm">Assess internal strengths and weaknesses & external opportunities and threats.</p>
                     </div>
                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="swot-tows">
-                        <h3 class="text-xl font-bold mb-2">Swot/Tows Analysis</h3><p class="text-white/70 text-sm">Develop strategies by matching internal factors to external factors.</p>
+                        <h3 class="text-xl font-bold mb-2">AI Swot/Tows Analysis</h3><p class="text-white/70 text-sm">Develop strategies by matching internal factors to external factors.</p>
                     </div>
                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="goals-initiatives">
-                        <h3 class="text-xl font-bold mb-2">Goals & Strategic Initiatives</h3><p class="text-white/70 text-sm">Set high-level goals and the key initiatives to achieve them.</p>
+                        <h3 class="text-xl font-bold mb-2">AI Goals & Strategic Initiatives</h3><p class="text-white/70 text-sm">Set high-level goals and the key initiatives to achieve them.</p>
                     </div>
                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="objectives">
-                        <h3 class="text-xl font-bold mb-2">Objectives</h3><p class="text-white/70 text-sm">Formulate specific, measurable, achievable, relevant, and time-bound objectives.</p>
+                        <h3 class="text-xl font-bold mb-2">AI Objectives</h3><p class="text-white/70 text-sm">Formulate specific, measurable, achievable, relevant, and time-bound objectives.</p>
                     </div>
                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="action-plans">
-                        <h3 class="text-xl font-bold mb-2">Action Plans</h3><p class="text-white/70 text-sm">Detail the resources, tasks, and timelines required for execution.</p>
+                        <h3 class="text-xl font-bold mb-2">AI Action Plans</h3><p class="text-white/70 text-sm">Detail the resources, tasks, and timelines required for execution.</p>
                     </div>
                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="kpi-events">
-                        <h3 class="text-xl font-bold mb-2">KPI & Critical Events</h3><p class="text-white/70 text-sm">Define key performance indicators and track critical milestones.</p>
+                        <h3 class="text-xl font-bold mb-2">AI KPI & Critical Events</h3><p class="text-white/70 text-sm">Define key performance indicators and track critical milestones.</p>
                     </div>
                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="misc-summary">
-                        <h3 class="text-xl font-bold mb-2">Misc</h3><p class="text-white/70 text-sm">Compile summaries, risk assessments, governance, and conclusions.</p>
-                    </div>
+                        <h3 class="text-xl font-bold mb-2">AI Strategic Planning</h3><p class="text-white/70 text-sm">Compile summaries, risk assessments, governance, and conclusions.</p>
+                    </div> 
                 </div>
 
                 <div id="systemThinking" class="home-tab-panel grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="process-mapping">
-                        <h3 class="text-xl font-bold mb-2">Process Mapping</h3><p class="text-white/70 text-sm">Visualize and analyze the flow of activities in a process.</p>
+                        <h3 class="text-xl font-bold mb-2">AI Process Mapping</h3><p class="text-white/70 text-sm">Visualize and analyze the flow of activities in a process.</p>
                     </div>
                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="pareto-fishbone">
-                        <h3 class="text-xl font-bold mb-2">Fishbone/Pareto Analysis</h3><p class="text-white/70 text-sm">Identify root causes and prioritize the most significant issues.</p>
+                        <h3 class="text-xl font-bold mb-2">AI Fishbone/Pareto Analysis</h3><p class="text-white/70 text-sm">Identify root causes and prioritize the most significant issues.</p>
                     </div>
                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="system-thinking-analysis">
-                        <h3 class="text-xl font-bold mb-2">System Thinking Analysis</h3><p class="text-white/70 text-sm">Understand the complex interconnections within your organization.</p>
+                        <h3 class="text-xl font-bold mb-2">AI System Thinking Analysis</h3><p class="text-white/70 text-sm">Understand the complex interconnections within your organization.</p>
                     </div>
                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="leverage-points">
-                        <h3 class="text-xl font-bold mb-2">Leverage Points</h3><p class="text-white/70 text-sm">Identify areas where small changes can yield significant results.</p>
+                        <h3 class="text-xl font-bold mb-2">AI Leverage Points</h3><p class="text-white/70 text-sm">Identify areas where small changes can yield significant results.</p>
                     </div>
                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="archetype-analysis">
-                        <h3 class="text-xl font-bold mb-2">Archetypes Analysis</h3><p class="text-white/70 text-sm">Recognize and address recurring patterns of behavior in your system.</p>
+                        <h3 class="text-xl font-bold mb-2">AI Archetypes Analysis</h3><p class="text-white/70 text-sm">Recognize and address recurring patterns of behavior in your system.</p>
                     </div>
                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="system-goals-initiatives">
-                        <h3 class="text-xl font-bold mb-2">Goals/Strategic Initiatives</h3><p class="text-white/70 text-sm">Align system-level goals with broader strategic initiatives.</p>
+                        <h3 class="text-xl font-bold mb-2">AI Goals/Strategic Initiatives</h3><p class="text-white/70 text-sm">Align system-level goals with broader strategic initiatives.</p>
                     </div>
                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="system-objectives">
-                        <h3 class="text-xl font-bold mb-2">Objectives</h3><p class="text-white/70 text-sm">Define clear objectives for improving system performance.</p>
+                        <h3 class="text-xl font-bold mb-2">AI Objectives</h3><p class="text-white/70 text-sm">Define clear objectives for improving system performance.</p>
                     </div>
                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="system-actions">
-                        <h3 class="text-xl font-bold mb-2">Actions</h3><p class="text-white/70 text-sm">Outline concrete actions to implement system-level changes.</p>
+                        <h3 class="text-xl font-bold mb-2">AI Actions</h3><p class="text-white/70 text-sm">Outline concrete actions to implement system-level changes.</p>
                     </div>
                 </div>
                 
                 <div id="novelStrategies" class="home-tab-panel grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="novel-goals-initiatives">
-                        <h3 class="text-2xl font-bold mb-2">Goals & Strategic Initiatives</h3><p class="text-white/70">Define ambitious goals and innovative initiatives.</p>
+                        <h3 class="text-2xl font-bold mb-2">AI Goals & Strategic Initiatives</h3><p class="text-white/70">Define ambitious goals and innovative initiatives.</p>
                     </div>
                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="all-framework">
-                        <h3 class="text-2xl font-bold mb-2">All Framework</h3><p class="text-white/70">Access a comprehensive suite of strategic frameworks.</p>
+                        <h3 class="text-2xl font-bold mb-2">AI All Frameworks</h3><p class="text-white/70">Access a comprehensive suite of strategic frameworks.</p>
                     </div>
                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="creative-dissonance">
-                        <h3 class="text-2xl font-bold mb-2">Creative Dissonance</h3><p class="text-white/70">Leverage the gap between vision and reality to spark innovation.</p>
+                        <h3 class="text-2xl font-bold mb-2">AI Creative Dissonance</h3><p class="text-white/70">Leverage the gap between vision and reality to spark innovation.</p>
                     </div>
                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="living-system">
-                        <h3 class="text-2xl font-bold mb-2">Living System</h3><p class="text-white/70">Apply principles of living systems to foster organizational adaptability.</p>
+                        <h3 class="text-2xl font-bold mb-2">AI Living System</h3><p class="text-white/70">Apply principles of living systems to foster organizational adaptability.</p>
                     </div>
                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="thinking-system">
-                        <h3 class="text-2xl font-bold mb-2">Thinking System</h3><p class="text-white/70">Develop a holistic approach to problem-solving and decision-making.</p>
+                        <h3 class="text-2xl font-bold mb-2">AI Thinking System</h3><p class="text-white/70">Develop a holistic approach to problem-solving and decision-making.</p>
                     </div>
                 </div>
 
                 <div id="dataAnalysis" class="home-tab-panel grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="descriptive-analysis"><h3 class="text-xl font-bold mb-2">Descriptive</h3><p class="text-white/70 text-sm">Summarize historical data to understand what has happened.</p></div>
-                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="predictive-analysis"><h3 class="text-xl font-bold mb-2">Predictive</h3><p class="text-white/70 text-sm">Use statistical models to forecast future outcomes.</p></div>
-                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="prescriptive-analysis"><h3 class="text-xl font-bold mb-2">Prescriptive</h3><p class="text-white/70 text-sm">Advise on possible outcomes and recommend actions.</p></div>
-                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="visualization"><h3 class="text-xl font-bold mb-2">Visualization</h3><p class="text-white/70 text-sm">Create graphical representations of data for insights.</p></div>
-                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="regression-analysis"><h3 class="text-xl font-bold mb-2">Regression</h3><p class="text-white/70 text-sm">Model relationships between variables for prediction.</p></div>
-                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="pls-analysis"><h3 class="text-xl font-bold mb-2">PLS</h3><p class="text-white/70 text-sm">Apply Partial Least Squares for structural equation modeling.</p></div>
-                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="sem-analysis"><h3 class="text-xl font-bold mb-2">SEM</h3><p class="text-white/70 text-sm">Structural Equation Modeling for complex variable relationships.</p></div>
-                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="dematel-analysis"><h3 class="text-xl font-bold mb-2">DEMATEL</h3><p class="text-white/70 text-sm">Understand causal relationships between complex factors.</p></div>
+                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="descriptive-analysis"><h3 class="text-xl font-bold mb-2">AI Descriptive</h3><p class="text-white/70 text-sm">Summarize historical data to understand what has happened.</p></div>
+                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="predictive-analysis"><h3 class="text-xl font-bold mb-2">AI Predictive</h3><p class="text-white/70 text-sm">Use statistical models to forecast future outcomes.</p></div>
+                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="prescriptive-analysis"><h3 class="text-xl font-bold mb-2">AI Prescriptive</h3><p class="text-white/70 text-sm">Advise on possible outcomes and recommend actions.</p></div>
+                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="visualization"><h3 class="text-xl font-bold mb-2">AI Visualization</h3><p class="text-white/70 text-sm">Create graphical representations of data for insights.</p></div>
+                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="regression-analysis"><h3 class="text-xl font-bold mb-2">AI Regression</h3><p class="text-white/70 text-sm">Model relationships between variables for prediction.</p></div>
+                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="pls-analysis"><h3 class="text-xl font-bold mb-2">AI-Based PLS</h3><p class="text-white/70 text-sm">Apply Partial Least Squares for structural equation modeling.</p></div>
+                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="sem-analysis"><h3 class="text-xl font-bold mb-2">AI-Based SEM</h3><p class="text-white/70 text-sm">Structural Equation Modeling for complex variable relationships.</p></div>
+                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="dematel-analysis"><h3 class="text-xl font-bold mb-2">AI-Based DEMATEL</h3><p class="text-white/70 text-sm">Understand causal relationships between complex factors.</p></div>
                 </div>
             </div>
             <!-- START OF BOOK SECTION -->
-            <div class="glass-container mt-16 mb-12">
+            <div class="glass-container feature-card mt-16 mb-12 overflow-hidden">
                 <h2 class="text-4xl font-bold mb-4 text-indigo-300 text-center">Science and Art of Strategy</h2>
                 <div class="flex flex-col md:flex-row items-center gap-8">
                     <div class="w-full md:w-1/3">
@@ -231,6 +233,7 @@
                 </div>
             </div>
             <!-- END OF BOOK SECTION -->
+
             <!-- START OF LEADERSHIP / SYSTEM BOOK SECTION -->
             <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div class="feature-card p-6">
@@ -287,6 +290,7 @@
                 </div>
                 <!-- END OF LEADERSHIP / SYSTEM BOOK SECTION -->
             </div>
+            
             <div class="glass-container mt-16 mb-12">
                 <h2 class="text-4xl font-bold mb-4 text-indigo-300 text-center">Contact Us</h2>
                 <p class="text-white/80 mb-8 text-center max-w-2xl mx-auto">
@@ -397,6 +401,7 @@
                     <div class="text-center mt-6">
                         <p class="text-gray-300">Don't have an account?</p>
                         <button class="btn-tertiary nav-link" data-page="signup">Create Account</button>
+                        <button class="btn-tertiary nav-link text-sm mt-2" data-page="passwordResetRequest">Forgot Password?</button>
                     </div>
                 </div>
             </div>
@@ -794,64 +799,171 @@
             <h1 class="text-5xl md:text-6xl font-extrabold text-white leading-tight mb-12 text-center">
                 S.A.G.E. Blog
             </h1>
-            <div id="blogCardContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+            <div id="blogCardContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="feature-card p-6 blog-article-link cursor-pointer" data-article-id="caos">
+                    <h3 class="text-xl font-bold mb-2">Collective Appreciation of Strategy (CAOS)</h3>
+                    <p class="text-white/70 text-sm">A process to analyze situations, identify challenges, and develop novel strategies.</p>
+                </div>
+                <div class="feature-card p-6 blog-article-link cursor-pointer" data-article-id="science-of-strategy">
+                    <h3 class="text-xl font-bold mb-2">The Science of Strategy</h3>
+                    <p class="text-white/70 text-sm">Understanding the systematic study and application of strategic principles to achieve long-term goals.</p>
+                </div>
+                <div class="feature-card p-6 blog-article-link cursor-pointer" data-article-id="mission-analysis">
+                    <h3 class="text-xl font-bold mb-2">What is Mission Analysis?</h3>
+                    <p class="text-white/70 text-sm">The process of breaking down a complex mission to understand what needs to be done and how to do it.</p>
+                </div>
+                <div class="feature-card p-6 blog-article-link cursor-pointer" data-article-id="strategic-mission">
+                    <h3 class="text-xl font-bold mb-2">What is a Strategic Mission?</h3>
+                    <p class="text-white/70 text-sm">Provides a clear and compelling sense of purpose, outlining core values, objectives, and goals.</p>
+                </div>
+                <div class="feature-card p-6 blog-article-link cursor-pointer" data-article-id="strategic-vision">
+                    <h3 class="text-xl font-bold mb-2">What is a Strategic Vision?</h3>
+                    <p class="text-white/70 text-sm">A powerful tool that helps organizations clarify their long-term objectives and aspirations.</p>
+                </div>
+                <div class="feature-card p-6 blog-article-link cursor-pointer" data-article-id="art-of-strategy">
+                    <h3 class="text-xl font-bold mb-2">Science and Art of Strategy</h3>
+                    <p class="text-white/70 text-sm">An essay by LTC Gurbachan Singh exploring the multi-disciplinary nature of warfare and strategy.</p>
+                </div>
+                <div class="feature-card p-6 blog-article-link cursor-pointer" data-article-id="operational-art">
+                    <h3 class="text-xl font-bold mb-2">Operational Art in the Malayan Campaign</h3>
+                    <p class="text-white/70 text-sm">A historical analysis of the Malayan Campaign through the lens of Operational Art by LTC Gurbachan Singh.</p>
+                </div>
+                <div class="feature-card p-6 blog-article-link cursor-pointer" data-article-id="strategic-leadership">
+                    <h3 class="text-xl font-bold mb-2">Strategic Leadership</h3>
+                    <p class="text-white/70 text-sm">Exploring the qualities of great strategic leaders, from Clausewitz to Lee Kuan Yew.</p>
+                </div>
+                <div class="feature-card p-6 blog-article-link cursor-pointer" data-article-id="innovation-nexus">
+                    <h3 class="text-xl font-bold mb-2">The Strategy, Innovation & Entrepreneurship Nexus</h3>
+                    <p class="text-white/70 text-sm">A draft thesis exploring the relationship between innovation, entrepreneurship, and strategy in SMEs.</p>
+                </div>
+            </div>
         </div>
-
         <div id="blogDetail" class="page container mx-auto px-6 py-16">
             <button class="btn btn-secondary mb-8 nav-link" data-page="blog">&larr; Back to Blog</button>
             <div id="blogDetailContent" class="glass-container p-6 md:p-10"></div>
         </div>
-    </div>
 
+        <div id="emailVerifiedSuccess" class="page flex-col items-center justify-center min-h-[80vh]">
+            <div class="w-full max-w-md">
+                <div class="glass-container text-center">
+                    <h2 class="text-3xl font-bold mb-6 text-white">✅ Email Verified!</h2>
+                    <p class="text-white/80 mb-6">
+                        Thank you! Your email has been successfully verified. You can now log in to your account.
+                    </p>
+                    <div class="text-center">
+                        <button class="btn btn-primary nav-link" data-page="login">Proceed to Login</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="emailVerifiedAlready" class="page flex-col items-center justify-center min-h-[80vh]">
+            <div class="w-full max-w-md">
+                <div class="glass-container text-center">
+                    <h2 class="text-3xl font-bold mb-6 text-white">👍 Already Verified</h2>
+                    <p class="text-white/80 mb-6">
+                        It looks like your email has already been verified. You're all set!
+                    </p>
+                    <div class="text-center">
+                        <button class="btn btn-primary nav-link" data-page="login">Return to Login</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="passwordResetRequest" class="page flex-col items-center justify-center min-h-[80vh]">
+            <div class="w-full max-w-md">
+                <div class="glass-container">
+                    <h2 class="text-3xl font-bold mb-6 text-center text-white">Reset Password</h2>
+                    <p class="text-white/80 mb-6 text-center">Enter your email address and we will send you a link to reset your password.</p>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="passwordResetEmail" class="block text-sm font-medium text-gray-200 mb-2">Email</label>
+                            <input type="email" id="passwordResetEmail" class="input-field" placeholder="Enter your email" required>
+                        </div>
+                        <button id="passwordResetRequestBtn" class="btn btn-primary w-full">
+                            <span id="passwordResetRequestBtnText">Send Reset Link</span>
+                            <span id="passwordResetRequestSpinner" class="loading-spinner hidden ml-2"></span>
+                        </button>
+                        <div id="passwordResetRequestMessage" class="hidden"></div>
+                    </div>
+                    <div class="text-center mt-6">
+                        <button class="btn-tertiary nav-link" data-page="login">Back to Login</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="passwordResetUpdate" class="page flex-col items-center justify-center min-h-[80vh]">
+            <div class="w-full max-w-md">
+                <div class="glass-container">
+                    <h2 class="text-3xl font-bold mb-6 text-center text-white">Create New Password</h2>
+                    <p class="text-white/80 mb-6 text-center">Enter your new password below. You will be logged out after completion.</p>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="passwordUpdatePassword" class="block text-sm font-medium text-gray-200 mb-2">New Password</label>
+                            <input type="password" id="passwordUpdatePassword" class="input-field" placeholder="Create a new password" required>
+                        </div>
+                        <div>
+                            <label for="passwordUpdateConfirmPassword" class="block text-sm font-medium text-gray-200 mb-2">Confirm New Password</label>
+                            <input type="password" id="passwordUpdateConfirmPassword" class="input-field" placeholder="Confirm your new password" required>
+                        </div>
+                        <button id="passwordUpdateBtn" class="btn btn-primary w-full">
+                            <span id="passwordUpdateBtnText">Update Password</span>
+                            <span id="passwordUpdateSpinner" class="loading-spinner hidden ml-2"></span>
+                        </button>
+                        <div id="passwordUpdateMessage" class="hidden"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feedback Modal -->
+        <div id="feedbackDetailModal" class="feedback-modal">
+            <div class="feedback-modal-container">
+                <div id="feedbackModalContent">
+                    <!-- Content will be injected by JavaScript -->
+                    <div class="modal-header">
+                        <div class="modal-title-section">
+                            <h3 class="modal-title">Loading...</h3>
+                        </div>
+                        <button class="modal-close-btn" id="modalCloseBtn">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="flex items-center justify-center p-10">
+                            <div class="loading-spinner mr-3"></div>
+                            <span class="text-white/80">Loading details...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Modal -->
+        <div id="contactDetailModal" class="feedback-modal">
+            <div class="feedback-modal-container" style="max-width: 1000px;"> <div id="contactModalContent">
+                    <div class="modal-header">
+                        <div class="modal-title-section">
+                            <h3 class="modal-title">Loading...</h3>
+                        </div>
+                        <button class="modal-close-btn" id="modalCloseContactBtn">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="flex items-center justify-center p-10">
+                            <div class="loading-spinner mr-3"></div>
+                            <span class="text-white/80">Loading contact message...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <footer class="mt-auto py-8">
         <div class="container mx-auto text-center text-white/70">
             <div class="flex justify-center space-x-6 mb-4">
                 <a href="#" class="hover:text-white nav-link" data-page="about">About</a>
-                <a href="#" class="hover:text-white nav-link" data-page="adminDashboard">Admin Dashboard</a>
             </div>
             <p>&copy; 2025 S.A.G.E. All rights reserved.</p>
         </div>
     </footer>
-
-    <!-- Feedback Modal -->
-    <div id="feedbackDetailModal" class="feedback-modal">
-        <div class="feedback-modal-container">
-            <div id="feedbackModalContent">
-                <!-- Content will be injected by JavaScript -->
-                <div class="modal-header">
-                    <div class="modal-title-section">
-                        <h3 class="modal-title">Loading...</h3>
-                    </div>
-                    <button class="modal-close-btn" id="modalCloseBtn">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="flex items-center justify-center p-10">
-                        <div class="loading-spinner mr-3"></div>
-                        <span class="text-white/80">Loading details...</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Contact Modal -->
-    <div id="contactDetailModal" class="feedback-modal">
-        <div class="feedback-modal-container" style="max-width: 1000px;"> <div id="contactModalContent">
-                <div class="modal-header">
-                    <div class="modal-title-section">
-                        <h3 class="modal-title">Loading...</h3>
-                    </div>
-                    <button class="modal-close-btn" id="modalCloseContactBtn">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="flex items-center justify-center p-10">
-                        <div class="loading-spinner mr-3"></div>
-                        <span class="text-white/80">Loading contact message...</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
     <script type="module" src="../js/main.mjs"></script>
 </body>
 </html>
