@@ -165,9 +165,98 @@ async function handleContactSubmit() {
 }
 
 
+
+/**
+     * Handles the password reset request form.
+     * Calls the new 'password-reset-request' edge function.
+     */
+    async function handlePasswordResetRequest() {
+        const email = dom.$("passwordResetEmail").value.trim();
+        const messageEl = dom.$("passwordResetRequestMessage");
+
+        if (!email) {
+            showMessage("passwordResetRequestMessage", "Please enter your email address", "error");
+            return;
+        }
+
+        setLoading("passwordResetRequest", true);
+        
+        try {
+            const { data, error } = await appConfig.supabase.functions.invoke("password-reset-request", {
+                body: { email: email }
+            });
+
+            if (error) throw error;
+
+            // Always show a success message (for security, don't reveal if email exists)
+            showMessage("passwordResetRequestMessage", "If an account exists, a reset link has been sent to your email.", "success");
+            dom.$("passwordResetEmail").value = ""; // Clear field
+
+        } catch (error) {
+            console.error("Password reset request error:", error);
+            // Show a generic error
+            showMessage("passwordResetRequestMessage", `Error: ${error.message || 'Could not send reset link.'}`, "error");
+        } finally {
+            setLoading("passwordResetRequest", false);
+        }
+    }
+
+    /**
+     * Handles the password update form.
+     * This runs on the client-side after the user clicks the email link.
+     */
+async function handlePasswordUpdate() {
+    const password = dom.$("passwordUpdatePassword").value;
+    const confirmPassword = dom.$("passwordUpdateConfirmPassword").value;
+    
+    if (!password || !confirmPassword) {
+        showMessage("passwordUpdateMessage", "Please fill in all fields", "error");
+        return;
+    }
+    if (password !== confirmPassword) {
+        showMessage("passwordUpdateMessage", "Passwords do not match", "error");
+        return;
+    }
+    if (password.length < 6) {
+        showMessage("passwordUpdateMessage", "Password must be at least 6 characters long", "error");
+        return;
+    }
+    
+    setLoading("passwordUpdate", true);
+    
+    try {
+        // Use the stored token and email from the URL
+        const { data, error } = await appConfig.supabase.functions.invoke("password-reset-verify", {
+            body: { 
+                token: window.resetToken,
+                email: window.resetEmail,
+                newPassword: password 
+            }
+        });
+        
+        if (error) throw error;
+        
+        showMessage("passwordUpdateMessage", "Password updated successfully! Redirecting to login...", "success");
+        
+        // Clear the stored values
+        delete window.resetToken;
+        delete window.resetEmail;
+        
+        setTimeout(() => navigateTo("login"), 2000);
+    } catch (error) {
+        console.error("Password reset error:", error);
+        showMessage("passwordUpdateMessage", `Error: ${error.message || 'Could not update password.'}`, "error");
+    } finally {
+        setLoading("passwordUpdate", false);
+    }
+}
+
+
 export {
     handleLogin,
     handleRegister,
     handleLogout,
-    handleContactSubmit
+    handleContactSubmit,
+    handlePasswordResetRequest,
+    handlePasswordUpdate
 }
