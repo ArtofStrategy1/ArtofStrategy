@@ -17,7 +17,7 @@ full_access_resend_api_key.txt
 *.backup
 
 # Supabase generated files
-volumes/
+#volumes/
 
 # Development files
 dev/

@@ -1,0 +1,440 @@
+import { serve } from 'https://deno.land/std@0.131.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
+
+serve(async (req) => {
+  const headers = {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-admin-secret',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS'
+  }
+
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers })
+  }
+
+  try {
+    // SECURITY LAYER 1: Admin secret verification
+    const adminSecret = req.headers.get('x-admin-secret')
+    const ADMIN_SECRET = Deno.env.get('ADMIN_SECRET_KEY')
+    
+    if (!adminSecret || adminSecret !== ADMIN_SECRET) {
+      return new Response(JSON.stringify({
+        error: 'Unauthorized - Admin secret required'
+      }), { status: 401, headers })
+    }
+
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      db: { schema: 'publicv2' }
+    })
+
+    // SECURITY LAYER 2: JWT token verification
+    const authHeader = req.headers.get('authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({
+        error: 'Unauthorized - JWT token required'
+      }), { status: 401, headers })
+    }
+
+    const token = authHeader.substring(7)
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    
+    if (authError || !user) {
+      return new Response(JSON.stringify({
+        error: 'Unauthorized - Invalid JWT token'
+      }), { status: 401, headers })
+    }
+
+    // SECURITY LAYER 3: Email whitelist verification
+    const ALLOWED_ADMIN_EMAILS = [
+      'supadatain@gmail.com',
+      'elijahfurlonge@yahoo.com',
+      'gurby1@gmail.com',
+      'gurby1@yahoo.com'
+    ]
+    
+    if (!ALLOWED_ADMIN_EMAILS.includes(user.email)) {
+      return new Response(JSON.stringify({
+        error: 'Access denied - Email not authorized'
+      }), { status: 403, headers })
+    }
+
+    // SECURITY LAYER 4: Database admin tier verification
+    const { data: adminUser, error: adminCheckError } = await supabase
+      .from('users')
+      .select('tier, email')
+      .eq('auth_user_id', user.id)
+      .single()
+
+    if (adminCheckError || !adminUser || adminUser.tier !== 'admin') {
+      return new Response(JSON.stringify({
+        error: 'Access denied - Admin privileges required'
+      }), { status: 403, headers })
+    }
+
+    const url = new URL(req.url)
+    const method = req.method
+    const pathParts = url.pathname.split('/').filter(part => part)
+    
+    if (pathParts[0] === 'admin-users-secure') {
+      pathParts.shift()
+    }
+    
+    // GET /health - Health check
+    if (method === 'GET' && pathParts.length === 1 && pathParts[0] === 'health') {
+      return new Response(JSON.stringify({
+        success: true,
+        message: 'Safe Admin API - Read/Update Only',
+        authenticated_user: user.email,
+        database_tier: adminUser.tier,
+        security_layers: ['admin_secret', 'jwt_token', 'email_whitelist', 'database_tier'],
+        capabilities: ['view_users', 'update_tiers', 'disable_accounts', 'view_stats'],
+        restrictions: ['no_user_creation', 'no_hard_deletion', 'no_admin_creation'],
+        timestamp: new Date().toISOString()
+      }), { headers })
+    }
+    
+    // GET /users/stats - User statistics
+    if (method === 'GET' && pathParts.length === 2 && pathParts[0] === 'users' && pathParts[1] === 'stats') {
+      const { data: stats, error } = await supabase
+        .from('users')
+        .select('tier, created_at')
+
+      if (error) throw error
+
+      const totalUsers = stats.length
+      const premiumUsers = stats.filter(u => u.tier === 'premium').length
+      const adminUsers = stats.filter(u => u.tier === 'admin').length
+      const basicUsers = totalUsers - premiumUsers - adminUsers
+
+      const thirtyDaysAgo = new Date()
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+      const newUsers = stats.filter(u => new Date(u.created_at) >= thirtyDaysAgo).length
+
+      return new Response(JSON.stringify({
+        success: true,
+        message: 'User statistics retrieved',
+        data: {
+          totalUsers, basicUsers, premiumUsers, adminUsers, newUsersLast30Days: newUsers,
+          premiumPercentage: totalUsers > 0 ? Math.round((premiumUsers / totalUsers) * 100) : 0
+        },
+        authenticated_user: user.email,
+        timestamp: new Date().toISOString()
+      }), { headers })
+    }
+
+    // GET /users - List all users with pagination
+    if (method === 'GET' && pathParts.length === 1 && pathParts[0] === 'users') {
+      const page = parseInt(url.searchParams.get('page') || '1')
+      const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100)
+      const search = url.searchParams.get('search') || ''
+      const tier = url.searchParams.get('tier') || ''
+      const sortBy = url.searchParams.get('sortBy') || 'created_at'
+      const sortOrder = url.searchParams.get('sortOrder') || 'desc'
+      
+      const offset = (page - 1) * limit
+
+      let query = supabase
+        .from('users')
+        .select('id, auth_user_id, created_at, first_name, last_name, tier, email, upgraded_at', { count: 'exact' })
+
+      if (search) {
+        query = query.or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%`)
+      }
+
+      if (tier && ['basic', 'premium', 'admin'].includes(tier)) {
+        query = query.eq('tier', tier)
+      }
+
+      query = query.order(sortBy, { ascending: sortOrder === 'asc' })
+      query = query.range(offset, offset + limit - 1)
+
+      const { data: users, error, count } = await query
+
+      if (error) throw error
+
+      return new Response(JSON.stringify({
+        success: true,
+        message: 'Users retrieved successfully',
+        data: users,
+        pagination: {
+          page,
+          limit,
+          total: count,
+          totalPages: Math.ceil(count / limit)
+        },
+        authenticated_user: user.email,
+        timestamp: new Date().toISOString()
+      }), { headers })
+    }
+
+    // GET /users/:id - Get specific user
+    if (method === 'GET' && pathParts.length === 2 && pathParts[0] === 'users' && pathParts[1] !== 'stats') {
+      const userId = pathParts[1]
+      
+      const { data: targetUser, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single()
+
+      if (error) throw error
+
+      if (!targetUser) {
+        return new Response(JSON.stringify({
+          error: 'User not found'
+        }), { status: 404, headers })
+      }
+
+      return new Response(JSON.stringify({
+        success: true,
+        message: 'User retrieved successfully',
+        data: targetUser,
+        authenticated_user: user.email,
+        timestamp: new Date().toISOString()
+      }), { headers })
+    }
+
+    // PUT /users/:id - Update user (LIMITED CAPABILITIES)
+    if (method === 'PUT' && pathParts.length === 2 && pathParts[0] === 'users') {
+      const userId = pathParts[1]
+      const body = await req.json()
+      
+      // LIMITED UPDATE FIELDS - No admin creation, safer operations only
+      const allowedFields = ['first_name', 'last_name', 'email']
+      const allowedTierChanges = ['basic', 'premium'] // NO ADMIN CREATION
+      const updateData = {}
+      
+      for (const field of allowedFields) {
+        if (body[field] !== undefined) {
+          updateData[field] = body[field]
+        }
+      }
+
+      // Handle tier changes with restrictions
+      if (body.tier !== undefined) {
+        if (!allowedTierChanges.includes(body.tier)) {
+          return new Response(JSON.stringify({
+            error: 'Invalid tier. Only basic/premium tiers allowed in Safe Admin mode.',
+            allowed_tiers: allowedTierChanges
+          }), { status: 400, headers })
+        }
+        updateData.tier = body.tier
+      }
+
+      // If tier is being upgraded to premium, set upgraded_at
+      if (updateData.tier === 'premium') {
+        updateData.upgraded_at = new Date().toISOString()
+      }
+
+      const { data: updatedUser, error } = await supabase
+        .from('users')
+        .update(updateData)
+        .eq('id', userId)
+        .select()
+        .single()
+
+      if (error) throw error
+
+      // If we're updating tier and user has auth_user_id, also update auth metadata
+      if (updateData.tier && updatedUser.auth_user_id) {
+        try {
+          await supabase.auth.admin.updateUserById(
+            updatedUser.auth_user_id,
+            {
+              user_metadata: {
+                ...updatedUser,
+                role: updateData.tier,
+                tier: updateData.tier,
+                full_name: `${updatedUser.first_name} ${updatedUser.last_name}`
+              },
+              app_metadata: {
+                role: updateData.tier,
+                tier: updateData.tier
+              }
+            }
+          )
+        } catch (authError) {
+          console.error('Auth update error:', authError)
+        }
+      }
+
+      return new Response(JSON.stringify({
+        success: true,
+        message: 'User updated successfully',
+        data: updatedUser,
+        authenticated_user: user.email,
+        timestamp: new Date().toISOString()
+      }), { headers })
+    }
+
+    // PUT /users/:id/disable - Soft disable user account
+    if (method === 'PUT' && pathParts.length === 3 && pathParts[0] === 'users' && pathParts[2] === 'disable') {
+      const userId = pathParts[1]
+      
+      // Get user first to check if they're an admin
+      const { data: targetUser, error: fetchError } = await supabase
+        .from('users')
+        .select('auth_user_id, email, tier')
+        .eq('id', userId)
+        .single()
+
+      if (fetchError) throw fetchError
+
+      if (!targetUser) {
+        return new Response(JSON.stringify({
+          error: 'User not found'
+        }), { status: 404, headers })
+      }
+
+      // Prevent disabling admin users
+      if (targetUser.tier === 'admin') {
+        return new Response(JSON.stringify({
+          error: 'Cannot disable admin users'
+        }), { status: 403, headers })
+      }
+
+      // Disable the auth user (soft disable)
+      if (targetUser.auth_user_id) {
+        try {
+          await supabase.auth.admin.updateUserById(
+            targetUser.auth_user_id,
+            { 
+              user_metadata: { 
+                disabled: true,
+                disabled_at: new Date().toISOString(),
+                disabled_by: user.email
+              }
+            }
+          )
+        } catch (authError) {
+          console.error('Auth disable error:', authError)
+          return new Response(JSON.stringify({
+            error: 'Failed to disable user account',
+            details: authError.message
+          }), { status: 500, headers })
+        }
+      }
+
+      return new Response(JSON.stringify({
+        success: true,
+        message: 'User account disabled successfully',
+        disabled_user: {
+          id: userId,
+          email: targetUser.email
+        },
+        authenticated_user: user.email,
+        action: 'soft_disable',
+        reversible: true,
+        timestamp: new Date().toISOString()
+      }), { headers })
+    }
+
+    // POST /users/bulk-tier-update - Limited bulk operations
+    if (method === 'POST' && pathParts.length === 2 && pathParts[0] === 'users' && pathParts[1] === 'bulk-tier-update') {
+      const body = await req.json()
+      const { action, userIds } = body
+
+      if (!action || !userIds || !Array.isArray(userIds)) {
+        return new Response(JSON.stringify({
+          error: 'Invalid request. Requires action and userIds array'
+        }), { status: 400, headers })
+      }
+
+      let results = []
+      const allowedActions = ['upgrade-to-premium', 'downgrade-to-basic']
+
+      if (!allowedActions.includes(action)) {
+        return new Response(JSON.stringify({
+          error: 'Invalid action for Safe Admin mode',
+          allowed_actions: allowedActions
+        }), { status: 400, headers })
+      }
+
+      // Check that none of the target users are admins
+      const { data: targetUsers, error: checkError } = await supabase
+        .from('users')
+        .select('id, tier, email')
+        .in('id', userIds)
+
+      if (checkError) throw checkError
+
+      const adminUsers = targetUsers.filter(u => u.tier === 'admin')
+      if (adminUsers.length > 0) {
+        return new Response(JSON.stringify({
+          error: 'Cannot perform bulk operations on admin users',
+          admin_users_found: adminUsers.map(u => u.email)
+        }), { status: 403, headers })
+      }
+
+      switch (action) {
+        case 'upgrade-to-premium':
+          const { data: upgradedUsers, error: upgradeError } = await supabase
+            .from('users')
+            .update({ 
+              tier: 'premium',
+              upgraded_at: new Date().toISOString()
+            })
+            .in('id', userIds)
+            .select()
+
+          if (upgradeError) throw upgradeError
+          results = upgradedUsers
+          break
+
+        case 'downgrade-to-basic':
+          const { data: downgradedUsers, error: downgradeError } = await supabase
+            .from('users')
+            .update({ tier: 'basic' })
+            .in('id', userIds)
+            .select()
+
+          if (downgradeError) throw downgradeError
+          results = downgradedUsers
+          break
+      }
+
+      return new Response(JSON.stringify({
+        success: true,
+        message: `Safe bulk ${action} completed for ${userIds.length} users`,
+        action,
+        results,
+        authenticated_user: user.email,
+        timestamp: new Date().toISOString()
+      }), { headers })
+    }
+
+    return new Response(JSON.stringify({
+      error: 'Route not found',
+      available_routes: [
+        'GET /health - Health check',
+        'GET /users/stats - User statistics', 
+        'GET /users - List users with pagination',
+        'GET /users/:id - Get specific user',
+        'PUT /users/:id - Update user (limited fields)',
+        'PUT /users/:id/disable - Disable user account (soft)',
+        'POST /users/bulk-tier-update - Bulk tier updates only'
+      ],
+      safe_admin_mode: true,
+      restrictions: [
+        'No user creation',
+        'No hard deletion', 
+        'No admin tier promotion',
+        'No permanent data destruction'
+      ],
+      authenticated_user: user.email,
+      requested_path: url.pathname
+    }), { status: 404, headers })
+
+  } catch (error) {
+    console.error('Function error:', error)
+    return new Response(JSON.stringify({
+      error: 'Internal server error',
+      details: error.message,
+      timestamp: new Date().toISOString()
+    }), { status: 500, headers })
+  }
+})

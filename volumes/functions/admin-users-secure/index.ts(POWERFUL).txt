@@ -1,0 +1,600 @@
+import { serve } from 'https://deno.land/std@0.131.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
+
+serve(async (req) => {
+  const headers = {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-admin-secret, x-operation-confirm',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
+  }
+
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers })
+  }
+
+  try {
+    // SECURITY LAYER 1: Admin secret verification
+    const adminSecret = req.headers.get('x-admin-secret')
+    const ADMIN_SECRET = Deno.env.get('ADMIN_SECRET_KEY')
+    
+    if (!adminSecret || adminSecret !== ADMIN_SECRET) {
+      return new Response(JSON.stringify({
+        error: 'Unauthorized - Admin secret required'
+      }), { status: 401, headers })
+    }
+
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      db: { schema: 'publicv2' }
+    })
+
+    // SECURITY LAYER 2: JWT token verification
+    const authHeader = req.headers.get('authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({
+        error: 'Unauthorized - JWT token required'
+      }), { status: 401, headers })
+    }
+
+    const token = authHeader.substring(7)
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    
+    if (authError || !user) {
+      return new Response(JSON.stringify({
+        error: 'Unauthorized - Invalid JWT token'
+      }), { status: 401, headers })
+    }
+
+    // SECURITY LAYER 3: Email whitelist verification
+    const ALLOWED_ADMIN_EMAILS = [
+      'supadatain@gmail.com',
+      'elijahfurlonge@yahoo.com',
+      'gurby1@gmail.com',
+      'gurby1@yahoo.com'
+    ]
+    
+    if (!ALLOWED_ADMIN_EMAILS.includes(user.email)) {
+      return new Response(JSON.stringify({
+        error: 'Access denied - Email not authorized'
+      }), { status: 403, headers })
+    }
+
+    // SECURITY LAYER 4: Database admin tier verification
+    const { data: adminUser, error: adminCheckError } = await supabase
+      .from('users')
+      .select('tier, email')
+      .eq('auth_user_id', user.id)
+      .single()
+
+    if (adminCheckError || !adminUser || adminUser.tier !== 'admin') {
+      return new Response(JSON.stringify({
+        error: 'Access denied - Admin privileges required'
+      }), { status: 403, headers })
+    }
+
+    const url = new URL(req.url)
+    const method = req.method
+    const pathParts = url.pathname.split('/').filter(part => part)
+    
+    if (pathParts[0] === 'admin-users-secure') {
+      pathParts.shift()
+    }
+    
+    // GET /health - Health check
+    if (method === 'GET' && pathParts.length === 1 && pathParts[0] === 'health') {
+      return new Response(JSON.stringify({
+        success: true,
+        message: 'Admin function with FULL SECURITY working!',
+        authenticated_user: user.email,
+        database_tier: adminUser.tier,
+        security_layers: ['admin_secret', 'jwt_token', 'email_whitelist', 'database_tier'],
+        timestamp: new Date().toISOString()
+      }), { headers })
+    }
+    
+    // GET /users/stats - User statistics
+    if (method === 'GET' && pathParts.length === 2 && pathParts[0] === 'users' && pathParts[1] === 'stats') {
+      const { data: stats, error } = await supabase
+        .from('users')
+        .select('tier, created_at')
+
+      if (error) throw error
+
+      const totalUsers = stats.length
+      const premiumUsers = stats.filter(u => u.tier === 'premium').length
+      const adminUsers = stats.filter(u => u.tier === 'admin').length
+      const basicUsers = totalUsers - premiumUsers - adminUsers
+
+      const thirtyDaysAgo = new Date()
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+      const newUsers = stats.filter(u => new Date(u.created_at) >= thirtyDaysAgo).length
+
+      return new Response(JSON.stringify({
+        success: true,
+        message: 'User statistics retrieved',
+        data: {
+          totalUsers, basicUsers, premiumUsers, adminUsers, newUsersLast30Days: newUsers,
+          premiumPercentage: totalUsers > 0 ? Math.round((premiumUsers / totalUsers) * 100) : 0
+        },
+        authenticated_user: user.email,
+        timestamp: new Date().toISOString()
+      }), { headers })
+    }
+
+    // GET /users - List all users with pagination
+    if (method === 'GET' && pathParts.length === 1 && pathParts[0] === 'users') {
+      const page = parseInt(url.searchParams.get('page') || '1')
+      const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100)
+      const search = url.searchParams.get('search') || ''
+      const tier = url.searchParams.get('tier') || ''
+      const sortBy = url.searchParams.get('sortBy') || 'created_at'
+      const sortOrder = url.searchParams.get('sortOrder') || 'desc'
+      
+      const offset = (page - 1) * limit
+
+      let query = supabase
+        .from('users')
+        .select('id, auth_user_id, created_at, first_name, last_name, tier, email, upgraded_at', { count: 'exact' })
+
+      if (search) {
+        query = query.or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%`)
+      }
+
+      if (tier && ['basic', 'premium', 'admin'].includes(tier)) {
+        query = query.eq('tier', tier)
+      }
+
+      query = query.order(sortBy, { ascending: sortOrder === 'asc' })
+      query = query.range(offset, offset + limit - 1)
+
+      const { data: users, error, count } = await query
+
+      if (error) throw error
+
+      return new Response(JSON.stringify({
+        success: true,
+        message: 'Users retrieved successfully',
+        data: users,
+        pagination: {
+          page,
+          limit,
+          total: count,
+          totalPages: Math.ceil(count / limit)
+        },
+        authenticated_user: user.email,
+        timestamp: new Date().toISOString()
+      }), { headers })
+    }
+
+    // GET /cleanup - Clean up orphaned auth users (admin only)
+    if (method === 'GET' && pathParts.length === 1 && pathParts[0] === 'cleanup') {
+      try {
+        // Get all auth users
+        const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers()
+        if (authError) throw authError
+
+        // Get all database users
+        const { data: dbUsers, error: dbError } = await supabase
+          .from('users')
+          .select('auth_user_id')
+
+        if (dbError) throw dbError
+
+        const dbAuthIds = new Set(dbUsers.map(u => u.auth_user_id).filter(Boolean))
+        const orphanedAuthUsers = authUsers.users.filter(authUser => 
+          !dbAuthIds.has(authUser.id)
+        )
+
+        let cleanedCount = 0
+        const cleanupResults = []
+
+        for (const orphanUser of orphanedAuthUsers) {
+          try {
+            await supabase.auth.admin.deleteUser(orphanUser.id)
+            cleanedCount++
+            cleanupResults.push({
+              id: orphanUser.id,
+              email: orphanUser.email,
+              status: 'deleted'
+            })
+          } catch (deleteError) {
+            cleanupResults.push({
+              id: orphanUser.id,
+              email: orphanUser.email,
+              status: 'failed',
+              error: deleteError.message
+            })
+          }
+        }
+
+        return new Response(JSON.stringify({
+          success: true,
+          message: `Cleaned up ${cleanedCount} orphaned auth users`,
+          total_orphaned: orphanedAuthUsers.length,
+          cleaned: cleanedCount,
+          results: cleanupResults,
+          authenticated_user: user.email,
+          timestamp: new Date().toISOString()
+        }), { headers })
+
+      } catch (error) {
+        return new Response(JSON.stringify({
+          error: 'Cleanup failed',
+          details: error.message
+        }), { status: 500, headers })
+      }
+    }
+
+    // POST /users - Create new test user
+    if (method === 'POST' && pathParts.length === 1 && pathParts[0] === 'users') {
+      const body = await req.json()
+      const { email, password, first_name, last_name, tier = 'basic' } = body
+      
+      if (!email || !password || !first_name || !last_name) {
+        return new Response(JSON.stringify({
+          error: 'Missing required fields: email, password, first_name, last_name'
+        }), { status: 400, headers })
+      }
+
+      try {
+        // Create user in auth system first
+        const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: true,
+          user_metadata: { 
+            first_name, 
+            last_name, 
+            tier,
+            full_name: `${first_name} ${last_name}` 
+          },
+          app_metadata: {
+            role: tier,
+            tier: tier
+          }
+        })
+
+        if (authError) throw authError
+
+        // Create user in our database
+        const { data: newUser, error: dbError } = await supabase
+          .from('users')
+          .insert({
+            auth_user_id: authUser.user.id,
+            email,
+            first_name,
+            last_name,
+            tier,
+            created_at: new Date().toISOString()
+          })
+          .select()
+          .single()
+
+        if (dbError) {
+          // If database insert fails, clean up auth user
+          try {
+            await supabase.auth.admin.deleteUser(authUser.user.id)
+          } catch (cleanupError) {
+            console.error('Failed to cleanup auth user:', cleanupError)
+          }
+          throw dbError
+        }
+
+        return new Response(JSON.stringify({
+          success: true,
+          message: 'Test user created successfully',
+          data: newUser,
+          auth_user_id: authUser.user.id,
+          authenticated_user: user.email,
+          timestamp: new Date().toISOString()
+        }), { headers })
+
+      } catch (createError) {
+        return new Response(JSON.stringify({
+          error: 'Failed to create user',
+          details: createError.message
+        }), { status: 500, headers })
+      }
+    }
+
+    // GET /users/:id - Get specific user
+    if (method === 'GET' && pathParts.length === 2 && pathParts[0] === 'users' && pathParts[1] !== 'stats') {
+      const userId = pathParts[1]
+      
+      const { data: targetUser, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single()
+
+      if (error) throw error
+
+      if (!targetUser) {
+        return new Response(JSON.stringify({
+          error: 'User not found'
+        }), { status: 404, headers })
+      }
+
+      return new Response(JSON.stringify({
+        success: true,
+        message: 'User retrieved successfully',
+        data: targetUser,
+        authenticated_user: user.email,
+        timestamp: new Date().toISOString()
+      }), { headers })
+    }
+
+    // PUT /users/:id - Update user
+    if (method === 'PUT' && pathParts.length === 2 && pathParts[0] === 'users') {
+      const userId = pathParts[1]
+      const body = await req.json()
+      
+      const allowedFields = ['first_name', 'last_name', 'tier', 'email']
+      const updateData = {}
+      
+      for (const field of allowedFields) {
+        if (body[field] !== undefined) {
+          updateData[field] = body[field]
+        }
+      }
+
+      // Prevent creating new admins unless you're an authorized admin creator
+      const ADMIN_CREATORS = [
+        'supadatain@gmail.com',
+        'gurby1@gmail.com', 
+        'gurby1@yahoo.com'
+      ]
+      
+      if (updateData.tier === 'admin' && !ADMIN_CREATORS.includes(user.email)) {
+        return new Response(JSON.stringify({
+          error: 'Cannot create admin users - insufficient privileges'
+        }), { status: 403, headers })
+      }
+
+      // If tier is being upgraded to premium, set upgraded_at
+      if (updateData.tier === 'premium') {
+        updateData.upgraded_at = new Date().toISOString()
+      }
+
+      const { data: updatedUser, error } = await supabase
+        .from('users')
+        .update(updateData)
+        .eq('id', userId)
+        .select()
+        .single()
+
+      if (error) throw error
+
+      // If we're updating tier and user has auth_user_id, also update auth metadata
+      if (updateData.tier && updatedUser.auth_user_id) {
+        try {
+          await supabase.auth.admin.updateUserById(
+            updatedUser.auth_user_id,
+            {
+              user_metadata: {
+                ...updatedUser,
+                role: updateData.tier,
+                tier: updateData.tier,
+                full_name: `${updatedUser.first_name} ${updatedUser.last_name}`
+              },
+              app_metadata: {
+                role: updateData.tier,
+                tier: updateData.tier
+              }
+            }
+          )
+        } catch (authError) {
+          console.error('Auth update error:', authError)
+        }
+      }
+
+      return new Response(JSON.stringify({
+        success: true,
+        message: 'User updated successfully',
+        data: updatedUser,
+        authenticated_user: user.email,
+        timestamp: new Date().toISOString()
+      }), { headers })
+    }
+
+    // DELETE /users/:id - Delete user
+    if (method === 'DELETE' && pathParts.length === 2 && pathParts[0] === 'users') {
+      const userId = pathParts[1]
+      const body = await req.json().catch(() => ({}))
+      const hardDelete = body?.hardDelete === true
+
+      // Check for confirmation token for sensitive operations
+      const confirmationToken = req.headers.get('x-operation-confirm')
+      if (!confirmationToken || !confirmationToken.startsWith(user.id)) {
+        return new Response(JSON.stringify({
+          error: 'Sensitive operation requires confirmation token',
+          required_header: 'x-operation-confirm',
+          token_format: `${user.id}-${Date.now()}`
+        }), { status: 400, headers })
+      }
+
+      // Get user first to check if they have auth_user_id
+      const { data: targetUser, error: fetchError } = await supabase
+        .from('users')
+        .select('auth_user_id, email, tier')
+        .eq('id', userId)
+        .single()
+
+      if (fetchError) throw fetchError
+
+      if (!targetUser) {
+        return new Response(JSON.stringify({
+          error: 'User not found'
+        }), { status: 404, headers })
+      }
+
+      // Prevent deleting other admins
+      if (targetUser.tier === 'admin') {
+        return new Response(JSON.stringify({
+          error: 'Cannot delete admin users'
+        }), { status: 403, headers })
+      }
+
+      if (hardDelete) {
+        // Delete from auth if auth_user_id exists
+        if (targetUser.auth_user_id) {
+          try {
+            await supabase.auth.admin.deleteUser(targetUser.auth_user_id)
+          } catch (authDeleteError) {
+            console.error('Auth delete error:', authDeleteError)
+          }
+        }
+
+        // Delete from users table
+        const { error: deleteError } = await supabase
+          .from('users')
+          .delete()
+          .eq('id', userId)
+
+        if (deleteError) throw deleteError
+
+        return new Response(JSON.stringify({
+          success: true,
+          message: 'User permanently deleted',
+          deleted_user: {
+            id: userId,
+            email: targetUser.email
+          },
+          authenticated_user: user.email,
+          timestamp: new Date().toISOString()
+        }), { headers })
+      } else {
+        // Soft delete - just disable the auth user
+        if (targetUser.auth_user_id) {
+          try {
+            await supabase.auth.admin.updateUserById(
+              targetUser.auth_user_id,
+              { 
+                user_metadata: { 
+                  disabled: true,
+                  disabled_at: new Date().toISOString()
+                }
+              }
+            )
+          } catch (authError) {
+            console.error('Auth disable error:', authError)
+          }
+        }
+
+        return new Response(JSON.stringify({
+          success: true,
+          message: 'User account disabled',
+          disabled_user: {
+            id: userId,
+            email: targetUser.email
+          },
+          authenticated_user: user.email,
+          timestamp: new Date().toISOString()
+        }), { headers })
+      }
+    }
+
+    // POST /users/bulk-action - Bulk operations
+    if (method === 'POST' && pathParts.length === 2 && pathParts[0] === 'users' && pathParts[1] === 'bulk-action') {
+      const body = await req.json()
+      const { action, userIds } = body
+
+      // Check for confirmation token
+      const confirmationToken = req.headers.get('x-operation-confirm')
+      if (!confirmationToken || !confirmationToken.startsWith(user.id)) {
+        return new Response(JSON.stringify({
+          error: 'Bulk operations require confirmation token',
+          required_header: 'x-operation-confirm',
+          token_format: `${user.id}-${Date.now()}`
+        }), { status: 400, headers })
+      }
+
+      if (!action || !userIds || !Array.isArray(userIds)) {
+        return new Response(JSON.stringify({
+          error: 'Invalid request. Requires action and userIds array'
+        }), { status: 400, headers })
+      }
+
+      let results = []
+
+      switch (action) {
+        case 'upgrade-to-premium':
+          const { data: upgradedUsers, error: upgradeError } = await supabase
+            .from('users')
+            .update({ 
+              tier: 'premium',
+              upgraded_at: new Date().toISOString()
+            })
+            .in('id', userIds)
+            .select()
+
+          if (upgradeError) throw upgradeError
+          results = upgradedUsers
+          break
+
+        case 'downgrade-to-basic':
+          const { data: downgradedUsers, error: downgradeError } = await supabase
+            .from('users')
+            .update({ tier: 'basic' })
+            .in('id', userIds)
+            .select()
+
+          if (downgradeError) throw downgradeError
+          results = downgradedUsers
+          break
+
+        case 'delete':
+          const { error: deleteError } = await supabase
+            .from('users')
+            .delete()
+            .in('id', userIds)
+
+          if (deleteError) throw deleteError
+          results = { deleted_count: userIds.length }
+          break
+
+        default:
+          return new Response(JSON.stringify({
+            error: 'Invalid action. Supported: upgrade-to-premium, downgrade-to-basic, delete'
+          }), { status: 400, headers })
+      }
+
+      return new Response(JSON.stringify({
+        success: true,
+        message: `Bulk ${action} completed for ${userIds.length} users`,
+        action,
+        results,
+        authenticated_user: user.email,
+        timestamp: new Date().toISOString()
+      }), { headers })
+    }
+
+    return new Response(JSON.stringify({
+      error: 'Route not found',
+      available_routes: [
+        'GET /health - Health check',
+        'GET /cleanup - Clean up orphaned auth users',
+        'GET /users/stats - User statistics', 
+        'GET /users - List users with pagination',
+        'POST /users - Create new user',
+        'GET /users/:id - Get specific user',
+        'PUT /users/:id - Update user',
+        'DELETE /users/:id - Delete user',
+        'POST /users/bulk-action - Bulk operations'
+      ],
+      authenticated_user: user.email,
+      requested_path: url.pathname
+    }), { status: 404, headers })
+
+  } catch (error) {
+    console.error('Function error:', error)
+    return new Response(JSON.stringify({
+      error: 'Internal server error',
+      details: error.message,
+      timestamp: new Date().toISOString()
+    }), { status: 500, headers })
+  }
+})
