@@ -16,8 +16,11 @@ full_access_resend_api_key.txt
 # Docker backup files
 *.backup
 
-# Supabase generated files
-#volumes/
+# Supabase generated files - ignore database data but keep functions
+volumes/db/
+volumes/logs/
+volumes/storage/
+# Keep volumes/functions/ (don't ignore this)
 
 # Development files
 dev/
