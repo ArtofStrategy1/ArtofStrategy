@@ -20,6 +20,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/lite.render.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4/dist/panzoom.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs" type="module"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs" type="module"></script>
     <style>
         /* --- THEME COLORS (CSS VARIABLES) --- */
         :root {
@@ -15587,13 +15589,17 @@ The AI will read this and build the matrix for you."></textarea>
      */
     async function extractTextFromFile(file) {
         return new Promise((resolve, reject) => {
-            if (file.type === "text/plain" || file.name.endsWith(".csv")) {
-                // This is the corrected line
+            const fileExtension = file.name.split(".").pop().toLowerCase();
+
+            // --- 1. Handle TXT/CSV (Read as Text) ---
+            if (file.type === "text/plain" || file.name.endsWith(".csv") || fileExtension === 'txt' || fileExtension === 'csv') {
                 const reader = new FileReader();
                 reader.onload = (e) => resolve(e.target.result);
-                reader.onerror = (e) => reject("Error reading file.");
+                reader.onerror = () => reject("Error reading .txt or .csv file.");
                 reader.readAsText(file);
-            } else if (file.name.endsWith(".docx")) {
+            
+            // --- 2. Handle DOCX (Read as ArrayBuffer) ---
+            } else if (fileExtension === 'docx') {
                 if (window.mammoth) {
                     const reader = new FileReader();
                     reader.onload = async (event) => {
@@ -15610,8 +15616,49 @@ The AI will read this and build the matrix for you."></textarea>
                 } else {
                     reject(".docx reader library (mammoth.js) not found.");
                 }
+            
+            // --- 3. Handle PDF (Read as ArrayBuffer for PDF.js) ---
+            } else if (fileExtension === 'pdf') {
+                if (typeof pdfjsLib === 'undefined') {
+                    reject("PDF reader library (pdf.js) not found. Cannot process PDF.");
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    const arrayBuffer = event.target.result;
+                    const pdfData = new Uint8Array(arrayBuffer);
+                    
+                    try {
+                        // Set worker source (necessary for PDF.js)
+                        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs'; 
+
+                        const pdfDocument = await pdfjsLib.getDocument({ data: pdfData }).promise;
+                        let fullText = '';
+
+                        // Iterate through all pages
+                        for (let i = 1; i <= pdfDocument.numPages; i++) {
+                            const page = await pdfDocument.getPage(i);
+                            const textContent = await page.getTextContent();
+                            
+                            // Concatenate text content items with spaces
+                            const pageText = textContent.items.map(item => item.str).join(' ');
+                            fullText += pageText + '\n\n'; // Add line breaks between pages
+                        }
+
+                        resolve(fullText.trim());
+                    } catch (err) {
+                        console.error("PDF.js Extraction Error:", err);
+                        reject(`Error extracting text from PDF: ${err.message}`);
+                    }
+                };
+
+                reader.onerror = () => reject("Error reading PDF file as ArrayBuffer.");
+                reader.readAsArrayBuffer(file);
+
             } else {
-                reject(`Unsupported file type: ${file.name.split(".").pop()}. Please use .txt or .docx.`);
+                // --- 4. Handle Unsupported Types ---
+                reject(`Unsupported file type: .${fileExtension}. Please use .txt, .csv, .docx, or .pdf.`);
             }
         });
     }
@@ -15762,7 +15809,7 @@ The AI will read this and build the matrix for you."></textarea>
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-            const response = await fetch("https://n8n.data2int.com/webhook/mission-vision-v1", {
+            const response = await fetch("https://n8n.data2int.com/webhook/mission-vision-v11", {
                 method: "POST",
                 headers: { Authorization: `Bearer ${session.access_token}` },
                 body: formData,
@@ -30378,133 +30425,108 @@ function renderSystemGoalsPage(container, data) {
         }
     }
 
-  /**
-     * HANDLES ALL WEBSOCKET MESSAGES (v7.5 - JS PARSER)
-     * - Uses the new `parseMarkdownTable` function for 'objectives'
-     * - No longer needs to be `async` for the objectives path.
-     * - All other logic remains the same.
+    /**
+     * HANDLES ALL WEBSOCKET MESSAGES (v7.5 - JS PARSER & Async Merge)
+     * - Dispatches messages based on the current context ID (`currentTemplateId`).
+     * - Fulfills either `pendingN8nResult` (Mission/Vision, Objectives) or uses the generic `pendingAnalysisRequests` map.
      */
-    async function handleWebSocketMessage(data) { // Still async for mission-vision
+    async function handleWebSocketMessage(data) {
         console.log("Received WebSocket message:", data);
 
-        // --- Logic for 'mission-vision' (Updated for new N8N format) ---
-        if (currentTemplateId === "mission-vision" && data.result && typeof data.result === 'string') {
+        // --- 1. Mission/Vision and Objectives (ASYNC MERGE PATH) ---
+        if (currentTemplateId && (currentTemplateId === "mission-vision" || currentTemplateId === "objectives") && data.result && typeof data.result === 'string') {
             
             if (!currentAnalysisMessageId) {
-                console.warn("WebSocket: Received mission-vision data, but no analysis is currently pending. Ignoring.");
+                console.warn("WebSocket: Received merged data, but no analysis is currently pending. Ignoring.");
                 return;
             }
 
-            console.log("WebSocket: Received n8n data for current mission-vision analysis. Parsing and Enriching...");
-            
+            console.log(`WebSocket: Received n8n data for ${currentTemplateId}. Parsing...`);
+
             try {
                 const resultText = data.result;
                 
-                // 1. Extract Vision (Using "Our vision is" or "Vision:" as anchor)
-                let vision = "";
-                const visionMatch = resultText.match(/(?:Our vision is|Vision:)([\s\S]*?)(?:\n\n|\n(?=[A-Z])|$)/i);
-                if (visionMatch) {
-                    // Re-add the prefix if it was part of the sentence structure
-                    const prefix = resultText.match(/Our vision is/i) ? "Our vision is " : "";
-                    vision = prefix + visionMatch[1].trim().replace(/^:\s*/, '');
-                }
-
-                // 2. Extract Mission (Context before Vision)
-                let mission = vision;
-                if (visionMatch && visionMatch.index > 0) {
-                    // Take everything before the vision as the mission/context
-                    mission = resultText.substring(0, visionMatch.index).trim();
-                } else {
-                    // Fallback: Check for explicit "Mission:" or take first paragraph
-                    const missionExplicit = resultText.match(/Mission:\s*([\s\S]*?)(?:\n\n|Vision:|$)/i);
-                    mission = missionExplicit ? missionExplicit[1].trim() : resultText.split('\n\n')[0].trim();
-                }
-
-                // 3. Extract Goals (Prioritize bullet points)
-                let goalStrings = [];
-                // Look for lines starting with bullet points (•, -, *)
-                const bulletMatches = resultText.match(/(?:^|\n)\s*[•\-*]\s*(.+)/g);
-                
-                if (bulletMatches && bulletMatches.length > 0) {
-                    goalStrings = bulletMatches.map(g => g.replace(/(?:^|\n)\s*[•\-*]\s*/, '').trim());
-                } else {
-                    // --- NEW: Animate the new content ---
-                    const newElementsToAnimate = container.querySelectorAll(
-                        '.glass-container, .feature-card, .project-card, .kpi-card, .summary-stat-card, .prescription-card, .insight-card, .action-card, .ladder-rung, .dissonance-pole, .cascade-objective, .cascade-goal-card, .st-objective-card, .st-goal-card, .feedback-card, .plotly-chart, .styled-table'
-                    );
-                    animateElements(newElementsToAnimate);
-                    // Fallback: If no bullets, try to find a "Goals" section or parse lines after Vision
-                    const goalsExplicit = resultText.match(/Goals:\s*([\s\S]*)/i);
-                    const textToSearch = goalsExplicit ? goalsExplicit[1] : (visionMatch ? resultText.substring(visionMatch.index + visionMatch[0].length) : "");
+                if (currentTemplateId === "mission-vision") {
+                    // --- Mission-Vision Logic (Parsing & Goal Enrichment) ---
+                    console.log("Parsing mission-vision string result and enriching goals...");
                     
-                    goalStrings = textToSearch.split('\n')
-                        .map(l => l.trim())
-                        // Filter out metadata lines, URLs, and short/empty lines
-                        .filter(l => l.length > 15 
-                            && !l.startsWith("Reference Links") 
-                            && !l.startsWith("Processing Time") 
-                            && !l.startsWith("Final Recommendation")
-                            && !l.startsWith("[")
-                            && !l.includes("http"));
-                }
+                    // 1. Extract Vision (Using "Our vision is" or "Vision:" as anchor)
+                    let vision = "";
+                    const visionMatch = resultText.match(/(?:Our vision is|Vision:)([\s\S]*?)(?:\n\n|\n(?=[A-Z])|$)/i);
+                    if (visionMatch) {
+                        const prefix = resultText.match(/Our vision is/i) ? "Our vision is " : "";
+                        vision = prefix + visionMatch[1].trim().replace(/^:\s*/, '');
+                    }
 
-                if (!currentAnalysisContext) {
-                    throw new Error("Cannot enrich goals, analysis context is missing.");
+                    // 2. Extract Mission (Context before Vision)
+                    let mission = "";
+                    const missionExplicit = resultText.match(/Mission:\s*([\s\S]*?)(?:\n\n|Vision:|$)/i);
+                    if (missionExplicit) {
+                        mission = missionExplicit[1].trim();
+                    } else if (visionMatch && visionMatch.index > 0) {
+                        mission = resultText.substring(0, visionMatch.index).trim();
+                    } else {
+                        mission = resultText.split('\n\n')[0].trim();
+                    }
+
+                    // 3. Extract Goals (Prioritize bullet points)
+                    let goalStrings = [];
+                    const bulletMatches = resultText.match(/(?:^|\n)\s*[•\-*]\s*(.+)/g);
+                    
+                    if (bulletMatches && bulletMatches.length > 0) {
+                        goalStrings = bulletMatches.map(g => g.replace(/(?:^|\n)\s*[•\-*]\s*/, '').trim());
+                    } else {
+                         // Fallback: Check for an explicit "Goals" section
+                        const goalsExplicit = resultText.match(/Goals:\s*([\s\S]*)/i);
+                        const textToSearch = goalsExplicit ? goalsExplicit[1] : (visionMatch ? resultText.substring(visionMatch.index + visionMatch[0].length) : "");
+                        
+                        goalStrings = textToSearch.split('\n')
+                            .map(l => l.trim())
+                            .filter(l => l.length > 15 
+                                && !l.startsWith("Reference Links") 
+                                && !l.startsWith("Processing Time") 
+                                && !l.startsWith("Final Recommendation")
+                                && !l.startsWith("[")
+                                && !l.includes("http"));
+                    }
+
+                    if (!currentAnalysisContext) {
+                        throw new Error("Cannot enrich goals, analysis context is missing.");
+                    }
+                    
+                    // Run enrichment asynchronously
+                    const enrichmentPromises = goalStrings.map(g_str => enrichN8nGoal(g_str, currentAnalysisContext));
+                    const enrichedGoals = await Promise.all(enrichmentPromises);
+
+                    pendingN8nResult = {
+                        mission: mission,
+                        vision: vision, 
+                        values: [], 
+                        goals: enrichedGoals
+                    };
+                    
+                } else if (currentTemplateId === "objectives") {
+                    // --- Objectives Logic (Reliable JS Table Parser) ---
+                    console.log("Parsing objectives markdown table with JS parser...");
+                    const markdownTable = data.result;
+                    const tableJson = parseMarkdownTable(markdownTable);
+                    pendingN8nResult = tableJson;
                 }
                 
-                const enrichmentPromises = goalStrings.map(g_str => enrichN8nGoal(g_str, currentAnalysisContext));
-                const enrichedGoals = await Promise.all(enrichmentPromises);
-                console.log(`Successfully enriched ${enrichedGoals.length} goals from n8n.`);
-
-                pendingN8nResult = {
-                    mission: mission,
-                    vision: "", 
-                    values: [], 
-                    goals: enrichedGoals
-                };
-
-                console.log("WebSocket: n8n data parsed and enriched. Stored in pendingN8nResult.");
+                console.log(`WebSocket: ${currentTemplateId} data parsed. Stored in pendingN8nResult.`);
                 attemptMergeAndRender();
 
             } catch (parseError) {
-                console.error("WebSocket: Failed to parse or enrich n8n result string:", parseError);
-                pendingN8nResult = { mission: "", vision: "", values: [], goals: [] };
+                console.error(`WebSocket: Failed to parse n8n result for ${currentTemplateId}:`, parseError);
+                pendingN8nResult = (currentTemplateId === "objectives") ? [] : { mission: "", vision: "", values: [], goals: [] };
                 attemptMergeAndRender();
             }
             return; 
-        
-        // --- START OF FIX (v7.5) ---
-        // Logic for 'objectives'
-        } else if (currentTemplateId === "objectives" && data.result && typeof data.result === 'string') {
-            
-             if (!currentAnalysisMessageId) {
-                console.warn("WebSocket: Received objectives data, but no analysis is currently pending. Ignoring.");
-                return;
-            }
-
-            console.log("WebSocket: Received n8n data for current objectives analysis. Parsing table with JS...");
-
-            try {
-                const markdownTable = data.result;
-                
-                // Call the new, reliable JS parser
-                const tableJson = parseMarkdownTable(markdownTable);
-                
-                pendingN8nResult = tableJson; // This is the array of table rows
-                
-                console.log("WebSocket: n8n table data parsed. Stored in pendingN8nResult.");
-                attemptMergeAndRender();
-
-            } catch (parseError) {
-                 console.error("WebSocket: Failed to parse n8n table:", parseError);
-                 pendingN8nResult = []; // Fulfill with empty array
-                 attemptMergeAndRender();
-            }
-            return;
         }
-        // --- END OF FIX (v7.5) ---
 
-        // This is your OLD logic for all *other* WebSocket messages
+        // --- 2. Generic Message Handler (NON-MERGE PATH) ---
+        
+        // This is the correct place to define and use the `container` variable for ALL other templates
         const container = pendingAnalysisRequests.get(parseInt(data.messageId));
         if (!container) {
             console.warn("WebSocket: Received message with no matching container in pendingAnalysisRequests. ID:", data.messageId);
@@ -30532,8 +30554,7 @@ function renderSystemGoalsPage(container, data) {
 
         if (data.templateId === "pareto-fishbone" && data.fishbone && data.pareto) {
             renderParetoFishbonePage(container, data);
-        } 
-        else if (data.result) {
+        } else if (data.result) {
             container.innerHTML = `<div id="analysisContent" class="whitespace-pre-wrap">${data.result}</div>`;
             analysisCache[currentTemplateId] = container.innerHTML;
         }
