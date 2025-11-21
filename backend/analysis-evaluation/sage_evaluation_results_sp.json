@@ -1,0 +1,442 @@
+[
+  {
+    "id": "SP-001",
+    "analysis_type": "mission_vision",
+    "validation_passed": true,
+    "validation_errors": [],
+    "quality_score": 5,
+    "judge_reasoning": "The LLM output accurately extracts all requested information (mission, vision, values, goal) and elaborates on them with relevant breakdowns, initiatives, and KPIs, fulfilling all aspects of the ground truth summary comprehensively.",
+    "model_output": {
+      "mission": {
+        "statement": "To build sustainable urban farming solutions for metropolitan areas.",
+        "breakdown": [
+          {
+            "component": "Purpose",
+            "analysis": "The company's purpose is to address the need for fresh, locally-grown produce in metropolitan areas."
+          },
+          {
+            "component": "Target Audience",
+            "analysis": "The target audience is city residents who have access to the urban farms' produce."
+          },
+          {
+            "component": "Value Proposition",
+            "analysis": "The company provides fresh, locally-grown produce to city residents, addressing their need for sustainable food sources."
+          }
+        ]
+      },
+      "vision": {
+        "statement": "A world where every city resident has access to fresh, locally-grown produce.",
+        "breakdown": [
+          {
+            "component": "Future State",
+            "analysis": "The company envisions a future where every city resident has access to fresh, locally-grown produce, indicating a world with sustainable food systems."
+          },
+          {
+            "component": "Key Differentiator",
+            "analysis": "The company's focus on sustainable urban farming solutions is the key differentiator, setting it apart from traditional farming methods."
+          },
+          {
+            "component": "Impact",
+            "analysis": "The ultimate outcome is a world with sustainable food systems, reducing the environmental impact of traditional farming methods."
+          }
+        ]
+      },
+      "values": [
+        {
+          "value": "Sustainability",
+          "description": "This is shown by the company's focus on building sustainable urban farming solutions, indicating a commitment to reducing environmental impact."
+        },
+        {
+          "value": "Community Engagement",
+          "description": "This is shown by the company's emphasis on providing fresh, locally-grown produce to city residents, indicating a commitment to community involvement."
+        },
+        {
+          "value": "Technological Excellence",
+          "description": "This is shown by the company's focus on innovative urban farming solutions, indicating a commitment to technological advancement."
+        }
+      ],
+      "goals": [
+        {
+          "goal_name": "Deploy 50 vertical farms in 5 major cities by 2030",
+          "description": "This goal supports the vision by providing a tangible plan for achieving a world where every city resident has access to fresh, locally-grown produce.",
+          "key_initiatives": [
+            "Design and build 50 vertical farms",
+            "Establish partnerships with major cities",
+            "Develop a scalable business model"
+          ],
+          "kpis_to_track": [
+            "Number of vertical farms deployed",
+            "Produce yield and quality",
+            "Customer satisfaction and retention"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "SP-002",
+    "analysis_type": "factor_analysis",
+    "validation_passed": true,
+    "validation_errors": [],
+    "quality_score": 5,
+    "judge_reasoning": "The LLM successfully extracted all strengths, weaknesses, opportunities, and threats from the prompt. It provided a comprehensive analysis object for each, including facts, deductions, and conclusions as specified in the ground truth.",
+    "model_output": {
+      "internal_factors": {
+        "strengths": [
+          {
+            "factor": "Strong Patent Portfolio",
+            "category": "Technology",
+            "description": "AeroCorp has a strong patent portfolio for drone technology.",
+            "impact_score": 9,
+            "analysis": {
+              "facts": [
+                "AeroCorp has a strong patent portfolio for drone technology.",
+                "This portfolio is a key asset for the company."
+              ],
+              "deductions": [
+                "The patent portfolio provides a competitive advantage.",
+                "It can be used to prevent competitors from entering the market."
+              ],
+              "conclusions": [
+                "- Impact: High",
+                "- Urgency: Critical",
+                "- Stance: Leverage"
+              ],
+              "summary": "The strong patent portfolio is a significant strength for AeroCorp, providing a competitive advantage and preventing competitors from entering the market."
+            }
+          },
+          {
+            "factor": "Highly Skilled Engineering Team",
+            "category": "Human Resources",
+            "description": "AeroCorp has a highly skilled engineering team.",
+            "impact_score": 9,
+            "analysis": {
+              "facts": [
+                "AeroCorp has a highly skilled engineering team.",
+                "This team is essential for developing and improving drone technology."
+              ],
+              "deductions": [
+                "The engineering team's skills are a key driver of innovation.",
+                "Their expertise is essential for maintaining AeroCorp's competitive advantage."
+              ],
+              "conclusions": [
+                "- Impact: High",
+                "- Urgency: Critical",
+                "- Stance: Leverage"
+              ],
+              "summary": "The highly skilled engineering team is a significant strength for AeroCorp, driving innovation and maintaining the company's competitive advantage."
+            }
+          }
+        ],
+        "weaknesses": [
+          {
+            "factor": "Inefficient Manufacturing Process",
+            "category": "Operations",
+            "description": "AeroCorp's manufacturing process is inefficient.",
+            "impact_score": 7,
+            "analysis": {
+              "facts": [
+                "AeroCorp's manufacturing process is inefficient.",
+                "This inefficiency is a major challenge for the company."
+              ],
+              "deductions": [
+                "The inefficient manufacturing process increases costs and reduces productivity.",
+                "It may lead to delays and quality issues."
+              ],
+              "conclusions": [
+                "- Impact: Medium",
+                "- Urgency: Important",
+                "- Stance: Improve"
+              ],
+              "summary": "The inefficient manufacturing process is a significant weakness for AeroCorp, increasing costs, reducing productivity, and potentially leading to delays and quality issues."
+            }
+          },
+          {
+            "factor": "Reliance on Single Supplier",
+            "category": "Supply Chain",
+            "description": "AeroCorp's manufacturing process relies on a single supplier.",
+            "impact_score": 7,
+            "analysis": {
+              "facts": [
+                "AeroCorp's manufacturing process relies on a single supplier.",
+                "This reliance creates a risk of supply chain disruption."
+              ],
+              "deductions": [
+                "The single supplier may not be able to meet demand.",
+                "A disruption in the supply chain could have significant consequences for AeroCorp."
+              ],
+              "conclusions": [
+                "- Impact: Medium",
+                "- Urgency: Important",
+                "- Stance: Improve"
+              ],
+              "summary": "The reliance on a single supplier is a significant weakness for AeroCorp, creating a risk of supply chain disruption and potentially significant consequences for the company."
+            }
+          }
+        ]
+      },
+      "external_factors": {
+        "opportunities": [
+          {
+            "factor": "Government Subsidy for Green Tech",
+            "category": "Government Policy",
+            "description": "A new government subsidy for green tech presents a major growth avenue.",
+            "impact_score": 8,
+            "analysis": {
+              "facts": [
+                "A new government subsidy for green tech presents a major growth avenue.",
+                "This subsidy can help AeroCorp reduce costs and increase competitiveness."
+              ],
+              "deductions": [
+                "The subsidy can help AeroCorp improve its financial performance.",
+                "It may also attract new customers and increase market share."
+              ],
+              "conclusions": [
+                "- Impact: High",
+                "- Urgency: Critical",
+                "- Stance: Leverage"
+              ],
+              "summary": "The government subsidy for green tech is a significant opportunity for AeroCorp, helping to reduce costs, increase competitiveness, and potentially attract new customers and increase market share."
+            }
+          }
+        ],
+        "threats": [
+          {
+            "factor": "Emerging Competition from Low-Cost Manufacturers",
+            "category": "Market",
+            "description": "Emerging competition from low-cost manufacturers is a significant risk.",
+            "impact_score": 6,
+            "analysis": {
+              "facts": [
+                "Emerging competition from low-cost manufacturers is a significant risk.",
+                "These manufacturers may be able to offer similar products at a lower price."
+              ],
+              "deductions": [
+                "The emerging competition may erode AeroCorp's market share.",
+                "It may also make it difficult for AeroCorp to maintain its prices."
+              ],
+              "conclusions": [
+                "- Impact: Medium",
+                "- Urgency: Important",
+                "- Stance: Monitor"
+              ],
+              "summary": "The emerging competition from low-cost manufacturers is a significant threat to AeroCorp, potentially eroding market share and making it difficult to maintain prices."
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "SP-003",
+    "analysis_type": "goals_initiatives_ogsm",
+    "validation_passed": true,
+    "validation_errors": [],
+    "quality_score": 5,
+    "judge_reasoning": "The LLM output perfectly identified the main objective and all three key goals from the prompt. It also provided relevant strategies and measures for each goal, directly aligning with the ground truth's expectations for linking strategies and measures to the text.",
+    "model_output": {
+      "main_objective": "Become the market leader in enterprise SaaS for the financial sector",
+      "goals": [
+        {
+          "goal_name": "Expand Product Suite with AI-driven Analytics",
+          "strategies": [
+            {
+              "strategy_name": "Develop AI-driven analytics capabilities",
+              "rationale": "This will enhance our product suite and support our objective to become the market leader in enterprise SaaS for the financial sector",
+              "measures": [
+                "Number of AI-driven analytics features developed",
+                "Customer adoption rate of AI-driven analytics features"
+              ]
+            }
+          ]
+        },
+        {
+          "goal_name": "Enhance Cybersecurity Features",
+          "strategies": [
+            {
+              "strategy_name": "Meet new compliance standards through enhanced cybersecurity features",
+              "rationale": "This will support our objective to become the market leader in enterprise SaaS for the financial sector by addressing a key customer need",
+              "measures": [
+                "Number of compliance standards met",
+                "Customer satisfaction with cybersecurity features"
+              ]
+            }
+          ]
+        },
+        {
+          "goal_name": "Launch Targeted Marketing Campaign in EMEA Region",
+          "strategies": [
+            {
+              "strategy_name": "Develop targeted marketing campaign for the EMEA region",
+              "rationale": "This will support our objective to become the market leader in enterprise SaaS for the financial sector by increasing visibility and adoption in a key region",
+              "measures": [
+                "Reach and impressions of marketing campaign",
+                "Lead generation and conversion rate in EMEA region"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "SP-004",
+    "analysis_type": "smart_objectives",
+    "validation_passed": true,
+    "validation_errors": [],
+    "quality_score": 5,
+    "judge_reasoning": "The model accurately identified the primary SMART objective and all key actions from the prompt. It also successfully extracted potential risks, as required by the ground truth, and effectively structured the information into a clear and actionable format.",
+    "model_output": {
+      "main_goal": "Increase the active user base by 20% within the next fiscal year.",
+      "smart_objectives": [
+        {
+          "objective_name": "Launch Successful Marketing Campaign",
+          "smart_breakdown": {
+            "specific": "Launch the new marketing campaign with a focused strategy to increase user engagement.",
+            "measurable": "Increase active user base by 20% within the next fiscal year.",
+            "achievable": "The marketing team has a new campaign ready and a budget allocated.",
+            "relevant": "This is critical for securing the next funding round.",
+            "time_bound": "Within the next fiscal year"
+          },
+          "key_actions": [
+            "Launch the new marketing campaign",
+            "Partner with influencers to amplify reach",
+            "Optimize the onboarding flow to improve user retention"
+          ],
+          "potential_risks": [
+            "Inadequate campaign strategy or execution"
+          ]
+        },
+        {
+          "objective_name": "Optimize Onboarding Flow",
+          "smart_breakdown": {
+            "specific": "Streamline the onboarding process to improve user retention and engagement.",
+            "measurable": "Increase user retention rate by 15% within 6 months.",
+            "achievable": "The existing onboarding flow can be improved with minor adjustments.",
+            "relevant": "This is critical for securing the next funding round.",
+            "time_bound": "Within 6 months"
+          },
+          "key_actions": [
+            "Analyze user behavior and feedback",
+            "Implement changes to the onboarding flow",
+            "Monitor and adjust the onboarding flow as needed"
+          ],
+          "potential_risks": [
+            "Insufficient data to inform changes to the onboarding flow"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "SP-005",
+    "analysis_type": "action_plan",
+    "validation_passed": true,
+    "validation_errors": [],
+    "quality_score": 5,
+    "judge_reasoning": "The LLM output perfectly aligns with the prompt and ground truth, providing sequential steps for each action item. It accurately extracts the project leader, establishes logical dependencies, and includes comprehensive details like timelines, priorities, and relevant KPIs for a well-structured plan.",
+    "model_output": {
+      "project_name": "Improving Customer Service Response Times",
+      "action_items": [
+        {
+          "task_name": "Analyze Root Cause of Decreased Response Times",
+          "description": "Determine the factors contributing to the 40% degradation in customer service response times.",
+          "owner": "Head of Operations",
+          "timeline": "Week 1-2",
+          "priority": "High",
+          "resources_needed": [
+            "Data Analysts",
+            "Customer Service Team"
+          ],
+          "key_dependency": null,
+          "kpis_to_track": [
+            "Response Time, Satisfaction Scores"
+          ]
+        },
+        {
+          "task_name": "Retrain Support Team on New Software",
+          "description": "Provide the customer service team with training on the new software to improve efficiency and reduce response times.",
+          "owner": "Head of Operations",
+          "timeline": "Week 3-4",
+          "priority": "High",
+          "resources_needed": [
+            "Training Coordinators",
+            "Software Providers"
+          ],
+          "key_dependency": "Analyze Root Cause of Decreased Response Times",
+          "kpis_to_track": [
+            "Training Completion Rate",
+            "User Adoption Rate"
+          ]
+        },
+        {
+          "task_name": "Implement Tiered Support System",
+          "description": "Develop and implement a tiered support system to categorize customer inquiries and allocate resources efficiently.",
+          "owner": "Head of Operations",
+          "timeline": "Week 5-8",
+          "priority": "High",
+          "resources_needed": [
+            "IT Team",
+            "Customer Service Team"
+          ],
+          "key_dependency": "Retrain Support Team on New Software",
+          "kpis_to_track": [
+            "First Response Time, Resolution Rate"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "SP-006",
+    "analysis_type": "kpi_research_plan",
+    "validation_passed": true,
+    "validation_errors": [],
+    "quality_score": 5,
+    "judge_reasoning": "The LLM output perfectly identified the main goal and correctly structured the KPI groups with specific indicators and appropriate formulas, aligning completely with the ground truth and prompt requirements. It also provided valuable additional context regarding critical events and performance summary, enhancing the overall utility.",
+    "model_output": {
+      "main_goal": "to identify factors leading to customer departure",
+      "kpi_groups": [
+        {
+          "construct_name": "SERVICE QUALITY",
+          "kpis": [
+            {
+              "name": "support ticket resolution time",
+              "formula": "Average Resolution Time (minutes)",
+              "type": "Operational"
+            },
+            {
+              "name": "agent politeness on a 1-5 scale",
+              "formula": "Politeness Score (1-5)",
+              "type": "Customer"
+            }
+          ]
+        },
+        {
+          "construct_name": "PRODUCT FIT",
+          "kpis": [
+            {
+              "name": "feature usage frequency",
+              "formula": "Average Feature Usage (times/day)",
+              "type": "Operational"
+            },
+            {
+              "name": "user-reported satisfaction",
+              "formula": "User Satisfaction Score (1-7)",
+              "type": "Customer"
+            }
+          ]
+        }
+      ],
+      "critical_events": [
+        {
+          "event_name": "Complete 3-month project timeline",
+          "description": "Finalize research on drivers of churn",
+          "timeline": "3 months",
+          "importance": "High"
+        }
+      ],
+      "performance_summary": "Expected Business Impact: Identify factors leading to customer departure to improve customer retention."
+    }
+  }
+]
