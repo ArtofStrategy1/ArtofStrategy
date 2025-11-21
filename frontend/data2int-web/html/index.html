@@ -2291,8 +2291,12 @@
                             <li class="flex items-center"><span class="text-green-400 mr-2">✓</span> Single User</li>
                             <li class="flex items-center"><span class="text-green-400 mr-2">✓</span> Email Support</li>
                         </ul>
-                        <a href="https://buy.stripe.com/9B6aEXaJbbl16eZ8xKbsc02" target="_blank" class="btn btn-secondary w-full py-2 border-purple-500/50 hover:bg-purple-500/20">
+                        <!--<a href="https://buy.stripe.com/9B6aEXaJbbl16eZ8xKbsc02" target="_blank" class="btn btn-secondary w-full py-2 border-purple-500/50 hover:bg-purple-500/20">
                             Select Individual
+                        </a>-->
+                        <!-- Test Payment Link-->
+                        <a href="https://buy.stripe.com/test_cNi7sLaJbdt946R5lybsc00" target="_blank" class="btn btn-secondary w-full py-2 border-purple-500/50 hover:bg-purple-500/20">
+                            TEST LINK
                         </a>
                     </div>
 
@@ -3245,7 +3249,7 @@ import { renderMermaidDiagram } from '../js/diagrams/diagram-renderer.mjs';
 document.addEventListener("DOMContentLoaded", () => {
 
     // --- Supabase Configuration ---
-    const SUPABASE_URL = "https://supabase.data2int.com";
+    const SUPABASE_URL = "https://supabase.sageaios.com";
     const SUPABASE_ANON_KEY =
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNjQwOTk1MjAwLCJleHAiOjE5NTYzNTUyMDB9.KHXKQpsN6MNB08H_IPxP4Gh0gjcsvXG9IeJuK3XpnAU";
 
@@ -5771,232 +5775,248 @@ function renderContactsTab() {
 }
 
     /**
- * Renders the Subscriptions tab with live data and filtering.
+ * Renders the Subscriptions tab with nested navigation (Overview, Transactions, Subscriptions, Customers).
  */
-    function renderSubscriptionsTab() {
-    console.log("DEBUG: renderSubscriptionsTab() called."); 
+function renderSubscriptionsTab() {
     const panel = document.getElementById("subscriptionsPanel");
-    if (!panel) {
-        console.error("DEBUG: 'subscriptionsPanel' container missing.");
-        return;
-    }
+    if (!panel) return;
 
-    // 1. Build the UI (This creates the inputs with the specific IDs we need)
+    // 1. Build the UI
     panel.innerHTML = `
-        <div id="subscriptionMetrics" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="glass-container flex flex-col justify-center items-center p-6">
-                <h3 class="text-sm font-semibold mb-1 text-green-400 uppercase tracking-wider">Monthly Revenue (MRR)</h3>
-                <p id="statMRR" class="text-3xl font-bold">--</p>
-            </div>
-            <div class="glass-container flex flex-col justify-center items-center p-6">
-                <h3 class="text-sm font-semibold mb-1 text-blue-400 uppercase tracking-wider">Active Subscribers</h3>
-                <p id="statActiveSubs" class="text-3xl font-bold">--</p>
-            </div>
-            <div class="glass-container flex flex-col justify-center items-center p-6">
-                <h3 class="text-sm font-semibold mb-1 text-purple-400 uppercase tracking-wider">Active Products</h3>
-                <p id="statActiveProducts" class="text-3xl font-bold">--</p>
-            </div>
-        </div>
-
-        <div class="glass-container p-6"> 
+        <div class="glass-container p-6">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-3xl font-bold">Subscription Management</h2>
-                <div class="flex gap-2">
-                    <button id="syncProductsBtn" class="btn btn-primary text-sm py-2 px-4">
-                        ☁️ Sync Products
-                    </button>
-                    <button id="refreshSubsBtn" class="btn btn-secondary text-sm py-2 px-4">
-                        🔄 Refresh Data
-                    </button>
+                <h2 class="text-3xl font-bold">Payments Dashboard</h2>
+                <div class="text-sm text-white/60 italic">
+                    Read-only view (Mirroring Stripe)
                 </div>
             </div>
-            
-            <div class="flex flex-col md:flex-row gap-4 mb-6">
-                <div class="flex-grow">
-                    <input type="text" id="subscriptionSearch" class="input-field" placeholder="Search email, ID, or product...">
+
+            <div class="flex space-x-6 border-b border-white/10 mb-6" id="subTabsNav">
+                <button class="sub-tab-btn active pb-2 border-b-2 border-indigo-400 font-medium text-white" data-target="overview">Overview</button>
+                <button class="sub-tab-btn pb-2 border-b-2 border-transparent text-white/60 hover:text-white transition-all" data-target="transactions">Transactions</button>
+                <button class="sub-tab-btn pb-2 border-b-2 border-transparent text-white/60 hover:text-white transition-all" data-target="subscriptions">Subscriptions</button>
+                <button class="sub-tab-btn pb-2 border-b-2 border-transparent text-white/60 hover:text-white transition-all" data-target="customers">Customers</button>
+            </div>
+
+            <div id="sub-overview" class="sub-panel block animate-fadeIn">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                    <div class="bg-white/5 p-4 rounded-lg border border-white/10">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="p-2 bg-indigo-500/20 rounded text-indigo-300 text-xl">$</div>
+                        </div>
+                        <p class="text-sm text-white/60">Monthly Revenue (MRR)</p>
+                        <h3 id="overviewMRR" class="text-2xl font-bold mt-1">--</h3>
+                    </div>
+                    <div class="bg-white/5 p-4 rounded-lg border border-white/10">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="p-2 bg-blue-500/20 rounded text-blue-300 text-xl">💳</div>
+                        </div>
+                        <p class="text-sm text-white/60">Active Subscriptions</p>
+                        <h3 id="overviewActiveSubs" class="text-2xl font-bold mt-1">--</h3>
+                    </div>
+                    <div class="bg-white/5 p-4 rounded-lg border border-white/10">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="p-2 bg-purple-500/20 rounded text-purple-300 text-xl">👥</div>
+                        </div>
+                        <p class="text-sm text-white/60">Total Customers</p>
+                        <h3 id="overviewCustomers" class="text-2xl font-bold mt-1">--</h3>
+                    </div>
+                    <div class="bg-white/5 p-4 rounded-lg border border-white/10">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="p-2 bg-pink-500/20 rounded text-pink-300 text-xl">📈</div>
+                        </div>
+                        <p class="text-sm text-white/60">Avg. Order Value</p>
+                        <h3 id="overviewAOV" class="text-2xl font-bold mt-1">--</h3>
+                    </div>
                 </div>
-                <div class="flex-shrink-0">
-                    <select id="subscriptionStatusFilter" class="input-field">
-                        <option value="">All Statuses</option>
-                        <option value="active">Active</option>
-                        <option value="past_due">Past Due</option>
-                        <option value="canceled">Canceled</option>
-                        <option value="trialing">Trialing</option>
-                    </select>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                    <div class="lg:col-span-2 bg-white/5 p-4 rounded-lg border border-white/10">
+                        <h3 class="text-lg font-bold mb-4">Revenue Growth (12 Months)</h3>
+                        <div id="mrrTrendChart" class="w-full h-[300px]"></div>
+                    </div>
+                    
+                    <div class="lg:col-span-1 bg-white/5 p-4 rounded-lg border border-white/10 flex flex-col">
+                        <h3 class="text-lg font-bold mb-4">Recent Activity</h3>
+                        <div class="overflow-y-auto flex-grow max-h-[300px]">
+                            <table class="w-full text-left text-sm">
+                                <tbody id="overviewTransactionsTable">
+                                    <tr><td class="p-4 text-center text-white/40 italic">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
-            
-            <div id="subscriptionTableContainer" class="overflow-x-auto min-h-[300px]">
-                <div class="flex items-center justify-center p-10">
-                    <div class="loading-spinner mr-3"></div>
-                    <span class="text-white/80">Loading subscription data...</span>
+
+            <div id="sub-transactions" class="sub-panel hidden animate-fadeIn">
+                 <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold">Transaction History</h3>
+                    <button id="refreshTransBtn" class="btn btn-secondary text-xs">🔄 Refresh</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left styled-table text-sm">
+                        <thead>
+                            <tr>
+                                <th class="p-3">Status</th>
+                                <th class="p-3">Amount</th>
+                                <th class="p-3">Method</th>
+                                <th class="p-3">Customer Email</th>
+                                <th class="p-3">Date</th>
+                                <th class="p-3">ID</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fullTransactionsTable">
+                            <tr><td colspan="6" class="p-10 text-center text-white/40">Loading transactions...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="sub-subscriptions" class="sub-panel hidden animate-fadeIn">
+                <div class="flex flex-col md:flex-row gap-4 mb-6">
+                    <div class="flex-grow">
+                        <input type="text" id="subscriptionSearch" class="input-field" placeholder="Search email, ID, or product...">
+                    </div>
+                    <div class="flex-shrink-0">
+                        <select id="subscriptionStatusFilter" class="input-field">
+                            <option value="">All Statuses</option>
+                            <option value="active">Active</option>
+                            <option value="past_due">Past Due</option>
+                            <option value="canceled">Canceled</option>
+                            <option value="trialing">Trialing</option>
+                        </select>
+                    </div>
+                    <div class="flex-shrink-0">
+                         <button id="refreshSubsBtn" class="btn btn-secondary h-full">🔄 Refresh</button>
+                    </div>
+                </div>
+                <div id="subscriptionTableContainer" class="overflow-x-auto min-h-[300px]">
+                    <div class="flex items-center justify-center p-10">
+                        <div class="loading-spinner mr-3"></div>
+                        <span class="text-white/80">Loading subscription data...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="sub-customers" class="sub-panel hidden animate-fadeIn">
+                <div class="flex flex-col md:flex-row gap-4 mb-6">
+                    <div class="flex-grow">
+                        <input type="text" id="customerSearch" class="input-field" placeholder="Search customer email...">
+                    </div>
+                    <div class="flex-shrink-0">
+                         <button id="refreshCustBtn" class="btn btn-secondary h-full">🔄 Refresh</button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left styled-table text-sm">
+                        <thead>
+                            <tr>
+                                <th class="p-3">Email</th>
+                                <th class="p-3">Customer ID</th>
+                                <th class="p-3">Created At</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customersTable">
+                            <tr><td colspan="3" class="p-10 text-center text-white/40">Loading customers...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     `;
 
-    // 2. Attach Listeners
-    // Now that the HTML is in the DOM, we can safely attach listeners
-    const searchInput = document.getElementById("subscriptionSearch");
-    const statusInput = document.getElementById("subscriptionStatusFilter");
-    const refreshBtn = document.getElementById("refreshSubsBtn");
-    const syncBtn = document.getElementById("syncProductsBtn");
+    // 2. Setup Sub-Tab Switching Logic
+    setupSubscriptionSubTabLogic();
 
-    let searchTimeout;
-    if (searchInput) {
-        searchInput.addEventListener("input", () => {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => fetchAndRenderSubscriptions(1), 500);
-        });
-    }
+    // 3. Attach Listeners
+    
+    // Attach Search/Refresh Listeners for Subscriptions
+    const subSearch = document.getElementById("subscriptionSearch");
+    const subFilter = document.getElementById("subscriptionStatusFilter");
+    const subRefresh = document.getElementById("refreshSubsBtn");
+    
+    if (subSearch) subSearch.addEventListener("input", debounce(() => fetchAndRenderSubscriptions('subscriptions'), 500));
+    if (subFilter) subFilter.addEventListener("change", () => fetchAndRenderSubscriptions('subscriptions'));
+    if (subRefresh) subRefresh.addEventListener("click", () => fetchAndRenderSubscriptions('subscriptions'));
 
-    if (statusInput) {
-        statusInput.addEventListener("change", () => fetchAndRenderSubscriptions(1));
-    }
+    // Attach Listeners for Transactions
+    const transRefresh = document.getElementById("refreshTransBtn");
+    if (transRefresh) transRefresh.addEventListener("click", () => fetchAndRenderSubscriptions('transactions'));
 
-    if (refreshBtn) {
-        refreshBtn.addEventListener("click", () => {
-            const originalText = refreshBtn.textContent;
-            refreshBtn.textContent = "Loading...";
-            refreshBtn.disabled = true;
-            fetchAndRenderSubscriptions(1).finally(() => {
-                refreshBtn.textContent = originalText;
-                refreshBtn.disabled = false;
+    // Attach Listeners for Customers
+    const custSearch = document.getElementById("customerSearch");
+    const custRefresh = document.getElementById("refreshCustBtn");
+    if (custSearch) custSearch.addEventListener("input", debounce(() => fetchAndRenderSubscriptions('customers'), 500));
+    if (custRefresh) custRefresh.addEventListener("click", () => fetchAndRenderSubscriptions('customers'));
+
+    // 4. Load Default Tab (Overview)
+    fetchAndRenderSubscriptions('overview');
+}
+
+    function setupSubscriptionSubTabLogic() {
+    const navButtons = document.querySelectorAll('#subTabsNav .sub-tab-btn');
+    const panels = document.querySelectorAll('.sub-panel');
+
+    navButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // 1. Toggle Button Styles
+            navButtons.forEach(b => {
+                b.classList.remove('active', 'border-indigo-400', 'text-white');
+                b.classList.add('border-transparent', 'text-white/60');
+            });
+            btn.classList.add('active', 'border-indigo-400', 'text-white');
+            btn.classList.remove('border-transparent', 'text-white/60');
+
+            // 2. Toggle Panels
+            const targetId = btn.dataset.target;
+            panels.forEach(p => {
+                if (p.id === targetId) {
+                    p.classList.remove('hidden');
+                } else {
+                    p.classList.add('hidden');
+                }
             });
         });
-    }
-
-    if (syncBtn) {
-        syncBtn.addEventListener("click", handleSyncProducts);
-    }
-
-    // 3. Trigger Initial Fetch (Now safe because elements exist)
-    fetchAndRenderSubscriptions(1);
-}
-
-    /**
- * Triggers Product Sync
- * Endpoint: /functions/v1/stripe-sync-products
- */
-async function handleSyncProducts() {
-    const btn = document.getElementById("syncProductsBtn");
-    const originalText = btn ? btn.innerHTML : "Sync";
-    
-    if(btn) {
-        btn.disabled = true;
-        btn.innerHTML = `<span class="loading-spinner"></span> Syncing...`;
-    }
-
-    try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) throw new Error("You are not logged in.");
-
-        // Call the dedicated sync endpoint
-        const response = await fetch(`https://supabase.data2int.com/functions/v1/stripe-sync-products`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session.access_token}`
-            }
-        });
-
-        const result = await response.json();
-        
-        if (!response.ok) throw new Error(result.error || "Sync failed");
-
-        alert(`✅ Sync Complete!\nProducts: ${result.products || 0}\nPrices: ${result.prices || 0}`);
-        
-        // Refresh the table to show any new data
-        fetchAndRenderSubscriptions(1);
-
-    } catch (error) {
-        console.error("Sync Error:", error);
-        alert(`❌ Sync Failed: ${error.message}`);
-    } finally {
-        if(btn) {
-            btn.disabled = false;
-            btn.innerHTML = originalText;
-        }
-    }
+    });
 }
 
 /**
- * Handles Cancellation via the secure admin endpoint
- * Endpoint: /functions/v1/admin-subscriptions-secure (POST)
+ * Master fetcher for the Payments Dashboard.
+ * Routes requests based on the active tab (overview, transactions, subscriptions, customers).
  */
-async function handleSubscriptionAction(subId, action) {
-    if (action !== 'cancel') return;
-
-    if (!confirm(`Are you sure you want to CANCEL subscription ${subId}? This action cannot be undone.`)) {
-        return;
-    }
-
-    // Optimistic UI update: Find the button and show processing state
-    const btn = document.querySelector(`button[data-id="${subId}"]`);
-    const originalText = btn ? btn.textContent : "Cancel";
-    if (btn) {
-        btn.disabled = true;
-        btn.textContent = "Processing...";
-    }
-
-    try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) throw new Error("Not logged in");
-
-        // We reuse the admin-subscriptions-secure endpoint with POST for actions
-        const response = await fetch(`https://supabase.data2int.com/functions/v1/admin-subscriptions-secure`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session.access_token}`
-            },
-            body: JSON.stringify({ subscriptionId: subId })
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) throw new Error(result.error || "Cancellation failed");
-
-        alert(`✅ Subscription cancelled successfully.`);
-        
-        // Refresh data to reflect the new 'canceled' status
-        fetchAndRenderSubscriptions(1);
-
-    } catch (error) {
-        console.error("Cancel Error:", error);
-        alert(`❌ Failed to cancel: ${error.message}`);
-        // Revert button state on error
-        if (btn) {
-            btn.disabled = false;
-            btn.textContent = originalText;
-        }
-    }
-}
-
-/**
- * Fetches data via the 'admin-subscriptions-secure' Edge Function.
- */
-async function fetchAndRenderSubscriptions(page = 1) {
-    const container = document.getElementById("subscriptionTableContainer");
-    const searchInput = document.getElementById("subscriptionSearch");
-    const statusInput = document.getElementById("subscriptionStatusFilter");
-
-    if (!container || !searchInput || !statusInput) return;
-
-    container.style.opacity = "0.5";
-
+async function fetchAndRenderSubscriptions(tabName = 'overview', page = 1) {
     try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return;
 
+        // Show Loading State on buttons
+        const refreshBtnId = tabName === 'transactions' ? 'refreshTransBtn' : 
+                             tabName === 'customers' ? 'refreshCustBtn' : 'refreshSubsBtn';
+        const refreshBtn = document.getElementById(refreshBtnId);
+        const originalText = refreshBtn ? refreshBtn.textContent : '';
+        if (refreshBtn) { refreshBtn.textContent = "..."; refreshBtn.disabled = true; }
+
+        // Prepare Search Params
         const params = new URLSearchParams({
+            tab: tabName,
             page: page.toString(),
-            limit: '20',
-            search: searchInput.value.trim(),
-            status: statusInput.value
+            limit: '20'
         });
 
-        const response = await fetch(`https://supabase.data2int.com/functions/v1/admin-subscriptions-secure?${params.toString()}`, {
+        // Add filters
+        if (tabName === 'subscriptions') {
+            const search = document.getElementById("subscriptionSearch")?.value || '';
+            const status = document.getElementById("subscriptionStatusFilter")?.value || '';
+            if (search) params.append('search', search);
+            if (status) params.append('status', status);
+        } else if (tabName === 'customers') {
+            const search = document.getElementById("customerSearch")?.value || '';
+            if (search) params.append('search', search);
+        }
+
+        // Call Edge Function
+        const response = await fetch(`https://supabase.sageaios.com/functions/v1/admin-subscriptions-secure?${params.toString()}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -6005,34 +6025,49 @@ async function fetchAndRenderSubscriptions(page = 1) {
         });
 
         const result = await response.json();
-        if (!response.ok) throw new Error(result.error);
+        if (!response.ok) throw new Error(result.error || 'Failed to fetch data');
 
-        const { data, stats } = result;
+        // Route to Renderers (Now passing Pagination Data!)
+        if (tabName === 'overview') {
+            renderOverviewTab(result);
+        } else if (tabName === 'transactions') {
+            // Stripe API returns 'has_more' instead of total pages
+            renderTransactionsTab(result.data, result.has_more, result.last_id);
+        } else if (tabName === 'subscriptions') {
+            renderSubscriptionsTable(
+                document.getElementById("subscriptionTableContainer"), 
+                result.data || [], 
+                result.pagination // Passing pagination info
+            );
+        } else if (tabName === 'customers') {
+            renderCustomersTab(result.data, result.pagination);
+        }
 
-        if (document.getElementById("statMRR")) 
-            document.getElementById("statMRR").textContent = `$${((stats?.mrr || 0) / 100).toFixed(2)}`;
-        if (document.getElementById("statActiveSubs")) 
-            document.getElementById("statActiveSubs").textContent = stats?.active_count || 0;
-
-        renderSubscriptionsTable(container, data || []);
+        if (refreshBtn) { refreshBtn.textContent = originalText; refreshBtn.disabled = false; }
 
     } catch (error) {
-        console.error("Fetch error:", error);
-        container.innerHTML = `<div class="text-red-400 text-center p-4">Error: ${error.message}</div>`;
-    } finally {
-        container.style.opacity = "1";
+        console.error("Dashboard Fetch Error:", error);
     }
 }
 
 /**
- * Renders the subscriptions list as a table.
+ * Renders the specific Subscriptions List table
  */
-function renderSubscriptionsTable(container, subs) {
+function renderSubscriptionsTable(container, subs, pagination) {
+    if (!container) return;
+
+    // 1. Better Empty State
     if (!subs || subs.length === 0) {
-        container.innerHTML = `<p class="text-white/70 text-center p-10">No subscriptions found.</p>`;
+        container.innerHTML = `
+            <div class="flex flex-col items-center justify-center p-10 text-white/60">
+                <div class="text-4xl mb-3 opacity-50">📭</div>
+                <h4 class="text-lg font-medium">No Subscriptions Found</h4>
+                <p class="text-sm">Try adjusting your filters or syncing data.</p>
+            </div>`;
         return;
     }
 
+    // 2. Render Table
     let tableHtml = `
         <table class="w-full text-left styled-table text-xs">
             <thead>
@@ -6042,91 +6077,284 @@ function renderSubscriptionsTable(container, subs) {
                     <th class="p-3">Product Detail</th>
                     <th class="p-3">Price</th>
                     <th class="p-3">Dates (Start / End)</th>
-                    <th class="p-3">Settings</th>
-                    <th class="p-3 text-right">Actions</th>
+                    <th class="p-3">Renewal</th>
                 </tr>
             </thead>
             <tbody>
     `;
 
     subs.forEach(sub => {
-        const statusColors = {
-            active: "tag-status-open",
-            past_due: "tag-priority-high",
-            canceled: "tag-priority-medium",
-            trialing: "tag-status-pending"
-        };
-        const statusTag = statusColors[sub.status] || "tag-type";
-
-        // Data mapped from the secure backend response
-        const email = sub.customer_email || "Unknown";
-        const stripeId = sub.stripe_subscription_id;
-        const prodName = sub.product_name || "Unknown Product";
-        const prodDesc = sub.product_desc || "";
-        
-        // Price Formatting
-        const rawAmount = sub.plan_amount || 0;
-        const amount = `$${(rawAmount / 100).toFixed(2)}`;
-        const currency = (sub.plan_currency || 'usd').toUpperCase();
-        const interval = sub.plan_interval || "one-time";
-
-        // Date Formatting
-        const formatDate = (isoString) => isoString ? new Date(isoString).toLocaleDateString() : 'N/A';
-        const start = formatDate(sub.current_period_start);
-        const end = formatDate(sub.current_period_end);
-
-        const cancelAtEnd = sub.cancel_at_period_end 
-            ? `<span class="text-yellow-400">Cancels at end</span>` 
-            : `<span class="text-green-400">Auto-renews</span>`;
+        const badgeStyle = sub.status === 'active' ? 'bg-green-500/20 text-green-400 border-green-500/30' : 
+                           sub.status === 'canceled' ? 'bg-gray-500/20 text-gray-400 border-gray-500/30' :
+                           'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
 
         tableHtml += `
-            <tr class="border-b border-white/10 hover:bg-white/5 transition-colors">
-                <td class="p-3"><span class="feedback-tag ${statusTag}">${sub.status}</span></td>
-                
+            <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+                <td class="p-3"><span class="px-2 py-1 rounded text-xs border ${badgeStyle}">${sub.status}</span></td>
                 <td class="p-3">
-                    <div class="font-bold text-white">${email}</div>
-                    <div class="text-xs text-white/50 font-mono" title="${stripeId}">${stripeId.slice(0, 14)}...</div>
+                    <div class="font-bold text-white">${sub.customer_email || "Unknown"}</div>
+                    <div class="text-xs text-white/50 font-mono">${sub.stripe_subscription_id.slice(0, 14)}...</div>
                 </td>
-
                 <td class="p-3">
-                    <div class="font-medium text-indigo-300">${prodName}</div>
-                    <div class="text-xs text-white/60 truncate max-w-[150px]" title="${prodDesc}">${prodDesc}</div>
+                    <div class="font-medium text-indigo-300">${sub.product_name || "Unknown Product"}</div>
+                    <div class="text-xs text-white/60 truncate max-w-[150px]">${sub.product_desc || ""}</div>
                 </td>
-
-                <td class="p-3">
-                    <div class="text-white font-bold">${amount} ${currency}</div>
-                    <div class="text-xs text-white/60">/${interval}</div>
+                <td class="p-3 text-white font-bold">
+                    $${((sub.plan_amount || 0) / 100).toFixed(2)} <span class="text-xs font-normal text-white/60">/${sub.plan_interval}</span>
                 </td>
-
                 <td class="p-3 text-white/80">
-                    <div><span class="text-white/50">Start:</span> ${start}</div>
-                    <div><span class="text-white/50">End:</span> ${end}</div>
+                    <div><span class="text-white/50">Start:</span> ${new Date(sub.current_period_start).toLocaleDateString()}</div>
+                    <div><span class="text-white/50">End:</span> ${new Date(sub.current_period_end).toLocaleDateString()}</div>
                 </td>
-
                 <td class="p-3 text-xs">
-                    ${cancelAtEnd}
-                </td>
-
-                <td class="p-3 text-right">
-                    ${(sub.status === 'active' || sub.status === 'trialing') ? 
-                        `<button class="btn btn-danger py-1 px-2 text-xs sub-action-btn" data-id="${stripeId}">Cancel</button>` 
-                        : `<span class="text-white/30 text-xs italic">Inactive</span>`
-                    }
+                    ${sub.cancel_at_period_end ? '<span class="text-yellow-400">Cancels at end</span>' : '<span class="text-green-400">Auto-renews</span>'}
                 </td>
             </tr>
         `;
     });
-
     tableHtml += `</tbody></table>`;
-    container.innerHTML = tableHtml;
 
-    // Re-attach Listeners
-    container.querySelectorAll('.sub-action-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const subId = e.target.dataset.id;
-            handleSubscriptionAction(subId, 'cancel');
+    // 3. Add Pagination Controls
+    if (pagination && pagination.totalPages > 1) {
+        tableHtml += `
+            <div class="flex justify-between items-center mt-4 px-2">
+                <span class="text-xs text-white/50">Page ${pagination.page} of ${pagination.totalPages}</span>
+                <div class="flex gap-2">
+                    <button class="btn btn-secondary text-xs py-1 px-3" 
+                        ${pagination.page <= 1 ? 'disabled' : ''} 
+                        onclick="fetchAndRenderSubscriptions('subscriptions', ${pagination.page - 1})">
+                        Previous
+                    </button>
+                    <button class="btn btn-secondary text-xs py-1 px-3" 
+                        ${pagination.page >= pagination.totalPages ? 'disabled' : ''} 
+                        onclick="fetchAndRenderSubscriptions('subscriptions', ${pagination.page + 1})">
+                        Next
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    container.innerHTML = tableHtml;
+}
+
+function renderOverviewTab(data) {
+    // 1. Update Cards
+    if (data.stats) {
+        const { mrr, active_count, total_customers, avg_order_value } = data.stats;
+        document.getElementById("overviewMRR").textContent = `$${(mrr / 100).toFixed(2)}`;
+        document.getElementById("overviewActiveSubs").textContent = active_count;
+        document.getElementById("overviewCustomers").textContent = total_customers;
+        document.getElementById("overviewAOV").textContent = `$${avg_order_value}`;
+    }
+
+    // 2. Render Revenue Trend Chart (New)
+    if (data.trend && document.getElementById("mrrTrendChart")) {
+        const xValues = data.trend.map(t => t.month);
+        const yValues = data.trend.map(t => t.mrr);
+
+        const trace = {
+            x: xValues,
+            y: yValues,
+            type: 'scatter',
+            mode: 'lines+markers',
+            fill: 'tozeroy', // Creates the area chart effect
+            line: { color: '#8E2DE2', width: 3, shape: 'spline' }, // Smooth purple line
+            marker: { color: '#ffffff', size: 6, line: { color: '#8E2DE2', width: 2 } }
+        };
+
+        const layout = {
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            font: { color: 'rgba(255,255,255,0.8)', family: 'Inter, sans-serif' },
+            margin: { t: 10, r: 10, b: 40, l: 40 },
+            xaxis: { 
+                showgrid: false, 
+                zeroline: false 
+            },
+            yaxis: { 
+                gridcolor: 'rgba(255,255,255,0.1)', 
+                zeroline: false,
+                tickprefix: '$' 
+            },
+            showlegend: false,
+            hovermode: 'x unified'
+        };
+        
+        // Responsive config
+        const config = { responsive: true, displayModeBar: false };
+
+        Plotly.newPlot('mrrTrendChart', [trace], layout, config);
+    }
+
+    // 3. Update Recent Transactions Table (Simplified for side view)
+    const txnTable = document.getElementById("overviewTransactionsTable");
+    if (txnTable && data.transactions) {
+        let html = '';
+        if (data.transactions.length === 0) {
+            html = `<tr><td class="p-4 text-center text-white/40 italic">No recent transactions.</td></tr>`;
+        } else {
+            data.transactions.forEach(tx => {
+                // Simplified row for the compact view
+                const isSuccess = tx.status === 'succeeded';
+                html += `
+                    <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+                        <td class="p-3">
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold text-white">$${(tx.amount / 100).toFixed(2)}</span>
+                                <span class="text-xs text-white/50">${new Date(tx.created).toLocaleDateString()}</span>
+                            </div>
+                            <div class="flex justify-between items-center mt-1">
+                                <span class="text-xs text-white/70 truncate max-w-[120px]">${tx.customer_email}</span>
+                                <span class="text-[10px] px-1.5 py-0.5 rounded ${isSuccess ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}">${tx.status}</span>
+                            </div>
+                        </td>
+                    </tr>`;
+            });
+        }
+        txnTable.innerHTML = html;
+    }
+}
+
+function renderTransactionsTab(transactions, hasMore, lastId) {
+    const tableBody = document.getElementById("fullTransactionsTable");
+    // We need to find the container holding the table to append pagination buttons, 
+    // or just replace the whole innerHTML of the container if you prefer.
+    // For safety, let's just update the tbody and handle "Load More" manually if needed.
+    
+    // Actually, looking at the HTML structure, it's better to replace the table rows
+    if (!tableBody) return;
+
+    if (!transactions || transactions.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-white/40">
+            <div class="flex flex-col items-center">
+                <span class="text-2xl mb-2">💸</span>
+                <span>No transactions found.</span>
+            </div>
+        </td></tr>`;
+        return;
+    }
+
+    let html = '';
+    transactions.forEach(tx => {
+        const statusColor = tx.status === 'succeeded' ? 'text-green-400 bg-green-500/20 border-green-500/30' : 'text-yellow-400 bg-yellow-500/20 border-yellow-500/30';
+        html += `
+            <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+                <td class="p-3"><span class="px-2 py-1 rounded text-xs border ${statusColor}">${tx.status}</span></td>
+                <td class="p-3 font-bold">$${(tx.amount / 100).toFixed(2)} <span class="text-xs font-normal text-white/50">${tx.currency.toUpperCase()}</span></td>
+                <td class="p-3 text-sm capitalize">${tx.payment_method} ${tx.last4 ? '•••• ' + tx.last4 : ''}</td>
+                <td class="p-3 text-sm text-white/80">${tx.customer_email}</td>
+                <td class="p-3 text-sm text-white/60">${new Date(tx.created).toLocaleString()}</td>
+                <td class="p-3 font-mono text-xs text-white/50">${tx.id.slice(0, 12)}...</td>
+            </tr>`;
+    });
+    tableBody.innerHTML = html;
+}
+
+function renderCustomersTab(customers, pagination) {
+    const tableBody = document.getElementById("customersTable");
+    if (!tableBody) return;
+
+    if (!customers || customers.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-white/40">No customers found.</td></tr>`;
+        return;
+    }
+
+    // Update Table Header (Add Status/Plan)
+    const thead = tableBody.parentElement.querySelector("thead tr");
+    if (thead) {
+        thead.innerHTML = `
+            <th class="p-3">Customer</th>
+            <th class="p-3">Current Plan</th>
+            <th class="p-3">Status</th>
+            <th class="p-3">Joined</th>
+        `;
+    }
+
+    let html = '';
+    customers.forEach(cust => {
+        // Style based on status
+        const statusStyles = {
+            'active': 'bg-green-500/20 text-green-400 border-green-500/30',
+            'trialing': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+            'past_due': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+            'canceled': 'bg-gray-500/20 text-gray-400 border-gray-500/30',
+            'none': 'bg-white/5 text-white/40 border-white/10'
+        };
+        const badgeClass = statusStyles[cust.subscription_status] || statusStyles['none'];
+
+        html += `
+            <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+                <td class="p-3">
+                    <div class="font-medium text-white">${cust.email}</div>
+                    <div class="text-xs text-white/50 font-mono">${cust.stripe_customer_id}</div>
+                </td>
+                <td class="p-3 text-white/90">${cust.plan_name}</td>
+                <td class="p-3">
+                    <span class="px-2 py-1 rounded text-xs border ${badgeClass} uppercase tracking-wide">
+                        ${cust.subscription_status}
+                    </span>
+                </td>
+                <td class="p-3 text-sm text-white/60">${new Date(cust.created_at).toLocaleDateString()}</td>
+            </tr>`;
+    });
+    
+    // Pagination (Same as before)
+    if (pagination && pagination.totalPages > 1) {
+        html += `
+            <tr>
+                <td colspan="4" class="p-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-white/50">Page ${pagination.page} of ${pagination.totalPages}</span>
+                        <div class="flex gap-2">
+                            <button class="btn btn-secondary text-xs py-1 px-3" 
+                                ${pagination.page <= 1 ? 'disabled' : ''} 
+                                onclick="fetchAndRenderSubscriptions('customers', ${pagination.page - 1})">Prev</button>
+                            <button class="btn btn-secondary text-xs py-1 px-3" 
+                                ${pagination.page >= pagination.totalPages ? 'disabled' : ''} 
+                                onclick="fetchAndRenderSubscriptions('customers', ${pagination.page + 1})">Next</button>
+                        </div>
+                    </div>
+                </td>
+            </tr>`;
+    }
+
+    tableBody.innerHTML = html;
+}
+
+    function setupSubscriptionSubTabLogic() {
+    const navButtons = document.querySelectorAll('#subTabsNav .sub-tab-btn');
+    const panels = document.querySelectorAll('.sub-panel');
+
+    navButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // 1. Update UI State
+            navButtons.forEach(b => {
+                b.classList.remove('active', 'border-indigo-400', 'text-white');
+                b.classList.add('border-transparent', 'text-white/60');
+            });
+            btn.classList.add('active', 'border-indigo-400', 'text-white');
+            btn.classList.remove('border-transparent', 'text-white/60');
+
+            // 2. Show/Hide Panels
+            const targetId = "sub-" + btn.dataset.target;
+            panels.forEach(p => {
+                p.style.display = (p.id === targetId) ? "block" : "none";
+            });
+
+            // 3. Fetch Data for the specific tab
+            fetchAndRenderSubscriptions(btn.dataset.target);
         });
     });
+}
+
+// Helper for debounce
+function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
 }
 
 /**
@@ -6408,7 +6636,7 @@ function openContactModal(contactId) {
                     if (!session) throw new Error("Not logged in");
 
                     // Call the new Edge Function
-                    const response = await fetch('https://supabase.data2int.com/functions/v1/admin-contacts-email-secure', {
+                    const response = await fetch('https://supabase.sageaios.com/functions/v1/admin-contacts-email-secure', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -6656,7 +6884,7 @@ async function handleContactSubmit() {
 
         // 4. Call the Supabase Edge Function via HTTP POST
         // Note: The function name here must match the deployed function endpoint
-        const FUNCTION_ENDPOINT = "https://supabase.data2int.com/functions/v1/insert-contact"; 
+        const FUNCTION_ENDPOINT = "https://supabase.sageaios.com/functions/v1/insert-contact"; 
         
         const response = await fetch(FUNCTION_ENDPOINT, {
             method: 'POST',
@@ -6818,65 +7046,6 @@ function openStripePlanModal() {
 }
 
 /**
- * Initializes the Stripe Payment Element inside the modal
- */
-async function initializePayment() {
-    const modal = document.getElementById("stripePaymentModal");
-    if (!modal) {
-        console.error("Stripe modal element not found.");
-        return;
-    }
-
-    // Show modal
-    modal.style.display = 'flex';
-    modal.classList.remove('hidden');
-    setTimeout(() => modal.classList.add('modal-open'), 10);
-
-    // 1. Call Supabase Edge Function to create PaymentIntent
-    // This matches the function name 'create-payment-intent' you set up in the backend
-    const { data, error } = await supabase.functions.invoke('create-payment-intent', {
-        body: { 
-            amount: 2000, // $20.00 in cents
-            currency: 'usd' 
-        }
-    });
-
-    if (error) {
-        console.error("Error creating payment intent:", error);
-        alert("Could not initialize payment. Please check your network connection.");
-        modal.style.display = 'none';
-        return;
-    }
-
-    if (!data || !data.client_secret) {
-        console.error("No client_secret returned from Edge Function", data);
-        alert("Payment initialization failed: Invalid server response.");
-        return;
-    }
-
-    const clientSecret = data.client_secret;
-
-    // 2. Customize Stripe Appearance to match Glass UI
-    const appearance = {
-        theme: 'night',
-        variables: {
-            colorPrimary: '#8E2DE2',
-            colorBackground: '#1f2937', // Dark gray/slate
-            colorText: '#ffffff',
-            colorDanger: '#ef4444',
-            fontFamily: 'Inter, sans-serif',
-            spacingUnit: '4px',
-            borderRadius: '8px',
-        },
-    };
-
-    // 3. Mount the Element
-    elements = stripe.elements({ appearance, clientSecret });
-    const paymentElement = elements.create("payment");
-    paymentElement.mount("#payment-element");
-}
-
-/**
  * Helper to toggle loading state on the Pay button
  */
 function setPaymentLoading(isLoading) {
@@ -6908,50 +7077,6 @@ if (closeStripeBtn) {
         }, 300);
     };
 }
-
-// 2. Handle Form Submission
-const paymentForm = document.getElementById("payment-form");
-if (paymentForm) {
-    paymentForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        setPaymentLoading(true);
-
-        // Confirm payment with Stripe
-        const { error } = await stripe.confirmPayment({
-            elements,
-            confirmParams: {
-                // Return URL is required, even if we don't redirect
-                return_url: window.location.href.split('?')[0] + "?payment_success=true",
-            },
-            redirect: "if_required" // Important: Keeps user on page if no 3DS is needed
-        });
-
-        if (error) {
-            // Show error message
-            const messageContainer = document.getElementById("payment-message");
-            messageContainer.textContent = error.message;
-            messageContainer.classList.remove("hidden");
-            messageContainer.className = "text-center text-sm p-2 rounded bg-red-500/20 text-red-200 border border-red-500/50";
-            setPaymentLoading(false);
-        } else {
-            // Success!
-            const messageContainer = document.getElementById("payment-message");
-            messageContainer.textContent = "Payment Successful! Unlocking premium features...";
-            messageContainer.classList.remove("hidden");
-            messageContainer.className = "text-center text-sm p-2 rounded bg-green-500/20 text-green-200 border border-green-500/50";
-            
-            setTimeout(() => {
-                // 1. Hide modal
-                document.getElementById("stripePaymentModal").style.display = 'none';
-                // 2. Update global state
-                currentSelectionLimit = 3; 
-                // 3. Proceed to the tool
-                proceedFromModal(); 
-                setPaymentLoading(false);
-            }, 1500);
-        }
-    });
-    }
 
     function proceedFromModal() {
         // --- MODIFIED LINES ---
