@@ -22,6 +22,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4/dist/panzoom.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs" type="module"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs" type="module"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+
     <style>
         /* --- THEME COLORS (CSS VARIABLES) --- */
         :root {
@@ -2068,66 +2070,62 @@
             }
         }
 
-        /* --- CLICK ME ANIMATION FOR TOOLS --- */
+       /* --- CLICK ME ANIMATION FOR TOOLS --- */
         
-        /* Ensure the card is a positioning context */
         .home-template-link {
             position: relative;
-            z-index: 1; /* Ensure it sits above background elements */
+            z-index: 1;
+            overflow: hidden; /* Ensures the badge stays within rounded corners */
+            border: 1px solid rgba(255, 255, 255, 0.15); /* Default subtle border */
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
 
-        /* The "Click to Start" Badge - Hidden by default */
+        /* The "Click Me" Badge */
         .home-template-link::after {
-            content: "👆 Click to Start";
+            content: "👆 Click Me!";
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0.5); /* Start small */
-            opacity: 0; /* Start invisible */
+            top: 12px;
+            right: 12px;
             
             /* Badge Styling */
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 9999px;
-            font-weight: 700;
-            font-size: 1rem;
+            background: #F59E0B; /* Bright Amber color */
+            color: #000000;      /* Black text for contrast */
+            font-weight: 800;
+            font-size: 0.65rem;
+            text-transform: uppercase;
             letter-spacing: 0.5px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-            white-space: nowrap;
+            padding: 4px 10px;
+            border-radius: 99px;
             
-            /* Animation Physics */
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); /* Bouncy effect */
-            pointer-events: none; /* Let clicks pass through to the card */
+            /* Effects */
+            box-shadow: 0 2px 10px rgba(245, 158, 11, 0.4);
             z-index: 20;
+            pointer-events: none; /* Allows clicking through the badge */
+            
+            /* Animation */
+            animation: badgePulse 2s infinite;
         }
 
-        /* Trigger Animation on Hover */
-        .home-template-link:hover::after {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1);
-            top: 50%; /* Ensure it stays centered */
+        /* The Badge Pulse Animation */
+        @keyframes badgePulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
         }
 
-        /* Optional: Dim the card text slightly when hovering to focus on the button */
+        /* HOVER STATE: Highlight the whole card */
+        .home-template-link:hover {
+            transform: translateY(-5px) scale(1.02);
+            background: rgba(255, 255, 255, 0.12);
+            border-color: #F59E0B; /* Border turns amber on hover */
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4), 
+                        0 0 15px rgba(245, 158, 11, 0.2); /* Amber glow */
+        }
+
+        /* Optional: Slightly dim text on hover to make badge pop more */
         .home-template-link:hover h3,
         .home-template-link:hover p {
-            opacity: 0.4;
-            filter: blur(1px);
-            transition: all 0.3s ease;
-        }
-        
-        /* Add a subtle pulse to the border on hover as well */
-        @keyframes borderPulse {
-            0% { border-color: rgba(255, 255, 255, 0.2); }
-            50% { border-color: var(--accent); box-shadow: 0 0 15px rgba(195, 55, 100, 0.3); }
-            100% { border-color: rgba(255, 255, 255, 0.2); }
-        }
-        
-        .home-template-link:hover {
-            animation: borderPulse 2s infinite;
+            opacity: 0.9;
         }
 
         /* --- Blog Article Styling --- */
@@ -2268,6 +2266,82 @@
                     </div>
                 </div>
                  <button id="closeModalBtn" class="btn btn-secondary mt-8">Cancel</button>
+            </div>
+        </div>
+
+        <div id="stripePaymentModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm items-center justify-center z-[110] feedback-modal hidden" style="display: none;">
+            <div class="glass-container w-full max-w-4xl p-8 feedback-modal-container relative">
+                <button id="closeStripeModalBtn" class="absolute top-4 right-4 text-white/60 hover:text-white text-2xl">&times;</button>
+                
+                <h2 class="text-3xl font-bold mb-4 text-center">Choose Your Plan</h2>
+                <p class="text-white/70 text-center mb-8 max-w-2xl mx-auto">Select the tier that best fits your strategic needs to unlock premium analysis features.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    
+                    <div class="bg-white/5 p-6 rounded-xl border border-white/10 hover:border-purple-400 transition-all duration-300 hover:-translate-y-2 flex flex-col relative group">
+                        <div class="text-center mb-4">
+                            <div class="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-purple-500/40 transition-colors">
+                                <span class="text-2xl">👤</span>
+                            </div>
+                            <h3 class="text-xl font-bold text-white">Individual</h3>
+                            <p class="text-white/60 text-sm mt-1">For solo strategists</p>
+                        </div>
+                        <ul class="text-sm text-white/70 space-y-2 mb-6 flex-grow">
+                            <li class="flex items-center"><span class="text-green-400 mr-2">✓</span> Basic Frameworks</li>
+                            <li class="flex items-center"><span class="text-green-400 mr-2">✓</span> Single User</li>
+                            <li class="flex items-center"><span class="text-green-400 mr-2">✓</span> Email Support</li>
+                        </ul>
+                        <a href="https://buy.stripe.com/9B6aEXaJbbl16eZ8xKbsc02" target="_blank" class="btn btn-secondary w-full py-2 border-purple-500/50 hover:bg-purple-500/20">
+                            Select Individual
+                        </a>
+                    </div>
+
+                    <div class="bg-gradient-to-b from-blue-900/40 to-white/5 p-6 rounded-xl border-2 border-blue-500/50 hover:border-blue-400 transition-all duration-300 hover:-translate-y-2 flex flex-col relative transform scale-105 shadow-xl z-10">
+                        <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg uppercase tracking-wide">
+                            Most Popular
+                        </div>
+                        <div class="text-center mb-4 mt-2">
+                            <div class="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <span class="text-2xl">🚀</span>
+                            </div>
+                            <h3 class="text-xl font-bold text-white">Small Business</h3>
+                            <p class="text-white/60 text-sm mt-1">For growing teams</p>
+                        </div>
+                        <ul class="text-sm text-white/70 space-y-2 mb-6 flex-grow">
+                            <li class="flex items-center"><span class="text-green-400 mr-2">✓</span> All Frameworks</li>
+                            <li class="flex items-center"><span class="text-green-400 mr-2">✓</span> Up to 5 Users</li>
+                            <li class="flex items-center"><span class="text-green-400 mr-2">✓</span> Priority Support</li>
+                            <li class="flex items-center"><span class="text-green-400 mr-2">✓</span> Export to PDF/DOCX</li>
+                        </ul>
+                        <a href="https://buy.stripe.com/7sY9ATg3v0Gnbzj4hubsc01" target="_blank" class="btn btn-primary w-full py-3 font-bold shadow-lg">
+                            Select Business
+                        </a>
+                    </div>
+
+                    <div class="bg-white/5 p-6 rounded-xl border border-white/10 hover:border-yellow-400 transition-all duration-300 hover:-translate-y-2 flex flex-col group">
+                        <div class="text-center mb-4">
+                            <div class="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-yellow-500/40 transition-colors">
+                                <span class="text-2xl">🏢</span>
+                            </div>
+                            <h3 class="text-xl font-bold text-white">Enterprise</h3>
+                            <p class="text-white/60 text-sm mt-1">For organizations</p>
+                        </div>
+                        <ul class="text-sm text-white/70 space-y-2 mb-6 flex-grow">
+                            <li class="flex items-center"><span class="text-green-400 mr-2">✓</span> Custom Solutions</li>
+                            <li class="flex items-center"><span class="text-green-400 mr-2">✓</span> Unlimited Users</li>
+                            <li class="flex items-center"><span class="text-green-400 mr-2">✓</span> Dedicated Account Mgr</li>
+                        </ul>
+                        <a href="https://buy.stripe.com/6oUdR96sVfBhcDn3dqbsc01" target="_blank" class="btn btn-secondary w-full py-2 border-yellow-500/50 hover:bg-yellow-500/20">
+                            Select Enterprise
+                        </a>
+                    </div>
+
+                </div>
+                
+                <div class="mt-8 text-center">
+                    <p class="text-xs text-white/40 mb-2">Secure payment processing by</p>
+                    <img src="https://images.ctfassets.net/fzn2n1nzq965/2WOM2d46aE6u8i6e6O6k46/e0e94e548552818112573a179aa986d3/stripe-badge-white.png" alt="Powered by Stripe" class="h-6 mx-auto opacity-50 hover:opacity-100 transition-opacity">
+                </div>
             </div>
         </div>
 
@@ -3208,7 +3282,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let currentAnalysisContext = null;
 
     // --- Version Control State ---
-    let currentSelectionLimit = 3; // Default to paid
+    let currentSelectionLimit = 1; // Default to paid
     let selectedTemplateForModal = null;
     let preFillData = ""; // Used to pass context from home card to template detail
 
@@ -3217,6 +3291,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // --- Regression Analysis ---
     let currentRegressionRowCount = 0; // Stores the row count for ratio validation
+
+    const stripe = Stripe('pk_test_51SUzA4Dv9QN5xDTmXlUbWtgQxo2SZwZGGEf47pJZfUrND5pPV3LOaFX8aUELfzEVwPK67YvDvPZQfItugXa70ord00d27aMudy'); 
+    let elements;
 
     // --- Template Data ---
     const templates = {
@@ -3969,35 +4046,67 @@ Profit_USD ~ Sales_Performance + Customer_Metrics`;
     // Initialize WebSocket connection
     initializeWebSocket();
 
-    // --- Session Management (With Email Confirmation Logic) ---
-    supabase.auth.onAuthStateChange((event, session) => {
-        if (event === "SIGNED_IN") {
+    // --- AUTH STATE CHANGE LISTENER ---
+    supabase.auth.onAuthStateChange(async (event, session) => {
+        console.log(`Auth Event: ${event}`);
+
+        if (event === "SIGNED_IN" && session) {
             userLoggedIn = true;
             currentUser = session.user;
 
-            // --- START OF NEW CODE ---
-            // Check if this SIGNED_IN event was from an email confirmation hash
+            // 1. Default to Basic (Secure default)
+            currentSelectionLimit = 1;
+
+            // 2. Check Metadata (Fast check)
+            // Checks if you manually set their role to 'admin' or 'premium' in Supabase dashboard
+            const tier = currentUser.app_metadata?.tier || currentUser.user_metadata?.tier;
+            const role = currentUser.app_metadata?.role;
+
+            if (tier === 'premium' || tier === 'admin' || role === 'admin') {
+                console.log(`User has privileged metadata (${tier || role}). Unlocking Premium.`);
+                currentSelectionLimit = 3;
+            } 
+            // 3. Check Database Subscription (Robust check)
+            // This verifies the actual Stripe data synced to your 'public.subscriptions' table
+            else {
+                const { data: subData, error: subError } = await supabase
+                    .from('subscriptions')
+                    .select('status')
+                    .eq('user_id', currentUser.id)
+                    .in('status', ['active', 'trialing'])
+                    .maybeSingle();
+
+                if (subData && subData.status) {
+                    console.log("Active subscription found in database. Unlocking Premium.");
+                    currentSelectionLimit = 3;
+                } else {
+                    console.log("No active subscription found. Enforcing Basic limit.");
+                }
+            }
+
+            // 4. Handle URL Hash (Password Resets / Email Confirmations)
             const hash = window.location.hash;
-            if (hash.includes("type=signup") && hash.includes("access_token")) {
-                // This was a new signup confirmation.
-                // Clear the messy token from the URL bar
+            if (hash && hash.includes("access_token")) {
+                if (hash.includes("type=recovery")) {
+                    console.log("Recovery link detected. Redirecting to password update...");
+                    window.history.replaceState(null, null, ' '); // Clear hash
+                    navigateTo("passwordResetUpdate");
+                    return; // Stop here, don't go to home
+                } 
+                // For normal logins/confirmations, clear hash and go home
                 window.history.replaceState(null, null, ' ');
-                // Navigate to the home page (which will happen anyway)
-                navigateTo("home");
-            } else if (hash.includes("type=recovery") && hash.includes("access_token")) {
-                // This was a password recovery.
-                 // Clear the hash from the URL bar
-                window.history.replaceState(null, null, ' ');
-                // TODO: You could navigate to a "change password" page here
-                // For now, we'll just send them to the home page, logged in.
                 navigateTo("home");
             }
-            // --- END OF NEW CODE ---
 
         } else if (event === "SIGNED_OUT") {
+            // Lock everything down on logout
             userLoggedIn = false;
             currentUser = null;
+            currentSelectionLimit = 1; 
+            console.log("User signed out. Limits reset to Basic.");
         }
+        
+        // Update UI elements (Nav bar, etc.)
         updateNavBar();
     });
 
@@ -5661,80 +5770,82 @@ function renderContactsTab() {
     fetchAndRenderContacts(1);
 }
 
-/**
- * Renders the placeholder UI for the Subscriptions tab.
- */
-function renderSubscriptionsTab() {
-    console.log("DEBUG: renderSubscriptionsTab() called. Building UI..."); 
+async function renderSubscriptionsTab() {
     const panel = $("subscriptionsPanel");
-    if (!panel) {
-        console.error("DEBUG: subscriptionsPanel element not found!"); 
+    if (!panel) return;
+
+    // 1. Fetch Real Data from Supabase
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    // Fetch payment intents (sales)
+    const { data: payments, error: payError } = await supabase
+        .from('payment_intents')
+        .select('amount, status, created_at, currency')
+        .eq('status', 'succeeded')
+        .order('created_at', { ascending: false });
+
+    // Fetch active subscribers
+    const { data: subs, error: subError } = await supabase
+        .from('subscriptions')
+        .select('*');
+
+    if (payError || subError) {
+        console.error("Error fetching Stripe data:", payError || subError);
+        panel.innerHTML = `<div class="p-6 text-red-400">Error loading subscription data. Ensure database tables are created.</div>`;
         return;
     }
 
-    // 1. Build the UI
+    // Calculate Metrics
+    const totalRevenue = payments.reduce((sum, p) => sum + (p.amount / 100), 0); // Convert cents to dollars
+    const activeSubs = subs.filter(s => s.status === 'active' || s.status === 'trialing').length;
+    const recentSales = payments.length;
+
+    // 2. Render UI
     panel.innerHTML = `
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div class="glass-container">
-                <h3 class="text-xl font-semibold mb-2 text-green-400">Monthly Revenue</h3>
-                <p class="text-4xl font-bold">--</p>
-                <p class="text-white/60 text-sm mt-2">Stripe data not connected.</p>
+                <h3 class="text-xl font-semibold mb-2 text-green-400">Total Revenue</h3>
+                <p class="text-4xl font-bold">$${totalRevenue.toFixed(2)}</p>
+                <p class="text-white/60 text-sm mt-2">Lifetime sales</p>
             </div>
             <div class="glass-container">
-                <h3 class="text-xl font-semibold mb-2 text-blue-400">Premium Users</h3>
-                <p class="text-4xl font-bold">--</p>
-                <p class="text-white/60 text-sm mt-2">Stripe data not connected.</p>
+                <h3 class="text-xl font-semibold mb-2 text-blue-400">Active Subscribers</h3>
+                <p class="text-4xl font-bold">${activeSubs}</p>
+                <p class="text-white/60 text-sm mt-2">Current plan holders</p>
             </div>
             <div class="glass-container">
-                <h3 class="text-xl font-semibold mb-2 text-yellow-400">New Subscriptions (30d)</h3>
-                <p class="text-4xl font-bold">--</p>
-                <p class="text-white/60 text-sm mt-2">Stripe data not connected.</p>
+                <h3 class="text-xl font-semibold mb-2 text-yellow-400">Total Transactions</h3>
+                <p class="text-4xl font-bold">${recentSales}</p>
+                <p class="text-white/60 text-sm mt-2">Successful payments</p>
             </div>
         </div>
 
-        <div class="glass-container p-6 mt-8"> 
-            <h2 class="text-3xl font-bold mb-4">Subscription Management</h2>
-            <p class="text-white/70 text-center p-10">
-                <span class="text-2xl mb-4">💳</span><br>
-                <strong>This feature is not yet connected.</strong><br>
-                Connecting this tab will require integrating a payment processor like Stripe.
-            </p>
-            
-            <div class="opacity-30">
-                <div class="flex flex-col md:flex-row gap-4 mb-6">
-                    <input type="text" class="input-field" placeholder="Search by user email or subscription ID..." disabled>
-                    <select class="input-field" disabled>
-                        <option>Filter by: Active</option>
-                        <option>Filter by: Canceled</option>
-                    </select>
-                </div>
+        <div class="glass-container p-6"> 
+            <h2 class="text-3xl font-bold mb-6">Recent Transactions</h2>
+            <div class="overflow-x-auto">
                 <table class="w-full text-left styled-table">
                     <thead>
                         <tr>
-                            <th class="p-3">User Email</th>
-                            <th class="p-3">Plan</th>
+                            <th class="p-3">Date</th>
+                            <th class="p-3">Amount</th>
+                            <th class="p-3">Currency</th>
                             <th class="p-3">Status</th>
-                            <th class="p-3">Subscribed On</th>
-                            <th class="p-3">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td class="p-3 text-white/50">example@email.com</td>
-                            <td class="p-3 text-white/50">Premium</td>
-                            <td class="p-3 text-white/50">Active</td>
-                            <td class="p-3 text-white/50">2025-10-01</td>
-                            <td class="p-3">
-                                <button class="btn btn-secondary py-1 px-3 text-xs" disabled>Manage</button>
-                            </td>
+                        ${payments.length > 0 ? payments.map(p => `
+                            <tr class="border-b border-white/10">
+                                <td class="p-3 text-white/80">${new Date(p.created_at).toLocaleDateString()}</td>
+                                <td class="p-3 font-bold text-green-300">$${(p.amount/100).toFixed(2)}</td>
+                                <td class="p-3 uppercase text-sm">${p.currency}</td>
+                                <td class="p-3"><span class="px-2 py-1 rounded bg-green-500/20 text-green-300 text-xs">${p.status}</span></td>
                         </tr>
+                        `).join('') : '<tr><td colspan="4" class="p-4 text-center text-white/50">No transactions found.</td></tr>'}
                     </tbody>
                 </table>
             </div>
         </div>
     `;
-
-    // 2. Attach any placeholder listeners (none needed for now)
 }
 
 /**
@@ -6308,55 +6419,257 @@ async function handleContactSubmit() {
 
     // --- Home Page Card & Tab Logic ---
     function setupHomeTabs() {
-        const tabsNav = $("homeTabsNav");
+        const tabsNav = document.getElementById("homeTabsNav");
         const tabPanels = document.querySelectorAll(".home-tab-panel");
         const tabBtns = document.querySelectorAll(".home-tab-btn");
 
+        // 1. Initial State: Force the active tab to be visible immediately
         tabPanels.forEach((panel) => {
             if (panel.classList.contains("active")) {
                 panel.style.display = "grid";
+                panel.style.opacity = "1"; // Force visibility safety net
             } else {
                 panel.style.display = "none";
+                panel.style.opacity = "0";
             }
         });
 
-        tabsNav.addEventListener("click", (e) => {
-            if (e.target.tagName !== "BUTTON") return;
-            const targetTab = e.target.dataset.tab;
+        // 2. Click Listener
+        if (tabsNav) {
+            tabsNav.addEventListener("click", (e) => {
+                    // Find the closest button (in case user clicks the icon/span inside)
+                    const btn = e.target.closest(".home-tab-btn");
+                    if (!btn) return;
 
-            tabBtns.forEach((btn) => {
-                btn.classList.toggle("active", btn.dataset.tab === targetTab);
-            });
+                    const targetTab = btn.dataset.tab;
 
-            tabPanels.forEach((panel) => {
-                if (panel.id === targetTab) {
-                    panel.classList.add("active");
-                    panel.style.display = "grid";
-                } else {
-                    panel.classList.remove("active");
-                    panel.style.display = "none";
-                }
+                    // Update Buttons
+                    tabBtns.forEach((b) => b.classList.toggle("active", b.dataset.tab === targetTab));
+
+                    // Update Panels with Animation Reset
+                tabPanels.forEach((panel) => {
+                    if (panel.id === targetTab) {
+                        panel.classList.add("active");
+                        panel.style.display = "grid";
+                            
+                            // Re-trigger animation for these specific elements
+                            setTimeout(() => {
+                                const cards = panel.querySelectorAll('.feature-card');
+                                animateElements(cards);
+                            }, 10);
+                    } else {
+                        panel.classList.remove("active");
+                        panel.style.display = "none";
+                    }
+                });
             });
-        });
+        }
     }
 
     function attachHomeCardListeners() {
-        document.querySelectorAll(".home-template-link").forEach((card) => {
-            card.addEventListener("click", () => {
-                const templateId = card.dataset.templateId;
-                preFillData = card.dataset.preFill || "";
+    // 1. Select all tool cards
+    const cards = document.querySelectorAll(".home-template-link");
 
+    cards.forEach((card) => {
+        // Ensure we remove old listeners to prevent stacking
+        const newCard = card.cloneNode(true);
+        card.parentNode.replaceChild(newCard, card);
+        
+        newCard.addEventListener("click", () => {
+            const templateId = newCard.dataset.templateId;
+            preFillData = newCard.dataset.preFill || "";
+
+            // 2. Authentication Check
                 if (!userLoggedIn) {
                     showMessage("loginMessage", "Please log in to use the analysis tools.", "error");
                     navigateTo("login");
-                } else {
-                    selectedTemplateForModal = templateId;                    
-                    const modal = $("versionChoiceModal");
-                    modal.style.display = 'flex'; // Make it visible
-                    setTimeout(() => modal.classList.add('modal-open'), 10); // Trigger animation
+                return;
+            }
+
+            // 3. Store selected template
+            selectedTemplateForModal = templateId;                    
+
+            // 4. Open the Version Choice Modal (Free vs Paid)
+            const modal = $("versionChoiceModal");
+            if (modal) {
+                modal.style.display = 'flex';
+                setTimeout(() => modal.classList.add('modal-open'), 10);
                 }
             });
         });
+
+    // --- Logic for the "Version Choice" Modal Buttons ---
+
+    const selectFreeBtn = $("selectFreeVersion");
+    if (selectFreeBtn) {
+        selectFreeBtn.onclick = () => {
+            currentSelectionLimit = 1; // Limit user
+            proceedFromModal();      // Go to tool
+        };
+    }
+
+    const selectPaidBtn = $("selectPaidVersion");
+    if (selectPaidBtn) {
+        selectPaidBtn.onclick = () => {
+            // 1. Close the Choice Modal
+            const choiceModal = $("versionChoiceModal");
+            choiceModal.classList.remove('modal-open');
+            setTimeout(() => {
+                choiceModal.style.display = 'none';
+                
+                // 2. Open the NEW Stripe Plan Modal
+                openStripePlanModal(); 
+            }, 300);
+        };
+    }
+}
+
+// Function to open the Plan Selection Modal
+function openStripePlanModal() {
+    const modal = document.getElementById("stripePaymentModal");
+    if (modal) {
+        modal.style.display = 'flex';
+        modal.classList.remove('hidden');
+        setTimeout(() => modal.classList.add('modal-open'), 10);
+    } else {
+        console.error("Stripe Payment Modal not found in DOM");
+    }
+}
+
+/**
+ * Initializes the Stripe Payment Element inside the modal
+ */
+async function initializePayment() {
+    const modal = document.getElementById("stripePaymentModal");
+    if (!modal) {
+        console.error("Stripe modal element not found.");
+        return;
+    }
+
+    // Show modal
+    modal.style.display = 'flex';
+    modal.classList.remove('hidden');
+    setTimeout(() => modal.classList.add('modal-open'), 10);
+
+    // 1. Call Supabase Edge Function to create PaymentIntent
+    // This matches the function name 'create-payment-intent' you set up in the backend
+    const { data, error } = await supabase.functions.invoke('create-payment-intent', {
+        body: { 
+            amount: 2000, // $20.00 in cents
+            currency: 'usd' 
+        }
+    });
+
+    if (error) {
+        console.error("Error creating payment intent:", error);
+        alert("Could not initialize payment. Please check your network connection.");
+        modal.style.display = 'none';
+        return;
+    }
+
+    if (!data || !data.client_secret) {
+        console.error("No client_secret returned from Edge Function", data);
+        alert("Payment initialization failed: Invalid server response.");
+        return;
+    }
+
+    const clientSecret = data.client_secret;
+
+    // 2. Customize Stripe Appearance to match Glass UI
+    const appearance = {
+        theme: 'night',
+        variables: {
+            colorPrimary: '#8E2DE2',
+            colorBackground: '#1f2937', // Dark gray/slate
+            colorText: '#ffffff',
+            colorDanger: '#ef4444',
+            fontFamily: 'Inter, sans-serif',
+            spacingUnit: '4px',
+            borderRadius: '8px',
+        },
+    };
+
+    // 3. Mount the Element
+    elements = stripe.elements({ appearance, clientSecret });
+    const paymentElement = elements.create("payment");
+    paymentElement.mount("#payment-element");
+}
+
+/**
+ * Helper to toggle loading state on the Pay button
+ */
+function setPaymentLoading(isLoading) {
+    const btn = document.getElementById("submitPaymentBtn");
+    const spinner = document.getElementById("paySpinner");
+    const text = document.getElementById("payBtnText");
+    
+    if (!btn || !spinner || !text) return;
+
+    btn.disabled = isLoading;
+    if (isLoading) {
+        spinner.classList.remove("hidden");
+        text.textContent = "Processing...";
+    } else {
+        spinner.classList.add("hidden");
+        text.textContent = "Pay Now";
+    }
+}
+
+// Logic to Close the Plan Selection Modal
+const closeStripeBtn = document.getElementById("closeStripeModalBtn");
+if (closeStripeBtn) {
+    closeStripeBtn.onclick = () => {
+        const modal = document.getElementById("stripePaymentModal");
+        modal.classList.remove('modal-open');
+        setTimeout(() => {
+            modal.style.display = 'none';
+            modal.classList.add('hidden');
+        }, 300);
+    };
+}
+
+// 2. Handle Form Submission
+const paymentForm = document.getElementById("payment-form");
+if (paymentForm) {
+    paymentForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        setPaymentLoading(true);
+
+        // Confirm payment with Stripe
+        const { error } = await stripe.confirmPayment({
+            elements,
+            confirmParams: {
+                // Return URL is required, even if we don't redirect
+                return_url: window.location.href.split('?')[0] + "?payment_success=true",
+            },
+            redirect: "if_required" // Important: Keeps user on page if no 3DS is needed
+        });
+
+        if (error) {
+            // Show error message
+            const messageContainer = document.getElementById("payment-message");
+            messageContainer.textContent = error.message;
+            messageContainer.classList.remove("hidden");
+            messageContainer.className = "text-center text-sm p-2 rounded bg-red-500/20 text-red-200 border border-red-500/50";
+            setPaymentLoading(false);
+        } else {
+            // Success!
+            const messageContainer = document.getElementById("payment-message");
+            messageContainer.textContent = "Payment Successful! Unlocking premium features...";
+            messageContainer.classList.remove("hidden");
+            messageContainer.className = "text-center text-sm p-2 rounded bg-green-500/20 text-green-200 border border-green-500/50";
+            
+            setTimeout(() => {
+                // 1. Hide modal
+                document.getElementById("stripePaymentModal").style.display = 'none';
+                // 2. Update global state
+                currentSelectionLimit = 3; 
+                // 3. Proceed to the tool
+                proceedFromModal(); 
+                setPaymentLoading(false);
+            }, 1500);
+        }
+    });
     }
 
     function proceedFromModal() {
@@ -12334,10 +12647,9 @@ function createSystemObjectivesLayout_ST(template) {
                     console.error("navigateTo function is not defined.");
                 }
             });
-                } else {
-                    console.warn("Feedback link not found inside createThinkingSystemLayout_NS");
-                }
-                // --- END FIX ---
+        } else {
+            console.warn("Feedback link not found inside createThinkingSystemLayout_NS");
+        }
     }
 
     async function handleThinkingSystemAnalysis_NS() {
@@ -12357,7 +12669,7 @@ function createSystemObjectivesLayout_ST(template) {
                 if (!file) throw new Error("❌ Please select a document to upload.");
                 beliefOrProblemContext = await extractTextFromFile(file);
                 console.log("Extracted text from Thinking System context file.");
-                } else {
+            } else {
                 beliefOrProblemContext = $("tsContent").value.trim();
                 if (!beliefOrProblemContext) {
                     throw new Error("❌ Please describe a belief, conclusion, or problem context to analyze.");
@@ -12762,21 +13074,20 @@ function createSystemObjectivesLayout_ST(template) {
         }
 
         // Attach listener for the feedback link
-                const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
-                if (feedbackLink) {
-                    feedbackLink.addEventListener("click", (e) => {
-                        e.preventDefault();
-                        
-                        if (typeof navigateTo === 'function') {
-                            navigateTo('feedback');
-                        } else {
-                            console.error("navigateTo function is not defined.");
-                        }
-                    });
+        const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+        if (feedbackLink) {
+            feedbackLink.addEventListener("click", (e) => {
+                e.preventDefault();
+                
+                if (typeof navigateTo === 'function') {
+                    navigateTo('feedback');
                 } else {
-                    console.warn("Feedback link not found inside createSwotTowsLayout");
+                    console.error("navigateTo function is not defined.");
                 }
-                // --- END FIX ---
+            });
+        } else {
+            console.warn("Feedback link not found inside createSwotTowsLayout");
+        }
     }
 
     function createMiscLayout_MSC(template) {
@@ -15238,7 +15549,7 @@ The AI will read this and build the matrix for you."></textarea>
                 </div>
             </div>`;
 
-        // --- 6. Populate Creative Dissonance Panel (NO Novel Strategies) ---
+        // --- 6. Populate Creative Dissonance Panel ---
         const dissonancePanel = $("dissonancePanel");
         dissonancePanel.innerHTML = `
             <div class="p-4 space-y-6">
@@ -21726,6 +22037,12 @@ function createFactorAnalysisLayout(template) {
                         <div class="max-w-2xl mx-auto w-full">
                             <div class="glass-container p-6 space-y-4">
                                <h3 class="text-xl font-bold mb-4 text-white">Provide Business Information</h3>
+                    
+                                <div>
+                                    <label for="factorLocation" class="block text-sm font-medium text-gray-200 mb-2">Location / Region</label>
+                                    <input type="text" id="factorLocation" class="input-field" placeholder="e.g., Global, North America, Manufacturing Plant">
+                                </div>
+
                                 <div class="input-radio-group">
                                     <input type="radio" name="inputType" id="textInput" class="input-radio" checked>
                                     <label for="textInput" class="input-radio-label">Text Input</label>
@@ -21767,7 +22084,7 @@ function createFactorAnalysisLayout(template) {
                     </div>`;
 
         // Attach event listeners
-        $("generateBtn").addEventListener("click", handleGenerate);
+        $("generateBtn").addEventListener("click", handleFactorAnalysis);
         reattachActionListeners();
 
         // Restore from cache or set default
@@ -21821,11 +22138,6 @@ function createFactorAnalysisLayout(template) {
                     feedbackLink.addEventListener("click", (e) => {
                         e.preventDefault();
                         
-                        // This just calls the navigateTo function.
-                        // It relies on your main `MapsTo` function to be
-                        // the *simplified one* (without memory logic)
-                        // and your `submitFeedbackPageBtn` listener
-                        // to be the *simplified one* (that just goes home).
                         if (typeof navigateTo === 'function') {
                             navigateTo('feedback');
                         } else {
@@ -21835,7 +22147,6 @@ function createFactorAnalysisLayout(template) {
                 } else {
                     console.warn("Feedback link not found inside createFactorAnalysisLayout");
                 }
-                // --- END FIX ---
 }
 
 async function handleFactorAnalysis() {
@@ -23439,254 +23750,227 @@ function renderKpiPage_KE(container, data) {
 
 
 
-   /**
-     * HANDLER: Mission Vision (DEEP ANALYSIS v4 - with Goal Enrichment)
-     * - Calls n8n for a base result and Ollama for a deep, component-based analysis.
-     * - **NEW**: Stores `fullContext` globally for the WebSocket handler.
-     * - **NEW**: When merging, calls `enrichN8nGoal` for any unique n8n goal strings.
+ /**
+     * OLLAMA CASCADE: Generates Mission, Vision, Values, and Goals with Contextual Breakdowns.
+     * This function is called by handleWebSocketMessage ONLY after N8N returns its base analysis.
+     */
+    async function ollamaCascadeGoals(n8nResult, fullContext) {
+        console.log("Ollama Cascade: Starting deep synthesis with contextual breakdowns.");
+        
+        const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
+        const MODEL_NAME = "llama3.1:latest";
+        
+        const statusEl = document.getElementById("analysisStatus");
+        if (statusEl) statusEl.textContent = "Synthesizing Mission, Vision & Contextual Analysis...";
+
+        // Construct the combined context for the cascade prompt
+        const combinedContext = `
+            **FULL COMPANY CONTEXT (User Input):**
+            ${fullContext}
+
+            **RAG ANALYSIS OUTPUT (External Context):**
+            - Book Summary: ${n8nResult.external_data?.book_summary || 'N/A'}
+            - Web Summary: ${n8nResult.external_data?.web_summary || 'N/A'}
+        `;
+        
+        const MAX_CONTEXT_LENGTH = 15000;
+        const ollamaText = combinedContext.substring(0, MAX_CONTEXT_LENGTH);
+
+        const prompt = `
+            You are a top-tier strategic planning consultant. Your task is to synthesize a complete strategic foundation. Base all outputs **EXCLUSIVELY** on the provided "FULL COMPANY CONTEXT" and "RAG ANALYSIS OUTPUT".
+
+            **CONTEXT:**
+            \`\`\`
+            ${ollamaText}
+            \`\`\`
+
+            **DETAILED TASKS:**
+            1.  **Synthesize Mission (\`mission\`):** * Create a concise \`statement\` defining the organization's core purpose.
+                * Create a \`breakdown\` array. Break the mission into 3 components (e.g., "Target Audience", "Contribution", "Key Elements"). For the \`analysis\` of each, **you must explicitly reference facts from the context** (e.g., "The context mentions targeting SMEs in the fintech sector...").
+            2.  **Synthesize Vision (\`vision\`):** * Create an aspirational \`statement\` describing the future state.
+                * Create a \`breakdown\` array. Break the vision into 3 components (e.g., "Future State", "Impact", "Strategic Direction"). For the \`analysis\` of each, **cite specific ambitions found in the context**.
+            3.  **Generate Core Values (\`core_values\`):** Identify 5-7 Core Values.
+                * \`value\`: The value name.
+                * \`description\`: Explain how this applies to the specific organization described.
+            4.  **Generate Strategic Goals (\`goals\`):** Create 8-10 distinct, high-level strategic goals.
+                * \`goal_name\`: Clear, inspiring goal.
+                * \`description\`: Rationale based on context.
+                * \`key_initiatives\`: 2-3 high-level initiatives.
+                * \`kpis_to_track\`: 2-3 specific KPIs.
+
+            **ABSOLUTE CONSTRAINTS:**
+            - **CONTEXT IS KING:** Do not generate generic analyses. Every breakdown analysis must mention specific details from the user's input (industry, specific products, stated challenges).
+            - **JSON FORMAT:** Adhere EXACTLY.
+
+            **RETURN FORMAT:**
+            Provide ONLY a valid JSON object.
+            {
+              "mission": {
+                "statement": "To empower...",
+                "breakdown": [
+                    { "component": "Target Audience", "analysis": "Specifically focuses on [User's Audience] as mentioned in the text..." },
+                    { "component": "Core Contribution", "analysis": "Delivers [User's Product] to solve [User's Problem]..." },
+                    { "component": "Distinction", "analysis": "Leverages [User's Unique Selling Point]..." }
+                ]
+              },
+              "vision": {
+                "statement": "To become the...",
+                "breakdown": [
+                    { "component": "Future State", "analysis": "Aims for [Specific Future Goal]..." },
+                    { "component": "Impact", "analysis": "Seeks to change [Specific Industry Metric]..." },
+                    { "component": "Scope", "analysis": "Expands operations to [Specific Region/Market]..." }
+                ]
+              },
+              "core_values": [
+                { "value": "Value 1", "description": "..." }
+              ],
+              "goals": [
+                { "goal_name": "Goal 1", "description": "...", "key_initiatives": ["..."], "kpis_to_track": ["..."] }
+              ]
+            }
+        `;
+
+        try {
+            console.log("Sending deep Mission/Vision/Values/Goals CASCADE prompt to Ollama...");
+            const response = await fetch(OLLAMA_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ model: MODEL_NAME, prompt: prompt, stream: false, format: "json", options: { num_ctx: 32768 } })
+            });
+
+            if (!response.ok) {
+                let errorBody = `AI Cascade error ${response.status}`;
+                try { errorBody += `: ${await response.text()}`; } catch (e) {}
+                throw new Error(errorBody);
+            }
+            
+            const data = await response.json();
+            const ollamaJson = JSON.parse(data.response);
+            
+            // Basic Validation
+            if (!ollamaJson.mission || !ollamaJson.mission.statement) {
+                 console.warn("AI Cascade missing mission statement, using fallback.");
+                 ollamaJson.mission = { statement: "Analysis failed.", breakdown: [] };
+            }
+            
+            return ollamaJson; 
+            
+        } catch (error) {
+            console.error(`Ollama Cascade Failure (Step 2):`, error);
+            return { 
+                mission: { statement: "Analysis failed.", breakdown: [] },
+                vision: { statement: "Analysis failed.", breakdown: [] },
+                core_values: [], 
+                goals: [], 
+                error_message: error.message 
+            }; 
+        }
+    }
+
+
+// =========================================================================
+// ===== UPDATED HANDLERS (CASCADE CONTROLLER)                          =====
+// =========================================================================
+
+    /**
+     * HANDLER: Mission Vision (DUAL STEP CASCADE)
+     * - Step 1: Triggers n8n to fetch RAG data (MISSION/VISION/RAG SUMMARY).
+     * - Step 2: Waits for WS message, then triggers OllamaCascadeGoals to generate goals.
      */
     async function handleMissionVisionAnalysis() {
-        const analysisResultContainer = $("analysisResult");
+        const analysisResultContainer = document.getElementById("analysisResult");
         analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8">
                                                 <div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div>
-                                                <h3 class="text-xl font-semibold text-white mb-4">Running Deep Dual-Analysis...</h3>
-                                                <p id="analysisStatus" class="text-white/80 mb-2">Initializing n8n and Ollama requests...</p>
+                                                <h3 class="text-xl font-semibold text-white mb-4">Step 1/2: Gathering External Context (RAG)...</h3>
+                                                <p id="analysisStatus" class="text-white/80 mb-2">Initializing n8n request...</p>
                                              </div>`;
         setLoading("generate", true);
 
         // --- 1. Reset state and create a unique ID for this analysis ---
-        pendingOllamaResult = null;
-        pendingN8nResult = null;
+        pendingOllamaResult = null; // Used to store the result of OllamaCascadeGoals
+        pendingN8nResult = null; // Used to store the result of the initial N8N RAG fetch
         currentAnalysisMessageId = `analysis_${Date.now()}`;
-        console.log(`Starting analysis with ID: ${currentAnalysisMessageId}`);
+        console.log(`Starting cascade analysis with ID: ${currentAnalysisMessageId}`);
 
-        let text = ""; // Raw text for Ollama
+        let text = ""; // Raw context
         const n8nFormData = new FormData(); // FormData for n8n
 
         try {
             // 2. Gather Inputs
-            const useDoc = $("docUpload").checked;
+            const useDoc = document.getElementById("docUpload").checked;
             
             if (useDoc) {
-                const file = $("companyDocumentsFile").files[0];
+                const file = document.getElementById("companyDocumentsFile").files[0];
                 if (!file) throw new Error("Please select a document.");
                 text = await extractTextFromFile(file); 
                 n8nFormData.append("file", file, file.name); 
             } else {
-                text = $("missionVisionContent").value.trim();
+                text = document.getElementById("missionVisionContent").value.trim();
                 if (!text.trim()) throw new Error("Please provide your company context.");
-                n8nFormData.append("missionVisionContent", text); // n8n key
+                n8nFormData.append("missionVisionContent", text); 
             }
             
-            const companyName = $("companyName").value.trim() || "The organization";
-            const location = $("location").value.trim() || "unspecified location";
+            const companyName = document.getElementById("companyName").value.trim() || "The organization";
+            const location = document.getElementById("location").value.trim() || "unspecified location";
             n8nFormData.append("customerName", companyName);
             n8nFormData.append("location", location);
+            n8nFormData.append("messageId", currentAnalysisMessageId); // Pass ID for WS tracking
             
-            let fullContext = `Company Name: ${companyName}\nLocation: ${location}\n\nCompany Context/Document Content:\n${text}`;
-            
-            // --- NEW: Store context globally for WebSocket handler ---
-            currentAnalysisContext = fullContext; 
+            // Create full context for Ollama (Step 2)
+            currentAnalysisContext = `Company Name: ${companyName}\nLocation: ${location}\n\nCompany Context/Document Content:\n${text}`; 
 
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) throw new Error("Please log in to generate analysis.");
 
-            // 3. Define and *call* the two fetch functions
+            // 3. Trigger N8N Workflow (Asynchronous RAG fetch)
+            const N8N_MISSION_URL = "https://n8n.data2int.com/webhook/mission-vision-v11";
+            console.log(`Sending data to n8n RAG workflow at ${N8N_MISSION_URL}...`);
             
-            // --- Fetch 1: n8n Workflow (Triggers async response) ---
-            async function triggerN8N() {
-                const N8N_MISSION_URL = "https://n8n.data2int.com/webhook/mission-vision-v1";
-                console.log(`Sending data to n8n workflow at ${N8N_MISSION_URL}...`);
-                
-                const response = await fetch(N8N_MISSION_URL, {
-                    method: "POST",
-                    headers: { 'Authorization': `Bearer ${session.access_token}` },
-                    body: n8nFormData
-                });
+            // We use fetch just to trigger the workflow; the result comes via WebSocket.
+            const response = await fetch(N8N_MISSION_URL, {
+                method: "POST",
+                headers: { 'Authorization': `Bearer ${session.access_token}` },
+                body: n8nFormData
+            });
 
-                if (!response.ok) {
-                    throw new Error(`n8n Trigger Error: ${response.status} - ${await response.text()}`);
-                }
-                const n8nJson = await response.json();
-                console.log("n8n workflow triggered, received response:", n8nJson);
-                if (n8nJson.status !== "success") {
-                     console.warn("n8n workflow did not return 'success'. Waiting for WebSocket anyway.");
-                }
-            }
-
-            // --- Fetch 2: Direct Ollama Call (Gets deep data) ---
-            async function fetchOllama() {
-                const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
-                const MODEL_NAME = "llama3.1:latest";
-                
-                let ollamaText = fullContext;
-                const MAX_CONTEXT_LENGTH = 15000;
-                let truncatedNote = "";
-                if (ollamaText.length > MAX_CONTEXT_LENGTH) {
-                    ollamaText = ollamaText.substring(0, MAX_CONTEXT_LENGTH);
-                    truncatedNote = `(Note: Analysis based on the first ${MAX_CONTEXT_LENGTH} characters.)`;
-                }
-
-                const prompt = `
-                    You are a top-tier strategic consultant (e.g., McKinsey, BCG). Your task is to analyze the user's provided company context **based ONLY on the text itself** and generate a comprehensive strategic foundation. You must deconstruct the Mission, Vision, Values, and Goals into their core components and provide rich, actionable detail for each. ${truncatedNote}
-
-                    **USER'S COMPANY CONTEXT:**
-                    \`\`\`
-                    ${ollamaText}
-                    \`\`\`
-
-                    **DETAILED TASKS (Ground all answers *strictly* in the text):**
-
-                    1.  **Deconstruct Mission (\`mission\`):**
-                        * \`statement\`: Synthesize a single, powerful mission statement.
-                        * \`breakdown\`: An array of objects analyzing the mission's components:
-                            * \`component\`: "Purpose" (What we do)
-                            * \`analysis\`: "Analysis of what the company does, from the text..."
-                            * \`component\`: "Target Audience" (For whom)
-                            * \`analysis\`: "Analysis of the target customers, from the text..."
-                            * \`component\`: "Value Proposition" (What value we provide)
-                            * \`analysis\`: "Analysis of the core value delivered, from the text..."
-
-                    2.  **Deconstruct Vision (\`vision\`):**
-                        * \`statement\`: Synthesize a single, inspirational vision statement.
-                        * \`breakdown\`: An array of objects analyzing the vision's components:
-                            * \`component\`: "Future State" (Where we are going)
-                            * \`analysis\`: "Analysis of the company's aspirational future, from the text..."
-                            * \`component\`: "Key Differentiator" (How we will win)
-                            * \`analysis\`: "Analysis of the future competitive advantage, from the text..."
-                            * \`component\`: "Impact" (The ultimate outcome)
-                            * \`analysis\`: "Analysis of the long-term impact on the industry/world, from the text..."
-
-                    3.  **Analyze Core Values (\`values\`):**
-                        * Extract an array of 3-5 core values **from the text** (e.g., "Innovation," "Integrity").
-                        * For each, provide:
-                            * \`value\`: The value itself (e.g., "Innovation").
-                            * \`description\`: A 1-2 sentence explanation of *how* this value manifests **based on evidence in the text** (e.g., "This is shown by the company's heavy investment in R&D...").
-
-                    4.  **Analyze Strategic Goals (\`goals\`):**
-                        * Extract an array of 3-5 high-level S.M.A.R.T. goals **from the text**.
-                        * For each, provide:
-                            * \`goal_name\`: The high-level goal (e.g., "Expand Market Share").
-                            * \`description\`: A 1-2 sentence explanation of *why* this goal is critical for achieving the Vision, **based on the text**.
-                            * \`key_initiatives\`: An array of 2-3 specific initiative strings **from the text** (e.g., "Launch product in European market", "Develop new pricing model").
-                            * \`kpis_to_track\`: An array of 2-3 specific KPI strings **from the text** (e.g., "Increase market share from 15% to 25%", "Achieve 500K EU active users").
-
-                    **ABSOLUTE CONSTRAINTS:**
-                    - **CONTEXT IS KING:** Base **ALL** output **EXCLUSIVELY** on the provided "USER'S COMPANY CONTEXT".
-                    - **NO FABRICATION:** Do not invent values, goals, or aspirations not present or logically implied in the text.
-                    - **FULL DETAIL:** You *must* provide the full, deep analysis for all four components, including the arrays of objects.
-                    - **JSON FORMAT:** Adhere EXACTLY.
-
-                    **RETURN FORMAT:**
-                    Provide ONLY a valid JSON object.
-                    {
-                      "mission": {
-                        "statement": "[Synthesized 1-sentence mission]",
-                        "breakdown": [
-                          { "component": "Purpose", "analysis": "[Analysis from text...]" },
-                          { "component": "Target Audience", "analysis": "[Analysis from text...]" },
-                          { "component": "Value Proposition", "analysis": "[Analysis from text...]" }
-                        ]
-                      },
-                      "vision": {
-                        "statement": "[Synthesized 1-sentence vision]",
-                        "breakdown": [
-                          { "component": "Future State", "analysis": "[Analysis from text...]" },
-                          { "component": "Key Differentiator", "analysis": "[Analysis from text...]" },
-                          { "component": "Impact", "analysis": "[Analysis from text...]" }
-                        ]
-                      },
-                      "values": [
-                        { "value": "Value 1 from text", "description": "How this is shown in the text..." },
-                        { "value": "Value 2 from text", "description": "How this is shown in the text..." }
-                      ],
-                      "goals": [
-                        { "goal_name": "Goal 1 from text", "description": "Why this supports the vision, based on text...", "key_initiatives": ["Initiative 1.1 from text", "Initiative 1.2 from text"], "kpis_to_track": ["KPI 1 from text", "KPI 2 from text"] },
-                        { "goal_name": "Goal 2 from text", "description": "Why this supports the vision, based on text...", "key_initiatives": ["Initiative 2.1 from text"], "kpis_to_track": ["KPI 3 from text"] }
-                      ]
-                    }
-                `;
-
-                console.log(`Sending deep Mission/Vision prompt directly to ${MODEL_NAME}...`);
-                const response = await fetch(OLLAMA_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ model: MODEL_NAME, prompt: prompt, stream: false, format: "json", options: { num_ctx: 32768 } })
-                });
-
-                if (!response.ok) {
-                    let errorBody = `API error ${response.status}`;
-                    try { errorBody += `: ${await response.text()}`; } catch (e) {}
-                    throw new Error(errorBody);
-                }
-                
-                const data = await response.json();
-                const ollamaJson = JSON.parse(data.response);
-                // Deep validation
-                if (!ollamaJson.mission || !ollamaJson.mission.statement || !Array.isArray(ollamaJson.mission.breakdown) ||
-                    !ollamaJson.vision || !ollamaJson.vision.statement || !Array.isArray(ollamaJson.vision.breakdown) ||
-                    !Array.isArray(ollamaJson.values) || !Array.isArray(ollamaJson.goals)) {
-                     throw new Error("Direct Ollama call returned an invalid or incomplete JSON structure.");
-                }
-                console.log("Received and validated deep data from direct Ollama.");
-                
-                pendingOllamaResult = ollamaJson; // Store the result
-                attemptMergeAndRender(); // Check if n8n is already done
+            if (!response.ok) {
+                throw new Error(`n8n Trigger Error: ${response.status} - ${await response.text()}`);
             }
             
-            // 4. Trigger both functions.
-            triggerN8N().catch(async (err) => {
-                console.error("n8n Trigger Failed:", err.message);
-                // If n8n fails to even *trigger*, we can't wait for it.
-                // Manually "fulfill" its part with empty data.
-                pendingN8nResult = { mission: "", vision: "", values: [], goals: [] };
-                attemptMergeAndRender(); // Check if Ollama is done
-            });
-            
-            fetchOllama().catch(async (err) => {
-                console.error("Ollama Call Failed:", err.message);
-                
-                // --- MODIFIED FALLBACK ---
-                // If Ollama fails, we MUST still wait for n8n
-                console.log("Ollama failed. Waiting for n8n data as fallback...");
-                // We'll set a "failed" placeholder for Ollama
-                pendingOllamaResult = {
-                    mission: { statement: "Deep analysis failed.", breakdown: [] },
-                    vision: { statement: "Deep analysis failed.", breakdown: [] },
-                    values: [],
-                    goals: []
-                };
-                
-                // If n8n is already done, this will trigger the merge
-                // If n8n is not done, the WebSocket handler will trigger it
-                attemptMergeAndRender(); 
-            });
+            // The process now pauses here, waiting for the WebSocket message in handleWebSocketMessage
 
         } catch (error) {
             console.error(`Error in handleMissionVisionAnalysis (Setup):`, error);
             analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
             setLoading("generate", false);
-            currentAnalysisContext = null; // Clean up context
+            currentAnalysisContext = null; 
         }
     }
     
+
     /**
      * RENDERER: Mission Vision (DEEP ANALYSIS v4 - Layout Fix & Safe Rendering)
-     * - Handles scenarios where data might be partial (e.g. only N8N or only Ollama).
+     * --- FIX: Added new tab and sections to render external data and references ---
      */
     function renderMissionVisionPage(container, data) {
         // Fix spacing
         container.style.whiteSpace = 'normal';
         container.innerHTML = ""; 
 
-        const { mission, vision, values, goals } = data;
+        const { mission, vision, values, goals, external_data } = data;
 
         // --- Validation with Fallbacks ---
-        // We check if the main objects exist. If not, we provide defaults to prevent the UI from crashing.
         const safeMission = mission || { statement: "No mission generated", breakdown: [] };
         const safeVision = vision || { statement: "No vision generated", breakdown: [] };
         const safeValues = Array.isArray(values) ? values : [];
         const safeGoals = Array.isArray(goals) ? goals : [];
+
+        // --- NEW: Process External Data ---
+        const bookSummary = external_data?.book_summary || "Book summary not available.";
+        const webSummary = external_data?.web_summary || "Web summary not available.";
+        const referenceLinks = external_data?.reference_links || [];
+        const processingTime = external_data?.processing_time || "N/A";
+
 
         // --- Create Tab Navigation ---
         const tabNav = document.createElement("div");
@@ -23694,8 +23978,8 @@ function renderKpiPage_KE(container, data) {
         tabNav.innerHTML = `
             <button class="analysis-tab-btn active" data-tab="summary">📊 Summary</button>
             <button class="analysis-tab-btn" data-tab="statements">📜 Mission & Vision</button>
-            <button class="analysis-tab-btn" data-tab="values">🧭 Core Values</button>
             <button class="analysis-tab-btn" data-tab="goals">🎯 Strategic Goals</button>
+            <button class="analysis-tab-btn" data-tab="references">🔗 References & Sources</button>
             <button class="analysis-tab-btn" data-tab="learn">🎓 Learn Framework</button>
         `;
         container.appendChild(tabNav);
@@ -23708,10 +23992,10 @@ function renderKpiPage_KE(container, data) {
             <div id="statementsPanel" class="analysis-tab-panel p-4 md:p-6"></div>
             <div id="valuesPanel" class="analysis-tab-panel p-4 md:p-6"></div>
             <div id="goalsPanel" class="analysis-tab-panel p-4 md:p-6"></div>
-            <div id="learnPanel" class="analysis-tab-panel p-4 md:p-6"></div>
+            <div id="referencesPanel" class="analysis-tab-panel p-4 md:p-6"></div> <div id="learnPanel" class="analysis-tab-panel p-4 md:p-6"></div>
         `;
 
-        // --- 1. Populate Summary Panel ---
+        // --- 1. Populate Summary Panel (Replaced Values/Goals with Sources) ---
         const summaryPanel = $("summaryPanel");
         summaryPanel.innerHTML = `
         <div class="space-y-8">
@@ -23730,28 +24014,21 @@ function renderKpiPage_KE(container, data) {
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
                 <div class="bg-black/20 p-4 rounded-lg glass-container">
-                    <h4 class="text-lg font-bold mb-3 text-yellow-300">🧭 Top Core Values</h4>
-                    ${safeValues.length > 0 ? 
-                        `<ul class="list-disc list-inside space-y-1 text-sm text-white/80">
-                            ${safeValues.slice(0, 3).map(v => `<li><strong>${v.value}:</strong> ${v.description?.substring(0, 80) || ''}...</li>`).join('')}
-                        </ul>` : 
-                        `<p class="text-white/70 italic text-sm">No core values extracted.</p>`
-                    }
+                    <h4 class="text-lg font-bold mb-3 text-yellow-300">📚 Primary Source Summary (Book)</h4>
+                    <p class="text-sm text-white/80 italic line-clamp-3">${bookSummary}</p>
+                    <p class="text-xs text-white/60 mt-3">Processing Time: ${processingTime}</p>
                 </div>
                 <div class="bg-black/20 p-4 rounded-lg glass-container">
-                    <h4 class="text-lg font-bold mb-3 text-red-300">🎯 Top Strategic Goals</h4>
-                    ${safeGoals.length > 0 ? 
-                        `<ul class="list-disc list-inside space-y-1 text-sm text-white/80">
-                            ${safeGoals.slice(0, 3).map(g => `<li><strong>${g.goal_name}</strong></li>`).join('')}
-                        </ul>` :
-                        `<p class="text-white/70 italic text-sm">No strategic goals extracted.</p>`
-                    }
+                    <h4 class="text-lg font-bold mb-3 text-red-300">🌐 Supporting Source Summary (Web)</h4>
+                     <p class="text-sm text-white/80 italic line-clamp-3">${webSummary}</p>
+                     <p class="text-xs text-white/60 mt-3">${referenceLinks.length} External Reference(s)</p>
                 </div>
             </div>
         </div>
         `;
 
         // --- 2. Populate Mission & Vision Statements Panel ---
+        // (No change in logic needed, still uses safeMission/safeVision)
         const statementsPanel = $("statementsPanel");
         const missionRows = safeMission.breakdown?.map(b => `
             <tr><td class="font-semibold text-white/90">${b.component}</td><td class="text-white/80">${b.analysis}</td></tr>
@@ -23795,26 +24072,30 @@ function renderKpiPage_KE(container, data) {
         </div>
         `;
 
-        // --- 3. Populate Core Values Panel ---
-        const valuesPanel = $("valuesPanel");
-        let valuesHtml = `<div class="space-y-6"><h3 class="text-3xl font-bold text-center mb-8">🧭 Core Values</h3><div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">`;
+        // --- 3. Populate Core Values Panel (Moved to Goals Panel for space) ---
+        // I will merge the Core Values panel content into the Goals Panel for simplicity since you only provided Goals/References
+        
+        // --- 4. Populate Strategic Goals Panel ---
+        const goalsPanel = $("goalsPanel");
+        let goalsHtml = `<div class="space-y-6">`;
+        
+        // 4a. Add Core Values Section
+        goalsHtml += `<h3 class="text-3xl font-bold text-center mb-8">🧭 Core Values</h3><div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">`;
         if (safeValues.length > 0) {
             safeValues.forEach((v_obj) => {
-                valuesHtml += `
+                goalsHtml += `
                 <div class="insight-card border-l-4 border-yellow-400">
                     <h4 class="text-xl font-bold mb-2">${v_obj.value}</h4>
                     <p class="text-sm text-white/80 italic">${v_obj.description || ''}</p>
                 </div>`;
             });
         } else {
-            valuesHtml += `<p class="text-white/70 italic text-center md:col-span-2">No core values were generated from the context.</p>`;
+            goalsHtml += `<p class="text-white/70 italic text-center md:col-span-2">No core values were generated from the context.</p>`;
         }
-        valuesHtml += `</div></div>`;
-        valuesPanel.innerHTML = valuesHtml;
-
-        // --- 4. Populate Strategic Goals Panel ---
-        const goalsPanel = $("goalsPanel");
-        let goalsHtml = `<div class="space-y-6"><h3 class="text-3xl font-bold text-center mb-8">🎯 Strategic Goals (${safeGoals.length})</h3><div class="max-w-4xl mx-auto space-y-6">`;
+        goalsHtml += `</div><hr class="border-white/20 my-6">`;
+        
+        // 4b. Add Strategic Goals Section
+        goalsHtml += `<h3 class="text-3xl font-bold text-center mb-8">🎯 Strategic Goals (${safeGoals.length})</h3><div class="max-w-4xl mx-auto space-y-6">`;
         if (safeGoals.length > 0) {
             safeGoals.forEach((g_obj, index) => {
                 goalsHtml += `
@@ -23843,15 +24124,58 @@ function renderKpiPage_KE(container, data) {
         goalsHtml += `</div></div>`;
         goalsPanel.innerHTML = goalsHtml;
 
-        // --- 5. Populate Learn Panel ---
+        // --- 5. Populate References & Sources Panel (NEW) ---
+        const referencesPanel = $("referencesPanel");
+        let referencesHtml = `<div class="space-y-6"><h3 class="text-3xl font-bold text-center mb-6">🔗 References & Source Material</h3>`;
+        
+        // 5a. Primary Source (Book)
+        referencesHtml += `<div class="glass-container p-6 border-l-4 border-blue-400">
+            <h4 class="text-xl font-bold mb-3 text-blue-300">📚 Primary Source (Book Summary)</h4>
+            <p class="text-white/80 whitespace-pre-wrap">${bookSummary}</p>
+        </div>`;
+
+        // 5b. Web Sources Summary
+        referencesHtml += `<div class="glass-container p-6 border-l-4 border-purple-400">
+            <h4 class="text-xl font-bold mb-3 text-purple-300">🌐 Supporting Source (Web Summary)</h4>
+            <p class="text-white/80 whitespace-pre-wrap">${webSummary}</p>
+        </div>`;
+
+        // 5c. Links Table
+        referencesHtml += `<div class="glass-container p-6">
+            <h4 class="text-xl font-bold mb-3">External Reference Links (${referenceLinks.length})</h4>
+            <div class="overflow-x-auto">
+                <table class="coeff-table styled-table text-sm">
+                    <thead><tr><th class="w-10">#</th><th>URL</th></tr></thead>
+                    <tbody>`;
+        if (referenceLinks.length > 0) {
+            referenceLinks.forEach((link, index) => {
+                referencesHtml += `<tr>
+                    <td>${index + 1}</td>
+                    <td><a href="${link}" target="_blank" class="text-blue-300 hover:text-blue-100">${link}</a></td>
+                </tr>`;
+            });
+        } else {
+            referencesHtml += `<tr><td colspan="2" class="text-center italic opacity-50">No external links provided.</td></tr>`;
+        }
+        referencesHtml += `</tbody></table></div></div>`;
+        
+        referencesHtml += `</div>`; // Close space-y-6
+        referencesPanel.innerHTML = referencesHtml;
+
+
+        // --- 6. Populate Learn Panel ---
         const learnPanel = $("learnPanel");
+        // (Static content for learning framework remains here)
         learnPanel.innerHTML = `
         <div class="space-y-6 text-white/90 glass-container max-w-4xl mx-auto p-6 md:p-10">
             <h3 class="text-3xl font-bold text-center mb-4">🎓 Understanding Mission, Vision, Values & Goals</h3>
             
             
 
-    [Image of strategic planning pyramid mission vision values goals]
+
+
+[Image of strategic planning pyramid mission vision values goals]
+
 
 
             <div class="bg-black/20 p-4 rounded-lg border border-white/10">
@@ -23876,13 +24200,12 @@ function renderKpiPage_KE(container, data) {
         </div>
         `;
 
-        // --- NEW: Animate the new content ---
-            const newElementsToAnimate = container.querySelectorAll(
-                '.glass-container, .feature-card, .project-card, .kpi-card, .summary-stat-card, .prescription-card, .insight-card, .action-card, .ladder-rung, .dissonance-pole, .cascade-objective, .cascade-goal-card, .st-objective-card, .st-goal-card, .feedback-card, .plotly-chart, .styled-table'
-            );
-            animateElements(newElementsToAnimate);
+        // --- Final Touches (Animation, Cache, and Listeners) ---
+        const newElementsToAnimate = container.querySelectorAll(
+            '.glass-container, .feature-card, .project-card, .kpi-card, .summary-stat-card, .prescription-card, .insight-card, .action-card, .ladder-rung, .dissonance-pole, .cascade-objective, .cascade-goal-card, .st-objective-card, .st-goal-card, .feedback-card, .plotly-chart, .styled-table'
+        );
+        animateElements(newElementsToAnimate);
 
-        // --- Final Touches ---
         analysisCache[currentTemplateId] = container.innerHTML;
         $("analysisActions").classList.remove("hidden");
 
@@ -23899,21 +24222,21 @@ function renderKpiPage_KE(container, data) {
     }
     
     async function handleSwotTowsAnalysis() {
-    const analysisResultContainer = $("analysisResult");
-    analysisResultContainer.innerHTML = `
-        <div class="text-center text-white/70 p-8">
-            <div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div>
-            <h3 class="text-xl font-semibold text-white mb-4">Performing Comprehensive SWOT/TOWS Analysis...</h3>
-            <p class="text-white/80 mb-2">Analyzing factors, generating strategies, and identifying priorities based *only* on your text...</p> <!-- Updated text -->
-            <p id="analysisStatus" class="text-white/60 text-sm">Initializing...</p>
-        </div>`;
-    setLoading("generate", true); // Ensure loading state is set
+        const analysisResultContainer = $("analysisResult");
+        analysisResultContainer.innerHTML = `
+            <div class="text-center text-white/70 p-8">
+                <div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div>
+                <h3 class="text-xl font-semibold text-white mb-4">Performing Comprehensive SWOT/TOWS Analysis...</h3>
+                <p class="text-white/80 mb-2">Analyzing factors, generating strategies, and identifying priorities based *only* on your text...</p> <!-- Updated text -->
+                <p id="analysisStatus" class="text-white/60 text-sm">Initializing...</p>
+            </div>`;
+        setLoading("generate", true); // Ensure loading state is set
 
-    const statusEl = $("analysisStatus");
-    const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
-    const MODEL_NAME = "llama3.1:latest"; // Consistent model
+        const statusEl = $("analysisStatus");
+        const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
+        const MODEL_NAME = "llama3.1:latest"; // Consistent model
 
-    try {
+        try {
         // --- Step 0: Gather Input ---
             statusEl.textContent = "Reading your business content...";
             const useDoc = $("docUpload").checked;
@@ -24548,12 +24871,12 @@ function renderDetailedAnalysis(swotData, towsData, containerId) {
 }
 
     /**
- * HANDLER: Goals & Strategic Initiatives (Strategic Planning)
- * - NEW: Re-engineered to use a comprehensive OGSM prompt.
- * - Forces AI to deconstruct user text into Objective, Goals, Strategies, and Measures.
- * - Ensures high accuracy by grounding every component in the provided text.
- */
-   async function handleGoalsAndInitiativesAnalysis_SP() {
+     * HANDLER: Goals & Strategic Initiatives (Strategic Planning)
+     * - NEW: Re-engineered to use a comprehensive OGSM prompt.
+     * - Forces AI to deconstruct user text into Objective, Goals, Strategies, and Measures.
+     * - Ensures high accuracy by grounding every component in the provided text.
+     */
+    async function handleGoalsAndInitiativesAnalysis_SP() {
         const analysisResultContainer = $("analysisResult");
         analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white mb-4">Building OGSM Framework...</h3><p class="text-white/80 mb-2">Cascading your objective into actionable strategies based *only* on your provided text...</p></div>`;
         setLoading("generate", true);
@@ -30426,18 +30749,17 @@ function renderSystemGoalsPage(container, data) {
     }
 
     /**
-     * HANDLES ALL WEBSOCKET MESSAGES (v7.5 - JS PARSER & Async Merge)
-     * - Dispatches messages based on the current context ID (`currentTemplateId`).
-     * - Fulfills either `pendingN8nResult` (Mission/Vision, Objectives) or uses the generic `pendingAnalysisRequests` map.
+     * HANDLER: Mission Vision (DUAL STEP CASCADE)
+     * - The primary controller, executed upon receiving the initial RAG result from n8n.
      */
     async function handleWebSocketMessage(data) {
         console.log("Received WebSocket message:", data);
 
         // --- 1. Mission/Vision and Objectives (ASYNC MERGE PATH) ---
-        if (currentTemplateId && (currentTemplateId === "mission-vision" || currentTemplateId === "objectives") && data.result && typeof data.result === 'string') {
+        if (currentTemplateId && currentTemplateId === "mission-vision" && data.result && typeof data.result === 'string') {
             
             if (!currentAnalysisMessageId) {
-                console.warn("WebSocket: Received merged data, but no analysis is currently pending. Ignoring.");
+                console.warn("WebSocket: Received mission-vision data, but no analysis is currently pending. Ignoring.");
                 return;
             }
 
@@ -30445,80 +30767,81 @@ function renderSystemGoalsPage(container, data) {
 
             try {
                 const resultText = data.result;
+                const statusEl = document.getElementById("analysisStatus");
                 
-                if (currentTemplateId === "mission-vision") {
-                    // --- Mission-Vision Logic (Parsing & Goal Enrichment) ---
-                    console.log("Parsing mission-vision string result and enriching goals...");
-                    
-                    // 1. Extract Vision (Using "Our vision is" or "Vision:" as anchor)
-                    let vision = "";
-                    const visionMatch = resultText.match(/(?:Our vision is|Vision:)([\s\S]*?)(?:\n\n|\n(?=[A-Z])|$)/i);
-                    if (visionMatch) {
-                        const prefix = resultText.match(/Our vision is/i) ? "Our vision is " : "";
-                        vision = prefix + visionMatch[1].trim().replace(/^:\s*/, '');
-                    }
+                // --- Helper to extract content blocks using regex ---
+                const extractBlock = (text, startTag, endTag) => {
+                    const match = text.match(new RegExp(startTag + '([\\s\\S]*?)' + endTag, 'i'));
+                    return match ? match[1].trim() : null;
+                };
 
-                    // 2. Extract Mission (Context before Vision)
-                    let mission = "";
-                    const missionExplicit = resultText.match(/Mission:\s*([\s\S]*?)(?:\n\n|Vision:|$)/i);
-                    if (missionExplicit) {
-                        mission = missionExplicit[1].trim();
-                    } else if (visionMatch && visionMatch.index > 0) {
-                        mission = resultText.substring(0, visionMatch.index).trim();
-                    } else {
-                        mission = resultText.split('\n\n')[0].trim();
+                // --- EXTRACT RAG BLOCKS ---
+                const bookSummary = extractBlock(resultText, '=== BOOK \\(Primary Source\\) ===', '=== WEB \\(Supporting Source\\) ===') || "Primary source summary missing.";
+                const webSummaryFull = extractBlock(resultText, '=== WEB \\(Supporting Source\\) ===', 'Reference Links:') || "Web source data missing.";
+                
+                const referenceLinksMatch = resultText.match(/Reference Links:\s*([\s\S]*?)Processing Time:/i);
+                const referenceLinks = referenceLinksMatch ? referenceLinksMatch[1].match(/https?:\/\/\S+/g) || [] : [];
+                
+                const processingTimeMatch = resultText.match(/Processing Time:\s*([\s\S]*)/i);
+                const processingTime = processingTimeMatch ? processingTimeMatch[1].trim() : "N/A";
+                
+                // --- STORE N8N EXTERNAL DATA ---
+                const n8nBaseData = {
+                    external_data: {
+                        book_summary: bookSummary,
+                        web_summary: webSummaryFull,
+                        reference_links: referenceLinks,
+                        processing_time: processingTime
                     }
+                };
 
-                    // 3. Extract Goals (Prioritize bullet points)
-                    let goalStrings = [];
-                    const bulletMatches = resultText.match(/(?:^|\n)\s*[•\-*]\s*(.+)/g);
-                    
-                    if (bulletMatches && bulletMatches.length > 0) {
-                        goalStrings = bulletMatches.map(g => g.replace(/(?:^|\n)\s*[•\-*]\s*/, '').trim());
-                    } else {
-                         // Fallback: Check for an explicit "Goals" section
-                        const goalsExplicit = resultText.match(/Goals:\s*([\s\S]*)/i);
-                        const textToSearch = goalsExplicit ? goalsExplicit[1] : (visionMatch ? resultText.substring(visionMatch.index + visionMatch[0].length) : "");
-                        
-                        goalStrings = textToSearch.split('\n')
-                            .map(l => l.trim())
-                            .filter(l => l.length > 15 
-                                && !l.startsWith("Reference Links") 
-                                && !l.startsWith("Processing Time") 
-                                && !l.startsWith("Final Recommendation")
-                                && !l.startsWith("[")
-                                && !l.includes("http"));
-                    }
+                // 2. TRIGGER CASCADE OLLAMA CALL (FULL SYNTHESIS)
+                if (statusEl) statusEl.textContent = "Step 2/2: Synthesizing Mission, Vision & Contextual Analysis...";
 
-                    if (!currentAnalysisContext) {
-                        throw new Error("Cannot enrich goals, analysis context is missing.");
-                    }
-                    
-                    // Run enrichment asynchronously
-                    const enrichmentPromises = goalStrings.map(g_str => enrichN8nGoal(g_str, currentAnalysisContext));
-                    const enrichedGoals = await Promise.all(enrichmentPromises);
+                const cascadeResult = await ollamaCascadeGoals(n8nBaseData, currentAnalysisContext);
+                
+                // 3. MERGE N8N + OLLAMA RESULTS
+                // We use the cascadeResult directly for mission/vision because it now has the breakdown
+                pendingOllamaResult = {
+                    mission: cascadeResult.mission, // Object containing { statement, breakdown }
+                    vision: cascadeResult.vision,   // Object containing { statement, breakdown }
+                    values: cascadeResult.core_values || [],
+                    goals: cascadeResult.goals || [], 
+                    external_data: n8nBaseData.external_data
+                };
+                
+                // Set pendingN8nResult to signal merge is ready (initialize as empty to prevent crash)
+                pendingN8nResult = { values: [], goals: [] }; 
+                
+                attemptMergeAndRender();
+                return;
+            } catch (parseError) {
+                console.error(`WebSocket: Failed to parse n8n result for ${currentTemplateId} and trigger cascade:`, parseError);
+                pendingN8nResult = { values: [], goals: [] }; // Signal completion with failure data
+                attemptMergeAndRender();
+            }
+            return;
+        
+        // --- Objectives Logic (Reliable JS Table Parser) ---
+        } else if (currentTemplateId === "objectives" && data.result && typeof data.result === 'string') {
+            // ... (Objectives logic remains unchanged) ...
+             if (!currentAnalysisMessageId) {
+                console.warn("WebSocket: Received objectives data, but no analysis is currently pending. Ignoring.");
+                return;
+            }
 
-                    pendingN8nResult = {
-                        mission: mission,
-                        vision: vision, 
-                        values: [], 
-                        goals: enrichedGoals
-                    };
-                    
-                } else if (currentTemplateId === "objectives") {
-                    // --- Objectives Logic (Reliable JS Table Parser) ---
-                    console.log("Parsing objectives markdown table with JS parser...");
+            console.log("WebSocket: Received n8n data for current objectives analysis. Parsing table with JS...");
+
+            try {
                     const markdownTable = data.result;
                     const tableJson = parseMarkdownTable(markdownTable);
                     pendingN8nResult = tableJson;
-                }
-                
-                console.log(`WebSocket: ${currentTemplateId} data parsed. Stored in pendingN8nResult.`);
+                console.log("WebSocket: n8n table data parsed. Stored in pendingN8nResult.");
                 attemptMergeAndRender();
 
             } catch (parseError) {
-                console.error(`WebSocket: Failed to parse n8n result for ${currentTemplateId}:`, parseError);
-                pendingN8nResult = (currentTemplateId === "objectives") ? [] : { mission: "", vision: "", values: [], goals: [] };
+                 console.error("WebSocket: Failed to parse n8n table:", parseError);
+                 pendingN8nResult = []; 
                 attemptMergeAndRender();
             }
             return; 
@@ -30526,7 +30849,6 @@ function renderSystemGoalsPage(container, data) {
 
         // --- 2. Generic Message Handler (NON-MERGE PATH) ---
         
-        // This is the correct place to define and use the `container` variable for ALL other templates
         const container = pendingAnalysisRequests.get(parseInt(data.messageId));
         if (!container) {
             console.warn("WebSocket: Received message with no matching container in pendingAnalysisRequests. ID:", data.messageId);
@@ -30786,38 +31108,42 @@ async function handlePasswordUpdate() {
      */
     function animateElements(elementsToAnimate) {
         if (!elementsToAnimate || elementsToAnimate.length === 0) {
-            return; // Nothing to animate
+            return;
         }
 
         const observerOptions = {
-            threshold: 0.1, // Animate when 10% visible
-            rootMargin: '0px 0px -50px 0px'
+            threshold: 0.05, // Lower threshold (triggers easier)
+            rootMargin: '0px 0px -20px 0px' // Less aggressive margin
         };
 
-        const animationObserver = new IntersectionObserver((entries) => {
+        const animationObserver = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    // Fade IN
+                    // Make visible
                     entry.target.style.opacity = '1';
                     entry.target.style.transform = 'translateY(0)';
-                } else {
-                    // Reset (Fade OUT)
-                    entry.target.style.opacity = '0';
-                    entry.target.style.transform = 'translateY(20px)';
+                    
+                    // Stop observing once visible to save performance and prevent flickering
+                    observer.unobserve(entry.target);
                 }
             });
         }, observerOptions);
 
         // Apply initial (hidden) state and start observing
         elementsToAnimate.forEach(el => {
-            el.style.opacity = '0';
-            el.style.transform = 'translateY(20px)';
-            el.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
-            animationObserver.observe(el);
+            // Only hide it if it hasn't been animated yet
+            if (el.style.opacity !== '1') {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(20px)';
+                el.style.transition = 'opacity 0.4s ease-out, transform 0.4s ease-out';
+                animationObserver.observe(el);
+            }
         });
 
-        // Store this new observer so we can disconnect it on the next page navigation
-        activeObservers.push(animationObserver);
+        // Add to global list for page cleanup
+        if (typeof activeObservers !== 'undefined') {
+            activeObservers.push(animationObserver);
+        }
     }
 
     /**
@@ -31412,6 +31738,13 @@ async function handlePasswordUpdate() {
     
     // These should run regardless
     setupHomeTabs();
+    setTimeout(() => {
+        const activePanel = document.querySelector(".home-tab-panel.active");
+        if (activePanel) {
+            const cards = activePanel.querySelectorAll('.feature-card');
+            animateElements(cards);
+        }
+    }, 100); // Small delay to ensure DOM layout is settled
     attachHomeCardListeners();
     initThreeJS();
 })();
@@ -31580,9 +31913,38 @@ async function handlePasswordUpdate() {
     // =========================================================
     // =====               END BLOG CONTENT                =====
     // =========================================================
+
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    if (urlParams.get('payment_success') === 'true') {
+        console.log("PAYMENT SUCCESS: Unlocking Premium Features...");
+        
+        // 1. Unlock the limit immediately for this session
+        currentSelectionLimit = 3; 
+        
+        // 2. Show visual confirmation
+        const successMsg = document.createElement('div');
+        successMsg.className = 'fixed top-20 right-5 p-6 bg-green-600 text-white rounded-xl shadow-2xl z-[200] flex items-center transform transition-all duration-500 translate-y-0 border border-green-400';
+        successMsg.innerHTML = `
+            <div class="text-4xl mr-4">🎉</div> 
+            <div>
+                <h4 class="font-bold text-lg">Premium Unlocked!</h4>
+                <p class="text-green-100 text-sm">Thank you for your purchase.</p>
+            </div>`;
+        document.body.appendChild(successMsg);
+        
+        // 3. Clean the URL so refreshing doesn't re-trigger
+        const newUrl = window.location.pathname + window.location.hash;
+        window.history.replaceState(null, null, newUrl);
+        
+        // 4. Remove message after 5 seconds
+        setTimeout(() => {
+            successMsg.style.opacity = '0';
+            successMsg.style.transform = 'translateY(-20px)';
+            setTimeout(() => successMsg.remove(), 500);
+        }, 5000);
+    }
 });
-
-
     </script>
 </body>
 </html>
