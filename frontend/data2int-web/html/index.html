@@ -4147,7 +4147,7 @@ Profit_USD ~ Sales_Performance + Customer_Metrics`;
                 fetchAndDisplayStatistics();
                 
                 // 2. Start a new timer to re-fetch every 10 seconds
-                statsInterval = setInterval(fetchAndDisplayStatistics, 10000); // 10000ms = 10 seconds
+                //statsInterval = setInterval(fetchAndDisplayStatistics, 10000); // 10000ms = 10 seconds
                 console.log("Started admin stats auto-refresh.");
             }
             window.scrollTo(0, 0);
@@ -5770,82 +5770,363 @@ function renderContactsTab() {
     fetchAndRenderContacts(1);
 }
 
-async function renderSubscriptionsTab() {
-    const panel = $("subscriptionsPanel");
-    if (!panel) return;
-
-    // 1. Fetch Real Data from Supabase
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    // Fetch payment intents (sales)
-    const { data: payments, error: payError } = await supabase
-        .from('payment_intents')
-        .select('amount, status, created_at, currency')
-        .eq('status', 'succeeded')
-        .order('created_at', { ascending: false });
-
-    // Fetch active subscribers
-    const { data: subs, error: subError } = await supabase
-        .from('subscriptions')
-        .select('*');
-
-    if (payError || subError) {
-        console.error("Error fetching Stripe data:", payError || subError);
-        panel.innerHTML = `<div class="p-6 text-red-400">Error loading subscription data. Ensure database tables are created.</div>`;
+    /**
+ * Renders the Subscriptions tab with live data and filtering.
+ */
+    function renderSubscriptionsTab() {
+    console.log("DEBUG: renderSubscriptionsTab() called."); 
+    const panel = document.getElementById("subscriptionsPanel");
+    if (!panel) {
+        console.error("DEBUG: 'subscriptionsPanel' container missing.");
         return;
     }
 
-    // Calculate Metrics
-    const totalRevenue = payments.reduce((sum, p) => sum + (p.amount / 100), 0); // Convert cents to dollars
-    const activeSubs = subs.filter(s => s.status === 'active' || s.status === 'trialing').length;
-    const recentSales = payments.length;
-
-    // 2. Render UI
+    // 1. Build the UI (This creates the inputs with the specific IDs we need)
     panel.innerHTML = `
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="glass-container">
-                <h3 class="text-xl font-semibold mb-2 text-green-400">Total Revenue</h3>
-                <p class="text-4xl font-bold">$${totalRevenue.toFixed(2)}</p>
-                <p class="text-white/60 text-sm mt-2">Lifetime sales</p>
+        <div id="subscriptionMetrics" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="glass-container flex flex-col justify-center items-center p-6">
+                <h3 class="text-sm font-semibold mb-1 text-green-400 uppercase tracking-wider">Monthly Revenue (MRR)</h3>
+                <p id="statMRR" class="text-3xl font-bold">--</p>
             </div>
-            <div class="glass-container">
-                <h3 class="text-xl font-semibold mb-2 text-blue-400">Active Subscribers</h3>
-                <p class="text-4xl font-bold">${activeSubs}</p>
-                <p class="text-white/60 text-sm mt-2">Current plan holders</p>
+            <div class="glass-container flex flex-col justify-center items-center p-6">
+                <h3 class="text-sm font-semibold mb-1 text-blue-400 uppercase tracking-wider">Active Subscribers</h3>
+                <p id="statActiveSubs" class="text-3xl font-bold">--</p>
             </div>
-            <div class="glass-container">
-                <h3 class="text-xl font-semibold mb-2 text-yellow-400">Total Transactions</h3>
-                <p class="text-4xl font-bold">${recentSales}</p>
-                <p class="text-white/60 text-sm mt-2">Successful payments</p>
+            <div class="glass-container flex flex-col justify-center items-center p-6">
+                <h3 class="text-sm font-semibold mb-1 text-purple-400 uppercase tracking-wider">Active Products</h3>
+                <p id="statActiveProducts" class="text-3xl font-bold">--</p>
             </div>
         </div>
 
         <div class="glass-container p-6"> 
-            <h2 class="text-3xl font-bold mb-6">Recent Transactions</h2>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left styled-table">
-                    <thead>
-                        <tr>
-                            <th class="p-3">Date</th>
-                            <th class="p-3">Amount</th>
-                            <th class="p-3">Currency</th>
-                            <th class="p-3">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${payments.length > 0 ? payments.map(p => `
-                            <tr class="border-b border-white/10">
-                                <td class="p-3 text-white/80">${new Date(p.created_at).toLocaleDateString()}</td>
-                                <td class="p-3 font-bold text-green-300">$${(p.amount/100).toFixed(2)}</td>
-                                <td class="p-3 uppercase text-sm">${p.currency}</td>
-                                <td class="p-3"><span class="px-2 py-1 rounded bg-green-500/20 text-green-300 text-xs">${p.status}</span></td>
-                        </tr>
-                        `).join('') : '<tr><td colspan="4" class="p-4 text-center text-white/50">No transactions found.</td></tr>'}
-                    </tbody>
-                </table>
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold">Subscription Management</h2>
+                <div class="flex gap-2">
+                    <button id="syncProductsBtn" class="btn btn-primary text-sm py-2 px-4">
+                        ☁️ Sync Products
+                    </button>
+                    <button id="refreshSubsBtn" class="btn btn-secondary text-sm py-2 px-4">
+                        🔄 Refresh Data
+                    </button>
+                </div>
+            </div>
+            
+            <div class="flex flex-col md:flex-row gap-4 mb-6">
+                <div class="flex-grow">
+                    <input type="text" id="subscriptionSearch" class="input-field" placeholder="Search email, ID, or product...">
+                </div>
+                <div class="flex-shrink-0">
+                    <select id="subscriptionStatusFilter" class="input-field">
+                        <option value="">All Statuses</option>
+                        <option value="active">Active</option>
+                        <option value="past_due">Past Due</option>
+                        <option value="canceled">Canceled</option>
+                        <option value="trialing">Trialing</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div id="subscriptionTableContainer" class="overflow-x-auto min-h-[300px]">
+                <div class="flex items-center justify-center p-10">
+                    <div class="loading-spinner mr-3"></div>
+                    <span class="text-white/80">Loading subscription data...</span>
+                </div>
             </div>
         </div>
     `;
+
+    // 2. Attach Listeners
+    // Now that the HTML is in the DOM, we can safely attach listeners
+    const searchInput = document.getElementById("subscriptionSearch");
+    const statusInput = document.getElementById("subscriptionStatusFilter");
+    const refreshBtn = document.getElementById("refreshSubsBtn");
+    const syncBtn = document.getElementById("syncProductsBtn");
+
+    let searchTimeout;
+    if (searchInput) {
+        searchInput.addEventListener("input", () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => fetchAndRenderSubscriptions(1), 500);
+        });
+    }
+
+    if (statusInput) {
+        statusInput.addEventListener("change", () => fetchAndRenderSubscriptions(1));
+    }
+
+    if (refreshBtn) {
+        refreshBtn.addEventListener("click", () => {
+            const originalText = refreshBtn.textContent;
+            refreshBtn.textContent = "Loading...";
+            refreshBtn.disabled = true;
+            fetchAndRenderSubscriptions(1).finally(() => {
+                refreshBtn.textContent = originalText;
+                refreshBtn.disabled = false;
+            });
+        });
+    }
+
+    if (syncBtn) {
+        syncBtn.addEventListener("click", handleSyncProducts);
+    }
+
+    // 3. Trigger Initial Fetch (Now safe because elements exist)
+    fetchAndRenderSubscriptions(1);
+}
+
+    /**
+ * Triggers Product Sync
+ * Endpoint: /functions/v1/stripe-sync-products
+ */
+async function handleSyncProducts() {
+    const btn = document.getElementById("syncProductsBtn");
+    const originalText = btn ? btn.innerHTML : "Sync";
+    
+    if(btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="loading-spinner"></span> Syncing...`;
+    }
+
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error("You are not logged in.");
+
+        // Call the dedicated sync endpoint
+        const response = await fetch(`https://supabase.data2int.com/functions/v1/stripe-sync-products`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+            }
+        });
+
+        const result = await response.json();
+        
+        if (!response.ok) throw new Error(result.error || "Sync failed");
+
+        alert(`✅ Sync Complete!\nProducts: ${result.products || 0}\nPrices: ${result.prices || 0}`);
+        
+        // Refresh the table to show any new data
+        fetchAndRenderSubscriptions(1);
+
+    } catch (error) {
+        console.error("Sync Error:", error);
+        alert(`❌ Sync Failed: ${error.message}`);
+    } finally {
+        if(btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    }
+}
+
+/**
+ * Handles Cancellation via the secure admin endpoint
+ * Endpoint: /functions/v1/admin-subscriptions-secure (POST)
+ */
+async function handleSubscriptionAction(subId, action) {
+    if (action !== 'cancel') return;
+
+    if (!confirm(`Are you sure you want to CANCEL subscription ${subId}? This action cannot be undone.`)) {
+        return;
+    }
+
+    // Optimistic UI update: Find the button and show processing state
+    const btn = document.querySelector(`button[data-id="${subId}"]`);
+    const originalText = btn ? btn.textContent : "Cancel";
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = "Processing...";
+    }
+
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error("Not logged in");
+
+        // We reuse the admin-subscriptions-secure endpoint with POST for actions
+        const response = await fetch(`https://supabase.data2int.com/functions/v1/admin-subscriptions-secure`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify({ subscriptionId: subId })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) throw new Error(result.error || "Cancellation failed");
+
+        alert(`✅ Subscription cancelled successfully.`);
+        
+        // Refresh data to reflect the new 'canceled' status
+        fetchAndRenderSubscriptions(1);
+
+    } catch (error) {
+        console.error("Cancel Error:", error);
+        alert(`❌ Failed to cancel: ${error.message}`);
+        // Revert button state on error
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }
+    }
+}
+
+/**
+ * Fetches data via the 'admin-subscriptions-secure' Edge Function.
+ */
+async function fetchAndRenderSubscriptions(page = 1) {
+    const container = document.getElementById("subscriptionTableContainer");
+    const searchInput = document.getElementById("subscriptionSearch");
+    const statusInput = document.getElementById("subscriptionStatusFilter");
+
+    if (!container || !searchInput || !statusInput) return;
+
+    container.style.opacity = "0.5";
+
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+
+        const params = new URLSearchParams({
+            page: page.toString(),
+            limit: '20',
+            search: searchInput.value.trim(),
+            status: statusInput.value
+        });
+
+        const response = await fetch(`https://supabase.data2int.com/functions/v1/admin-subscriptions-secure?${params.toString()}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+            }
+        });
+
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error);
+
+        const { data, stats } = result;
+
+        if (document.getElementById("statMRR")) 
+            document.getElementById("statMRR").textContent = `$${((stats?.mrr || 0) / 100).toFixed(2)}`;
+        if (document.getElementById("statActiveSubs")) 
+            document.getElementById("statActiveSubs").textContent = stats?.active_count || 0;
+
+        renderSubscriptionsTable(container, data || []);
+
+    } catch (error) {
+        console.error("Fetch error:", error);
+        container.innerHTML = `<div class="text-red-400 text-center p-4">Error: ${error.message}</div>`;
+    } finally {
+        container.style.opacity = "1";
+    }
+}
+
+/**
+ * Renders the subscriptions list as a table.
+ */
+function renderSubscriptionsTable(container, subs) {
+    if (!subs || subs.length === 0) {
+        container.innerHTML = `<p class="text-white/70 text-center p-10">No subscriptions found.</p>`;
+        return;
+    }
+
+    let tableHtml = `
+        <table class="w-full text-left styled-table text-xs">
+            <thead>
+                <tr>
+                    <th class="p-3">Status</th>
+                    <th class="p-3">Customer</th>
+                    <th class="p-3">Product Detail</th>
+                    <th class="p-3">Price</th>
+                    <th class="p-3">Dates (Start / End)</th>
+                    <th class="p-3">Settings</th>
+                    <th class="p-3 text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    subs.forEach(sub => {
+        const statusColors = {
+            active: "tag-status-open",
+            past_due: "tag-priority-high",
+            canceled: "tag-priority-medium",
+            trialing: "tag-status-pending"
+        };
+        const statusTag = statusColors[sub.status] || "tag-type";
+
+        // Data mapped from the secure backend response
+        const email = sub.customer_email || "Unknown";
+        const stripeId = sub.stripe_subscription_id;
+        const prodName = sub.product_name || "Unknown Product";
+        const prodDesc = sub.product_desc || "";
+        
+        // Price Formatting
+        const rawAmount = sub.plan_amount || 0;
+        const amount = `$${(rawAmount / 100).toFixed(2)}`;
+        const currency = (sub.plan_currency || 'usd').toUpperCase();
+        const interval = sub.plan_interval || "one-time";
+
+        // Date Formatting
+        const formatDate = (isoString) => isoString ? new Date(isoString).toLocaleDateString() : 'N/A';
+        const start = formatDate(sub.current_period_start);
+        const end = formatDate(sub.current_period_end);
+
+        const cancelAtEnd = sub.cancel_at_period_end 
+            ? `<span class="text-yellow-400">Cancels at end</span>` 
+            : `<span class="text-green-400">Auto-renews</span>`;
+
+        tableHtml += `
+            <tr class="border-b border-white/10 hover:bg-white/5 transition-colors">
+                <td class="p-3"><span class="feedback-tag ${statusTag}">${sub.status}</span></td>
+                
+                <td class="p-3">
+                    <div class="font-bold text-white">${email}</div>
+                    <div class="text-xs text-white/50 font-mono" title="${stripeId}">${stripeId.slice(0, 14)}...</div>
+                </td>
+
+                <td class="p-3">
+                    <div class="font-medium text-indigo-300">${prodName}</div>
+                    <div class="text-xs text-white/60 truncate max-w-[150px]" title="${prodDesc}">${prodDesc}</div>
+                </td>
+
+                <td class="p-3">
+                    <div class="text-white font-bold">${amount} ${currency}</div>
+                    <div class="text-xs text-white/60">/${interval}</div>
+                </td>
+
+                <td class="p-3 text-white/80">
+                    <div><span class="text-white/50">Start:</span> ${start}</div>
+                    <div><span class="text-white/50">End:</span> ${end}</div>
+                </td>
+
+                <td class="p-3 text-xs">
+                    ${cancelAtEnd}
+                </td>
+
+                <td class="p-3 text-right">
+                    ${(sub.status === 'active' || sub.status === 'trialing') ? 
+                        `<button class="btn btn-danger py-1 px-2 text-xs sub-action-btn" data-id="${stripeId}">Cancel</button>` 
+                        : `<span class="text-white/30 text-xs italic">Inactive</span>`
+                    }
+                </td>
+            </tr>
+        `;
+    });
+
+    tableHtml += `</tbody></table>`;
+    container.innerHTML = tableHtml;
+
+    // Re-attach Listeners
+    container.querySelectorAll('.sub-action-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const subId = e.target.dataset.id;
+            handleSubscriptionAction(subId, 'cancel');
+        });
+    });
 }
 
 /**
