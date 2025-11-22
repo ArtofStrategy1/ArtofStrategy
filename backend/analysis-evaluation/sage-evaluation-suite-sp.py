@@ -837,12 +837,23 @@ def run_evaluation_suite():
     print(f"\nAverage Quality Score: {avg_quality_score:.2f} / 5.0")
     print(f"Programmatic Validation Pass Rate: {pass_rate:.2f}%")
     
-    # Save detailed results to a file
-    filename = "sage_evaluation_results_sp.json"
-    with open(filename, "w") as f:
+    # Save detailed results to a JSON file
+    json_filename = "sage_evaluation_results_sp.json"
+    with open(json_filename, "w") as f:
         json.dump(results, f, indent=2)
+    print(f"\nDetailed results saved to {json_filename}")
+
+    # Save summary results to a Markdown file
+    md_filename = "sage_evaluation_results_sp.md"
+    # Select columns for the markdown report
+    df_for_md = df[['id', 'analysis_type', 'validation_passed', 'quality_score', 'judge_reasoning']]
+    with open(md_filename, "w") as f:
+        f.write("# S.A.G.E. Evaluation Summary: Strategic Planning\n\n")
+        f.write(f"**Average Quality Score:** {avg_quality_score:.2f} / 5.0\n")
+        f.write(f"**Programmatic Validation Pass Rate:** {pass_rate:.2f}%\n\n")
+        f.write(df_for_md.to_markdown(index=False))
     
-    print(f"\nDetailed results saved to {filename}")
+    print(f"Summary results saved to {md_filename}")
 
 
 if __name__ == "__main__":

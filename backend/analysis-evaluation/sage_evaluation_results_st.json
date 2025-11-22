@@ -5,49 +5,49 @@
     "validation_passed": true,
     "validation_errors": [],
     "quality_score": 5,
-    "judge_reasoning": "The LLM's output perfectly identified both key bottlenecks described in the prompt: manual account creation and the lack of automated notification for the implementation specialist. It also provided precise and relevant optimizations that align with the ground truth summary, delivered in a well-structured JSON format.",
+    "judge_reasoning": "The LLM perfectly identified the key bottlenecks (manual account creation and lack of automated notification) directly from the prompt. It also proposed highly relevant and accurate optimizations that align precisely with the ground truth summary's expectations.",
     "model_output": {
       "process_name": "Customer Onboarding",
       "steps": [
         {
           "id": 1,
           "name": "Sales Sends Welcome Email",
-          "description": "Sales sends a welcome email to the customer.",
+          "description": "Sales team sends a welcome email to the new customer.",
           "owner": "Sales",
-          "type": "Task"
+          "type": "Start"
         },
         {
           "id": 2,
           "name": "Support Creates Account",
-          "description": "Support manually creates the customer's account in three different systems.",
+          "description": "Support team manually creates the customer's account in three different systems.",
           "owner": "Support",
           "type": "Task"
         },
         {
           "id": 3,
           "name": "Implementation Specialist Schedules Call",
-          "description": "An implementation specialist schedules a call with the customer.",
+          "description": "Implementation specialist schedules a call with the customer.",
           "owner": "Implementation Specialist",
           "type": "Task"
         },
         {
           "id": 4,
-          "name": "Customer Prepares for Implementation",
-          "description": "The customer prepares for the implementation call.",
-          "owner": "Customer",
+          "name": "Handover from Support to Implementation Specialist",
+          "description": "Support team notifies the implementation specialist about the created account.",
+          "owner": "Support",
           "type": "Task"
         },
         {
           "id": 5,
-          "name": "Implementation Specialist Contacts Customer",
-          "description": "The implementation specialist contacts the customer for the scheduled call.",
+          "name": "Implementation Specialist Calls Customer",
+          "description": "Implementation specialist calls the customer for the scheduled call.",
           "owner": "Implementation Specialist",
           "type": "Task"
         },
         {
           "id": 6,
-          "name": "Onboarding Process Complete",
-          "description": "The customer onboarding process is complete.",
+          "name": "Account Activation",
+          "description": "Account is activated after the call.",
           "owner": "Implementation Specialist",
           "type": "End"
         }
@@ -82,43 +82,47 @@
       "bottlenecks": [
         {
           "step_name": "Support Creates Account",
-          "reason": "The description states that Support manually creates the customer's account in three different systems, indicating a slow and error-prone process."
+          "reason": "Context states 'Support team manually creates the customer's account in three different systems', indicating a time-consuming and error-prone step."
         },
         {
-          "step_name": "Implementation Specialist Schedules Call",
-          "reason": "The context implies that the implementation specialist may not receive notifications, leading to potential delays in the onboarding process."
+          "step_name": "Handover from Support to Implementation Specialist",
+          "reason": "The description implies a potential delay between steps 4 and 5 without specifying a clear trigger or SLA, suggesting a possible bottleneck."
         }
       ],
       "optimizations": [
         {
           "target_step_name": "Support Creates Account",
-          "suggestion": "Automate the account creation process.",
-          "rationale": "Replaces the slow and error-prone manual process with an automated system, reducing errors and speeding up the onboarding process.",
+          "suggestion": "Automate account creation in all systems.",
+          "rationale": "Replaces the manual creation of accounts with an automated system, reducing errors and speeding up the process.",
           "type": "Automation"
         },
         {
-          "target_step_name": "Implementation Specialist Schedules Call",
-          "suggestion": "Implement a notification system for the implementation specialist.",
-          "rationale": "Addresses the potential delay caused by lack of notifications, ensuring that the implementation specialist receives timely updates and the onboarding process proceeds smoothly.",
+          "target_step_name": "Handover from Support to Implementation Specialist",
+          "suggestion": "Implement automated notification from Support to Implementation Specialist upon account creation.",
+          "rationale": "Addresses the implied delay between steps 4 and 5 by creating a clear trigger, potentially reducing wait time.",
           "type": "Process Improvement/Automation"
         }
       ],
       "kpis": [
         {
           "name": "Onboarding Cycle Time",
-          "description": "Total time from 'Sales Sends Welcome Email' (Step 1) to 'Onboarding Process Complete' (Step 6)."
+          "description": "Total time from 'Sales Sends Welcome Email' (Step 1) to 'Account Activation' (Step 6)."
         },
         {
           "name": "Account Creation Time",
           "description": "Time taken specifically for the 'Support Creates Account' step (Step 2)."
         },
         {
-          "name": "Implementation Call Response Rate",
-          "description": "Percentage of customers responding to the implementation specialist's call within a specified timeframe."
+          "name": "Implementation Specialist Call Time",
+          "description": "Time taken for the 'Implementation Specialist Calls Customer' step (Step 5)."
         },
         {
-          "name": "Onboarding Process Accuracy Rate",
-          "description": "Percentage of customers completing the onboarding process without errors (correct account creation, timely implementation call)."
+          "name": "On-Time Activation Rate",
+          "description": "Percentage of accounts activated by the promised date."
+        },
+        {
+          "name": "Account Creation Accuracy Rate",
+          "description": "Percentage of accounts created without errors (correct information, correct systems)."
         }
       ]
     }
@@ -128,71 +132,78 @@
     "analysis_type": "pareto_fishbone",
     "validation_passed": true,
     "validation_errors": [],
-    "quality_score": 3,
-    "judge_reasoning": "The LLM accurately categorizes the root causes into a fishbone diagram. However, its Pareto analysis incorrectly places the 'Inadequate RAM in Testing Environments' (an infrastructure issue) in the 'useful_many' instead of the 'vital_few', failing to identify it as a dominant source as specified by the ground truth.",
+    "quality_score": 2,
+    "judge_reasoning": "The LLM partially categorized root causes correctly in the fishbone but critically missed 'potential memory leaks' under Methods. More significantly, its Pareto analysis failed to identify 'technical debt (memory leaks)' and 'infrastructure issues (QA environment)' as the 'vital few' as explicitly required by the ground truth summary.",
     "model_output": {
-      "problem_statement": "Software Crashing Issues",
+      "problem_statement": "Software crashes when exporting large reports",
       "fishbone": {
         "Methods": [
-          "Insufficient Charting Library Documentation",
-          "Inadequate Memory Management Best Practices"
+          "Inadequate testing",
+          "Insufficient documentation"
         ],
         "Machines": [
-          "Inadequate RAM in Testing Environments"
+          "Insufficient RAM in testing environments"
         ],
         "Materials": [],
         "Manpower": [
-          "Lack of Junior Developer Training",
-          "Inadequate QA Team Expertise"
+          "Junior developers' lack of memory management skills",
+          "Inadequate training"
         ],
         "Measurement": [
-          "Inaccurate Bug Reporting"
+          "Inaccurate testing"
         ],
-        "Environment": []
+        "Environment": [
+          "Resource constraints"
+        ]
       },
       "pareto_analysis": {
         "vital_few": [
           {
-            "cause": "Lack of Junior Developer Training",
-            "impact_score": 55,
+            "cause": "Junior developers' lack of memory management skills",
+            "impact_score": 50,
             "category": "Manpower"
           },
           {
-            "cause": "Insufficient Charting Library Documentation",
+            "cause": "Inadequate testing",
             "impact_score": 30,
             "category": "Methods"
           }
         ],
         "useful_many": [
           {
-            "cause": "Inadequate RAM in Testing Environments",
+            "cause": "Insufficient RAM in testing environments",
             "impact_score": 10,
             "category": "Machines"
           },
           {
-            "cause": "Inadequate Memory Management Best Practices",
-            "impact_score": 3,
-            "category": "Methods"
+            "cause": "Inadequate training",
+            "impact_score": 5,
+            "category": "Manpower"
           },
           {
-            "cause": "Inadequate QA Team Expertise",
+            "cause": "Inaccurate testing",
+            "impact_score": 3,
+            "category": "Measurement"
+          },
+          {
+            "cause": "Resource constraints",
             "impact_score": 2,
-            "category": "Manpower"
+            "category": "Environment"
           }
         ],
-        "analysis_summary": "The analysis suggests that 'Lack of Junior Developer Training' and 'Insufficient Charting Library Documentation' collectively account for an estimated 85% of the impact, highlighting the importance of addressing these root causes to mitigate software crashing issues."
+        "analysis_summary": "The analysis suggests that 'Junior developers' lack of memory management skills' and 'Inadequate testing' collectively account for an estimated 80% of the impact, in line with the 80/20 principle."
       },
       "action_plan": [
         {
-          "target_cause": "Lack of Junior Developer Training",
-          "action_suggestion": "Develop targeted training program focusing on memory management best practices and charting library usage.",
-          "rationale": "Addresses the primary driver identified (Manpower issue mentioned in context) by equipping junior developers with necessary skills to prevent software crashes.",
+          "target_cause": "Junior developers' lack of memory management skills",
+          "action_suggestion": "Develop targeted training program",
+          "rationale": "Addresses the primary driver identified by providing developers with necessary skills to manage memory effectively.",
           "potential_impact": "High"
         },
         {
-          "target_cause": "Insufficient Charting Library Documentation",
-          "action_suggestion": "Standardize and enhance charting library documentation, including memory management guidelines and troubleshooting tips.",
-          "rationale": "Tackles the second major contributor (Methods issue described as...) by ensuring developers have easy access to relevant information, reducing the likelihood of software crashes.",
+          "target_cause": "Inadequate testing",
+          "action_suggestion": "Standardize process documentation and testing procedures",
+          "rationale": "Tackles the second major contributor by ensuring that testing environments accurately reflect production environments.",
           "potential_impact": "High"
         }
       ]
@@ -203,10 +214,10 @@
     "analysis_type": "system_thinking",
     "validation_passed": true,
     "validation_errors": [],
-    "quality_score": 2,
-    "judge_reasoning": "The LLM correctly extracted several elements and causal links from the prompt, but significantly failed on identifying the correct system archetype. It labeled the archetype as 'Shifting the Burden' when the ground truth specifies 'Limits to Growth', which is a major conceptual error for system dynamics. Additionally, its description of the reinforcing loop was somewhat muddled, incorporating negative outcomes.",
+    "quality_score": 3,
+    "judge_reasoning": "The LLM correctly identified the 'Limits to Growth' archetype, which is a key part of the ground truth. However, its 'feedback_loops' and 'causal_links' sections failed to accurately represent the reinforcing and balancing loops as closed systems, instead presenting them as linear chains and missing some critical connections described in the prompt and ground truth.",
     "model_output": {
-      "summary": "Our startup is facing a dynamic problem of growth, with increasing marketing spend, user acquisition, feature requests, development complexity, and user frustration.",
+      "summary": "Our startup is facing challenges in balancing growth and quality as we increase marketing spend, leading to increased complexity and bugs.",
       "elements": [
         {
           "name": "Marketing Spend",
@@ -221,12 +232,8 @@
           "type": "Variable"
         },
         {
-          "name": "Development Complexity",
-          "type": "Variable"
-        },
-        {
-          "name": "User Frustration",
-          "type": "Variable"
+          "name": "Developers",
+          "type": "Stock"
         },
         {
           "name": "Product Quality",
@@ -237,18 +244,22 @@
           "type": "Variable"
         },
         {
-          "name": "Customer Satisfaction",
+          "name": "User Satisfaction",
           "type": "Variable"
+        },
+        {
+          "name": "Customer Retention",
+          "type": "Stock"
         }
       ],
       "feedback_loops": [
         {
-          "name": "R1",
-          "description": "Increased marketing spend leads to more users, which leads to more feature requests, causing development complexity and user frustration."
+          "loop_name": "R1",
+          "description": "As we increase marketing spend, we get more users (R1). More users lead to more feature requests (R1)."
         },
         {
-          "name": "B1",
-          "description": "Increased development complexity leads to more bugs, causing user frustration and potentially leading to user churn."
+          "loop_name": "B1",
+          "description": "Increased complexity leads to more bugs (B1), which slows down development and frustrates users, causing some to leave (B1)."
         }
       ],
       "causal_links": [
@@ -257,7 +268,7 @@
           "to": "Users",
           "polarity": "+",
           "loop_name": "R1",
-          "description": "As marketing spend increases, we get more users."
+          "description": "Increasing marketing spend leads to more users."
         },
         {
           "from": "Users",
@@ -268,45 +279,69 @@
         },
         {
           "from": "Feature Requests",
-          "to": "Development Complexity",
+          "to": "Developers",
           "polarity": "+",
           "loop_name": "R1",
-          "description": "More feature requests lead to development complexity."
+          "description": "More feature requests require hiring more developers."
         },
         {
-          "from": "Development Complexity",
-          "to": "Bugs",
+          "from": "Developers",
+          "to": "Product Quality",
           "polarity": "+",
-          "loop_name": "B1",
-          "description": "Increased development complexity leads to more bugs."
+          "loop_name": "R1",
+          "description": "More developers improve product quality."
+        },
+        {
+          "from": "Product Quality",
+          "to": "User Satisfaction",
+          "polarity": "+",
+          "loop_name": "R1",
+          "description": "Improved product quality increases user satisfaction."
+        },
+        {
+          "from": "User Satisfaction",
+          "to": "Customer Retention",
+          "polarity": "+",
+          "loop_name": "R1",
+          "description": "Higher user satisfaction leads to better customer retention."
         },
         {
           "from": "Bugs",
-          "to": "User Frustration",
-          "polarity": "+",
-          "loop_name": "B1",
-          "description": "More bugs lead to user frustration."
-        },
-        {
-          "from": "User Frustration",
-          "to": "User Churn",
+          "to": "Development Speed",
           "polarity": "-",
           "loop_name": "B1",
-          "description": "User frustration can lead to user churn."
+          "description": "Increased bugs slow down development."
+        },
+        {
+          "from": "Development Speed",
+          "to": "User Satisfaction",
+          "polarity": "-",
+          "loop_name": "B1",
+          "description": "Slower development frustrates users."
+        },
+        {
+          "from": "User Satisfaction",
+          "to": "Customer Retention",
+          "polarity": "-",
+          "loop_name": "B1",
+          "description": "Lower user satisfaction leads to customer churn."
         }
       ],
-      "system_archetype": "Shifting the Burden",
+      "system_archetype": "Limits to Growth",
       "leverage_points": [
         {
-          "point": "Reduce Development Complexity",
+          "point_name": "Optimize Marketing Spend",
+          "description": "Find the right balance between marketing spend and quality.",
           "impact": "High"
         },
         {
-          "point": "Improve Product Quality",
+          "point_name": "Prioritize Bug Fixing",
+          "description": "Address bugs promptly to maintain user satisfaction and retention.",
           "impact": "Medium"
         },
         {
-          "point": "Enhance User Support",
+          "point_name": "Invest in Developer Capacity",
+          "description": "Increase developer capacity to improve product quality and development speed.",
           "impact": "Low"
         }
       ],
@@ -319,7 +354,7 @@
     "validation_passed": true,
     "validation_errors": [],
     "quality_score": 5,
-    "judge_reasoning": "The LLM accurately identified all core differentiators as leverage points, with appropriate rationales, including the specific mention of 'proprietary' for the NexaScore AI engine. It correctly kept the 'feedback_loops' array empty as required by the ground truth.",
+    "judge_reasoning": "The LLM output perfectly matched the requirement for an empty 'feedback_loops' array. It also correctly identified the 'NexaScore AI engine' as a leverage point and provided an excellent rationale highlighting its proprietary and competitive advantage, as stipulated in the ground truth.",
     "model_output": {
       "elements": [
         {
@@ -335,20 +370,20 @@
           "type": "Variable"
         },
         {
+          "name": "NexaFlow Capital",
+          "type": "Stock"
+        },
+        {
           "name": "Digital-first financial services company",
           "type": "Stock"
         },
         {
-          "name": "Financial services",
-          "type": "Stock"
+          "name": "AI engine for real-time credit scoring",
+          "type": "Variable"
         },
         {
-          "name": "AI engine",
-          "type": "Stock"
-        },
-        {
-          "name": "Blockchain",
-          "type": "Stock"
+          "name": "Blockchain-audited transaction trails",
+          "type": "Variable"
         }
       ],
       "feedback_loops": [],
@@ -369,22 +404,6 @@
           "intervention": "Market the transparency of blockchain-audited trails",
           "rationale": "This feature directly addresses the 'unprecedented transparency' value proposition.",
           "expected_outcome": "Increase trust and adoption of DeFi payment services."
-        },
-        {
-          "point_name": "AI-driven investment advisory",
-          "potential_impact_rank": "Medium",
-          "target_element_or_loop": "AI-driven investment advisory",
-          "intervention": "Improve the accuracy of AI-driven investment advisory",
-          "rationale": "This service is a key differentiator that provides a competitive advantage in investment advisory.",
-          "expected_outcome": "Increase client trust and retention."
-        },
-        {
-          "point_name": "Digital-first financial services company",
-          "potential_impact_rank": "Low",
-          "target_element_or_loop": "Digital-first financial services company",
-          "intervention": "Maintain the digital-first strategy",
-          "rationale": "This is a core aspect of the business model.",
-          "expected_outcome": "Maintain market position and competitiveness."
         }
       ]
     }
@@ -395,53 +414,53 @@
     "validation_passed": true,
     "validation_errors": [],
     "quality_score": 2,
-    "judge_reasoning": "The LLM failed to identify the correct system archetype ('Shifting the Burden') and did not explicitly classify 'manually reboot the server' as a 'Short-Term Fix' within its action items. While it correctly identified 'auto-scaling cloud infrastructure' as a 'Long-Term Solution', the core archetypal diagnosis was incorrect, significantly impacting the quality.",
+    "judge_reasoning": "The LLM correctly identified the short-term fix (manual reboot) and long-term solution (auto-scaling) with appropriate rationales. However, it failed to identify the 'Shifting the Burden' archetype as specified by the ground truth, instead classifying it as 'Limits to Growth', which is a significant error given the specific archetypal analysis requested.",
     "model_output": {
-      "problem_diagnosis": "Server overloads and crashes during website traffic spikes, causing 15 minutes of downtime.",
+      "problem_diagnosis": "Server overload during sales leads to frequent downtime",
       "system_archetype": {
         "name": "Limits to Growth",
-        "explanation": "The server overloading and crashing is a recurring problem that occurs during traffic spikes, indicating that the current infrastructure is unable to handle increased demand. This is a classic example of the 'Limits to Growth' archetype, where the system is unable to adapt to increasing inputs or demands, leading to a bottleneck. The manual reboot by an engineer is a temporary fix, but it does not address the root cause of the problem.",
+        "explanation": "The company's server overloading during sales indicates a fundamental limitation in its current infrastructure, which is unable to handle increased demand. This is a recurring problem pattern, where the server crashes every time traffic spikes, indicating a clear need for a long-term solution to scale the infrastructure. The text mentions an urgent need to move to an auto-scaling cloud infrastructure, which is a fundamental change to address this root cause.",
         "leverage_points": [
           {
-            "point": "Inadequate infrastructure to handle high traffic"
+            "point": "Current server infrastructure"
           },
           {
-            "point": "Manual reboot as a temporary fix"
+            "point": "Need for auto-scaling cloud infrastructure"
           }
         ]
       },
       "actions": [
         {
-          "action_name": "Implement Auto-Scaling Cloud Infrastructure",
+          "action_name": "Implement Manual Reboot Process",
+          "type": "Short-Term Fix",
+          "rationale": "The text mentions that engineers manually reboot the server to address the immediate issue, which is a temporary measure to mitigate the problem. This action addresses the immediate symptom of the server crashing but does not address the underlying infrastructure issue.",
+          "impact": "Medium",
+          "effort": "Low",
+          "kpis": [
+            "Server uptime",
+            "Frequency of manual reboots"
+          ]
+        },
+        {
+          "action_name": "Develop and Implement Auto-Scaling Cloud Infrastructure",
           "type": "Long-Term Solution",
-          "rationale": "This action addresses the root cause of the problem by providing the necessary infrastructure to handle high traffic. It will also eliminate the need for manual reboots, reducing downtime and improving system reliability.",
+          "rationale": "The text explicitly mentions the need to move to an auto-scaling cloud infrastructure, which is a fundamental change to address the root cause of the server overloading. This action addresses the underlying infrastructure issue and has a lasting impact on the company's ability to handle increased demand.",
           "impact": "High",
           "effort": "High",
           "kpis": [
-            "Uptime percentage",
-            "Mean Time To Recover (MTTR)"
+            "Server capacity utilization",
+            "Time to scale up/down infrastructure"
           ]
         },
         {
-          "action_name": "Implement Load Balancing",
-          "type": "Long-Term Solution",
-          "rationale": "This action will help distribute traffic across multiple servers, reducing the load on individual servers and preventing overloading. It will also improve system reliability and reduce downtime.",
-          "impact": "Medium",
-          "effort": "Medium",
-          "kpis": [
-            "Uptime percentage",
-            "Average response time"
-          ]
-        },
-        {
-          "action_name": "Implement Monitoring and Alerting Tools",
+          "action_name": "Prioritize Urgent Feature Requests",
           "type": "Short-Term Fix",
-          "rationale": "This action will help identify the cause of the problem more quickly, allowing for faster resolution and minimizing downtime. However, it does not address the root cause of the problem and is only a temporary fix.",
-          "impact": "Low",
+          "rationale": "The text mentions that urgent feature requests are being prioritized over implementing the auto-scaling cloud infrastructure. This action addresses an immediate need but does not address the underlying infrastructure issue and may further exacerbate the problem.",
+          "impact": "Medium",
           "effort": "Low",
           "kpis": [
-            "Mean Time To Detect (MTTD)",
-            "Mean Time To Resolve (MTTR)"
+            "Feature request backlog",
+            "Time spent on urgent features"
           ]
         }
       ]
