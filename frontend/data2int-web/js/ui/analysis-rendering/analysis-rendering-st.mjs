@@ -510,364 +510,235 @@ function renderParetoFishbonePage(container, data) {
 
 /**
  * RENDERER: System Thinking Analysis
- * - NEW (v3): This renderer is now flexible.
- * - It checks if `system_archetype` exists. If not, it assumes a "research_plan"
- * and displays `focus_areas` instead of `leverage_points` and archetypes.
- * - FIX (v4): Added checks for loop.type, finalFocusAreas, and system_archetype before access.
- * - FIX (v5): Added check for "Unanalyzable" state.
+ * - NEW (v5 - Comprehensive): This renderer is completely overhauled to handle
+ *   the rich JSON output from the new comprehensive system mapping prompt.
+ * - It creates a multi-tab view to explore the deep analysis.
  */
 function renderSystemThinkingPage(container, data) {
     container.innerHTML = ""; // Clear the loading indicator
 
-    // --- Validation for the flexible structure ---
-    if (!data || !data.summary || !data.elements || !data.causal_links ||
-        (data.system_archetype === undefined && data.focus_areas === undefined)) {
-        console.error("Incomplete data passed to renderSystemThinkingPage (v3):", data);
-        container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render results.</div>`;
+    // --- Validation for the comprehensive new structure ---
+    if (!data || !Array.isArray(data.concepts) || !Array.isArray(data.relationships) || !Array.isArray(data.archetypes) || !Array.isArray(data.leverage_points)) {
+        console.error("Incomplete data passed to renderSystemThinkingPage (v5):", data);
+        container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. The AI response is missing key fields like concepts, relationships, archetypes, or leverage_points.</div>`;
         dom.$("analysisActions").classList.add("hidden");
         return;
     }
     
-    // --- NEW CHECK FOR UNANALYZABLE TEXT ---
-    // If the AI returns no elements AND (no leverage points AND no focus areas), it's unanalyzable.
-    if (data.elements.length === 0 && (!data.leverage_points || data.leverage_points.length === 0) && (!data.focus_areas || data.focus_areas.length === 0)) {
-        console.warn("Data is unanalyzable. Displaying summary as error.");
-        container.innerHTML = `<div class="p-4 text-center text-yellow-300">
-                                 <h4 class="text-xl font-bold mb-3">Analysis Incomplete</h4>
-                                 <p class="text-white/80">${data.summary}</p>
-                                 <p class="text-sm text-white/70 mt-2">Please try again with text describing a business, a system problem, or a research plan.</p>
-                               </div>`;
-        dom.$("analysisActions").classList.add("hidden"); // Hide save buttons
-        return; // Stop rendering
-    }
-    // --- END NEW CHECK ---
-
-    // Destructure all possible fields
+    // Destructure all new fields for clarity
     const {
-        elements,
-        feedback_loops,
-        summary,
-        causal_links,
-        system_archetype,
-        focus_areas,
-        leverage_points
+        concepts,
+        relationships,
+        goals,
+        stakeholders,
+        constraints,
+        assumptions,
+        missing_factors,
+        leverage_points,
+        second_order_effects,
+        archetypes,
+        feedback_loops
     } = data;
 
-    // Determine which mode we are in
-    // A research model is identified by having `focus_areas` and no `system_archetype`.
-    const isResearchModel = (!!focus_areas && !system_archetype);
-    // Use leverage_points OR focus_areas. Ensure finalFocusAreas is an array.
-    const finalFocusAreas = focus_areas || leverage_points || [];
-
-    // --- Create Tab Navigation (6 Tabs) ---
+    // --- Create Tab Navigation (New Tabs for Deep Analysis) ---
     const tabNav = document.createElement("div");
     tabNav.className = "flex flex-wrap border-b border-white/20 -mx-6 px-6";
-    // Customize tab name based on input type
-    const focusTabName = isResearchModel ? "⚡ Key Research Questions" : "⚡ Elements & Leverage";
-    const loopTabName = (feedback_loops && feedback_loops.length > 0) ? "🔄 Feedback Loops" : "🔗 Causal Links (Hypotheses)"; // <-- Use feedback_loops to decide name
     tabNav.innerHTML = `
         <button class="analysis-tab-btn active" data-tab="dashboard">📊 Dashboard</button>
-        <button class="analysis-tab-btn" data-tab="diagram">🗺️ Causal Diagram</button>
-        <button class="analysis-tab-btn" data-tab="network">🕸️ Network</button>
-        <button class="analysis-tab-btn" data-tab="loops">${loopTabName}</button>
-        <button class="analysis-tab-btn" data-tab="focus">${focusTabName}</button>
-        <button class="analysis-tab-btn" data-tab="learn">🎓 Learn System Thinking</button>
+        <button class="analysis-tab-btn" data-tab="network">🕸️ System Map</button>
+        <button class="analysis-tab-btn" data-tab="variables">🔬 Variables</button>
+        <button class="analysis-tab-btn" data-tab="relations">🔗 Relationships</button>
+        <button class="analysis-tab-btn" data-tab="loops">🔄 Loops & Archetypes</button>
+        <button class="analysis-tab-btn" data-tab="strategy">🎯 Strategic Context</button>
+        <button class="analysis-tab-btn" data-tab="leverage">⚡ Leverage Points</button>
+        <button class="analysis-tab-btn" data-tab="learn">🎓 Learn</button>
     `;
     container.appendChild(tabNav);
 
-    // --- Create Tab Panels (6 Panels) ---
+    // --- Create Tab Panels ---
     const tabContent = document.createElement("div");
     container.appendChild(tabContent);
     tabContent.innerHTML = `
         <div id="dashboardPanel" class="analysis-tab-panel active"></div>
-        <div id="diagramPanel" class="analysis-tab-panel"></div>
         <div id="networkPanel" class="analysis-tab-panel"></div>
+        <div id="variablesPanel" class="analysis-tab-panel"></div>
+        <div id="relationsPanel" class="analysis-tab-panel"></div>
         <div id="loopsPanel" class="analysis-tab-panel"></div>
-        <div id="focusPanel" class="analysis-tab-panel"></div>
+        <div id="strategyPanel" class="analysis-tab-panel"></div>
+        <div id="leveragePanel" class="analysis-tab-panel"></div>
         <div id="learnPanel" class="analysis-tab-panel"></div>
     `;
 
     // --- 1. Populate Dashboard Panel ---
     const dashboardPanel = dom.$("dashboardPanel");
+    let dashboardHtml = `<div class="p-4 space-y-6">
+        <h3 class="text-2xl font-bold mb-4 text-center">System Analysis Dashboard</h3>`;
 
-    // Find the top focus area/leverage point
-    let topFocusHtml = "";
-    if (finalFocusAreas && finalFocusAreas.length > 0) { // <-- Added check for finalFocusAreas
-        // Find the first item (either ranked "High" or just the first in the list)
-        const topFocus = [...finalFocusAreas].sort((a, b) => { // <-- Use spread to avoid mutating original
-            const order = {
-                "High": 1,
-                "Medium": 2,
-                "Low": 3
-            };
-            // Handle both 'impact' and 'potential_impact_rank' keys
-            const rankA = order[a.potential_impact_rank || a.impact] || 4;
-            const rankB = order[b.potential_impact_rank || b.impact] || 4;
-            return rankA - rankB;
-        })[0];
-
-        const title = isResearchModel ? "Top Research Question" : "Top Leverage Point";
-        // Handle both 'description'/'intervention' and 'area_name'/'point_name'
-        const desc = topFocus.description || topFocus.intervention || "No description provided.";
-        const pointName = topFocus.area_name || topFocus.point_name || "Unnamed Point";
-
-        topFocusHtml = `
-            <div class="prescription-card border-l-4 border-red-500">
-                <h3 class="text-lg font-bold text-red-300">${title}</h3>
-                <p class="text-xl font-semibold mt-1">${pointName}</p>
-                <p class="text-sm text-white/80 mt-2"><strong>Description:</strong> ${desc}</p>
-            </div>`;
-    }
-
-    // Find the archetype (if it exists)
-    let archetypeHtml = "";
-    // Check for archetype *object* and *name property*
-    if (system_archetype && typeof system_archetype === 'object' && system_archetype.name) {
-        archetypeHtml = `
-            <div class="archetype-card">
-                <h3 class="text-lg font-bold text-indigo-300">Dominant System Archetype</h3>
-                <p class="text-2xl font-semibold mt-1">${system_archetype.name}</p>
-                <p class="text-sm text-white/80 mt-2 italic">${system_archetype.description || 'No description provided.'}</p>
-            </div>`;
-    } else if (isResearchModel) {
-        // If it's a research model, create a simpler card
-        archetypeHtml = `
-            <div class="archetype-card">
-                <h3 class="text-lg font-bold text-indigo-300">Analysis Type</h3>
-                <p class="text-2xl font-semibold mt-1">Hypothesis Model</p>
-                <p class="text-sm text-white/80 mt-2 italic">The system is a set of hypothesized causal links to be tested, not a dynamic problem archetype.</p>
-            </div>`;
-    } else {
-        // Fallback if archetype is null/undefined but not a research model
-        archetypeHtml = `
-            <div class="archetype-card">
-                <h3 class="text-lg font-bold text-indigo-300">Dominant System Archetype</h3>
-                <p class="text-2xl font-semibold mt-1">Not Identified</p>
-                <p class="text-sm text-white/80 mt-2 italic">No single dominant archetype was identified from the text.</p>
-            </div>`;
-    }
-
-    dashboardPanel.innerHTML = `
-        <div class="p-4 space-y-6">
-            <h3 class="text-2xl font-bold mb-4 text-center">System Analysis Dashboard</h3>
-            <blockquote class="p-4 italic border-l-4 border-gray-500 bg-black/20 text-white/90 text-sm">
-                <strong>Analysis Summary:</strong> ${summary}
-            </blockquote>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                ${archetypeHtml}
-                ${topFocusHtml}
-            </div>
+    // Top Archetype
+    if (archetypes && archetypes.length > 0) {
+        dashboardHtml += `
+        <div class="archetype-card">
+            <h3 class="text-lg font-bold text-indigo-300">Dominant System Archetype</h3>
+            <p class="text-2xl font-semibold mt-1">${archetypes[0].name}</p>
+            <p class="text-sm text-white/80 mt-2 italic">${archetypes[0].description || 'No description.'}</p>
         </div>`;
-
-    // --- 2. Populate Causal Loop Diagram Panel ---
-    const diagramPanel = dom.$("diagramPanel");
-    const diagramTitle = isResearchModel ? "Hypothesis Model Diagram" : "Causal Loop Diagram (CLD)";
-    diagramPanel.innerHTML = `
-        <div class="p-4">
-            <h3 class="text-2xl font-bold mb-4 text-center">${diagramTitle}</h3>
-            <p class="text-sm text-white/70 text-center mb-4 italic">This diagram shows the causal relationships between system elements.</p>
-            <div id="cldGraphContainer" class="w-full min-h-[600px] flex justify-center items-center bg-black/10 rounded-lg">
-                <p class="text-white/70">Rendering diagram...</p>
-            </div>
-            <div id="cldKey" class="mt-4 text-xs text-white/70 text-center space-x-4"></div>
-        </div>`;
-
-    try {
-        // This assumes buildDotString is available in the global scope and has the fix
-        const dotString = buildDotString(elements, causal_links, feedback_loops);
-        const viz = new Viz();
-        viz.renderSVGElement(dotString)
-            .then(svgElement => {
-                const container = dom.$("cldGraphContainer");
-                container.innerHTML = "";
-                svgElement.style.width = "100%";
-                svgElement.style.height = "auto";
-                container.appendChild(svgElement);
-
-                // Add key
-                const keyContainer = dom.$("cldKey");
-                let keyHtml = "";
-                if (feedback_loops && feedback_loops.length > 0) {
-                    // --- START FIX ---
-                    // Check for loop types again with safety
-                    const hasR = feedback_loops.some(l => l && l.type && typeof l.type === 'string' && l.type.toLowerCase() === 'reinforcing');
-                    const hasB = feedback_loops.some(l => l && l.type && typeof l.type === 'string' && l.type.toLowerCase() === 'balancing');
-                    // --- END FIX ---
-                    if (hasR) keyHtml += `<span><span class="inline-block w-3 h-3 rounded-full bg-green-400 mr-1"></span> Reinforcing Loop</span> `;
-                    if (hasB) keyHtml += `<span><span class="inline-block w-3 h-3 rounded-full bg-yellow-400 mr-1"></span> Balancing Loop</span>`;
-                }
-                keyHtml += `<span><span class="inline-block w-3 h-0.5 bg-white mr-1" style="transform: translateY(-2px);"></span> (+) Same Direction</span> <span><span class="inline-block w-3 h-0.5 bg-white mr-1" style="transform: translateY(-2px); clip-path: polygon(0% 0%, 75% 0%, 75% 100%, 0% 100%);">T</span> (-) Opposite Direction</span>`;
-                keyContainer.innerHTML = keyHtml;
-            })
-            .catch(error => {
-                console.error("Viz.js rendering error:", error);
-                dom.$("cldGraphContainer").innerHTML = `<p class="text-red-400">Error rendering diagram: ${error.message}</p>`;
-            });
-    } catch (e) {
-        console.error("Error creating DOT string or initializing Viz.js:", e);
-        dom.$("cldGraphContainer").innerHTML = `<p class="text-red-400">Error initializing diagram: ${e.message}</p>`;
     }
 
-    // --- 3. Populate Network Tab ---
-    renderSystemNetworkTab(elements, causal_links, "networkPanel");
+    // Top Leverage Point
+    if (leverage_points && leverage_points.length > 0) {
+        const topLeverage = [...leverage_points].sort((a,b) => a.level - b.level)[0];
+        dashboardHtml += `
+        <div class="prescription-card border-l-4 border-red-500">
+            <h3 class="text-lg font-bold text-red-300">Top Leverage Point (Level ${topLeverage.level})</h3>
+            <p class="text-xl font-semibold mt-1">${topLeverage.type}</p>
+            <p class="text-sm text-white/80 mt-2"><strong>Recommendation:</strong> ${topLeverage.recommendation}</p>
+        </div>`;
+    }
+    
+    // Summary cards
+    dashboardHtml += `<div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+        <div class="summary-stat-card"><p class="font-bold text-3xl">${concepts.length}</p><p class="text-xs">Variables</p></div>
+        <div class="summary-stat-card"><p class="font-bold text-3xl">${relationships.length}</p><p class="text-xs">Relationships</p></div>
+        <div class="summary-stat-card"><p class="font-bold text-3xl">${feedback_loops.length}</p><p class="text-xs">Feedback Loops</p></div>
+        <div class="summary-stat-card"><p class="font-bold text-3xl">${archetypes.length}</p><p class="text-xs">Archetypes</p></div>
+    </div></div>`;
+    dashboardPanel.innerHTML = dashboardHtml;
 
-    // --- 4. Populate Feedback Loops / Causal Links Panel ---
+    // --- 2. Populate System Map (Network) Panel ---
+    // This is deferred until the tab is clicked, but we set up the container.
+    const networkPanel = dom.$("networkPanel");
+    networkPanel.innerHTML = `<div class="p-4"><h3 class="text-2xl font-bold mb-4 text-center">System Map</h3><div id="systemNetworkChart" class="w-full h-[700px] bg-black/10 rounded-lg"></div></div>`;
+    
+    // --- 3. Populate Variables Panel ---
+    const variablesPanel = dom.$("variablesPanel");
+    let variablesHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">System Variables (Concepts)</h3><div class="overflow-x-auto"><table class="coeff-table styled-table text-sm">
+        <thead><tr><th>Name</th><th>Type</th><th>Leverage Lvl (1-12)</th><th>Description</th></tr></thead><tbody>`;
+    concepts.forEach(c => {
+        variablesHtml += `<tr>
+            <td class="font-semibold">${c.name}</td>
+            <td>${c.type}</td>
+            <td class="text-center">${c.leverage_level}</td>
+            <td class="text-white/80">${c.description}</td>
+        </tr>`;
+    });
+    variablesHtml += `</tbody></table></div></div>`;
+    variablesPanel.innerHTML = variablesHtml;
+    
+    // --- 4. Populate Relationships Panel ---
+    const relationsPanel = dom.$("relationsPanel");
+    let relationsHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">Causal Relationships</h3><div class="overflow-x-auto"><table class="coeff-table styled-table text-sm">
+        <thead><tr><th>From</th><th>To</th><th>Polarity</th><th>Strength</th><th>Delay</th><th>Evidence</th></tr></thead><tbody>`;
+    relationships.forEach(r => {
+        relationsHtml += `<tr>
+            <td class="font-semibold">${r.from}</td>
+            <td class="font-semibold">${r.to}</td>
+            <td class="text-center font-bold ${r.polarity === '+' ? 'text-green-400' : 'text-red-400'}">${r.polarity}</td>
+            <td>${r.strength}</td>
+            <td>${r.delay}</td>
+            <td class="text-white/80 italic">"${r.evidence}"</td>
+        </tr>`;
+    });
+    relationsHtml += `</tbody></table></div></div>`;
+    relationsPanel.innerHTML = relationsHtml;
+    
+    // --- 5. Populate Loops & Archetypes Panel ---
     const loopsPanel = dom.$("loopsPanel");
-    let loopsHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4 text-center">${loopTabName}</h3><div class="space-y-6">`;
-    if (feedback_loops && feedback_loops.length > 0) {
-        // Mode A: Dynamic Problem
-        feedback_loops.forEach((loop) => {
-            // --- START FIX ---
-            // Check if loop and loop.type are valid before calling toLowerCase()
-            const loopType = (loop && loop.type && typeof loop.type === 'string') ? loop.type.toLowerCase() : 'unknown';
-            const isReinforcing = loopType === "reinforcing";
-            // --- END FIX ---
-
-            const loopIcon = isReinforcing ? "📈" : "⚖️";
-            const loopColor = isReinforcing ? "border-green-400" : "border-yellow-400";
-            const elementsList = Array.isArray(loop.elements) ? loop.elements.join(", ") : 'Elements not specified';
-            const loopTypeName = loop.type || 'Type N/A'; // <-- Use safe value for display
-            const loopName = loop.name || loop.loop_name || "Unnamed Loop"; // <-- Handle missing name
-
-            loopsHtml += `
-                <div class="bg-black/20 p-4 rounded-lg border-l-4 ${loopColor}">
-                    <h4 class="text-lg font-bold flex items-center gap-2">${loopIcon} ${loopName} <span class="text-xs font-light text-white/60">(${loopTypeName})</span></h4>
-                    <p class="text-sm text-white/80 my-3 italic"><strong>Causal Chain:</strong> ${loop.description || 'No description provided.'}</p>
-                    <div class="text-xs text-white/60"><strong>Key Elements Involved:</strong> ${elementsList}</div>
-                </div>`;
-        });
-    } else if (isResearchModel && causal_links.length > 0) {
-        // Mode B: Research Plan
-        causal_links.forEach((link) => {
-            loopsHtml += `
-                <div class="bg-black/20 p-4 rounded-lg border-l-4 border-blue-400">
-                    <h4 class="text-lg font-bold flex items-center gap-2">🔗 ${link.description || `${link.from} -> ${link.to}`}</h4>
-                    <p class="text-sm text-white/80 my-3 font-mono"><code>${link.from}</code> --( ${link.polarity} )--> <code>${link.to}</code></p>
-                </div>`;
-        });
-    } else {
-        loopsHtml += `<p class="text-center text-white/70 italic">No feedback loops or causal links were identified from the text.</p>`;
-    }
+    let loopsHtml = `<div class="p-4 space-y-8">`;
+    // Archetypes
+    loopsHtml += `<div><h3 class="text-2xl font-bold mb-4">System Archetypes</h3><div class="space-y-4">`;
+    archetypes.forEach(a => {
+        loopsHtml += `<div class="archetype-card p-4">
+            <h4 class="text-xl font-bold text-indigo-300">${a.name}</h4>
+            <p class="text-sm text-white/80 my-2 italic">${a.description}</p>
+            <p class="text-xs text-white/60"><strong>Dynamic:</strong> ${a.dynamic}</p>
+            <p class="text-xs text-white/60"><strong>Nodes:</strong> ${a.nodes_involved.join(", ")}</p>
+        </div>`;
+    });
     loopsHtml += `</div></div>`;
+    // Feedback Loops
+    loopsHtml += `<div><h3 class="text-2xl font-bold mb-4">Feedback Loops</h3><div class="space-y-4">`;
+    feedback_loops.forEach(l => {
+        const isReinforcing = l.type === 'reinforcing';
+        loopsHtml += `<div class="bg-black/20 p-4 rounded-lg border-l-4 ${isReinforcing ? 'border-green-400' : 'border-yellow-400'}">
+            <h4 class="text-lg font-bold">${isReinforcing ? '📈' : '⚖️'} ${l.type.toUpperCase()} Loop</h4>
+            <p class="text-sm text-white/80 my-2 italic">${l.description}</p>
+            <p class="text-xs text-white/60"><strong>Variables:</strong> ${l.variables.join(" → ")} → ...</p>
+        </div>`;
+    });
+    loopsHtml += `</div></div></div>`;
     loopsPanel.innerHTML = loopsHtml;
-
-    // --- 5. Populate Elements & Focus Panel ---
-    const focusPanel = dom.$("focusPanel");
-    let focusHtml = `<div class="p-4 space-y-8">
-                        <div>
-                            <h3 class="text-2xl font-bold mb-4 text-center">Key System Elements</h3>
-                            <div class="overflow-x-auto">
-                                <table class="coeff-table styled-table text-sm">
-                                    <thead><tr><th>Element Name</th><th>Type</th><th>Role in Model</th></tr></thead>
-                                    <tbody>`;
-    elements.forEach(el => {
-        let description = "A key construct in the model.";
-        if (causal_links.some(l => l.from === el.name) && !causal_links.some(l => l.to === el.name)) {
-            description = "Exogenous Driver (Predictor)";
-        } else if (!causal_links.some(l => l.from === el.name) && causal_links.some(l => l.to === el.name)) {
-            description = "Endogenous Outcome (Result)";
-        } else if (causal_links.some(l => l.from === el.name) && causal_links.some(l => l.to === el.name)) {
-            description = "Mediating Variable (Driver & Outcome)";
-        }
-
-        focusHtml += `<tr>
-                            <td class="font-semibold">${el.name}</td>
-                            <td class="font-mono text-xs">${el.type}</td>
-                            <td class="text-white/70">${description}</td>
-                         </tr>`;
+    
+    // --- 6. Populate Strategic Context Panel ---
+    const strategyPanel = dom.$("strategyPanel");
+    let strategyHtml = `<div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-black/20 p-4 rounded-lg">
+            <h4 class="text-lg font-bold mb-2 text-indigo-300">Goals</h4>
+            <ul class="list-disc list-inside text-sm space-y-1">${goals.map(g => `<li>${g}</li>`).join('')}</ul>
+        </div>
+        <div class="bg-black/20 p-4 rounded-lg">
+            <h4 class="text-lg font-bold mb-2 text-indigo-300">Stakeholders</h4>
+            <ul class="list-disc list-inside text-sm space-y-1">${stakeholders.map(s => `<li>${s}</li>`).join('')}</ul>
+        </div>
+        <div class="bg-black/20 p-4 rounded-lg">
+            <h4 class="text-lg font-bold mb-2 text-yellow-400">Constraints</h4>
+            <ul class="list-disc list-inside text-sm space-y-1">${constraints.map(c => `<li>${c}</li>`).join('')}</ul>
+        </div>
+        <div class="bg-black/20 p-4 rounded-lg">
+            <h4 class="text-lg font-bold mb-2 text-yellow-400">Assumptions</h4>
+            <ul class="list-disc list-inside text-sm space-y-1">${assumptions.map(a => `<li>${a}</li>`).join('')}</ul>
+        </div>
+        <div class="bg-black/20 p-4 rounded-lg col-span-1 md:col-span-2">
+            <h4 class="text-lg font-bold mb-2 text-red-400">Risks & Second-Order Effects</h4>
+            <p class="text-sm text-white/70 mb-2"><strong>Missing Factors:</strong> ${missing_factors.join(", ")}</p>
+            <ul class="text-sm space-y-2 mt-4">${second_order_effects.map(e => `
+                <li class="border-t border-white/10 pt-2">
+                    <strong>Action:</strong> ${e.action}<br>
+                    <span class="text-green-400"><strong>Immediate:</strong> ${e.immediate}</span> → 
+                    <span class="text-red-400"><strong>Delayed (${e.timeline}):</strong> ${e.delayed}</span>
+                </li>`).join('')}
+            </ul>
+        </div>
+    </div>`;
+    strategyPanel.innerHTML = strategyHtml;
+    
+    // --- 7. Populate Leverage Points Panel ---
+    const leveragePanel = dom.$("leveragePanel");
+    let leverageHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">Leverage Points (after Donella Meadows)</h3><div class="space-y-6">`;
+    [...leverage_points].sort((a,b) => a.level - b.level).forEach(lp => {
+        leverageHtml += `<div class="prescription-card border-l-4" style="border-color: hsl(${lp.level * 25}, 70%, 50%)">
+            <h4 class="text-xl font-bold">Level ${lp.level}: ${lp.type}</h4>
+            <p class="text-sm my-2 text-white/80">${lp.description}</p>
+            <div class="p-3 bg-black/20 rounded mt-3 text-sm">
+                <p><strong>Impact:</strong> <span class="font-semibold">${lp.impact}</span></p>
+                <p><strong>Recommendation:</strong> ${lp.recommendation}</p>
+            </div>
+        </div>`;
     });
-    focusHtml += `</tbody></table></div></div>`;
+    leverageHtml += `</div></div>`;
+    leveragePanel.innerHTML = leverageHtml;
 
-    // Focus Areas / Leverage Points Section
-    focusHtml += `<div><h3 class="text-2xl font-bold mb-4 text-center">${focusTabName}</h3><div class="space-y-6">`;
-    const sortedFocusAreas = [...finalFocusAreas].sort((a, b) => {
-        const order = {
-            "High": 1,
-            "Medium": 2,
-            "Low": 3
-        };
-        const rankA = order[a.potential_impact_rank || a.impact] || 4;
-        const rankB = order[b.potential_impact_rank || b.impact] || 4;
-        return rankA - rankB;
-    });
-    sortedFocusAreas.forEach((point, index) => {
-        const impact = point.potential_impact_rank || point.impact;
-        let borderColor = "border-indigo-400";
-        if (impact === "High") borderColor = "border-red-500";
-        else if (impact === "Medium") borderColor = "border-yellow-500";
-        else if (impact === "Low") borderColor = "border-blue-500";
-
-        const pointName = point.area_name || point.point_name;
-        const pointDesc = point.description || point.intervention;
-        const pointRationale = point.rationale;
-        const pointOutcome = point.expected_outcome;
-
-        focusHtml += `
-            <div class="prescription-card ${borderColor}">
-                 <h4 class="text-xl font-bold">${index + 1}. ${pointName}</h4>
-                 ${impact ? `<p class="text-xs font-semibold my-1 ${borderColor.replace('border-', 'text-')}">${impact}</p>` : ''}
-                 <p class="rationale mt-3"><strong>Description/Intervention:</strong> ${pointDesc}</p>
-                 ${pointRationale ? `<p class="text-sm text-white/80 mt-2 italic"><strong>Rationale:</strong> ${pointRationale}</p>` : ''}
-                 ${pointOutcome ? `<div class="p-3 bg-black/20 rounded mt-3 text-sm"><p><strong>Expected Outcome:</strong> ${pointOutcome}</p></div>` : ''}
-            </div>`;
-    });
-    focusHtml += `</div></div></div>`;
-    focusPanel.innerHTML = focusHtml;
-
-    // --- 6. Populate Learn System Thinking Panel (Unchanged) ---
+    // --- 8. Populate Learn Panel ---
     const learnPanel = dom.$("learnPanel");
     learnPanel.innerHTML = `
     <div class="p-6 space-y-6 text-white/90">
         <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding System Thinking</h3>
-        
         <div class="bg-black/20 p-4 rounded-lg">
             <h4 class="text-lg font-bold mb-2 text-indigo-300">What is System Thinking?</h4>
-            <p class="text-sm text-white/80">System thinking is a holistic approach to analysis that focuses on how a system's constituent parts interrelate and how systems work over time and within the context of larger systems. It contrasts with traditional analysis, which studies systems by breaking them down into their separate elements.</p>
+            <p class="text-sm text-white/80">System thinking is a holistic approach to analysis that focuses on how a system's constituent parts interrelate and how systems work over time and within the context of larger systems. This analysis extracts variables, relationships, and feedback loops to build a comprehensive model of your situation.</p>
         </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-white/5 p-4 rounded-lg border border-white/10">
-                <h4 class="text-lg font-bold mb-2">Key Concepts:</h4>
-                <ul class="list-disc list-inside space-y-2 text-sm">
-                    <li><strong>Interconnectedness:</strong> Elements within a system are interconnected; changing one part affects others.</li>
-                    <li><strong>Feedback Loops:</strong> Circular causal relationships that amplify (reinforcing) or stabilize (balancing) change. </li>
-                    <li><strong>Stocks & Flows:</strong> Stocks are accumulations (like water in a tub); Flows are the rates that change stocks (like the faucet and drain).</li>
-                    <li><strong>Delays:</strong> Time lags between actions and their effects, often causing oscillations or overshoots.</li>
-                    <li><strong>Leverage Points:</strong> Places in a system where a small change can have a large effect.</li>
-                </ul>
-            </div>
-            <div class="bg-white/5 p-4 rounded-lg border border-white/10">
-                <h4 class="text-lg font-bold mb-2">Why Use System Thinking?</h4>
-                 <ul class="list-disc list-inside space-y-1 text-sm">
-                    <li><strong>See the Bigger Picture:</strong> Understand context and connections.</li>
-                    <li><strong>Identify Root Causes:</strong> Move beyond addressing symptoms to find underlying structural issues.</li>
-                    <li><strong>Find High-Leverage Interventions:</strong> Identify points where small efforts yield significant results.</li>
-                    <li><strong>Anticipate Unintended Consequences:</strong> Recognize how changes might ripple through the system.</li>
-                 </ul>
-            </div>
-        </div>
-
-         <details class="styled-details text-sm mt-4" open>
+        <details class="styled-details text-sm mt-4" open>
             <summary class="font-semibold">Common System Archetypes (Recurring Patterns)</summary>
             <div class="bg-black/20 p-4 rounded-b-lg space-y-2">
-                <p><strong>Limits to Growth:</strong> Growth eventually slows or stops due to a limiting factor (a balancing loop).</p>
-                <p><strong>Shifting the Burden:</strong> Using a short-term fix distracts from or undermines a fundamental long-term solution.</p>
-                <p><strong>Fixes that Fail:</strong> A solution creates unintended consequences elsewhere that worsen the original problem later.</p>
-                <p><strong>Tragedy of the Commons:</strong> Individuals overusing a shared resource deplete it for everyone.</p>
+                <p><strong>Limits to Growth:</strong> Growth eventually slows or stops due to a limiting factor.</p>
+                <p><strong>Shifting the Burden:</strong> Using a short-term fix distracts from a fundamental solution.</p>
+                <p><strong>Fixes that Fail:</strong> A solution creates unintended consequences that worsen the original problem.</p>
+                <p><strong>Success to the Successful:</strong> One group gets more resources, leading to even better performance and more resources, starving others.</p>
             </div>
         </details>
-         <p class="text-xs text-center text-white/60 mt-4">This tool analyzes your text to identify elements, causal links, and key focus areas to help you understand the structure of your system.</p>
-    </div>
-    `;
-
-    // --- NEW: Animate the new content ---
-    const newElementsToAnimate = container.querySelectorAll(
-        '.glass-container, .feature-card, .project-card, .kpi-card, .summary-stat-card, .prescription-card, .insight-card, .action-card, .ladder-rung, .dissonance-pole, .cascade-objective, .cascade-goal-card, .st-objective-card, .st-goal-card, .feedback-card, .plotly-chart, .styled-table'
-    );
-    animateElements(newElementsToAnimate);
+    </div>`;
 
     // --- Final Touches ---
-    appState.analysisCache[appState.currentTemplateId] = container.innerHTML; // Cache result
+    appState.analysisCache[appState.currentTemplateId] = container.innerHTML;
 
     // Tab switching logic
     tabNav.addEventListener("click", (e) => {
@@ -879,20 +750,15 @@ function renderSystemThinkingPage(container, data) {
             const targetPanel = dom.$(targetPanelId);
             if (targetPanel) {
                 targetPanel.classList.add("active");
-                // Resize diagram if its tab is clicked
-                if (targetPanelId === "diagramPanel") {
-                    const svg = targetPanel.querySelector("svg");
-                    if (svg) {
-                        // Viz.js SVG should resize automatically
+                if (e.target.dataset.tab === 'network') {
+                    // Render the network chart only when its tab is clicked for the first time
+                    const chartDiv = dom.$('systemNetworkChart');
+                    if (chartDiv && !chartDiv.hasChildNodes()) {
+                        renderSystemNetworkTab(concepts, relationships, 'networkPanel');
+                    } else if (chartDiv) {
+                        Plotly.Plots.resize(chartDiv);
                     }
                 }
-                // NEW: Resize plotly chart if its tab is clicked
-                const chart = targetPanel.querySelector(".plotly-chart");
-                if (chart && typeof Plotly !== 'undefined') {
-                    try { Plotly.Plots.resize(chart); } catch (err) { console.error("Resize err:", err); }
-                }
-            } else {
-                console.warn("Target panel not found:", targetPanelId);
             }
         }
     });
@@ -1123,96 +989,114 @@ function renderLeveragePointsPage(container, data) {
 }
 
 
-
-function renderSystemNetworkTab(elements, causalLinks, containerId) {
+/**
+ * RENDERER: System Network Diagram
+ * - NEW (v2 - Comprehensive): This function is enhanced to visualize the rich
+ *   output from the new system mapping prompt.
+ * - Node size is based on leverage level.
+ * - Node color is based on variable type.
+ * - Edge width is based on relationship strength.
+ * - Edge color is based on polarity.
+ * - FIX (v2.1): Corrected property access in annotation creation from `edge.source`
+ *   to `edge.from`, preventing a TypeError. Added a guard clause.
+ */
+function renderSystemNetworkTab(concepts, relationships, containerId) {
     const container = dom.$(containerId);
     if (!container) return;
-    container.innerHTML = `<div id="systemNetworkChart" class="w-full h-[600px] plotly-chart"></div>`;
-
-    const nodes = elements.map(el => ({ id: el.name, ...el }));
     
-    // Filter out causal links that don't have corresponding nodes
-    const validCausalLinks = causalLinks.filter(link => {
-        const sourceExists = nodes.some(node => node.id === link.from);
-        const targetExists = nodes.some(node => node.id === link.to);
-        return sourceExists && targetExists;
-    });
+    // Ensure the chart container exists
+    let chartDiv = dom.$('systemNetworkChart');
+    if (!chartDiv) {
+        container.innerHTML = `<div id="systemNetworkChart" class="w-full h-[700px] plotly-chart"></div>`;
+        chartDiv = dom.$('systemNetworkChart');
+    }
 
-    const edges = validCausalLinks.map(link => ({ source: link.from, target: link.to, polarity: link.polarity }));
+    const nodes = concepts.map(c => ({ id: c.name, ...c }));
+    
+    // Filter out relationships where the source or target node doesn't exist
+    const validRelationships = relationships.filter(link => 
+        nodes.some(node => node.id === link.from) && nodes.some(node => node.id === link.to)
+    );
 
+    const edges = validRelationships.map(r => ({ source: r.from, target: r.to, ...r }));
+
+    // --- Layout Nodes in a Circle ---
     const positions = {};
-    const nodeMap = new Map(nodes.map(node => [node.id, node]));
-
-    // Create positions for nodes in a circular layout
     nodes.forEach((node, i) => {
         const angle = (i / nodes.length) * 2 * Math.PI;
-        positions[node.id] = { x: nodes.length * 15 * Math.cos(angle), y: nodes.length * 15 * Math.sin(angle) };
+        positions[node.id] = { x: nodes.length * 20 * Math.cos(angle), y: nodes.length * 20 * Math.sin(angle) };
     });
 
-    const edge_x = [];
-    const edge_y = [];
+    // --- Create Edge Traces ---
+    const edge_traces = [];
+    const strengthToWidth = { 'strong': 3, 'medium': 1.5, 'weak': 0.5 };
+    
     edges.forEach(edge => {
         const sourcePos = positions[edge.source];
         const targetPos = positions[edge.target];
         if (sourcePos && targetPos) {
-            edge_x.push(sourcePos.x, targetPos.x, null);
-            edge_y.push(sourcePos.y, targetPos.y, null);
+            edge_traces.push({
+                x: [sourcePos.x, targetPos.x],
+                y: [sourcePos.y, targetPos.y],
+                mode: 'lines',
+                line: {
+                    width: strengthToWidth[edge.strength] || 1,
+                    color: edge.polarity === '+' ? 'rgba(52, 168, 83, 0.6)' : 'rgba(234, 67, 53, 0.6)' // Green for +, Red for -
+                },
+                hoverinfo: 'text',
+                text: `<b>${edge.from} → ${edge.to}</b><br>Polarity: ${edge.polarity}<br>Strength: ${edge.strength}<br>Delay: ${edge.delay}<br>Evidence: <i>${edge.evidence}</i>`
+            });
         }
     });
 
-    const node_x = [];
-    const node_y = [];
-    const node_text = [];
-    const node_color = [];
-    nodes.forEach(node => {
-        const pos = positions[node.id];
-        if (pos) {
-            node_x.push(pos.x);
-            node_y.push(pos.y);
-            node_text.push(`${node.name}<br>Type: ${node.type}`);
-            // Color nodes based on their type for better visual distinction
-            switch (node.type) {
-                case 'Stock': node_color.push('#4285F4'); break; // Google Blue
-                case 'Flow': node_color.push('#34A853'); break; // Google Green
-                case 'Variable': node_color.push('#FBBC05'); break; // Google Yellow
-                case 'Parameter': node_color.push('#EA4335'); break; // Google Red
-                default: node_color.push('grey');
-            }
-        }
-    });
-
-    const edgeTrace = {
-        x: edge_x,
-        y: edge_y,
-        mode: 'lines',
-        line: { width: 1, color: '#888' },
-        hoverinfo: 'none'
+    // --- Create Node Trace ---
+    const typeToColor = {
+        'driver': '#FBBC05',   // Yellow
+        'outcome': '#4285F4',  // Blue
+        'constraint': '#EA4335', // Red
+        'resource': '#34A853'   // Green
     };
 
     const nodeTrace = {
-        x: node_x,
-        y: node_y,
+        x: nodes.map(node => positions[node.id]?.x),
+        y: nodes.map(node => positions[node.id]?.y),
         mode: 'markers+text',
         text: nodes.map(n => n.name),
         textposition: 'bottom center',
         hoverinfo: 'text',
-        hovertext: node_text,
+        hovertext: nodes.map(n => `<b>${n.name}</b><br>Type: ${n.type}<br>Leverage: ${n.leverage_level}<br>Desc: <i>${n.description}</i>`),
         marker: {
-            size: 20,
-            color: node_color,
+            size: nodes.map(n => (13 - n.leverage_level) * 2.5 + 10), // Higher leverage (lower num) = bigger size
+            color: nodes.map(n => typeToColor[n.type] || 'grey'),
             symbol: 'circle'
         }
     };
 
-    Plotly.newPlot('systemNetworkChart', [edgeTrace, nodeTrace], {
-        title: 'System Elements Network',
+    Plotly.newPlot(chartDiv, [...edge_traces, nodeTrace], {
+        title: 'System Map',
         showlegend: false,
         hovermode: 'closest',
         paper_bgcolor: 'rgba(0,0,0,0)',
         plot_bgcolor: 'rgba(0,0,0,0)',
         font: { color: 'white' },
         xaxis: { showgrid: false, zeroline: false, showticklabels: false },
-        yaxis: { showgrid: false, zeroline: false, showticklabels: false }
+        yaxis: { showgrid: false, zeroline: false, showticklabels: false },
+        annotations: validRelationships.map(edge => {
+            const sourcePos = positions[edge.from]; // CORRECTED: from .source to .from
+            const targetPos = positions[edge.to];   // CORRECTED: from .target to .to
+            
+            // Add a guard to prevent errors if a position is somehow not found
+            if (!sourcePos || !targetPos) {
+                return null;
+            }
+
+            return {
+                ax: sourcePos.x, ay: sourcePos.y, axref: 'x', ayref: 'y',
+                x: (sourcePos.x + targetPos.x) / 2, y: (sourcePos.y + targetPos.y) / 2, xref: 'x', yref: 'y',
+                showarrow: true, arrowhead: 2, arrowsize: 1.5, arrowwidth: 1,
+                arrowcolor: edge.polarity === '+' ? 'rgba(52, 168, 83, 0.6)' : 'rgba(234, 67, 53, 0.6)'
+            }
+        }).filter(a => a !== null) // Filter out any null annotations from the guard
     }, { responsive: true });
 }
 
