@@ -12,6 +12,8 @@ services:
     environment:
       OLLAMA_AUTH: false  # Disable authentication
       OLLAMA_MAX_LOADED_MODELS: 3
+      OLLAMA_NUM_PARALLEL: 4
+      OLLAMA_NEW_ENGINE: true
       OLLAMA_ORIGINS: >
         *,https://data2int.com,https://khaled.data2int.com
         https://elijah.data2int.com,https://matt.data2int.com
