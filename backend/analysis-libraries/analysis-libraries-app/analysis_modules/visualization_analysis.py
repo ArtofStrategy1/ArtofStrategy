@@ -15,12 +15,24 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # --- OLLAMA Configuration ---
-OLLAMA_URL = "https://ollama.data2int.com/api/generate"
-OLLAMA_MODEL = "llama3.1:latest" # Use the model you prefer
+OLLAMA_URL = "https://ollama.sageaios.com/api/generate"
+OLLAMA_MODEL = "llama3.1:latest"
 
 # --- JSON Serialization Helper (Corrected for Array/Series check) ---
 def convert_numpy_types(obj):
-    """Convert numpy/pandas types to native Python types for JSON serialization, handling NaN/Inf and arrays."""
+    """Recursively converts numpy/pandas types to native Python types for JSON serialization.
+
+    Handles deep recursion for dictionaries and lists. Specifically handles:
+    - Numpy arrays, Pandas Series/Index -> Lists
+    - Numpy scalars (int, float, bool) -> Python natives
+    - NaN/Infinity -> None (valid JSON null)
+
+    Args:
+        obj (Any): The object to convert.
+
+    Returns:
+        Any: The JSON-safe native Python object.
+    """
     
     # --- NEW: Check for collections FIRST ---
     # 1. Check for dicts (recurse)
@@ -74,7 +86,22 @@ async def load_dataframe(
     is_file_upload: bool,
     input_filename: str
 ) -> pd.DataFrame:
-    """Load data from file upload or text input"""
+    """Loads a DataFrame from an uploaded file or a raw text string.
+
+    Supports CSV and Excel files. Cleans column names by removing special 
+    characters and spaces to ensure compatibility with analysis functions.
+
+    Args:
+        data_payload (Union[UploadFile, str]): The file object or raw CSV string.
+        is_file_upload (bool): Flag indicating if the payload is a file.
+        input_filename (str): The filename used to detect format (CSV/Excel).
+
+    Returns:
+        pd.DataFrame: The loaded and cleaned DataFrame.
+
+    Raises:
+        HTTPException(400): If the file is empty, invalid type, or unreadable.
+    """
     print("📊 Loading data for visualization analysis...")
     filename_lower = input_filename.lower()
     na_vals = ['-', '', ' ', 'NA', 'N/A', 'null', 'None', '#N/A', '#VALUE!', '#DIV/0!', 'NaN', 'nan']
@@ -121,7 +148,14 @@ async def load_dataframe(
 
 # --- NEW: Helper to load context file ---
 async def _load_context(context_file: Optional[UploadFile]) -> str:
-    """Loads the business context from the optional context file."""
+    """Reads the business context from an optional uploaded file.
+
+    Args:
+        context_file (Optional[UploadFile]): The file containing context text.
+
+    Returns:
+        str: The content of the file or a default message if none provided.
+    """
     business_context = "No business context provided."
     if context_file:
         try:
@@ -135,7 +169,18 @@ async def _load_context(context_file: Optional[UploadFile]) -> str:
 
 # --- Data Type Detection (Unchanged) ---
 def detect_column_types(df: pd.DataFrame) -> Dict[str, Dict[str, Any]]:
-    """Detect and categorize column types for visualization recommendations"""
+    """Analyzes DataFrame columns to infer data types for visualization.
+
+    Categorizes columns into 'numerical', 'categorical', 'datetime', or 'text'.
+    Calculates metadata like unique counts, min/max values, and sample values
+    to help the LLM suggest appropriate charts.
+
+    Args:
+        df (pd.DataFrame): The dataset to analyze.
+
+    Returns:
+        Dict[str, Dict[str, Any]]: A dictionary mapping column names to their metadata.
+    """
     column_info = {}
     
     for col in df.columns:
@@ -202,7 +247,16 @@ def detect_column_types(df: pd.DataFrame) -> Dict[str, Dict[str, Any]]:
 # --- Chart Generation Functions (Updated) ---
 
 def create_frequency_table(df: pd.DataFrame, column: str, max_categories: int = 50) -> Dict[str, Any]:
-    """Create frequency table for categorical or numerical columns"""
+    """Generates data for a frequency table, including percentages and cumulative stats.
+
+    Args:
+        df (pd.DataFrame): The source data.
+        column (str): The column to analyze.
+        max_categories (int, optional): Max rows to return. Defaults to 50.
+
+    Returns:
+        Dict[str, Any]: The formatted frequency table data.
+    """
     series = df[column].dropna()
     value_counts = series.value_counts().head(max_categories)
     
@@ -240,7 +294,16 @@ def create_frequency_table(df: pd.DataFrame, column: str, max_categories: int = 
     }
 
 def create_histogram(df: pd.DataFrame, column: str, bins: int = 30) -> Dict[str, Any]:
-    """Create histogram data for numerical columns"""
+    """Generates histogram data (bins and counts) for a numerical column.
+
+    Args:
+        df (pd.DataFrame): The source data.
+        column (str): The numerical column to plot.
+        bins (int, optional): Number of bins. Defaults to 30.
+
+    Returns:
+        Dict[str, Any]: Histogram data including bin edges, counts, and basic stats.
+    """
     series = pd.to_numeric(df[column], errors='coerce').dropna()
     
     if len(series) == 0:
@@ -276,7 +339,20 @@ def create_histogram(df: pd.DataFrame, column: str, bins: int = 30) -> Dict[str,
 
 # --- MODIFIED: This function now handles aggregation by a value column ---
 def create_bar_chart(df: pd.DataFrame, column: str, value_col: str = None, max_categories: int = 20) -> Dict[str, Any]:
-    """Create bar chart data. If value_col is given, aggregates by sum."""
+    """Creates data for a bar chart. Supports both frequency counts and value aggregation.
+
+    If `value_col` is provided, it sums that column grouped by `column`. 
+    Otherwise, it counts occurrences of `column`.
+
+    Args:
+        df (pd.DataFrame): The source data.
+        column (str): The categorical column for the X-axis.
+        value_col (str, optional): The numerical column to sum (Y-axis). Defaults to None.
+        max_categories (int, optional): Max bars to show. Defaults to 20.
+
+    Returns:
+        Dict[str, Any]: Bar chart data structure.
+    """
     
     if value_col:
         # --- NEW: Aggregation Logic ---
@@ -324,7 +400,19 @@ def create_bar_chart(df: pd.DataFrame, column: str, value_col: str = None, max_c
 
 # --- MODIFIED: This function now handles aggregation by a value column ---
 def create_pie_chart(df: pd.DataFrame, column: str, value_col: str = None, max_slices: int = 10) -> Dict[str, Any]:
-    """Create pie chart data. If value_col is given, aggregates by sum."""
+    """Creates data for a pie chart. Supports frequency counts and value aggregation.
+
+    Automatically groups smaller slices into "Others" if they exceed `max_slices`.
+
+    Args:
+        df (pd.DataFrame): Source data.
+        column (str): Categorical column defining the slices.
+        value_col (str, optional): Numerical column to sum for slice size. Defaults to None.
+        max_slices (int, optional): Max slices before grouping. Defaults to 10.
+
+    Returns:
+        Dict[str, Any]: Pie chart data structure.
+    """
     
     if value_col:
         # --- NEW: Aggregation Logic ---
@@ -401,7 +489,17 @@ def create_pie_chart(df: pd.DataFrame, column: str, value_col: str = None, max_s
         }
 
 def create_scatter_plot(df: pd.DataFrame, x_col: str, y_col: str, color_col: str = None) -> Dict[str, Any]:
-    """Create scatter plot data for two numerical columns"""
+    """Generates scatter plot data for two numerical variables, optionally colored by a third.
+
+    Args:
+        df (pd.DataFrame): Source data.
+        x_col (str): X-axis numerical column.
+        y_col (str): Y-axis numerical column.
+        color_col (str, optional): Categorical column for point colors. Defaults to None.
+
+    Returns:
+        Dict[str, Any]: Scatter plot data including calculated correlation.
+    """
     # Convert to numeric and remove NaN
     x_series = pd.to_numeric(df[x_col], errors='coerce')
     y_series = pd.to_numeric(df[y_col], errors='coerce')
@@ -442,7 +540,18 @@ def create_scatter_plot(df: pd.DataFrame, x_col: str, y_col: str, color_col: str
     return result
 
 def create_line_chart(df: pd.DataFrame, x_col: str, y_col: str) -> Dict[str, Any]:
-    """Create line chart data, typically for time series"""
+    """Generates line chart data, typically for time-series analysis.
+
+    Automatically detects if the X-axis is datetime or numeric and sorts the data.
+
+    Args:
+        df (pd.DataFrame): Source data.
+        x_col (str): X-axis column (Date or Numeric).
+        y_col (str): Y-axis column (Numeric).
+
+    Returns:
+        Dict[str, Any]: Line chart data structure.
+    """
     # Try to convert x to datetime
     try:
         x_series = pd.to_datetime(df[x_col])
@@ -483,7 +592,16 @@ def create_line_chart(df: pd.DataFrame, x_col: str, y_col: str) -> Dict[str, Any
     }
 
 def create_area_chart(df: pd.DataFrame, x_col: str, y_cols: List[str]) -> Dict[str, Any]:
-    """Create area chart data for multiple series over x-axis"""
+    """Generates stacked or standard area chart data for multiple series.
+
+    Args:
+        df (pd.DataFrame): Source data.
+        x_col (str): X-axis column.
+        y_cols (List[str]): List of column names to plot on the Y-axis.
+
+    Returns:
+        Dict[str, Any]: Area chart data structure with multiple series.
+    """
     # Try to convert x to datetime
     try:
         x_series = pd.to_datetime(df[x_col])
@@ -527,7 +645,18 @@ def create_area_chart(df: pd.DataFrame, x_col: str, y_cols: List[str]) -> Dict[s
     }
 
 def create_box_plot(df: pd.DataFrame, column: str, group_by: str = None) -> Dict[str, Any]:
-    """Create box plot data for numerical columns"""
+    """Generates box plot data (quartiles, median, outliers).
+
+    Supports both single variable distribution and grouped distributions (e.g., Sales by Region).
+
+    Args:
+        df (pd.DataFrame): Source data.
+        column (str): The numerical column to plot.
+        group_by (str, optional): Categorical column to group by. Defaults to None.
+
+    Returns:
+        Dict[str, Any]: Box plot data structure containing quartiles and outliers.
+    """
     series = pd.to_numeric(df[column], errors='coerce').dropna()
     
     if len(series) == 0:
@@ -585,7 +714,15 @@ def create_box_plot(df: pd.DataFrame, column: str, group_by: str = None) -> Dict
         }
 
 def create_heatmap(df: pd.DataFrame, columns: List[str] = None) -> Dict[str, Any]:
-    """Create correlation heatmap for numerical columns"""
+    """Generates a correlation heatmap for numerical columns.
+
+    Args:
+        df (pd.DataFrame): Source data.
+        columns (List[str], optional): Specific columns to include. If None, selects all numerical columns.
+
+    Returns:
+        Dict[str, Any]: Heatmap data containing the correlation matrix.
+    """
     if columns is None:
         # Auto-select numerical columns
         numerical_cols = []
@@ -626,7 +763,17 @@ def create_heatmap(df: pd.DataFrame, columns: List[str] = None) -> Dict[str, Any
 
 # --- MODIFIED: This function now handles aggregation by a value column ---
 def create_treemap(df: pd.DataFrame, category_col: str, value_col: str = None, max_categories: int = 20) -> Dict[str, Any]:
-    """Create treemap data. If value_col is given, aggregates by sum."""
+    """Generates treemap data. Supports frequency counts and value aggregation.
+
+    Args:
+        df (pd.DataFrame): Source data.
+        category_col (str): The column determining the tiles.
+        value_col (str, optional): The column determining tile size (sum). Defaults to None.
+        max_categories (int, optional): Max tiles to show. Defaults to 20.
+
+    Returns:
+        Dict[str, Any]: Treemap data structure.
+    """
     
     if value_col is None:
         # --- OLD: Frequency Logic ---
@@ -699,10 +846,18 @@ def create_treemap(df: pd.DataFrame, category_col: str, value_col: str = None, m
 
 # --- NEW: Function to get a "Chart Plan" from the LLM (V3.1 - Bug Fix) ---
 async def _get_chart_plan_from_llm(context: str, column_info: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """
-    Step 1: Ask the LLM to create a list of chart configurations
-    based on user context and available data columns.
-    V3.1: Fixes IndexError if no numerical columns are present.
+    """Query the LLM to generate a plan of which charts to create based on user context.
+
+    Uses a robust prompt that includes column metadata to ensure the AI suggests
+    charts that are compatible with the available data (e.g., checking for
+    enough numerical columns for a heatmap).
+
+    Args:
+        context (str): The user's business context or specific question.
+        column_info (Dict[str, Any]): The metadata about available columns.
+
+    Returns:
+        List[Dict[str, Any]]: A list of chart configurations (type, columns, reason).
     """
     print("🤖 Asking LLM for a visualization plan (V3.1 - Advanced)...")
     
@@ -914,8 +1069,16 @@ async def _get_chart_plan_from_llm(context: str, column_info: Dict[str, Any]) ->
         
 # --- NEW: Function to execute the chart plan ---
 def _execute_chart_plan(df: pd.DataFrame, chart_configs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """
-    Step 2: Loop through the AI's plan and execute the chart functions.
+    """Iterates through the chart configuration list and executes the corresponding chart functions.
+
+    Acts as a dispatcher, routing each config to functions like `create_bar_chart` or `create_heatmap`.
+
+    Args:
+        df (pd.DataFrame): The source data.
+        chart_configs (List[Dict[str, Any]]): The list of charts to build.
+
+    Returns:
+        List[Dict[str, Any]]: A list of generated chart objects (or error objects).
     """
     print(f"⚙️ Executing plan for {len(chart_configs)} charts...")
     visualizations = []
@@ -977,9 +1140,19 @@ def _execute_chart_plan(df: pd.DataFrame, chart_configs: List[Dict[str, Any]]) -
 
 # --- NEW: Function to get insights AFTER charts are made (V2 - Deeper Analysis) ---
 async def _get_insights_from_results(visualizations: List[Dict], context: str) -> List[Dict[str, str]]:
-    """
-    Step 3: Send the results of the *executed plan* to the LLM for interpretation.
-    This version (V2) explicitly asks for cross-correlation and temporal analysis.
+    """Analyzes the *generated* visualizations to find deeper insights.
+
+    Instead of just looking at raw data, this function sends a summary of the 
+    generated charts (trends, stats, correlations) back to the LLM. It asks the 
+    AI to find connections *between* charts (e.g., "The scatter plot correlation 
+    explains the trend in the bar chart").
+
+    Args:
+        visualizations (List[Dict]): The list of generated chart objects.
+        context (str): The original business context.
+
+    Returns:
+        List[Dict[str, str]]: A list of structured insight objects.
     """
     print("🤖 Generating insights on executed chart plan (V2 - Deep Dive)...")
     
@@ -1104,8 +1277,18 @@ async def _get_suggestions_from_results(
     column_info: Dict[str, Any], 
     generated_charts: List[Dict]
 ) -> List[Dict[str, Any]]:
-    """
-    Step 4: Ask the LLM to suggest *new* charts to run next.
+    """Asks the LLM to suggest *additional* charts based on what has already been built.
+
+    Ensures that the new suggestions are not duplicates of existing charts
+    and encourages more advanced analysis (multi-variable, deep dives).
+
+    Args:
+        context (str): The business context.
+        column_info (Dict[str, Any]): Available column metadata.
+        generated_charts (List[Dict]): The list of charts already created.
+
+    Returns:
+        List[Dict[str, Any]]: A list of suggested chart configurations.
     """
     print("🤖 Generating suggestions for further analysis...")
     
@@ -1220,6 +1403,25 @@ async def perform_visualization_analysis(
     context_file: Optional[UploadFile] = None,
     chart_configs: Optional[List[Dict[str, Any]]] = None 
 ) -> Dict[str, Any]:
+    """Orchestrates the context-aware visualization analysis pipeline.
+
+    1. Loads and cleans data.
+    2. Analyzes column metadata.
+    3. Asks AI for a chart plan based on business context.
+    4. Executes the chart plan.
+    5. Analyzes the *results* of the charts for deeper insights.
+    6. Asks AI for follow-up suggestions.
+
+    Args:
+        data_payload (Union[UploadFile, str]): Source data.
+        is_file_upload (bool): True if source is a file.
+        input_filename (str): Filename.
+        context_file (Optional[UploadFile], optional): Context file.
+        chart_configs (Optional[List[Dict]], optional): Pre-defined charts to run (bypassing the plan step).
+
+    Returns:
+        Dict[str, Any]: The complete analysis result including visualizations, insights, and suggestions.
+    """
     
     print("🚀 Starting NEW context-aware Visualization Analysis...")
     
@@ -1296,7 +1498,13 @@ async def perform_visualization_analysis(
         
 # --- NEW: Helper to safely close files, to be used in main.py ---
 async def safe_close_file(file: Optional[UploadFile]):
-    """Safely closes an uploaded file if it exists."""
+    """Safely closes an uploaded file if it exists.
+
+    Prevents resource leaks by ensuring the file handle is released.
+
+    Args:
+        file (Optional[UploadFile]): The file object to close.
+    """
     if file and isinstance(file, UploadFile):
         try:
             await file.close()

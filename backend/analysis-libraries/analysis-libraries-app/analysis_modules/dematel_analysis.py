@@ -3,15 +3,178 @@
 import traceback
 import numpy as np
 import pandas as pd
+import httpx  # Required for async API calls to Ollama
+import json
+import re
 from typing import List, Dict, Any
 from fastapi import HTTPException
 from datetime import datetime
+
+# --- CONFIGURATION ---
+OLLAMA_URL = "https://ollama.sageaios.com/api/generate"
+MODEL_NAME = "llama3.1:latest"
 
 # --- Debugging ---
 def debug_log(message, level="INFO"):
     """Simple logger for debugging."""
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(f"[{timestamp}] [DEMATEL-{level}] {message}")
+
+# --- Helper Functions ---
+def clean_and_parse_json(raw_text: str) -> Dict[str, Any]:
+    """
+    Robustly parses JSON content from a potentially messy string (e.g., LLM output).
+    
+    Strips Markdown code block delimiters (```json ... ```) and attempts to isolate
+    the JSON object by finding the first '{' and last '}'. Returns a fallback error
+    dictionary if parsing fails to prevent application crashes.
+    """
+    try:
+        # 1. Remove markdown code blocks
+        text = re.sub(r'```json\s*', '', raw_text, flags=re.IGNORECASE)
+        text = re.sub(r'```', '', text)
+        
+        # 2. Find the JSON object boundaries
+        start_idx = text.find('{')
+        end_idx = text.rfind('}')
+        
+        if start_idx != -1 and end_idx != -1:
+            text = text[start_idx : end_idx + 1]
+        
+        # 3. Attempt to parse
+        return json.loads(text)
+        
+    except (json.JSONDecodeError, Exception) as e:
+        debug_log(f"JSON Parse Error: {e}", "ERROR")
+        # Fail gracefully so the UI doesn't break
+        return {
+            "factors": ["Error_Factor_1", "Error_Factor_2"],
+            "matrix": [[0, 0], [0, 0]],
+            "error": f"The AI returned invalid data. Raw output: {raw_text[:100]}..."
+        }
+
+# --- NEW: Ollama Integration (matching SEM pattern) ---
+async def _call_ollama_for_dematel(user_text: str) -> Dict[str, Any]:
+    """
+    Calls Ollama to extract factors and generate the influence matrix from user text.
+    Uses the same pattern as SEM analysis for consistency.
+    """
+    debug_log("Step 1: Calling Ollama for factor extraction and matrix generation...", "INFO")
+    
+    prompt = f"""
+        You are a meticulous DEMATEL analyst. Your task is to perform a rigorous analysis of the provided text.
+
+        **USER TEXT:**
+        \"\"\"
+        {user_text}
+        \"\"\"
+
+        **YOUR TASKS (Follow this order):**
+
+        **TASK 1: Extract Factors**
+        First, carefully read the text and identify the key named factors. List them.
+        *Example:*
+        * Factors: ["Factor 1", "Factor 2", "Factor 3"]
+
+        **TASK 2: Analyze Relationships (Chain of Thought)**
+        Second, think step-by-step. For each *pair* of factors, analyze the influence from the row factor to the column factor.
+        - Use this scale ONLY: 0=No, 1=Low, 2=Moderate, 3=Strong, 4=Very Strong.
+        - You MUST justify your rating with a quote or direct inference from the text.
+        - If the text does not describe an influence, the rating MUST be 0.
+        
+        *Example of thinking process:*
+        * (Factor 1 -> Factor 1): 0 (Self-influence is zero)
+        * (Factor 1 -> Factor 2): Rating 3 (Strong). Justification: The text states "Factor 1 strongly influences Factor 2."
+        * (Factor 1 -> Factor 3): Rating 0. Justification: The text does not mention any relationship.
+        * (Factor 2 -> Factor 1): Rating 1 (Low). Justification: The text implies "Factor 2 has some small impact on Factor 1."
+        * ... (continue for all pairs)
+
+        **TASK 3: Create Final JSON**
+        Finally, use your step-by-step analysis to build the final JSON object.
+        - The "factors" list must match the factors you identified.
+        - The "matrix" must be an N x N matrix corresponding to your justified ratings.
+        - The matrix row/column order MUST match the factor list order.
+
+        **IMPORTANT:** RETURN ONLY RAW JSON. No markdown, no explanations.
+
+        **JSON FORMAT:**
+        {{
+          "factors": [
+            "Factor Name 1",
+            "Factor Name 2",
+            "..."
+          ],
+          "matrix": [
+            [0, 3, 0, ...], 
+            [1, 0, 0, ...],
+            [...],
+            ...
+          ]
+        }}
+    """
+    
+    try:
+        # Use httpx like SEM analysis for consistency
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                OLLAMA_URL,
+                json={
+                    "model": MODEL_NAME,
+                    "prompt": prompt,
+                    "stream": False,
+                    "format": "json",
+                    "options": {"num_ctx": 4096}
+                },
+                timeout=120.0  # 2 minute timeout like SEM
+            )
+            
+            if response.status_code != 200:
+                debug_log(f"Ollama API Error: {response.status_code} {response.text}", "ERROR")
+                raise HTTPException(
+                    status_code=500, 
+                    detail=f"Ollama AI server error: {response.status_code}"
+                )
+            
+            data = response.json()
+            debug_log("Received response from Ollama", "DEBUG")
+            
+            # Use the robust JSON cleaner like SEM analysis
+            ai_data = clean_and_parse_json(data["response"])
+            
+            # Check for parsing errors
+            if "error" in ai_data:
+                raise HTTPException(status_code=500, detail=ai_data["error"])
+            
+            # Validate the structure
+            if not ai_data.get("factors") or not ai_data.get("matrix"):
+                raise HTTPException(status_code=500, detail="AI response missing 'factors' or 'matrix' key")
+            
+            if not isinstance(ai_data["factors"], list) or not isinstance(ai_data["matrix"], list):
+                raise HTTPException(status_code=500, detail="'factors' or 'matrix' are not arrays")
+            
+            if len(ai_data["factors"]) != len(ai_data["matrix"]):
+                raise HTTPException(status_code=500, detail="Matrix size does not match factors list")
+            
+            # Validate matrix dimensions
+            n = len(ai_data["factors"])
+            for i, row in enumerate(ai_data["matrix"]):
+                if not isinstance(row, list) or len(row) != n:
+                    raise HTTPException(status_code=500, detail=f"Matrix row {i} has incorrect dimensions")
+            
+            debug_log("AI response validated successfully", "DEBUG")
+            return ai_data
+            
+    except httpx.ReadTimeout:
+        debug_log("Ollama request timed out", "ERROR")
+        raise HTTPException(status_code=500, detail="AI request timed out. Please try again.")
+    except httpx.RequestError as e:
+        debug_log(f"Ollama request failed: {str(e)}", "ERROR")
+        raise HTTPException(status_code=500, detail=f"Failed to connect to Ollama AI server: {str(e)}")
+    except HTTPException:
+        raise  # Re-raise HTTPException as-is
+    except Exception as e:
+        debug_log(f"Unexpected Ollama error: {str(e)}", "ERROR")
+        raise HTTPException(status_code=500, detail=f"Unexpected AI processing error: {str(e)}")
 
 # --- Helper Functions (These are all REAL math/data-shaping) ---
 
@@ -292,17 +455,44 @@ def _generate_dematel_diagnostics(calc_results: Dict[str, Any], direct_matrix_np
     return {"checks": checks, "statistics": statistics}
 
 
-# --- Main DEMATEL Function ---
+# --- Main DEMATEL Functions ---
+
+async def perform_dematel_from_text(user_text: str) -> Dict[str, Any]:
+    """
+    NEW: Main function to run DEMATEL analysis from raw text.
+    This function handles the Ollama call internally using the same pattern as SEM analysis.
+    """
+    debug_log("🚀 Starting DEMATEL Analysis from Text", "INFO")
+    
+    try:
+        # Step 1: Call Ollama to extract factors and matrix (using httpx like SEM)
+        ai_data = await _call_ollama_for_dematel(user_text)
+        factors = ai_data["factors"]
+        direct_matrix = ai_data["matrix"]
+        
+        debug_log(f"AI extracted {len(factors)} factors", "INFO")
+        
+        # Step 2: Continue with existing DEMATEL processing
+        return await perform_dematel(factors, direct_matrix)
+        
+    except HTTPException:
+        raise  # Re-raise HTTPException as-is
+    except Exception as e:
+        error_msg = f"❌ Error during DEMATEL text analysis: {type(e).__name__}: {str(e)}"
+        debug_log(error_msg, "ERROR")
+        debug_log(f"Full traceback:\n{traceback.format_exc()}", "ERROR")
+        raise HTTPException(status_code=500, detail=error_msg)
+
 
 async def perform_dematel(
     factors: List[str],
     direct_matrix: List[List[int]]
 ) -> Dict[str, Any]:
     """
-    Main function to run the full DEMATEL analysis.
-    It now receives the factors and matrix from the frontend.
+    EXISTING: Main function to run DEMATEL analysis from factors/matrix.
+    This maintains backward compatibility for direct matrix input.
     """
-    debug_log("🚀 Starting DEMATEL Analysis (Real Data)", "INFO")
+    debug_log("🚀 Starting DEMATEL Analysis (Matrix Input)", "INFO")
     
     try:
         # Step 1: Convert incoming data to NumPy
@@ -326,7 +516,7 @@ async def perform_dematel(
             "analysis_type": "dematel",
             **analysis_data, 
             "chart_data": chart_data,
-            "diagnostics": diagnostics, # <-- Send the new diagnostics object
+            "diagnostics": diagnostics, 
             "raw_data": { 
                 "factors": factors, 
                 "summary_df": calc_results['results_df'].to_dict(orient='records'),

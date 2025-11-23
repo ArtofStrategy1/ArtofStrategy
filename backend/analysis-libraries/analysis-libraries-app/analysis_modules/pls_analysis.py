@@ -1,3 +1,5 @@
+# analysis_modules/pls_analysis.py
+
 import io
 import pandas as pd
 import numpy as np
@@ -25,10 +27,24 @@ except ImportError:
     Plspm = None
 
 # --- Configuration ---
-OLLAMA_URL = "https://ollama.data2int.com/api/generate"
+OLLAMA_URL = "https://ollama.sageaios.com/api/generate"
 OLLAMA_MODEL = "llama3.1:latest" # Using the latest Llama 3.1
 
 def debug_dataframe(df: pd.DataFrame, stage_name: str, show_sample_rows: int = 5):
+    """
+     comprehensive debugging for dataframe at each stage.
+
+    Prints shape, columns, data types, memory usage, missing values, non-numeric value detection,
+    descriptive statistics, and a correlation matrix to the console for debugging purposes.
+
+    Args:
+        df (pd.DataFrame): The pandas DataFrame to inspect.
+        stage_name (str): A label for the current processing stage (used in logs).
+        show_sample_rows (int, optional): Number of rows to print from head/tail. Defaults to 5.
+
+    Returns:
+        dict: A dictionary containing problematic non-numeric values found in object columns.
+    """
     """Comprehensive debugging for dataframe at each stage"""
     print(f"\n{'='*80}")
     print(f"🔍 DEBUG: {stage_name}")
@@ -118,6 +134,24 @@ def debug_dataframe(df: pd.DataFrame, stage_name: str, show_sample_rows: int = 5
     return problematic_values
 
 async def read_data(data_payload: Union[UploadFile, str], is_file_upload: bool, input_filename: str) -> pd.DataFrame:
+    """
+    Reads data from either an uploaded file or a text string into a pandas DataFrame.
+    
+    Detects CSV (comma, semicolon, auto-sep) or Excel formats. Logs debug info about the read process.
+    Does NOT perform automatic numeric conversion at this stage.
+
+    Args:
+        data_payload (Union[UploadFile, str]): The input data, either an UploadFile object or a raw string.
+        is_file_upload (bool): True if the payload is a file, False if it is a text string.
+        input_filename (str): The name of the file (used for extension detection).
+
+    Returns:
+        pd.DataFrame: The loaded pandas DataFrame.
+
+    Raises:
+        HTTPException: If file is empty, invalid type, or parsing fails.
+        TypeError: If `is_file_upload` is True but payload is not `UploadFile`.
+    """
     """
     Reads data from either an uploaded file or a text string into a pandas DataFrame.
     REMOVED automatic numeric conversion.
@@ -224,6 +258,21 @@ async def read_data(data_payload: Union[UploadFile, str], is_file_upload: bool, 
         raise HTTPException(status_code=400, detail=f"Error loading data: {str(e)}")
 
 def clean_column_names(df: pd.DataFrame) -> Tuple[pd.DataFrame, Dict[str, str], Dict[str, str]]:
+    """
+    Cleans DataFrame column names to be valid Python/plspm identifiers.
+
+    Replaces non-alphanumeric characters with underscores, handles duplicates by appending counters,
+    and maps original names to clean names.
+
+    Args:
+        df (pd.DataFrame): The DataFrame with original column names.
+
+    Returns:
+        Tuple[pd.DataFrame, Dict[str, str], Dict[str, str]]: 
+            - DataFrame with cleaned column names.
+            - clean_to_original mapping (Dict[clean, original]).
+            - original_to_clean mapping (Dict[original, clean]).
+    """
     """Cleans DataFrame column names to be valid Python/plspm identifiers."""
     print("🔧 DEBUG: clean_column_names starting...")
     
@@ -283,6 +332,26 @@ def clean_column_names(df: pd.DataFrame) -> Tuple[pd.DataFrame, Dict[str, str], 
     return df, name_mapping, reverse_name_mapping
 
 def parse_lavaan_syntax(measurement_syntax: str, structural_syntax: str, reverse_name_mapping: Dict[str, str]) -> Tuple[Config, Dict[str, List[str]], List[Tuple[str, str]]]:
+    """
+    Parses lavaan-style syntax into the dictionary format required by plspm.
+    
+    Parses both measurement models (Latent =~ item1 + item2) and structural models (Target ~ Source).
+    Validates that indicators exist in the dataset using the reverse_name_mapping.
+
+    Args:
+        measurement_syntax (str): String defining latent variables and their indicators.
+        structural_syntax (str): String defining relationships between latent variables.
+        reverse_name_mapping (Dict[str, str]): Mapping from original column names to cleaned names.
+
+    Returns:
+        Tuple[Config, Dict[str, List[str]], List[Tuple[str, str]]]:
+            - `config`: The plspm Config object ready for analysis.
+            - `blocks`: Dictionary mapping latent variables to list of indicator column names.
+            - `structure_paths`: List of tuples representing (source, target) paths.
+
+    Raises:
+        HTTPException: If syntax is invalid, indicators are missing, or blocks/paths are empty.
+    """
     """
     Parses lavaan-style syntax into the dictionary format required by plspm.
     MODIFIED: Now returns the Config object, the 'blocks' dictionary, AND the 'structure_paths' list.
@@ -467,6 +536,27 @@ def generate_path_diagram(
     output_format: str = 'png'
 ) -> Tuple[str, bool]:
     """
+    Generates a PLS-SEM path diagram dynamically based on actual model results using Graphviz.
+    
+    Visualizes latent constructs, indicators, loadings, and path coefficients (indicating significance).
+    Returns an HTML string containing the base64 encoded image.
+
+    Args:
+        path_coefficients (List[Dict[str, Any]]): List of path coefficient dictionaries.
+        reliability_validity (List[Dict[str, Any]]): List of reliability stats (used for R2 mapping if needed).
+        model_evaluation (Dict[str, Any]): Dictionary containing R-squared values.
+        measurement_syntax (str): The original measurement syntax string.
+        outer_loadings (Optional[pd.DataFrame]): DataFrame of outer loadings.
+        name_mapping (Dict[str, str]): Clean-to-original name mapping.
+        reverse_name_mapping (Dict[str, str]): Original-to-clean name mapping.
+        output_format (str, optional): output format for graphviz. Defaults to 'png'.
+
+    Returns:
+        Tuple[str, bool]:
+            - HTML string embedding the diagram (or error message).
+            - Boolean indicating success.
+    """
+    """
     Generates PLS-SEM path diagram dynamically based on actual model results.
     Fixed to handle missing data more gracefully.
     """
@@ -648,6 +738,21 @@ def generate_path_diagram(
         return f'<div class="p-4 text-center text-red-400">Diagram error: {str(e)}</div>', False
 
 async def call_ollama_for_insights(prompt: str) -> Dict[str, Any]:
+    """
+    Helper function to call Ollama from the backend to generate qualitative insights.
+
+    Sends a POST request to the Ollama API with the configured model and prompt.
+
+    Args:
+        prompt (str): The prompt text to send to the LLM.
+
+    Returns:
+        Dict[str, Any]: The parsed JSON response from the LLM containing insights.
+
+    Raises:
+        HTTPException: If connection fails (500), response is invalid JSON (500), 
+            or specific API keys are missing.
+    """
     """Helper to call Ollama from the backend to generate qualitative insights."""
     print(f"DEBUG: Contacting Ollama at {OLLAMA_URL}...")
     try:
@@ -682,10 +787,35 @@ async def call_ollama_for_insights(prompt: str) -> Dict[str, Any]:
 def calculate_degrees_of_freedom(n_observations: int, n_parameters: int) -> int:
     """
     Calculate degrees of freedom for t-test in PLS-SEM context.
+    
+    Formula: max(1, n_observations - n_parameters - 1)
+
+    Args:
+        n_observations (int): Number of rows in the dataset.
+        n_parameters (int): Number of estimated parameters (paths + weights).
+
+    Returns:
+        int: The calculated degrees of freedom.
+    """
+    """
+    Calculate degrees of freedom for t-test in PLS-SEM context.
     """
     return max(1, n_observations - n_parameters - 1)
 
 def check_data_quality(df: pd.DataFrame) -> Dict[str, Any]:
+    """
+    Comprehensive data quality checks for PLS-SEM analysis.
+    
+    Checks for perfect correlations and sample size adequacy based on rule of thumb.
+    Does NOT check for outliers via IQR as it is inappropriate for Likert-scale data.
+
+    Args:
+        df (pd.DataFrame): The DataFrame to check.
+
+    Returns:
+        Dict[str, Any]: Dictionary containing boolean 'has_issues', a list of 'issues',
+            'data_shape', and 'missing_values' count.
+    """
     """
     Comprehensive data quality checks for PLS-SEM analysis.
     --- V2: REMOVED outlier check, as it's inappropriate for Likert-scale data. ---
@@ -737,6 +867,23 @@ def check_data_quality(df: pd.DataFrame) -> Dict[str, Any]:
     }
 
 def clean_and_validate_data(df: pd.DataFrame) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+    """
+    Enhanced data cleaning with validation for PLS-SEM analysis.
+    
+    Performs the following steps:
+    1. Extracts numeric values from messy object columns.
+    2. Converts all columns to numeric (coercing errors).
+    3. Handles perfect correlations by removing redundant variables.
+    4. Removes rows with missing values.
+
+    Args:
+        df (pd.DataFrame): The raw DataFrame.
+
+    Returns:
+        Tuple[pd.DataFrame, Dict[str, Any]]: 
+            - The cleaned DataFrame.
+            - A cleaning log dictionary detailing steps taken and final quality.
+    """
     """
     Enhanced data cleaning with validation for PLS-SEM analysis.
     This function now performs all numeric conversion and NA handling.
@@ -819,6 +966,22 @@ def clean_and_validate_data(df: pd.DataFrame) -> Tuple[pd.DataFrame, Dict[str, A
     return df, cleaning_log
 
 def calculate_htmt(pls: Plspm, model_df: pd.DataFrame, blocks: Dict[str, List[str]], name_mapping: Dict[str, str]) -> Dict[str, Any]:
+    """
+    Manually calculates the HTMT (Heterotrait-Monotrait Ratio) matrix.
+
+    Computes heterotrait correlations and monotrait correlations from the indicator correlation matrix,
+    then derives HTMT values.
+
+    Args:
+        pls (Plspm): The fitted PLS model object (used primarily for context/validation here).
+        model_df (pd.DataFrame): The DataFrame containing indicator data.
+        blocks (Dict[str, List[str]]): Dictionary mapping constructs to indicators.
+        name_mapping (Dict[str, str]): Mapping from internal to original names.
+
+    Returns:
+        Dict[str, Any]: A dictionary representing the HTMT matrix with 'headers' and 'rows'.
+            Returns error details if calculation fails.
+    """
     """
     Manually calculates the HTMT (Heterotrait-Monotrait Ratio) matrix.
     """
@@ -906,6 +1069,27 @@ async def extract_statistical_results(
     model_df_clean: pd.DataFrame,
     blocks: Dict[str, List[str]]
 ) -> Dict[str, Any]:
+    """
+    Extracts all statistical results from the plspm object.
+    
+    Includes Model Fit (R2), Path Coefficients (with significance via bootstrap if available),
+    Reliability (Alpha, CR, AVE), Discriminant Validity (HTMT, Fornell-Larcker), and Outer Loadings.
+
+    Args:
+        pls (Plspm): The fitted PLS model object.
+        bootstrap_data (Any): Result object from pls.bootstrap(), or None.
+        n_observations (int): Number of observations used.
+        n_parameters (int): Number of estimated parameters.
+        name_mapping (Dict[str, str]): Mapping from internal to original names.
+        model_df_clean (pd.DataFrame): The cleaned DataFrame used for analysis.
+        blocks (Dict[str, List[str]]): The block definition dictionary.
+
+    Returns:
+        Dict[str, Any]: A comprehensive dictionary of statistical results.
+
+    Raises:
+        HTTPException: If extraction fails (500).
+    """
     """
     Extracts all statistical results from the plspm object.
     --- V9: FIXED Fornell-Larcker manual calculation ---
@@ -1181,6 +1365,15 @@ async def extract_statistical_results(
 def make_json_serializable(obj):
     """
     Recursively convert numpy types to native Python types for JSON serialization.
+
+    Args:
+        obj (Any): The object to convert (dict, list, scalar, etc.).
+
+    Returns:
+        Any: The converted object safe for JSON dumping.
+    """
+    """
+    Recursively convert numpy types to native Python types for JSON serialization.
     """
     if isinstance(obj, dict):
         return {k: make_json_serializable(v) for k, v in obj.items()}
@@ -1210,6 +1403,21 @@ async def generate_ai_insights(
     user_input: Dict[str, str],
     user_critique: str # This is the new parameter from your prompt
 ) -> Dict[str, Any]:
+    """
+    Calls Ollama with statistical results to generate qualitative insights
+    and recommendations based on the user's critique.
+    
+    Constructs a detailed prompt with statistical data and user goals, then parses
+    the JSON response from the LLM.
+
+    Args:
+        stats_results (Dict[str, Any]): The extracted statistical results.
+        user_input (Dict[str, str]): The user's original syntax input.
+        user_critique (str): The user's specific critique or goals.
+
+    Returns:
+        Dict[str, Any]: A dictionary containing AI-generated evaluations and recommendations.
+    """
     """
     Calls Ollama with statistical results to generate qualitative insights
     and recommendations based on the user's critique.
@@ -1344,6 +1552,27 @@ async def perform_pls_sem(
     measurement_syntax: str, 
     structural_syntax: str
 ) -> Dict[str, Any]:
+    """
+    Performs PLS-SEM analysis using the 'plspm' library.
+    
+    (Reorganized Version)
+    Coordinates the entire analysis pipeline: loading data, cleaning names, parsing syntax,
+    validating data, running PLS-SEM, calculating stats, generating AI insights, 
+    and creating path diagrams.
+
+    Args:
+        data_payload (Union[UploadFile, str]): The input data.
+        is_file_upload (bool): Whether input is a file.
+        input_filename (str): Name of the input file.
+        measurement_syntax (str): Measurement model syntax.
+        structural_syntax (str): Structural model syntax.
+
+    Returns:
+        Dict[str, Any]: Comprehensive analysis results including stats, diagram, and insights.
+
+    Raises:
+        HTTPException: If any step of the process fails.
+    """
     """
     Performs PLS-SEM analysis using the 'plspm' library.
     --- V5: FIXED JSON serialization and variable reference errors ---
@@ -2039,258 +2268,6 @@ async def perform_pls_sem(
         print("="*60)
         
         n_observations = len(model_df_clean)
-        n_parameters = len(all_indicators) + len(structure_paths) # Estimate
-        
-        statistical_results = await extract_statistical_results(
-            pls=pls,
-            bootstrap_data=bootstrap_results,
-            n_observations=n_observations,
-            n_parameters=n_parameters,
-            name_mapping=name_mapping,
-            model_df_clean=model_df_clean, # <-- PASSING THIS
-            blocks=blocks                  # <-- PASSING THIS
-        )
-
-        # Step 7: Generate AI insights
-        print("\n" + "="*60)
-        print("    STEP 7: GENERATING AI INSIGHTS")
-        print("="*60)
-        
-        user_input_dict = {
-            "measurementModel": measurement_syntax,
-            "structuralModel": structural_syntax
-        }
-        
-        ai_insights = await generate_ai_insights(
-            stats_results=statistical_results,
-            user_input=user_input_dict,
-            user_critique=user_critique # Pass the critique to the AI
-        )
-
-        # Step 8: Generate path diagram
-        print("\n" + "="*60)
-        print("    STEP 8: GENERATING PATH DIAGRAM")
-        print("="*60)
-        
-        outer_loadings_df_for_diagram = statistical_results.get('outer_loadings_df', None)
-        print(f"📊 Outer loadings for diagram: {outer_loadings_df_for_diagram.shape if outer_loadings_df_for_diagram is not None else 'None'}")
-        
-        try:
-            path_diagram_html, diagram_success = generate_path_diagram(
-                statistical_results['path_coefficients'],
-                statistical_results['reliability_validity'],
-                statistical_results['model_evaluation'],
-                measurement_syntax,
-                outer_loadings_df_for_diagram, 
-                name_mapping,
-                reverse_name_mapping,
-                output_format='png'
-            )
-        except Exception as diagram_err:
-            print(f"⚠️ Diagram generation failed: {diagram_err}")
-            print(traceback.format_exc())
-            path_diagram_html = f'<div class="p-4 text-center text-yellow-400">⚠️ Diagram unavailable: {diagram_err}</div>'
-            diagram_success = False
-
-        # Step 9: Prepare final results
-        print("\n" + "="*60)
-        print("    STEP 9: PREPARING FINAL RESULTS")
-        print("="*60)
-        
-        # Convert DataFrame to JSON-friendly dict
-        outer_loadings_json = None
-        if 'outer_loadings_df' in statistical_results and isinstance(statistical_results['outer_loadings_df'], pd.DataFrame):
-            print("DEBUG: Converting outer_loadings_df to JSON format...")
-            df_loadings = statistical_results['outer_loadings_df']
-            outer_loadings_json = {
-                "headers": [col for col in df_loadings.columns],
-                "rows": [
-                    {"indicator": index, **row.to_dict()} 
-                    for index, row in df_loadings.iterrows()
-                ]
-            }
-            # Remove the non-serializable DataFrame from the dict
-            del statistical_results['outer_loadings_df']
-
-        # Merge stats and AI insights
-        final_results = {
-            **statistical_results,
-            "model_evaluation": {
-                **statistical_results["model_evaluation"],
-                "interpretation": ai_insights["model_evaluation"].get("interpretation", "AI interpretation failed.")
-            },
-            "path_coefficients": [
-                {**stat_path, "interpretation": next((ai_path.get("interpretation", "AI interpretation failed.") for ai_path in ai_insights.get("path_coefficients", []) if ai_path.get("path") == stat_path.get("path")), "AI interpretation failed.")}
-                for stat_path in statistical_results["path_coefficients"]
-            ],
-            "reliability_validity": [
-                {**stat_rel, "assessment": next((ai_rel.get("assessment", "AI assessment failed.") for ai_rel in ai_insights.get("reliability_validity", []) if ai_rel.get("construct") == stat_rel.get("construct")), "AI assessment failed.")}
-                for stat_rel in statistical_results["reliability_validity"]
-            ],
-            "business_recommendations": ai_insights.get("business_recommendations", []),
-            "path_diagram": path_diagram_html,
-            "diagram_available": diagram_success,
-            "userInput": user_input_dict,
-            "data_summary": {
-                "total_rows": len(df_raw),
-                "analysis_rows": len(model_df_clean),
-                "missing_rows": len(model_df) - len(model_df_clean), 
-                "variables": list(name_mapping.values()),
-                "cleaning_log": cleaning_log
-            },
-            "outer_loadings_json": outer_loadings_json
-        }
-        
-        # CRITICAL: Convert all numpy types to JSON-serializable types before returning
-        print("DEBUG: Converting final results to JSON-serializable format...")
-        final_results = make_json_serializable(final_results)
-        
-        print("✅ PLS-SEM analysis completed successfully")
-        return final_results
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        error_msg = f"Unexpected error: {type(e).__name__}: {str(e)}"
-        print(f"💥 {error_msg}")
-        print(f"💥 Full traceback:")
-        print(traceback.format_exc())
-        raise HTTPException(status_code=500, detail=error_msg)
-    """
-    Performs PLS-SEM analysis using the 'plspm' library.
-    --- V5: FIXED JSON serialization and variable reference errors ---
-    """
-    if not Plspm:
-        raise HTTPException(status_code=500, detail="PLS-SEM library 'plspm' not available.")
-
-    print("🚀 Starting PLS-SEM analysis with comprehensive debugging...")
-    
-    # --- This is the user's critique, hardcoded as requested ---
-    user_critique = """
-    Model Fit & Reliability (5/10)
-    Major Concerns:
-    - Poor Quality construct reliability (α=0.825, CR=0.684): CR below 0.7 threshold
-    - Low Satisfaction R² (0.181): Only 18.1% variance explained - concerning
-    - Zero Quality R² (0.000): Expected for exogenous construct but limits model scope
-    - Loyalty explanation (24.2%): Moderate but could be improved
-    Critical Issues:
-    - Reliability inconsistency: Cronbach's α acceptable but CR poor for Quality
-    - Missing discriminant validity: No Fornell-Larcker criterion or HTMT ratios
-    - AVE concerns: Some AVE values below 0.7 threshold
-    - Model explanatory power: Overall variance explained is modest
-    Recommendations:
-    - Urgently improve Quality measurement: Add/modify indicators
-    - Conduct full validity assessment (discriminant validity crucial)
-    - Consider additional predictors to improve R² values
-    - Report complete fit indices (SRMR, NFI if available) 
-    
-    Recommendations (6/10)
-    Positives:
-    - Actionable focus on Quality improvement
-    - Recognition of key relationships
-    - Practical KPI suggestions (loyalty rate, satisfaction rate)
-    Limitations:
-    - Generic recommendations: Lacks specificity for your context
-    - Missing prioritization: Which quality aspects matter most?
-    - No segmentation analysis: Different customer groups may need different approaches
-    - Limited scope: Doesn't address satisfaction drivers specifically
-    Improvements Needed:
-    - Industry-specific quality improvement strategies
-    - Segmented recommendations based on customer profiles
-    - Timeline and resource allocation for improvements
-    - Additional KPIs (NPS, customer lifetime value, retention metrics)
-    """
-    
-    try:
-        # Step 1: Load data (no numeric conversion yet)
-        print("\n" + "="*60)
-        print("    STEP 1: LOADING DATA")
-        print("="*60)
-        df_raw = await read_data(data_payload, is_file_upload, input_filename)
-        
-        # Step 2: Clean column names
-        print("\n" + "="*60)
-        print("    STEP 2: CLEANING COLUMN NAMES")
-        print("="*60)
-        df_named, name_mapping, reverse_name_mapping = clean_column_names(df_raw)
-        
-        # Step 3: Parse syntax
-        print("\n" + "="*60)
-        print("    STEP 3: PARSING SYNTAX")
-        print("="*60)
-        config, blocks, structure_paths = parse_lavaan_syntax(measurement_syntax, structural_syntax, reverse_name_mapping)
-
-        # Step 4: Final Data Prep & Validation
-        print("\n" + "="*60)
-        print("    STEP 4: FINAL DATA PREPARATION & VALIDATION")
-        print("="*60)
-        
-        all_indicators = list(set([item for sublist in blocks.values() for item in sublist]))
-        print(f"Model requires {len(all_indicators)} indicators: {all_indicators}")
-        
-        try:
-            model_df = df_named[all_indicators].copy()
-        except KeyError as e:
-            missing_cols = list(set(all_indicators) - set(df_named.columns))
-            original_missing = [name_mapping.get(c, c) for c in missing_cols]
-            print(f"❌ ERROR: Model syntax refers to columns not in the data: {original_missing}")
-            raise HTTPException(status_code=400, detail=f"Syntax error. Columns not found in data: {original_missing}")
-
-        debug_dataframe(model_df, "STEP 4A: PRE-CLEANING MODEL DATA")
-        
-        model_df_clean, cleaning_log = clean_and_validate_data(model_df)
-        
-        debug_dataframe(model_df_clean, "STEP 4B: FINAL VALIDATED MODEL DATA")
-        
-        if cleaning_log['final_quality']['has_issues']:
-            print("🚨 WARNING: Data quality issues found. Raising exception.")
-            issues_str = "; ".join([f"{issue['type']}: {issue['message']}" for issue in cleaning_log['final_quality']['issues']])
-            raise HTTPException(
-                status_code=400, 
-                detail=f"Data Quality Error: {issues_str}. Please clean your data."
-            )
-        
-        if len(model_df_clean) < 30:
-            raise HTTPException(
-                status_code=400, 
-                detail=f"Insufficient data: only {len(model_df_clean)} complete rows remain for the model. Need at least 30."
-            )
-
-        # Step 5: Run PLS-SEM analysis
-        print("\n" + "="*60)
-        print("    STEP 5: RUNNING PLS-SEM MODEL")
-        print("="*60)
-        bootstrap_results = None
-        
-        try:
-            print("🔧 Initializing PLS model...")
-            pls = Plspm(model_df_clean, config, Scheme.PATH, 100, 0.0000001, bootstrap=True)
-            print("✅ PLS model initialized successfully")
-            
-            try:
-                print("🎲 Starting bootstrap analysis...")
-                bootstrap_results = pls.bootstrap()
-                print("✅ Bootstrapping completed successfully")
-            except Exception as bootstrap_err:
-                print(f"⚠️ Bootstrap failed: {bootstrap_err}")
-                print(traceback.format_exc())
-                print("    Continuing without bootstrap (p-values unavailable)")
-                bootstrap_results = None
-                
-        except Exception as model_err:
-            print(f"💥 Model fitting error: {model_err}")
-            print(traceback.format_exc())
-            raise HTTPException(
-                status_code=400, 
-                detail=f"PLS-SEM model failed to converge. Check data quality and model specification: {str(model_err)}"
-            )
-
-        # Step 6: Extract statistical results
-        print("\n" + "="*60)
-        print("    STEP 6: EXTRACTING STATISTICAL RESULTS")
-        print("="*60)
-        
-        n_observations = len(model_df_clean)
         n_parameters = len(all_indicators) + len(structure_paths)  # FIXED: was path_coefficients, now structure_paths
         
         statistical_results = await extract_statistical_results(
@@ -2298,299 +2275,9 @@ async def perform_pls_sem(
             bootstrap_data=bootstrap_results,
             n_observations=n_observations,
             n_parameters=n_parameters,
-            name_mapping=name_mapping
-        )
-
-        # Step 7: Generate AI insights
-        print("\n" + "="*60)
-        print("    STEP 7: GENERATING AI INSIGHTS")
-        print("="*60)
-        
-        user_input_dict = {
-            "measurementModel": measurement_syntax,
-            "structuralModel": structural_syntax
-        }
-        
-        ai_insights = await generate_ai_insights(
-            stats_results=statistical_results,
-            user_input=user_input_dict,
-            user_critique=user_critique
-        )
-
-        # Step 8: Generate path diagram
-        print("\n" + "="*60)
-        print("    STEP 8: GENERATING PATH DIAGRAM")
-        print("="*60)
-        
-        # Get outer loadings for diagram but keep a copy
-        outer_loadings_df_for_diagram = statistical_results.get('outer_loadings_df', None)
-        print(f"📊 Outer loadings for diagram: {outer_loadings_df_for_diagram.shape if outer_loadings_df_for_diagram is not None else 'None'}")
-        
-        try:
-            path_diagram_html, diagram_success = generate_path_diagram(
-                statistical_results['path_coefficients'],
-                statistical_results['reliability_validity'],
-                statistical_results['model_evaluation'],
-                measurement_syntax,
-                outer_loadings_df_for_diagram,
-                name_mapping,
-                reverse_name_mapping,
-                output_format='png'
-            )
-        except Exception as diagram_err:
-            print(f"⚠️ Diagram generation failed: {diagram_err}")
-            print(traceback.format_exc())
-            path_diagram_html = f'<div class="p-4 text-center text-yellow-400">⚠️ Diagram unavailable: {diagram_err}</div>'
-            diagram_success = False
-
-        # Step 9: Prepare final results
-        print("\n" + "="*60)
-        print("    STEP 9: PREPARING FINAL RESULTS")
-        print("="*60)
-        
-        # Convert outer_loadings_df to JSON format FIRST
-        outer_loadings_json = None
-        if 'outer_loadings_df' in statistical_results and isinstance(statistical_results['outer_loadings_df'], pd.DataFrame):
-            print("DEBUG: Converting outer_loadings_df to JSON format...")
-            df_loadings = statistical_results['outer_loadings_df']
-            outer_loadings_json = {
-                "headers": [col for col in df_loadings.columns],
-                "rows": [
-                    {"indicator": index, **row.to_dict()} 
-                    for index, row in df_loadings.iterrows()
-                ]
-            }
-            # Remove the non-serializable DataFrame
-            del statistical_results['outer_loadings_df']
-
-        # Convert statistical_results and ai_insights to JSON-safe format BEFORE merging
-        print("DEBUG: Converting statistical and AI results to JSON-serializable format...")
-        statistical_results = make_json_serializable(statistical_results)
-        ai_insights = make_json_serializable(ai_insights)
-        
-        # Clean other variables
-        user_input_dict = make_json_serializable(user_input_dict)
-        cleaning_log = make_json_serializable(cleaning_log)
-        
-        # Build final_results with already-clean data
-        final_results = {
-            **statistical_results,
-            "model_evaluation": {
-                **statistical_results["model_evaluation"],
-                "interpretation": ai_insights["model_evaluation"].get("interpretation", "AI interpretation failed.")
-            },
-            "path_coefficients": [
-                {**stat_path, "interpretation": next((ai_path.get("interpretation", "AI interpretation failed.") for ai_path in ai_insights.get("path_coefficients", []) if ai_path.get("path") == stat_path.get("path")), "AI interpretation failed.")}
-                for stat_path in statistical_results["path_coefficients"]
-            ],
-            "reliability_validity": [
-                {**stat_rel, "assessment": next((ai_rel.get("assessment", "AI assessment failed.") for ai_rel in ai_insights.get("reliability_validity", []) if ai_rel.get("construct") == stat_rel.get("construct")), "AI assessment failed.")}
-                for stat_rel in statistical_results["reliability_validity"]
-            ],
-            "business_recommendations": ai_insights.get("business_recommendations", []),
-            "path_diagram": path_diagram_html,
-            "diagram_available": make_json_serializable(diagram_success),
-            "userInput": user_input_dict,
-            "data_summary": {
-                "total_rows": len(df_raw),
-                "analysis_rows": len(model_df_clean),
-                "missing_rows": len(model_df) - len(model_df_clean),
-                "variables": list(name_mapping.values()),
-                "cleaning_log": cleaning_log
-            },
-            "outer_loadings_json": outer_loadings_json
-        }
-        
-        # Final conversion to ensure everything is JSON-safe
-        print("DEBUG: Final JSON-serialization pass...")
-        final_results = make_json_serializable(final_results)
-        
-        # Test JSON serialization before returning
-        try:
-            test_json = json.dumps(final_results)
-            print("✅ DEBUG: Final results JSON serialization test passed")
-        except Exception as json_err:
-            print(f"❌ DEBUG: Final results JSON serialization failed: {json_err}")
-            print(f"Error type: {type(json_err)}")
-            
-            # Find problematic fields
-            for key, value in final_results.items():
-                try:
-                    json.dumps({key: value})
-                    print(f"  ✅ {key}: OK")
-                except Exception as field_err:
-                    print(f"  ❌ {key}: {field_err}")
-                    print(f"    Value type: {type(value)}")
-                    if hasattr(value, '__dict__'):
-                        print(f"    Value dict: {vars(value)}")
-            
-            # Create fallback response
-            final_results = {
-                "error": "JSON serialization failed",
-                "message": str(json_err),
-                "path_coefficients": [],
-                "reliability_validity": [],
-                "business_recommendations": ai_insights.get("business_recommendations", []),
-                "model_evaluation": {"interpretation": "Serialization error occurred"},
-                "data_summary": {"error": "Could not serialize data summary"}
-            }
-        
-        print("✅ PLS-SEM analysis completed successfully")
-        return final_results
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        error_msg = f"Unexpected error: {type(e).__name__}: {str(e)}"
-        print(f"💥 {error_msg}")
-        print(f"💥 Full traceback:")
-        print(traceback.format_exc())
-        raise HTTPException(status_code=500, detail=error_msg)
-    """
-    Performs PLS-SEM analysis using the 'plspm' library.
-    --- V4: FIX ---
-    - Converts outer_loadings_df to a JSON-serializable dict 
-    - Adds this new dict to the final_results.
-    """
-    if not Plspm:
-        raise HTTPException(status_code=500, detail="PLS-SEM library 'plspm' not available.")
-
-    print("🚀 Starting PLS-SEM analysis with comprehensive debugging...")
-    
-    # --- This is the user's critique, hardcoded as requested ---
-    user_critique = """
-    Model Fit & Reliability (5/10)
-    Major Concerns:
-    - Poor Quality construct reliability (α=0.825, CR=0.684): CR below 0.7 threshold
-    - Low Satisfaction R² (0.181): Only 18.1% variance explained - concerning
-    - Zero Quality R² (0.000): Expected for exogenous construct but limits model scope
-    - Loyalty explanation (24.2%): Moderate but could be improved
-    Critical Issues:
-    - Reliability inconsistency: Cronbach's α acceptable but CR poor for Quality
-    - Missing discriminant validity: No Fornell-Larcker criterion or HTMT ratios
-    - AVE concerns: Some AVE values below 0.7 threshold
-    - Model explanatory power: Overall variance explained is modest
-    Recommendations:
-    - Urgently improve Quality measurement: Add/modify indicators
-    - Conduct full validity assessment (discriminant validity crucial)
-    - Consider additional predictors to improve R² values
-    - Report complete fit indices (SRMR, NFI if available) 
-    
-    Recommendations (6/10)
-    Positives:
-    - Actionable focus on Quality improvement
-    - Recognition of key relationships
-    - Practical KPI suggestions (loyalty rate, satisfaction rate)
-    Limitations:
-    - Generic recommendations: Lacks specificity for your context
-    - Missing prioritization: Which quality aspects matter most?
-    - No segmentation analysis: Different customer groups may need different approaches
-    - Limited scope: Doesn't address satisfaction drivers specifically
-    Improvements Needed:
-    - Industry-specific quality improvement strategies
-    - Segmented recommendations based on customer profiles
-    - Timeline and resource allocation for improvements
-    - Additional KPIs (NPS, customer lifetime value, retention metrics)
-    """
-    
-    try:
-        # Step 1: Load data (no numeric conversion yet)
-        print("\n" + "="*60)
-        print("    STEP 1: LOADING DATA")
-        print("="*60)
-        df_raw = await read_data(data_payload, is_file_upload, input_filename)
-        
-        # Step 2: Clean column names
-        print("\n" + "="*60)
-        print("    STEP 2: CLEANING COLUMN NAMES")
-        print("="*60)
-        df_named, name_mapping, reverse_name_mapping = clean_column_names(df_raw)
-        
-        # Step 3: Parse syntax
-        print("\n" + "="*60)
-        print("    STEP 3: PARSING SYNTAX")
-        print("="*60)
-        config, blocks, structure_paths = parse_lavaan_syntax(measurement_syntax, structural_syntax, reverse_name_mapping)
-
-        # Step 4: Final Data Prep & Validation
-        print("\n" + "="*60)
-        print("    STEP 4: FINAL DATA PREPARATION & VALIDATION")
-        print("="*60)
-        
-        all_indicators = list(set([item for sublist in blocks.values() for item in sublist]))
-        print(f"Model requires {len(all_indicators)} indicators: {all_indicators}")
-        
-        try:
-            model_df = df_named[all_indicators].copy()
-        except KeyError as e:
-            missing_cols = list(set(all_indicators) - set(df_named.columns))
-            original_missing = [name_mapping.get(c, c) for c in missing_cols]
-            print(f"❌ ERROR: Model syntax refers to columns not in the data: {original_missing}")
-            raise HTTPException(status_code=400, detail=f"Syntax error. Columns not found in data: {original_missing}")
-
-        debug_dataframe(model_df, "STEP 4A: PRE-CLEANING MODEL DATA")
-        
-        model_df_clean, cleaning_log = clean_and_validate_data(model_df)
-        
-        debug_dataframe(model_df_clean, "STEP 4B: FINAL VALIDATED MODEL DATA")
-        
-        if cleaning_log['final_quality']['has_issues']:
-            print("🚨 WARNING: Data quality issues found. Raising exception.")
-            issues_str = "; ".join([f"{issue['type']}: {issue['message']}" for issue in cleaning_log['final_quality']['issues']])
-            raise HTTPException(
-                status_code=400, 
-                detail=f"Data Quality Error: {issues_str}. Please clean your data."
-            )
-        
-        if len(model_df_clean) < 30:
-            raise HTTPException(
-                status_code=400, 
-                detail=f"Insufficient data: only {len(model_df_clean)} complete rows remain for the model. Need at least 30."
-            )
-
-        # Step 5: Run PLS-SEM analysis
-        print("\n" + "="*60)
-        print("    STEP 5: RUNNING PLS-SEM MODEL")
-        print("="*60)
-        bootstrap_results = None
-        
-        try:
-            print("🔧 Initializing PLS model...")
-            pls = Plspm(model_df_clean, config, Scheme.PATH, 100, 0.0000001, bootstrap=True)
-            print("✅ PLS model initialized successfully")
-            
-            try:
-                print("🎲 Starting bootstrap analysis...")
-                bootstrap_results = pls.bootstrap()
-                print("✅ Bootstrapping completed successfully")
-            except Exception as bootstrap_err:
-                print(f"⚠️ Bootstrap failed: {bootstrap_err}")
-                print(traceback.format_exc())
-                print("    Continuing without bootstrap (p-values unavailable)")
-                bootstrap_results = None
-                
-        except Exception as model_err:
-            print(f"💥 Model fitting error: {model_err}")
-            print(traceback.format_exc())
-            raise HTTPException(
-                status_code=400, 
-                detail=f"PLS-SEM model failed to converge. Check data quality and model specification: {str(model_err)}"
-            )
-
-        # Step 6: Extract statistical results
-        print("\n" + "="*60)
-        print("    STEP 6: EXTRACTING STATISTICAL RESULTS")
-        print("="*60)
-        
-        n_observations = len(model_df_clean)
-        n_parameters = len(all_indicators) + len(structure_paths) # Estimate
-        
-        statistical_results = await extract_statistical_results(
-            pls=pls,
-            bootstrap_data=bootstrap_results,
-            n_observations=n_observations,
-            n_parameters=n_parameters,
-            name_mapping=name_mapping
+            name_mapping=name_mapping,
+            model_df_clean=model_df_clean,
+            blocks=blocks
         )
 
         # Step 7: Generate AI insights
@@ -2784,275 +2471,6 @@ async def perform_pls_sem(
 
         debug_dataframe(model_df, "STEP 4A: PRE-CLEANING MODEL DATA")
         
-        model_df_clean, cleaning_log = clean_and_validate_data(model_df)
-        
-        debug_dataframe(model_df_clean, "STEP 4B: FINAL VALIDATED MODEL DATA")
-        
-        if cleaning_log['final_quality']['has_issues']:
-            print("🚨 WARNING: Data quality issues found. Raising exception.")
-            issues_str = "; ".join([f"{issue['type']}: {issue['message']}" for issue in cleaning_log['final_quality']['issues']])
-            raise HTTPException(
-                status_code=400, 
-                detail=f"Data Quality Error: {issues_str}. Please clean your data."
-            )
-        
-        if len(model_df_clean) < 30:
-            raise HTTPException(
-                status_code=400, 
-                detail=f"Insufficient data: only {len(model_df_clean)} complete rows remain for the model. Need at least 30."
-            )
-
-        # Step 5: Run PLS-SEM analysis
-        print("\n" + "="*60)
-        print("    STEP 5: RUNNING PLS-SEM MODEL")
-        print("="*60)
-        bootstrap_results = None
-        
-        try:
-            print("🔧 Initializing PLS model...")
-            pls = Plspm(model_df_clean, config, Scheme.PATH, 100, 0.0000001, bootstrap=True)
-            print("✅ PLS model initialized successfully")
-            
-            try:
-                print("🎲 Starting bootstrap analysis...")
-                bootstrap_results = pls.bootstrap()
-                print("✅ Bootstrapping completed successfully")
-            except Exception as bootstrap_err:
-                print(f"⚠️ Bootstrap failed: {bootstrap_err}")
-                print(traceback.format_exc())
-                print("    Continuing without bootstrap (p-values unavailable)")
-                bootstrap_results = None
-                
-        except Exception as model_err:
-            print(f"💥 Model fitting error: {model_err}")
-            print(traceback.format_exc())
-            raise HTTPException(
-                status_code=400, 
-                detail=f"PLS-SEM model failed to converge. Check data quality and model specification: {str(model_err)}"
-            )
-
-        # Step 6: Extract statistical results
-        print("\n" + "="*60)
-        print("    STEP 6: EXTRACTING STATISTICAL RESULTS")
-        print("="*60)
-        
-        n_observations = len(model_df_clean)
-        # --- MODIFICATION: Use 'structure_paths' ---
-        n_parameters = len(all_indicators) + len(structure_paths) # Estimate
-        
-        statistical_results = await extract_statistical_results(
-            pls=pls,
-            bootstrap_data=bootstrap_results,
-            n_observations=n_observations,
-            n_parameters=n_parameters,
-            name_mapping=name_mapping
-        )
-
-        # Step 7: Generate AI insights
-        print("\n" + "="*60)
-        print("    STEP 7: GENERATING AI INSIGHTS")
-        print("="*60)
-        
-        user_input_dict = {
-            "measurementModel": measurement_syntax,
-            "structuralModel": structural_syntax
-        }
-        
-        ai_insights = await generate_ai_insights(
-            stats_results=statistical_results,
-            user_input=user_input_dict,
-            user_critique=user_critique # Pass the critique to the AI
-        )
-
-        # Step 8: Generate path diagram
-        print("\n" + "="*60)
-        print("    STEP 8: GENERATING PATH DIAGRAM")
-        print("="*60)
-        
-        outer_loadings_df = statistical_results.pop('outer_loadings_df', None)
-        print(f"📊 Outer loadings for diagram: {outer_loadings_df.shape if outer_loadings_df is not None else 'None'}")
-        
-        try:
-            path_diagram_html, diagram_success = generate_path_diagram(
-                statistical_results['path_coefficients'],
-                statistical_results['reliability_validity'],
-                statistical_results['model_evaluation'],
-                measurement_syntax,
-                outer_loadings_df,
-                name_mapping,
-                reverse_name_mapping,
-                output_format='png'
-            )
-        except Exception as diagram_err:
-            print(f"⚠️ Diagram generation failed: {diagram_err}")
-            print(traceback.format_exc())
-            path_diagram_html = f'<div class="p-4 text-center text-yellow-400">⚠️ Diagram unavailable: {diagram_err}</div>'
-            diagram_success = False
-
-        # Step 9: Prepare final results
-        print("\n" + "="*60)
-        print("    STEP 9: PREPARING FINAL RESULTS")
-        print("="*60)
-        
-        # Merge stats and AI insights
-        final_results = {
-            **statistical_results,
-            "model_evaluation": {
-                **statistical_results["model_evaluation"],
-                "interpretation": ai_insights["model_evaluation"].get("interpretation", "AI interpretation failed.")
-            },
-            "path_coefficients": [
-                {**stat_path, "interpretation": next((ai_path.get("interpretation", "AI interpretation failed.") for ai_path in ai_insights.get("path_coefficients", []) if ai_path.get("path") == stat_path.get("path")), "AI interpretation failed.")}
-                for stat_path in statistical_results["path_coefficients"]
-            ],
-            "reliability_validity": [
-                {**stat_rel, "assessment": next((ai_rel.get("assessment", "AI assessment failed.") for ai_rel in ai_insights.get("reliability_validity", []) if ai_rel.get("construct") == stat_rel.get("construct")), "AI assessment failed.")}
-                for stat_rel in statistical_results["reliability_validity"]
-            ],
-            "business_recommendations": ai_insights.get("business_recommendations", []),
-            "path_diagram": path_diagram_html,
-            "diagram_available": diagram_success,
-            "userInput": user_input_dict,
-            "data_summary": {
-                "total_rows": len(df_raw),
-                "analysis_rows": len(model_df_clean),
-                "missing_rows": len(model_df) - len(model_df_clean), # Missing from selected columns
-                "variables": list(name_mapping.values()),
-                "cleaning_log": cleaning_log
-            }
-        }
-        
-        # CRITICAL: Convert all numpy types to JSON-serializable types before returning
-        print("DEBUG: Converting final results to JSON-serializable format...")
-        final_results = make_json_serializable(final_results)
-        
-        # Test JSON serialization before returning
-        try:
-            test_json = json.dumps(final_results)
-            print("✅ DEBUG: Final results JSON serialization test passed")
-        except Exception as json_err:
-            print(f"❌ DEBUG: Final results JSON serialization failed: {json_err}")
-            # Find the problematic fields
-            for key, value in final_results.items():
-                try:
-                    json.dumps({key: value})
-                    print(f"  ✅ {key}: OK")
-                except Exception as field_err:
-                    print(f"  ❌ {key}: {field_err}")
-                    # Try to fix common issues
-                    if isinstance(value, dict):
-                        final_results[key] = make_json_serializable(value)
-                    elif isinstance(value, list):
-                        final_results[key] = make_json_serializable(value)
-            
-            # Test again after fixes
-            try:
-                test_json = json.dumps(final_results)
-                print("✅ DEBUG: Final results JSON serialization test passed after fixes")
-            except Exception as final_err:
-                print(f"❌ DEBUG: Final results still not serializable: {final_err}")
-                # Last resort: create a minimal response
-                final_results = {
-                    "error": "JSON serialization failed",
-                    "message": str(final_err),
-                    "path_coefficients": [],
-                    "reliability_validity": [],
-                    "business_recommendations": ai_insights.get("business_recommendations", [])
-                }
-        
-        print("✅ PLS-SEM analysis completed successfully")
-        return final_results
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        error_msg = f"Unexpected error: {type(e).__name__}: {str(e)}"
-        print(f"💥 {error_msg}")
-        print(f"💥 Full traceback:")
-        print(traceback.format_exc())
-        raise HTTPException(status_code=500, detail=error_msg)
-    """
-    Performs PLS-SEM analysis using the 'plspm' library.
-    REORGANIZED to fix data cleaning pipeline and use native stats.
-    """
-    if not Plspm:
-        raise HTTPException(status_code=500, detail="PLS-SEM library 'plspm' not available.")
-
-    print("🚀 Starting PLS-SEM analysis with comprehensive debugging...")
-    
-    # --- This is the user's critique, hardcoded as requested ---
-    user_critique = """
-    Model Fit & Reliability (5/10)
-    Major Concerns:
-    - Poor Quality construct reliability (α=0.825, CR=0.684): CR below 0.7 threshold
-    - Low Satisfaction R² (0.181): Only 18.1% variance explained - concerning
-    - Zero Quality R² (0.000): Expected for exogenous construct but limits model scope
-    - Loyalty explanation (24.2%): Moderate but could be improved
-    Critical Issues:
-    - Reliability inconsistency: Cronbach's α acceptable but CR poor for Quality
-    - Missing discriminant validity: No Fornell-Larcker criterion or HTMT ratios
-    - AVE concerns: Some AVE values below 0.7 threshold
-    - Model explanatory power: Overall variance explained is modest
-    Recommendations:
-    - Urgently improve Quality measurement: Add/modify indicators
-    - Conduct full validity assessment (discriminant validity crucial)
-    - Consider additional predictors to improve R² values
-    - Report complete fit indices (SRMR, NFI if available) 
-    
-    Recommendations (6/10)
-    Positives:
-    - Actionable focus on Quality improvement
-    - Recognition of key relationships
-    - Practical KPI suggestions (loyalty rate, satisfaction rate)
-    Limitations:
-    - Generic recommendations: Lacks specificity for your context
-    - Missing prioritization: Which quality aspects matter most?
-    - No segmentation analysis: Different customer groups may need different approaches
-    - Limited scope: Doesn't address satisfaction drivers specifically
-    Improvements Needed:
-    - Industry-specific quality improvement strategies
-    - Segmented recommendations based on customer profiles
-    - Timeline and resource allocation for improvements
-    - Additional KPIs (NPS, customer lifetime value, retention metrics)
-    """
-    
-    try:
-        # Step 1: Load data (no numeric conversion yet)
-        print("\n" + "="*60)
-        print("    STEP 1: LOADING DATA")
-        print("="*60)
-        df_raw = await read_data(data_payload, is_file_upload, input_filename)
-        
-        # Step 2: Clean column names
-        print("\n" + "="*60)
-        print("    STEP 2: CLEANING COLUMN NAMES")
-        print("="*60)
-        df_named, name_mapping, reverse_name_mapping = clean_column_names(df_raw)
-        
-        # Step 3: Parse syntax
-        print("\n" + "="*60)
-        print("    STEP 3: PARSING SYNTAX")
-        print("="*60)
-        config, blocks = parse_lavaan_syntax(measurement_syntax, structural_syntax, reverse_name_mapping)
-
-        # Step 4: Final Data Prep & Validation
-        print("\n" + "="*60)
-        print("    STEP 4: FINAL DATA PREPARATION & VALIDATION")
-        print("="*60)
-        
-        all_indicators = list(set([item for sublist in blocks.values() for item in sublist]))
-        print(f"Model requires {len(all_indicators)} indicators: {all_indicators}")
-        
-        try:
-            model_df = df_named[all_indicators].copy()
-        except KeyError as e:
-            missing_cols = list(set(all_indicators) - set(df_named.columns))
-            original_missing = [name_mapping.get(c, c) for c in missing_cols]
-            print(f"❌ ERROR: Model syntax refers to columns not in the data: {original_missing}")
-            raise HTTPException(status_code=400, detail=f"Syntax error. Columns not found in data: {original_missing}")
-
-        debug_dataframe(model_df, "STEP 4A: PRE-CLEANING MODEL DATA")
-        
         # --- THIS IS THE CORRECTED DATA CLEANING WORKFLOW ---
         model_df_clean, cleaning_log = clean_and_validate_data(model_df)
         
@@ -3191,6 +2609,44 @@ async def perform_pls_sem(
                 "cleaning_log": cleaning_log
             }
         }
+        
+        # CRITICAL: Convert all numpy types to JSON-serializable types before returning
+        print("DEBUG: Converting final results to JSON-serializable format...")
+        final_results = make_json_serializable(final_results)
+        
+        # Test JSON serialization before returning
+        try:
+            test_json = json.dumps(final_results)
+            print("✅ DEBUG: Final results JSON serialization test passed")
+        except Exception as json_err:
+            print(f"❌ DEBUG: Final results JSON serialization failed: {json_err}")
+            # Find the problematic fields
+            for key, value in final_results.items():
+                try:
+                    json.dumps({key: value})
+                    print(f"  ✅ {key}: OK")
+                except Exception as field_err:
+                    print(f"  ❌ {key}: {field_err}")
+                    # Try to fix common issues
+                    if isinstance(value, dict):
+                        final_results[key] = make_json_serializable(value)
+                    elif isinstance(value, list):
+                        final_results[key] = make_json_serializable(value)
+            
+            # Test again after fixes
+            try:
+                test_json = json.dumps(final_results)
+                print("✅ DEBUG: Final results JSON serialization test passed after fixes")
+            except Exception as final_err:
+                print(f"❌ DEBUG: Final results still not serializable: {final_err}")
+                # Last resort: create a minimal response
+                final_results = {
+                    "error": "JSON serialization failed",
+                    "message": str(final_err),
+                    "path_coefficients": [],
+                    "reliability_validity": [],
+                    "business_recommendations": ai_insights.get("business_recommendations", [])
+                }
         
         print("✅ PLS-SEM analysis completed successfully")
         return final_results
