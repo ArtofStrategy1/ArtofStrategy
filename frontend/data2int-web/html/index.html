@@ -4050,44 +4050,66 @@ Profit_USD ~ Sales_Performance + Customer_Metrics`;
     // Initialize WebSocket connection
     initializeWebSocket();
 
+
+    async function checkUserTierFromDB(userId) {
+        console.log(">>> Checking tier from DB.");
+        try {
+            const { data: userData, error: userError } = await supabase
+                .from('users') 
+                .select('tier')
+                .eq('auth_user_id', userId)
+                .maybeSingle();
+            
+            console.log(">>> DB Query result:", userData, userError);
+            
+            if (!userError && userData && (userData.tier === 'premium' || userData.tier === 'admin')) {
+                console.log(">>> Setting limit to 3");
+                currentSelectionLimit = 3;
+                updateNavBar(); // Update UI to reflect premium status
+            } else {
+                console.log(">>> Keeping limit at 1");
+            }
+        } catch (err) {
+            console.error(">>> DB check error:", err);
+        }
+    }
+
     // --- AUTH STATE CHANGE LISTENER ---
     supabase.auth.onAuthStateChange(async (event, session) => {
+        console.log("=== AUTH STATE CHANGE START ===");
         console.log(`Auth Event: ${event}`);
 
         if (event === "SIGNED_IN" && session) {
             userLoggedIn = true;
             currentUser = session.user;
 
+            updateNavBar();
+            console.log(">>> NavBar updated");
+        
             // 1. Default to Basic (Secure default)
             currentSelectionLimit = 1;
+            console.log(">>> Default Selection limit set");
 
             // 2. Check Metadata (Fast check)
             // Checks if you manually set their role to 'admin' or 'premium' in Supabase dashboard
             const tier = currentUser.app_metadata?.tier || currentUser.user_metadata?.tier;
             const role = currentUser.app_metadata?.role;
+            console.log(">>> Metadata tier:", tier);
+            console.log(">>> Metadata role:", role);
 
             if (tier === 'premium' || tier === 'admin' || role === 'admin') {
+                console.log(">>> TAKING METADATA PATH - skipping DB query");
                 console.log(`User has privileged metadata (${tier || role}). Unlocking Premium.`);
                 currentSelectionLimit = 3;
             } 
             // 3. Check Database Subscription (Robust check)
             // This verifies the actual Stripe data synced to your 'public.subscriptions' table
             else {
-                const { data: subData, error: subError } = await supabase
-                    .from('subscriptions')
-                    .select('status')
-                    .eq('user_id', currentUser.id)
-                    .in('status', ['active', 'trialing'])
-                    .maybeSingle();
-
-                if (subData && subData.status) {
-                    console.log("Active subscription found in database. Unlocking Premium.");
-                    currentSelectionLimit = 3;
-                } else {
-                    console.log("No active subscription found. Enforcing Basic limit.");
-                }
+                console.log(">>> Triggering async DB check");
+                checkUserTierFromDB(currentUser.id);
             }
-
+            console.log(">>> About to handle URL hash");
+                        
             // 4. Handle URL Hash (Password Resets / Email Confirmations)
             const hash = window.location.hash;
             if (hash && hash.includes("access_token")) {
@@ -4112,6 +4134,7 @@ Profit_USD ~ Sales_Performance + Customer_Metrics`;
         
         // Update UI elements (Nav bar, etc.)
         updateNavBar();
+        console.log("=== AUTH STATE CHANGE END ===");
     });
 
     // --- Navigation Logic ---
@@ -6929,14 +6952,19 @@ async function handleContactSubmit() {
     // --- Home Page Card & Tab Logic ---
     function setupHomeTabs() {
         const tabsNav = document.getElementById("homeTabsNav");
-        const tabPanels = document.querySelectorAll(".home-tab-panel");
-        const tabBtns = document.querySelectorAll(".home-tab-btn");
+        // Use specific container to avoid conflict with admin panels
+        const contentContainer = document.getElementById("homeTabsContent");
+        if (!contentContainer) return;
+
+        const tabPanels = contentContainer.querySelectorAll(".home-tab-panel");
+        // We scope buttons to the nav to ensure we don't accidentally toggle Admin buttons
+        const tabBtns = tabsNav ? tabsNav.querySelectorAll(".home-tab-btn") : document.querySelectorAll(".home-tab-btn");
 
         // 1. Initial State: Force the active tab to be visible immediately
         tabPanels.forEach((panel) => {
             if (panel.classList.contains("active")) {
                 panel.style.display = "grid";
-                panel.style.opacity = "1"; // Force visibility safety net
+                panel.style.opacity = "1"; 
             } else {
                 panel.style.display = "none";
                 panel.style.opacity = "0";
@@ -6946,29 +6974,35 @@ async function handleContactSubmit() {
         // 2. Click Listener
         if (tabsNav) {
             tabsNav.addEventListener("click", (e) => {
-                    // Find the closest button (in case user clicks the icon/span inside)
-                    const btn = e.target.closest(".home-tab-btn");
-                    if (!btn) return;
+                // Find the closest button (in case user clicks the icon/span inside)
+                const btn = e.target.closest(".home-tab-btn");
+                if (!btn) return;
+                
+                const targetTab = btn.dataset.tab;
 
-                    const targetTab = btn.dataset.tab;
+                // Update Buttons
+                tabBtns.forEach((b) => b.classList.toggle("active", b.dataset.tab === targetTab));
 
-                    // Update Buttons
-                    tabBtns.forEach((b) => b.classList.toggle("active", b.dataset.tab === targetTab));
-
-                    // Update Panels with Animation Reset
+                // Update Panels with Animation Reset
                 tabPanels.forEach((panel) => {
                     if (panel.id === targetTab) {
                         panel.classList.add("active");
                         panel.style.display = "grid";
-                            
-                            // Re-trigger animation for these specific elements
-                            setTimeout(() => {
-                                const cards = panel.querySelectorAll('.feature-card');
-                                animateElements(cards);
-                            }, 10);
+                        
+                        // --- THE FIX: Force Opacity back to 1 ---
+                        requestAnimationFrame(() => {
+                            panel.style.opacity = "1";
+                        });
+                        
+                        // Re-trigger animation for these specific elements
+                        setTimeout(() => {
+                             const cards = panel.querySelectorAll('.feature-card');
+                             animateElements(cards);
+                        }, 50);
                     } else {
                         panel.classList.remove("active");
                         panel.style.display = "none";
+                        panel.style.opacity = "0"; // Ensure it hides correctly
                     }
                 });
             });
@@ -7017,31 +7051,72 @@ async function handleContactSubmit() {
         };
     }
 
-    const selectPaidBtn = $("selectPaidVersion");
-    if (selectPaidBtn) {
-        selectPaidBtn.onclick = () => {
-            // 1. Close the Choice Modal
-            const choiceModal = $("versionChoiceModal");
-            choiceModal.classList.remove('modal-open');
-            setTimeout(() => {
-                choiceModal.style.display = 'none';
-                
-                // 2. Open the NEW Stripe Plan Modal
+    // NEW CODE (Paste this in)
+const selectPaidBtn = $("selectPaidVersion");
+if (selectPaidBtn) {
+    selectPaidBtn.onclick = () => {
+        // 1. Close the Choice Modal
+        const choiceModal = $("versionChoiceModal");
+        choiceModal.classList.remove('modal-open');
+        
+        // 2. Wait for fade out, then check Admin status
+        setTimeout(() => {
+            choiceModal.style.display = 'none';
+            
+            // --- ADMIN BYPASS LOGIC ---
+            // Check if user is Admin (via role or tier metadata) OR already Premium
+            const isPrivileged = 
+                (currentUser?.app_metadata?.role === 'admin') || 
+                (currentUser?.app_metadata?.tier === 'admin') ||
+                (currentUser?.user_metadata?.tier === 'admin') ||
+                (currentUser?.app_metadata?.tier === 'premium'); // Optional: Skip if already premium
+
+            if (isPrivileged) {
+                console.log("User is Admin/Premium. Bypassing payment modal.");
+                currentSelectionLimit = 3; // Grant full access limit
+                proceedFromModal();      // Go straight to the tool
+            } else {
+                // Normal User: Open Stripe Payment Modal
                 openStripePlanModal(); 
-            }, 300);
-        };
-    }
+            }
+            // ---------------------------
+            
+        }, 300);
+    };
+}
 }
 
 // Function to open the Plan Selection Modal
 function openStripePlanModal() {
     const modal = document.getElementById("stripePaymentModal");
+    
+    // --- FIX: Attach User ID to Stripe Link ---
+    // This ensures the Webhook knows which 'auth_user_id' to upgrade
+    if (currentUser && currentUser.id) {
+        const buyButtons = modal.querySelectorAll('a[href^="https://buy.stripe.com"]');
+        
+        buyButtons.forEach(btn => {
+            // 1. Get the base URL from the HTML
+            const url = new URL(btn.href);
+            
+            // 2. Append the Supabase UUID
+            url.searchParams.set('client_reference_id', currentUser.id);
+            
+            // 3. (Optional) Pre-fill email to make checkout faster
+            if (currentUser.email) {
+                url.searchParams.set('prefilled_email', currentUser.email);
+            }
+            
+            // 4. Update the button
+            btn.href = url.toString();
+        });
+    }
+    // ------------------------------------------
+
     if (modal) {
         modal.style.display = 'flex';
         modal.classList.remove('hidden');
         setTimeout(() => modal.classList.add('modal-open'), 10);
-    } else {
-        console.error("Stripe Payment Modal not found in DOM");
     }
 }
 
@@ -32144,6 +32219,10 @@ async function handlePasswordUpdate() {
     
     // These should run regardless
     setupHomeTabs();
+
+    // --- FIX: Force Event Listeners to attach immediately ---
+    attachNavLinkListeners();
+
     setTimeout(() => {
         const activePanel = document.querySelector(".home-tab-panel.active");
         if (activePanel) {
@@ -32339,9 +32418,9 @@ async function handlePasswordUpdate() {
             </div>`;
         document.body.appendChild(successMsg);
         
-        // 3. Clean the URL so refreshing doesn't re-trigger
-        const newUrl = window.location.pathname + window.location.hash;
-        window.history.replaceState(null, null, newUrl);
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete('payment_success');
+        window.history.replaceState(null, null, newUrl.toString());
         
         // 4. Remove message after 5 seconds
         setTimeout(() => {
