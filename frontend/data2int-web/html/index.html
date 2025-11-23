@@ -20035,16 +20035,13 @@ function renderPredictiveLearnPanel(learnPanel, data) {
 
 /**
  * Handles the DEMATEL analysis request.
- * --- THIS IS THE "REAL" VERSION - v2 ---
- * Step 1: Gets user text and sends it to OLLAMA with a highly-structured,
- * "chain-of-thought" prompt to force accurate factor/matrix generation.
- * Step 2: Sends the OLLAMA result to our Python backend for math.
- * Step 3: Renders the final result from the Python backend.
+ * --- SIMPLIFIED VERSION - Ollama call moved to Python backend ---
+ * Step 1: Gets user text from input or file
+ * Step 2: Sends text directly to Python backend (which handles Ollama internally)
+ * Step 3: Renders the final result from the Python backend
  */
 async function handleDematelAnalysis() {
-    const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
     const PYTHON_BACKEND_URL = "https://analysis.data2int.com/api/dematel";
-    const MODEL_NAME = "llama3.1:latest"; 
 
     const analysisResultContainer = $("analysisResult");
     analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div></div><div></div><div></div></div><h3 class="text-xl font-semibold text-white">Starting DEMATEL Analysis...</h3><p class="text-white/80 mb-2">Please wait...</p></div>`;
@@ -20061,7 +20058,7 @@ async function handleDematelAnalysis() {
         setLoading("generate", true); 
         analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div></div><div></div><div></div></div><h3 class="text-xl font-semibold text-white">Step 1/3: Reading and Understanding Text...</h3><p class="text-white/80 mb-2">Extracting key factors from your document...</p></div>`;
 
-        // 2. Get User Text (from sample, file, or text)
+        // 1. Get User Text (from sample, file, or text input)
         let userText = "";
         if (window.isSampleModeActive === true) {
             // --- SAMPLE MODE ---
@@ -20118,100 +20115,14 @@ async function handleDematelAnalysis() {
         
         console.log("🎯 Final DEMATEL text length:", userText.length);
 
-        // 3. --- STEP 1: CALL OLLAMA ---
-        analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div></div><div></div><div></div></div><h3 class="text-xl font-semibold text-white">Step 2/3: Generating Influence Matrix...</h3><p class="text-white/80 mb-2">AI is quantifying the causal relationships (this may take a moment)...</p></div>`;
+        // 2. --- SEND TEXT DIRECTLY TO PYTHON BACKEND ---
+        analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div></div><div></div><div></div></div><h3 class="text-xl font-semibold text-white">Step 2/3: AI Processing & Matrix Generation...</h3><p class="text-white/80 mb-2">Backend is extracting factors and calculating relationships...</p></div>`;
 
-        const prompt = `
-            You are a meticulous DEMATEL analyst. Your task is to perform a rigorous analysis of the provided text.
-
-            **USER TEXT:**
-            """
-            ${userText}
-            """
-
-            **YOUR TASKS (Follow this order):**
-
-            **TASK 1: Extract Factors**
-            First, carefully read the text and identify the key named factors. List them.
-            *Example:*
-            * Factors: ["Factor 1", "Factor 2", "Factor 3"]
-
-            **TASK 2: Analyze Relationships (Chain of Thought)**
-            Second, think step-by-step. For each *pair* of factors, analyze the influence from the row factor to the column factor.
-            - Use this scale ONLY: 0=No, 1=Low, 2=Moderate, 3=Strong, 4=Very Strong.
-            - You MUST justify your rating with a quote or direct inference from the text.
-            - If the text does not describe an influence, the rating MUST be 0.
-            
-            *Example of thinking process:*
-            * (Factor 1 -> Factor 1): 0 (Self-influence is zero)
-            * (Factor 1 -> Factor 2): Rating 3 (Strong). Justification: The text states "Factor 1 strongly influences Factor 2."
-            * (Factor 1 -> Factor 3): Rating 0. Justification: The text does not mention any relationship.
-            * (Factor 2 -> Factor 1): Rating 1 (Low). Justification: The text implies "Factor 2 has some small impact on Factor 1."
-            * ... (continue for all pairs)
-
-            **TASK 3: Create Final JSON**
-            Finally, use your step-by-step analysis to build the final JSON object.
-            - The "factors" list must match the factors you identified.
-            - The "matrix" must be an N x N matrix corresponding to your justified ratings.
-            - The matrix row/column order MUST match the factor list order.
-
-            You must return ONLY the valid JSON object. Do not add any other text or explanations outside the JSON structure.
-
-            **JSON FORMAT:**
-            {
-              "factors": [
-                "Factor Name 1",
-                "Factor Name 2",
-                "..."
-              ],
-              "matrix": [
-                [0, 3, 0, ...], 
-                [1, 0, 0, ...],
-                [...],
-                ...
-              ]
-            }
-        `;
-
-        console.log("🚀 Sending request to Ollama...");
-
-        const ollamaResponse = await fetch(OLLAMA_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ model: MODEL_NAME, prompt: prompt, stream: false, format: "json" })
-        });
-
-        if (!ollamaResponse.ok) {
-            throw new Error(`Ollama AI server error: ${ollamaResponse.statusText}`);
-        }
-
-        const ollamaResult = await ollamaResponse.json();
-        console.log("📥 Received response from Ollama");
-        
-        let aiData;
-        try {
-            aiData = JSON.parse(ollamaResult.response);
-            if (!aiData.factors || !aiData.matrix || !Array.isArray(aiData.factors) || !Array.isArray(aiData.matrix)) {
-                throw new Error("AI response missing 'factors' or 'matrix' key, or they are not arrays.");
-            }
-            if (aiData.factors.length !== aiData.matrix.length) {
-                throw new Error("AI returned a matrix size that does not match the factors list.");
-            }
-            console.log("✅ AI response validated successfully");
-        } catch (e) {
-            console.error("Failed to parse AI response:", ollamaResult.response);
-            throw new Error(`AI returned invalid JSON. Error: ${e.message}`);
-        }
-
-        // 4. --- STEP 2: CALL PYTHON BACKEND ---
-        analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div></div><div></div><div></div></div><h3 class="text-xl font-semibold text-white">Step 3/3: Calculating DEMATEL Mathematics...</h3><p class="text-white/80 mb-2">Running matrix calculations and generating insights...</p></div>`;
-        
         const backendFormData = new FormData();
-        backendFormData.append("analysis_type", "dematel");
-        backendFormData.append("dematel_factors", JSON.stringify(aiData.factors));
-        backendFormData.append("dematel_matrix", JSON.stringify(aiData.matrix));
+        backendFormData.append("analysis_type", "dematel_from_text"); // NEW: Signal to use text processing
+        backendFormData.append("user_text", userText); // NEW: Send the raw text
 
-        console.log("🚀 Sending request to Python backend...");
+        console.log("🚀 Sending text directly to Python backend...");
 
         const backendResponse = await fetch(PYTHON_BACKEND_URL, {
             method: "POST",
@@ -20227,7 +20138,9 @@ async function handleDematelAnalysis() {
             throw new Error(errorDetail);
         }
 
-        // 5. Process Final Response
+        // 3. Process Final Response
+        analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div></div><div></div><div></div></div><h3 class="text-xl font-semibold text-white">Step 3/3: Finalizing Results...</h3><p class="text-white/80 mb-2">Generating insights and visualizations...</p></div>`;
+
         const finalResults = await backendResponse.json();
         console.log("📥 Received response from Python backend");
 
@@ -20253,7 +20166,7 @@ async function handleDematelAnalysis() {
 
     } finally {
         window.isSampleModeActive = false; // Reset the flag
-        // 6. Reset loading state
+        // Reset loading state
         setLoading("generate", false);
     }
 }

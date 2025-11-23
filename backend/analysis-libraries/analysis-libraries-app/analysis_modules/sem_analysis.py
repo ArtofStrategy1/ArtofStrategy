@@ -1,3 +1,5 @@
+# analysis_modules/sem_analysis.py
+
 import io
 import pandas as pd
 import semopy
@@ -16,12 +18,25 @@ from semopy import Optimizer, calc_stats, semplot
 from semopy.inspector import inspect 
 
 # --- CONFIGURATION ---
-OLLAMA_URL = "https://ollama.data2int.com/api/generate"
+OLLAMA_URL = "https://ollama.sageaios.com/api/generate"
 MODEL_NAME = "llama3.1:latest"
 
 # --- Helper Functions ---
 
 def safe_float(value, default=np.nan):
+    """
+    Safely converts a value to a float, handling various string representations and NaNs.
+
+    This function checks for common "empty" string indicators and standardizes them to
+    the default value (usually np.nan). It also rounds valid floats to 4 decimal places.
+
+    Args:
+        value (Any): The input value to convert (string, number, or None).
+        default (float, optional): The value to return if conversion fails. Defaults to np.nan.
+
+    Returns:
+        float: The converted float value rounded to 4 decimals, or the default value.
+    """
     """
     Safely convert value to float, handling common issues, rounding to 4 decimals.
     """
@@ -40,6 +55,20 @@ def safe_float(value, default=np.nan):
         return default
 
 def clean_and_parse_json(raw_text: str) -> Dict[str, Any]:
+    """
+    Robustly parses JSON content from a potentially messy string (e.g., LLM output).
+
+    Strips Markdown code block delimiters (```json ... ```) and attempts to isolate
+    the JSON object by finding the first '{' and last '}'. Returns a fallback error
+    dictionary if parsing fails to prevent application crashes.
+
+    Args:
+        raw_text (str): The raw string output from the LLM.
+
+    Returns:
+        Dict[str, Any]: The parsed JSON object, or a dictionary describing the error
+            if parsing failed.
+    """
     """
     Robustly extracts JSON from AI output. 
     Strips Markdown (```json ... ```) and finds the first '{' and last '}'.
@@ -71,6 +100,21 @@ def clean_and_parse_json(raw_text: str) -> Dict[str, Any]:
         }
 
 async def generate_sem_interpretation(fit_indices, estimates_df, context_text=""):
+    """
+    Asynchronously generates a business-friendly interpretation of SEM results using an external LLM.
+
+    Constructs a prompt summarizing model fit metrics (CFI, RMSEA, etc.) and significant
+    path coefficients, then sends this to the Ollama API to get a strategic analysis.
+
+    Args:
+        fit_indices (pd.DataFrame): DataFrame containing model fit statistics.
+        estimates_df (pd.DataFrame): DataFrame containing parameter estimates and p-values.
+        context_text (str, optional): Business context or hypothesis description provided by the user.
+
+    Returns:
+        Optional[Dict[str, Any]]: A dictionary containing the AI-generated interpretation,
+            or None if the API call fails.
+    """
     """
     Sends SEM statistics to Ollama to generate a business-friendly interpretation.
     """
@@ -160,6 +204,35 @@ async def perform_sem(
     structural_syntax: str,
     context_text: str = ""
 ) -> Dict[str, Any]:
+    """
+    Orchestrates the full Structural Equation Modeling (SEM) analysis pipeline.
+
+    This function handles data loading, cleaning, standardization, model specification (using semopy syntax),
+    model fitting, statistic calculation (estimates, fit indices), visualization generation,
+    and AI-driven interpretation.
+
+    Args:
+        data_payload (Union[UploadFile, str]): The input data source (file or text).
+        is_file_upload (bool): Flag indicating if the payload is a file upload.
+        input_filename (str): Name of the input file.
+        measurement_syntax (str): The measurement model syntax (e.g., 'Latent =~ x1 + x2').
+        structural_syntax (str): The structural model syntax (e.g., 'Target ~ Source').
+        context_text (str, optional): Business context provided by the user for AI insights.
+
+    Returns:
+        Dict[str, Any]: A dictionary containing:
+            - 'estimates_csv_content': Parameter estimates CSV string.
+            - 'fit_indices_csv_content': Model fit indices CSV string.
+            - 'path_diagram_dot': Graphviz DOT source for the path diagram.
+            - 'warnings': Dictionary of data warnings (e.g., high correlations).
+            - 'model_variables': Lists of observed and latent variables.
+            - 'ai_interpretation': The AI-generated analysis results.
+
+    Raises:
+        HTTPException: If data loading fails, syntax is invalid, insufficient data exists,
+            or the SEM analysis encounters a critical error.
+        TypeError: If input types are incorrect.
+    """
     
     print("🚀 Starting SEM analysis...")
     

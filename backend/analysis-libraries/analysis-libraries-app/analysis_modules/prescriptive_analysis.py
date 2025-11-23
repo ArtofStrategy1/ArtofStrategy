@@ -14,12 +14,23 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # --- OLLAMA Configuration ---
-OLLAMA_URL = "https://ollama.data2int.com/api/generate"
-OLLAMA_MODEL = "llama3.1:latest"  # You can change this to "qwen3:30b-a3b" for potentially better accuracy
+OLLAMA_URL = "https://ollama.sageaios.com/api/generate"
+OLLAMA_MODEL = "llama3.1:latest"
 
 # --- JSON Serialization Helper ---
 def convert_numpy_types(obj):
-    """Convert numpy/pandas types to native Python types for JSON serialization."""
+    """Recursively converts numpy/pandas types to native Python types for JSON serialization.
+
+    Handles dictionaries, lists, tuples, numpy arrays, pandas Series, and specific
+    numpy scalar types (integers, floats, booleans). Also handles NaN/Infinity
+    to ensure validity for JSON output.
+
+    Args:
+        obj (Any): The object to convert.
+
+    Returns:
+        Any: The input object with all numpy types replaced by Python natives.
+    """
     
     # Check for collections first
     if isinstance(obj, dict):
@@ -56,7 +67,22 @@ async def load_dataframe(
     is_file_upload: bool,
     input_filename: str
 ) -> pd.DataFrame:
-    """Load data from file upload or text input"""
+    """Asynchronously loads a DataFrame from an uploaded file or raw text string.
+
+    Supports CSV and Excel formats. Performs initial cleaning of column names
+    (removing special characters and spaces) to ensure compatibility with downstream analysis.
+
+    Args:
+        data_payload (Union[UploadFile, str]): The file object or raw CSV string.
+        is_file_upload (bool): Flag indicating if the payload is a file.
+        input_filename (str): The name of the file (used for extension detection).
+
+    Returns:
+        pd.DataFrame: The loaded and cleaned DataFrame.
+
+    Raises:
+        HTTPException(400): If the file type is unsupported, data is empty, or loading fails.
+    """
     print("📊 Loading data for prescriptive analysis...")
     filename_lower = input_filename.lower()
     na_vals = ['-', '', ' ', 'NA', 'N/A', 'null', 'None', '#N/A', '#VALUE!', '#DIV/0!', 'NaN', 'nan']
@@ -106,7 +132,18 @@ async def load_business_context(
     context_file: Optional[UploadFile] = None,
     context_text: Optional[str] = None
 ) -> str:
-    """Load business context from file or text"""
+    """Retrieves business context text from either an uploaded file or a string.
+
+    Used to extract the specific business goals or constraints needed for the
+    prescriptive analysis.
+
+    Args:
+        context_file (Optional[UploadFile], optional): A file containing the context. Defaults to None.
+        context_text (Optional[str], optional): Raw text string of the context. Defaults to None.
+
+    Returns:
+        str: The extracted business context string, or a default message if none provided.
+    """
     if context_file:
         try:
             contents = await context_file.read()
@@ -124,7 +161,19 @@ async def load_business_context(
 
 # --- Data Analysis Helper ---
 def analyze_data_structure(df: pd.DataFrame) -> Dict[str, Any]:
-    """Analyze the data structure to understand what insights can be extracted"""
+    """Profiles the dataset to identify column types, quality metrics, and potential drivers.
+
+    Classifies columns as numerical or categorical, detects potential outcome variables
+    (e.g., 'revenue', 'churn') based on keywords, and calculates basic statistics
+    (mean, std, missing values) to feed into the LLM context.
+
+    Args:
+        df (pd.DataFrame): The dataset to analyze.
+
+    Returns:
+        Dict[str, Any]: A dictionary containing column metadata, data quality stats,
+            and classification of potential drivers/outcomes.
+    """
     print("🔍 Analyzing data structure for prescriptive insights...")
     
     analysis = {
@@ -183,7 +232,24 @@ async def generate_prescriptive_insights(
     data_snippet: str,
     data_analysis: Dict[str, Any]
 ) -> Dict[str, Any]:
-    """Generate prescriptive insights using LLM"""
+    """Interacts with an LLM to generate prescriptive business insights.
+
+    Constructs a detailed prompt containing data summaries, samples, and the business goal.
+    Queries the configured Ollama model to receive structured JSON containing
+    insights, prescriptions, and implementation priorities.
+
+    Args:
+        business_goal (str): The specific objective the user wants to achieve.
+        data_snippet (str): A CSV string representation of the first N rows.
+        data_analysis (Dict[str, Any]): The structural analysis of the dataset.
+
+    Returns:
+        Dict[str, Any]: Structured JSON response containing insights, prescriptions,
+            and implementation priorities.
+
+    Raises:
+        Exception: If the LLM response is invalid, malformed, or missing required fields.
+    """
     print("🤖 Generating prescriptive insights using LLM...")
     
     # Prepare data context for the LLM
@@ -326,7 +392,19 @@ async def generate_prescriptive_insights(
 
 # --- Risk Assessment ---
 def assess_implementation_risks(prescriptions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Assess potential risks for each prescription"""
+    """Calculates risk scores for generated prescriptions based on effort and impact.
+
+    Applies heuristic logic to determine if a recommendation is Low, Medium, or High risk.
+    Adds mitigation strategies and risk factors to the output.
+
+    Args:
+        prescriptions (List[Dict[str, Any]]): A list of prescription objects containing
+            'effort' and 'impact' fields.
+
+    Returns:
+        List[Dict[str, Any]]: The prescriptions enriched with risk analysis, scores,
+            and mitigation strategies.
+    """
     print("⚠️ Assessing implementation risks...")
     
     risk_assessments = []
@@ -381,9 +459,28 @@ async def perform_prescriptive_analysis(
     business_goal: str,
     context_file: Optional[UploadFile] = None
 ) -> Dict[str, Any]:
-    """
-    Main function to perform prescriptive analysis.
-    This will be called from the API endpoint.
+    """Orchestrates the end-to-end prescriptive analysis workflow.
+
+    1. Loads and cleans the dataframe.
+    2. Loads optional business context.
+    3. Analyzes data structure (columns, types, quality).
+    4. Generates insights via LLM based on data samples.
+    5. Assesses implementation risks for generated recommendations.
+    6. Formats the final response for the frontend.
+
+    Args:
+        data_payload (Union[UploadFile, str]): The source data.
+        is_file_upload (bool): True if source is a file.
+        input_filename (str): Filename for format detection.
+        business_goal (str): The target business objective.
+        context_file (Optional[UploadFile], optional): Supplementary context file.
+
+    Returns:
+        Dict[str, Any]: The complete analysis result including insights, prescriptions,
+            and risk assessments.
+    
+    Raises:
+        HTTPException: Propagates errors encountered during loading or analysis.
     """
     print("🚀 Starting Prescriptive Analysis...")
     

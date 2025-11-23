@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import traceback
 import json
+import httpx
 from typing import Optional, Tuple, List, Dict, Any, Union
 from datetime import datetime, timedelta
 import warnings
@@ -18,38 +19,67 @@ from fastapi import HTTPException
 warnings.filterwarnings('ignore', category=FutureWarning)
 warnings.filterwarnings('ignore', category=UserWarning)
 
-# --- Enhanced Debugging Functions ---
-def debug_log(message, level="INFO"):
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(f"[{timestamp}] [PREDICTIVE-{level}] {message}")
+# --- AI CONFIGURATION ---
+OLLAMA_URL = "https://ollama.sageaios.com/api/generate"
+OLLAMA_MODEL = "llama3.1:latest"
 
-def debug_data_info(df, step_name):
+# --- Debugging Helpers (Converted to Print) ---
+def print_data_info(df, step_name):
+    """Prints a summary of the DataFrame structure and content for debugging.
+
+    Args:
+        df (pd.DataFrame): The DataFrame to inspect.
+        step_name (str): A label for the current processing step.
+    """
     if df is None:
-        debug_log(f"=== {step_name} === DataFrame is None", "WARN")
+        print(f"=== {step_name} === DataFrame is None")
         return
-    debug_log(f"=== {step_name} ===", "DEBUG")
-    debug_log(f"DataFrame shape: {df.shape}", "DEBUG")
-    debug_log(f"Columns: {list(df.columns)}", "DEBUG")
+    print(f"=== {step_name} ===")
+    print(f"DataFrame shape: {df.shape}")
+    print(f"Columns: {list(df.columns)}")
     dtypes_str = str(df.dtypes.to_dict())
-    debug_log(f"Data types: {dtypes_str[:500]}{'...' if len(dtypes_str) > 500 else ''}", "DEBUG")
+    print(f"Data types: {dtypes_str[:500]}{'...' if len(dtypes_str) > 500 else ''}")
     if not df.empty:
-        debug_log(f"First 2 rows:\n{df.head(2).to_string()}", "DEBUG")
-        debug_log(f"Last 2 rows:\n{df.tail(2).to_string()}", "DEBUG")
-    debug_log(f"Null values:\n{df.isnull().sum().to_string()}", "DEBUG")
+        print(f"First 2 rows:\n{df.head(2).to_string()}")
+        print(f"Last 2 rows:\n{df.tail(2).to_string()}")
+    print(f"Null values:\n{df.isnull().sum().to_string()}")
 
-def debug_parameters(data_payload, is_file_upload, input_filename, date_column, target_column, forecast_periods, confidence_level, model_type):
-    debug_log("=== INPUT PARAMETERS ===", "DEBUG")
-    debug_log(f"data_payload type: {type(data_payload)}", "DEBUG")
-    debug_log(f"is_file_upload: {is_file_upload}", "DEBUG")
-    debug_log(f"input_filename: {input_filename}", "DEBUG")
-    debug_log(f"date_column: {date_column}", "DEBUG")
-    debug_log(f"target_column: {target_column}", "DEBUG")
-    debug_log(f"forecast_periods: {forecast_periods}", "DEBUG")
-    debug_log(f"confidence_level: {confidence_level}", "DEBUG")
-    debug_log(f"model_type: {model_type}", "DEBUG")
+def print_parameters(data_payload, is_file_upload, input_filename, date_column, target_column, forecast_periods, confidence_level, model_type):
+    """Prints the input parameters received by the prediction endpoint.
+
+    Args:
+        data_payload (Any): The raw data input.
+        is_file_upload (bool): Flag indicating if input is a file.
+        input_filename (str): Name of the file.
+        date_column (str): Name of the date column.
+        target_column (str): Name of the target variable column.
+        forecast_periods (int): Number of periods to forecast.
+        confidence_level (float): The confidence interval (0-1).
+        model_type (str): The requested model type (or 'auto').
+    """
+    print("=== INPUT PARAMETERS ===")
+    print(f"data_payload type: {type(data_payload)}")
+    print(f"is_file_upload: {is_file_upload}")
+    print(f"input_filename: {input_filename}")
+    print(f"date_column: {date_column}")
+    print(f"target_column: {target_column}")
+    print(f"forecast_periods: {forecast_periods}")
+    print(f"confidence_level: {confidence_level}")
+    print(f"model_type: {model_type}")
 
 # --- Helper Functions ---
 def safe_float(value, default=np.nan):
+    """Safely converts a value to a float, handling various non-numeric representations.
+
+    Handles strings like 'NA', 'null', 'None', and Excel errors (#DIV/0!).
+
+    Args:
+        value (Any): The value to convert.
+        default (float, optional): The fallback value if conversion fails. Defaults to np.nan.
+
+    Returns:
+        float: The converted float or the default value.
+    """
     try:
         if pd.isna(value):
             return default
@@ -65,16 +95,33 @@ def safe_float(value, default=np.nan):
             return default
         return float_value
     except (ValueError, TypeError):
-        debug_log(f"safe_float: Could not convert '{value}' (type: {type(value)}) to float. Returning default.", "WARN")
+        print(f"[WARN] safe_float: Could not convert '{value}' (type: {type(value)}) to float. Returning default.")
         return default
 
 def parse_date_column(series, column_name):
-    debug_log(f"parse_date_column: Starting parsing for column '{column_name}'", "DEBUG")
+    """Attempts to parse a pandas Series into datetime objects using multiple strategies.
+
+    Tries:
+    1. Direct pandas datetime inference.
+    2. Numeric year parsing (1900-2100).
+    3. Iteration through day-first and month-first formats.
+    4. Explicit common date formats (ISO, US, EU).
+    5. 'Best effort' coercion.
+
+    Args:
+        series (pd.Series): The data column containing date information.
+        column_name (str): The name of the column (for error logging).
+
+    Returns:
+        pd.Series: The parsed datetime series.
+
+    Raises:
+        ValueError: If the column cannot be parsed into valid dates.
+    """
+    print(f"[DEBUG] parse_date_column: Starting parsing for column '{column_name}'")
     original_dtype = series.dtype
-    debug_log(f"parse_date_column: Original dtype: {original_dtype}", "DEBUG")
     
     if pd.api.types.is_datetime64_any_dtype(original_dtype):
-        debug_log("parse_date_column: Already datetime dtype.", "DEBUG")
         return series
 
     if pd.api.types.is_numeric_dtype(original_dtype):
@@ -82,22 +129,21 @@ def parse_date_column(series, column_name):
             try:
                 parsed = pd.to_datetime(series, format='%Y', errors='coerce')
                 if not parsed.isna().all():
-                    debug_log("parse_date_column: Parsed numeric column as Year.", "DEBUG")
+                    print("[DEBUG] parse_date_column: Parsed numeric column as Year.")
                     return parsed
             except Exception: 
                 pass
 
     series_str = series.astype(str)
-    debug_log(f"parse_date_column: Sample string values: {series_str.head(3).tolist()}", "DEBUG")
 
     for dayfirst_setting in [False, True]:
         try:
             parsed = pd.to_datetime(series_str, infer_datetime_format=True, dayfirst=dayfirst_setting, errors='coerce')
             if not parsed.isna().all() and (parsed.isna().sum() / len(parsed) < 0.5):
-                debug_log(f"parse_date_column: Success with automatic inference (dayfirst={dayfirst_setting}).", "DEBUG")
+                print(f"[DEBUG] parse_date_column: Success with automatic inference (dayfirst={dayfirst_setting}).")
                 return parsed
-        except Exception as e:
-            debug_log(f"parse_date_column: Auto inference failed (dayfirst={dayfirst_setting}): {e}", "WARN")
+        except Exception:
+            pass
 
     date_formats = [
         '%Y-%m-%d', '%m/%d/%Y', '%d/%m/%Y', '%Y%m%d',
@@ -112,7 +158,7 @@ def parse_date_column(series, column_name):
                 continue
             parsed = pd.to_datetime(series_str, format=fmt, errors='coerce')
             if not parsed.isna().all() and (parsed.isna().sum() / len(parsed) < 0.5):
-                debug_log(f"parse_date_column: Success with explicit format '{fmt}'.", "DEBUG")
+                print(f"[DEBUG] parse_date_column: Success with explicit format '{fmt}'.")
                 return parsed
         except Exception:
             continue
@@ -120,19 +166,27 @@ def parse_date_column(series, column_name):
     try:
         parsed = pd.to_datetime(series_str, errors='coerce')
         if not parsed.isna().all() and (parsed.isna().sum() / len(parsed) < 0.7):
-            debug_log("parse_date_column: Success with general coercion (last resort).", "DEBUG")
+            print("[DEBUG] parse_date_column: Success with general coercion (last resort).")
             return parsed
     except Exception as e:
-        debug_log(f"parse_date_column: Final coercion failed: {e}", "WARN")
+        print(f"[WARN] parse_date_column: Final coercion failed: {e}")
 
     failed_samples = series_str[parsed.isna()].head(5).tolist() if 'parsed' in locals() and parsed is not None else series_str.head(5).tolist()
     error_msg = f"Could not parse date column '{column_name}'. Check format. Unparseable samples: {failed_samples}"
-    debug_log(f"parse_date_column: FAILED - {error_msg}", "ERROR")
+    print(f"[ERROR] parse_date_column: {error_msg}")
     raise ValueError(error_msg)
 
-# --- NEW: Function to prepare historical data for frontend charts ---
 def prepare_historical_data_for_charts(df: pd.DataFrame, date_col: str, value_col: str) -> List[Dict[str, Any]]:
-    """Prepare historical data in format expected by frontend charts"""
+    """Formats historical data into a JSON-serializable list for frontend charting.
+
+    Args:
+        df (pd.DataFrame): The source DataFrame.
+        date_col (str): The column name for dates.
+        value_col (str): The column name for values.
+
+    Returns:
+        List[Dict[str, Any]]: A list of dicts like [{'period': '2023-01-01', 'value': 100}, ...].
+    """
     historical_data = []
     
     for _, row in df.iterrows():
@@ -141,12 +195,26 @@ def prepare_historical_data_for_charts(df: pd.DataFrame, date_col: str, value_co
             'value': safe_float(row[value_col], default=None)
         })
     
-    debug_log(f"Prepared {len(historical_data)} historical data points for charts", "DEBUG")
+    print(f"[DEBUG] Prepared {len(historical_data)} historical data points for charts")
     return historical_data
 
-# --- Enhanced Validation Functions ---
+# --- Validation and Model Selection ---
 def perform_time_series_validation(data: pd.DataFrame, date_col: str, value_col: str, 
                                  model_type: str, horizon: int) -> Dict[str, float]:
+    """Performs rolling-origin cross-validation (time series split) to assess model performance.
+
+    Splits the data into sequential training and test sets to simulate real-world forecasting accuracy.
+
+    Args:
+        data (pd.DataFrame): The dataset.
+        date_col (str): Date column name.
+        value_col (str): Value column name.
+        model_type (str): The model strategy to test ('linear', 'seasonal', 'trend').
+        horizon (int): The forecast horizon to test against.
+
+    Returns:
+        Dict[str, float]: Validation metrics including 'cv_mape', 'cv_r2', and 'validation_reliability'.
+    """
     y = data[value_col].values
     min_train_size = max(12, len(y) // 3)
     
@@ -178,7 +246,7 @@ def perform_time_series_validation(data: pd.DataFrame, date_col: str, value_col:
                 r2_scores.append(r2)
                 
         except Exception as e:
-            debug_log(f"Validation fold failed: {e}", "WARN")
+            print(f"[WARN] Validation fold failed: {e}")
             continue
     
     return {
@@ -189,7 +257,22 @@ def perform_time_series_validation(data: pd.DataFrame, date_col: str, value_col:
     }
 
 def enhanced_model_selection(data: pd.DataFrame, date_col: str, value_col: str, 
-                           user_selection: str, horizon: int) -> Dict[str, Any]:
+                             user_selection: str, horizon: int) -> Dict[str, Any]:
+    """Selects the best forecasting model based on cross-validation performance.
+
+    If 'auto' is selected, it tests Trend, Linear, and Seasonal models and picks
+    the one with the best combined MAPE and R2 score.
+
+    Args:
+        data (pd.DataFrame): The dataset.
+        date_col (str): Date column name.
+        value_col (str): Value column name.
+        user_selection (str): 'auto' or a specific model name.
+        horizon (int): Forecasting horizon.
+
+    Returns:
+        Dict[str, Any]: Contains 'selected_model', 'reason', and validation scores.
+    """
     if user_selection != "auto":
         return {"selected_model": user_selection, "reason": "User specified"}
     
@@ -214,7 +297,7 @@ def enhanced_model_selection(data: pd.DataFrame, date_col: str, value_col: str,
                     "folds": validation_results["validation_folds"]
                 }
         except Exception as e:
-            debug_log(f"Model {model} failed validation: {e}", "WARN")
+            print(f"[WARN] Model {model} failed validation: {e}")
             continue
     
     if not model_scores:
@@ -231,7 +314,21 @@ def enhanced_model_selection(data: pd.DataFrame, date_col: str, value_col: str,
 
 # --- Business Context Analysis ---
 def analyze_business_context(data: pd.DataFrame, value_col: str, 
-                           predictions: List[Dict], target_column_name: str) -> Dict[str, Any]:
+                             predictions: List[Dict], target_column_name: str) -> Dict[str, Any]:
+    """Interprets numerical predictions into actionable business context.
+
+    Analyzes growth trajectory, volatility, and risk levels to generate
+    strategic recommendations (e.g., "Expansion opportunity").
+
+    Args:
+        data (pd.DataFrame): Historical data.
+        value_col (str): The column name of the target variable.
+        predictions (List[Dict]): The generated prediction objects.
+        target_column_name (str): The original name of the target column.
+
+    Returns:
+        Dict[str, Any]: Business context dictionary including trajectory, risk_level, and recommendations.
+    """
     current_values = data[value_col].values
     predicted_values = [p['predicted_value'] for p in predictions if p['predicted_value'] is not None]
     
@@ -312,9 +409,24 @@ def analyze_business_context(data: pd.DataFrame, value_col: str,
         "planning_horizon_recommendation": "3-6 months" if risk_level == "High" else "6-12 months"
     }
 
-# --- Enhanced Forecasting Functions ---
+# --- Forecasting Functions ---
 def perform_linear_forecast(data: pd.DataFrame, date_col: str, value_col: str, horizon_periods: int, confidence_level: float) -> Dict[str, Any]:
-    debug_log("perform_linear_forecast: Starting enhanced linear regression", "DEBUG")
+    """Performs forecasting using Ordinary Least Squares (Linear Regression).
+
+    Calculates the line of best fit and projects it forward. 
+    Includes confidence intervals based on residual standard deviation and Z-scores.
+
+    Args:
+        data (pd.DataFrame): Training data.
+        date_col (str): Date column.
+        value_col (str): Target column.
+        horizon_periods (int): Number of future periods.
+        confidence_level (float): Confidence level (e.g., 0.95).
+
+    Returns:
+        Dict[str, Any]: Forecast results, including 'predictions', 'lower_bounds', 'upper_bounds', and metrics.
+    """
+    print("[DEBUG] perform_linear_forecast: Starting enhanced linear regression")
     y = data[value_col].values
     x = np.arange(len(y)).reshape(-1, 1)
 
@@ -349,17 +461,15 @@ def perform_linear_forecast(data: pd.DataFrame, date_col: str, value_col: str, h
     future_x = np.arange(len(data), len(data) + horizon_periods).reshape(-1, 1)
     future_y = model.predict(future_x)
 
-    # ENHANCED: Ensure linear trend is visible (minimum 2% change over forecast period)
     trend_strength = abs(model.coef_[0]) * horizon_periods
     mean_value = np.mean(y)
     min_trend = 0.02 * mean_value
     
     if trend_strength < min_trend and len(y) > 3:
-        # Amplify trend to make it visible in charts
         trend_direction = 1 if model.coef_[0] >= 0 else -1
         enhanced_slope = min_trend / horizon_periods * trend_direction
         future_y = model.intercept_ + enhanced_slope * future_x.flatten()
-        debug_log(f"Enhanced linear trend visibility: slope amplified from {model.coef_[0]:.4f} to {enhanced_slope:.4f}", "DEBUG")
+        print(f"[DEBUG] Enhanced linear trend visibility: slope amplified to {enhanced_slope:.4f}")
 
     z_score_map = {0.99: 2.576, 0.95: 1.96, 0.90: 1.645, 0.80: 1.282}
     z_score = z_score_map.get(confidence_level, 1.645)
@@ -383,7 +493,24 @@ def perform_linear_forecast(data: pd.DataFrame, date_col: str, value_col: str, h
     }
 
 def perform_trend_forecast(data: pd.DataFrame, date_col: str, value_col: str, horizon_periods: int, confidence_level: float) -> Dict[str, Any]:
-    debug_log("perform_trend_forecast: Starting enhanced trend analysis", "DEBUG")
+    """Performs a simple trend-based forecast using the slope between start and end points.
+
+    Useful as a fallback when data is too noisy or scarce for regression.
+
+    Args:
+        data (pd.DataFrame): Training data.
+        date_col (str): Date column.
+        value_col (str): Target column.
+        horizon_periods (int): Number of future periods.
+        confidence_level (float): Confidence level.
+
+    Returns:
+        Dict[str, Any]: Forecast results and metrics.
+
+    Raises:
+        ValueError: If less than 2 data points are provided.
+    """
+    print("[DEBUG] perform_trend_forecast: Starting enhanced trend analysis")
     y = data[value_col].values
     if len(y) < 2: 
         raise ValueError("Trend forecast requires at least 2 data points.")
@@ -391,9 +518,7 @@ def perform_trend_forecast(data: pd.DataFrame, date_col: str, value_col: str, ho
     slope = (y[-1] - y[0]) / (len(y) - 1) if len(y) > 1 else 0
     last_value = y[-1]
     
-    # ENHANCED: Ensure minimal variation for "simple trend" model
-    # Keep trend very subtle for visual differentiation
-    predictions = [last_value + slope * 0.5 * i for i in range(1, horizon_periods + 1)]  # Reduced slope impact
+    predictions = [last_value + slope * 0.5 * i for i in range(1, horizon_periods + 1)]
 
     trend_line = y[0] + slope * np.arange(len(y))
     residuals = y - trend_line
@@ -433,22 +558,38 @@ def perform_trend_forecast(data: pd.DataFrame, date_col: str, value_col: str, ho
     }
 
 def perform_seasonal_forecast(data: pd.DataFrame, date_col: str, value_col: str, horizon_periods: int, confidence_level: float) -> Dict[str, Any]:
-    debug_log("perform_seasonal_forecast: Starting enhanced seasonal analysis", "DEBUG")
+    """Performs seasonal decomposition forecasting.
+
+    Attempts to detect seasonality (Monthly or Quarterly). Decomposes the signal 
+    into Trend + Seasonality + Noise, then projects the trend and adds seasonal 
+    components back.
+
+    Args:
+        data (pd.DataFrame): Training data.
+        date_col (str): Date column.
+        value_col (str): Target column.
+        horizon_periods (int): Number of future periods.
+        confidence_level (float): Confidence level.
+
+    Returns:
+        Dict[str, Any]: Forecast results. Returns trend forecast if seasonality detection fails.
+    """
+    print("[DEBUG] perform_seasonal_forecast: Starting enhanced seasonal analysis")
     y = data[value_col].values
 
     data_range_years = (data[date_col].max() - data[date_col].min()).days / 365.25
     if data_range_years >= 2 and len(y) >= 12:
         season_length = 12
-        debug_log(f"perform_seasonal_forecast: Assuming monthly seasonality (period={season_length})", "DEBUG")
+        print(f"[DEBUG] perform_seasonal_forecast: Assuming monthly seasonality (period={season_length})")
     elif data_range_years >= 1 and len(y) >= 4:
         season_length = 4
-        debug_log(f"perform_seasonal_forecast: Assuming quarterly seasonality (period={season_length})", "DEBUG")
+        print(f"[DEBUG] perform_seasonal_forecast: Assuming quarterly seasonality (period={season_length})")
     else:
-        debug_log("perform_seasonal_forecast: Insufficient data for seasonality detection, falling back to trend.", "WARN")
+        print("[WARN] perform_seasonal_forecast: Insufficient data for seasonality detection, falling back to trend.")
         return perform_trend_forecast(data, date_col, value_col, horizon_periods, confidence_level)
 
     if len(y) < 2 * season_length:
-        debug_log(f"perform_seasonal_forecast: Less than 2 full cycles ({len(y)} < {2*season_length}), falling back to trend.", "WARN")
+        print(f"[WARN] perform_seasonal_forecast: Less than 2 full cycles, falling back to trend.")
         return perform_trend_forecast(data, date_col, value_col, horizon_periods, confidence_level)
 
     try:
@@ -461,14 +602,13 @@ def perform_seasonal_forecast(data: pd.DataFrame, date_col: str, value_col: str,
         seasonal_indices = np.array([np.nanmean(detrended[i::season_length]) for i in range(season_length)])
         seasonal_indices -= np.nanmean(seasonal_indices)
 
-        # ENHANCED: Ensure seasonal amplitude is visible (minimum 10% of mean)
         seasonal_amplitude = np.max(np.abs(seasonal_indices))
         mean_value = np.mean(y)
         min_amplitude = 0.1 * mean_value
         
         if seasonal_amplitude < min_amplitude:
             seasonal_indices = seasonal_indices * (min_amplitude / seasonal_amplitude)
-            debug_log(f"Enhanced seasonal visibility: amplitude increased from {seasonal_amplitude:.2f} to {min_amplitude:.2f}", "DEBUG")
+            print(f"[DEBUG] Enhanced seasonal visibility: amplitude increased.")
 
         seasonal_full = np.tile(seasonal_indices, len(y) // season_length + 1)[:len(y)]
         residuals = y - trend_component.values - seasonal_full
@@ -520,17 +660,26 @@ def perform_seasonal_forecast(data: pd.DataFrame, date_col: str, value_col: str,
             }
         }
     except Exception as e:
-        debug_log(f"perform_seasonal_forecast: Error during decomposition: {e}. Falling back to trend.", "WARN")
+        print(f"[WARN] perform_seasonal_forecast: Error during decomposition: {e}. Falling back to trend.")
         return perform_trend_forecast(data, date_col, value_col, horizon_periods, confidence_level)
 
-# --- Period Generation and Analysis Helpers ---
+# --- Helpers ---
 def generate_forecast_periods(last_date: pd.Timestamp, horizon_periods: int) -> List[str]:
-    debug_log(f"generate_forecast_periods: last_date={last_date}, periods={horizon_periods}", "DEBUG")
+    """Generates a list of future date strings for the forecast horizon.
+
+    Args:
+        last_date (pd.Timestamp): The last available date in historical data.
+        horizon_periods (int): Number of periods to generate.
+
+    Returns:
+        List[str]: A list of date strings (YYYY-MM-DD).
+    """
+    print(f"[DEBUG] generate_forecast_periods: last_date={last_date}, periods={horizon_periods}")
     freq = 'MS'
     try:
         future_dates = pd.date_range(start=last_date + pd.Timedelta(days=1), periods=horizon_periods, freq=freq)
     except Exception as e:
-        debug_log(f"generate_forecast_periods: pandas date_range failed ({e}), using simple month offset.", "WARN")
+        print(f"[WARN] generate_forecast_periods: pandas date_range failed ({e}), using simple month offset.")
         future_dates = []
         current_date = last_date
         for _ in range(horizon_periods):
@@ -544,10 +693,18 @@ def generate_forecast_periods(last_date: pd.Timestamp, horizon_periods: int) -> 
             future_dates.append(current_date)
 
     formatted_periods = [d.strftime('%Y-%m-%d') for d in future_dates]
-    debug_log(f"generate_forecast_periods: Generated: {formatted_periods[:3]}...", "DEBUG")
     return formatted_periods
 
 def analyze_trend_direction(data: pd.DataFrame, value_col: str) -> str:
+    """Qualitatively analyzes the direction of the trend (e.g., "Strong Upward").
+
+    Args:
+        data (pd.DataFrame): The dataset.
+        value_col (str): The value column.
+
+    Returns:
+        str: A descriptive string indicating trend direction.
+    """
     y = data[value_col].dropna().values
     if len(y) < 3:
         return "Insufficient Data"
@@ -556,7 +713,6 @@ def analyze_trend_direction(data: pd.DataFrame, value_col: str) -> str:
     try:
         slope, intercept = np.polyfit(x, y, 1)
         relative_slope = slope / (np.mean(y) + 1e-8)
-        debug_log(f"analyze_trend_direction: Slope={slope:.4f}, Relative Slope={relative_slope:.4f}", "DEBUG")
 
         if relative_slope > 0.05:
             return "Strong Upward"
@@ -569,10 +725,19 @@ def analyze_trend_direction(data: pd.DataFrame, value_col: str) -> str:
         else:
             return "Stable / Flat"
     except Exception as e:
-        debug_log(f"analyze_trend_direction: Error calculating trend: {e}", "WARN")
+        print(f"[WARN] analyze_trend_direction: Error calculating trend: {e}")
         return "Calculation Error"
 
 def calculate_average_growth_rate(data: pd.DataFrame, value_col: str) -> Optional[float]:
+    """Calculates the average period-over-period percentage growth rate.
+
+    Args:
+        data (pd.DataFrame): The dataset.
+        value_col (str): The value column.
+
+    Returns:
+        Optional[float]: The average growth rate or None if insufficient data.
+    """
     y = data[value_col].dropna().values
     if len(y) < 2:
         return None
@@ -581,16 +746,31 @@ def calculate_average_growth_rate(data: pd.DataFrame, value_col: str) -> Optiona
     pct_changes = [(y[i] - y[i-1]) / (abs(y[i-1]) + epsilon) * 100 for i in range(1, len(y))]
 
     avg_growth = np.mean(pct_changes) if pct_changes else 0
-    debug_log(f"calculate_average_growth_rate: Average Growth = {avg_growth:.2f}%", "DEBUG")
     return avg_growth
 
-# --- Enhanced Insight Generation ---
+# --- Original Insight Generation (Fallback) ---
 def generate_enhanced_insights(data: pd.DataFrame, value_col: str, forecast_results: Dict[str, Any], 
                              model_type: str, forecast_periods: int, business_context: Dict) -> List[Dict[str, str]]:
+    """Generates heuristic-based insights as a fallback if AI generation fails.
+
+    Constructs insight objects covering Business Trajectory, Risk Assessment, 
+    Model Performance, Operational Recommendations, and Data Quality.
+
+    Args:
+        data (pd.DataFrame): Historical data.
+        value_col (str): Value column.
+        forecast_results (Dict[str, Any]): The raw forecast output.
+        model_type (str): The model used.
+        forecast_periods (int): Number of periods forecasted.
+        business_context (Dict): The analyzed business context.
+
+    Returns:
+        List[Dict[str, str]]: A list of insight dictionaries.
+    """
     insights = []
     metrics = forecast_results.get('metrics', {})
     
-    # Insight 1: Business Trajectory & Strategic Direction
+    # Insight 1: Business Trajectory
     trajectory = business_context.get('trajectory', 'Unknown')
     change_percent = business_context.get('change_percent', 0)
     
@@ -601,7 +781,7 @@ def generate_enhanced_insights(data: pd.DataFrame, value_col: str, forecast_resu
         "confidence_level": "High" if metrics.get('r_squared', 0) > 0.7 else "Medium" if metrics.get('r_squared', 0) > 0.5 else "Low"
     })
     
-    # Insight 2: Risk Assessment & Mitigation
+    # Insight 2: Risk Assessment
     risk_level = business_context.get('risk_level', 'Unknown')
     risk_factors = business_context.get('risk_factors', [])
     
@@ -609,11 +789,11 @@ def generate_enhanced_insights(data: pd.DataFrame, value_col: str, forecast_resu
         "observation": f"Risk assessment indicates {risk_level} risk level" + (f" with factors: {', '.join(risk_factors)}" if risk_factors else ""),
         "accurate_interpretation": f"Forecast reliability is {'strong' if risk_level == 'Low' else 'moderate' if risk_level == 'Medium' else 'limited'} based on model performance and data characteristics",
         "business_implication": f"Recommended planning horizon: {business_context.get('planning_horizon_recommendation', '6-12 months')}. " + 
-                               ("Consider enhanced monitoring systems." if risk_level == "High" else "Standard monitoring sufficient."),
+                                ("Consider enhanced monitoring systems." if risk_level == "High" else "Standard monitoring sufficient."),
         "confidence_level": "High" if len(risk_factors) <= 1 else "Medium"
     })
     
-    # Insight 3: Model Performance & Reliability
+    # Insight 3: Model Performance
     r2 = metrics.get('r_squared')
     mape = metrics.get('mape')
     model_name = forecast_results.get('model_name', 'Selected Model')
@@ -644,7 +824,7 @@ def generate_enhanced_insights(data: pd.DataFrame, value_col: str, forecast_resu
         "confidence_level": "Medium"
     })
 
-    # Insight 5: Data Quality Assessment
+    # Insight 5: Data Quality
     data_quality_score = min(100, len(data) * 2)
     insights.append({
         "observation": f"Analysis based on {len(data)} data points with {'high' if data_quality_score > 80 else 'medium' if data_quality_score > 50 else 'low'} data sufficiency",
@@ -654,6 +834,108 @@ def generate_enhanced_insights(data: pd.DataFrame, value_col: str, forecast_resu
     })
     
     return insights[:8]
+
+# --- AI Integration Functions ---
+async def generate_llm_insights(
+    data_summary: Dict, 
+    model_performance: Dict, 
+    business_context: Dict, 
+    forecast_periods: int,
+    target_column: str
+) -> List[Dict[str, str]]:
+    """Generates natural language business insights using the external Ollama AI service.
+
+    Constructs a detailed prompt with statistical findings and requests a JSON 
+    response containing strategic insights.
+
+    Args:
+        data_summary (Dict): Summary statistics of the data.
+        model_performance (Dict): Metrics regarding the forecast accuracy.
+        business_context (Dict): Derived business context (trajectory, risk).
+        forecast_periods (int): The forecast horizon.
+        target_column (str): The name of the predicted variable.
+
+    Returns:
+        List[Dict[str, str]]: A list of structured insight objects generated by AI.
+                              Returns an empty list if the AI service fails.
+    """
+    print("🤖 Generating AI Insights via Ollama...")
+
+    # 1. Construct the Prompt
+    prompt = f"""
+    You are an expert Data Scientist and Business Analyst. 
+    Analyze the following predictive analysis results for the metric: "{target_column}".
+
+    ### DATA SUMMARY:
+    - Mean: {data_summary.get('mean')}
+    - Trend Direction: {model_performance.get('trend_detected')}
+    - Volatility (CV): {data_summary.get('coeff_variation')}%
+
+    ### FORECAST MODEL:
+    - Model Used: {model_performance.get('model_used')}
+    - Accuracy (R2): {model_performance.get('r_squared')}
+    - Error Rate (MAPE): {model_performance.get('mape')}%
+    
+    ### BUSINESS CONTEXT:
+    - Trajectory: {business_context.get('trajectory')}
+    - Projected Change: {business_context.get('change_percent')}% over next {forecast_periods} periods.
+    - Risk Level: {business_context.get('risk_level')}
+    - Key Risk Factors: {', '.join(business_context.get('risk_factors', []))}
+
+    ### INSTRUCTIONS:
+    Generate 4 high-quality strategic insights based strictly on this data.
+    Return ONLY a raw JSON array. Do not include markdown formatting like ```json.
+    
+    Each insight object must have these exact keys:
+    1. "observation": A specific fact about the data or trend.
+    2. "accurate_interpretation": What this means mathematically or statistically.
+    3. "business_implication": Actionable advice for the business.
+    4. "confidence_level": "High", "Medium", or "Low".
+
+    Example format:
+    [
+        {{
+            "observation": "Sales are projected to grow by 15%.",
+            "accurate_interpretation": "Positive linear trend detected with high R2 score.",
+            "business_implication": "Increase inventory to meet demand.",
+            "confidence_level": "High"
+        }}
+    ]
+    """
+
+    payload = {
+        "model": OLLAMA_MODEL,
+        "prompt": prompt,
+        "stream": False,
+        "format": "json", 
+        "options": {
+            "temperature": 0.3, 
+            "num_ctx": 4096
+        }
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(OLLAMA_URL, json=payload)
+            response.raise_for_status()
+            
+            result = response.json()
+            generated_text = result.get('response', '')
+            
+            clean_json = generated_text.replace("```json", "").replace("```", "").strip()
+            
+            insights = json.loads(clean_json)
+            
+            if isinstance(insights, list) and len(insights) > 0:
+                print(f"✅ AI successfully generated {len(insights)} insights.")
+                return insights
+            else:
+                raise ValueError("AI response was not a valid list of insights.")
+
+    except Exception as e:
+        print(f"⚠️ AI Insight Generation Failed: {str(e)}")
+        print("Falling back to heuristic insights.")
+        return []
 
 # --- Main Enhanced Prediction Function ---
 async def perform_prediction(
@@ -666,8 +948,38 @@ async def perform_prediction(
     confidence_level: float,
     model_type: str = "auto"
 ) -> Dict[str, Any]:
-    debug_log("🚀 Starting Enhanced Predictive Analysis", "INFO")
-    debug_parameters(data_payload, is_file_upload, input_filename, date_column, target_column, forecast_periods, confidence_level, model_type)
+    """Orchestrates the entire Predictive Analysis workflow.
+
+    Pipeline steps:
+    1. Load data (from file or text).
+    2. Clean and validate schema (dates, numeric targets).
+    3. Aggregate duplicate dates.
+    4. Select best model (Auto, Linear, Trend, or Seasonal).
+    5. Execute forecast and calculate confidence intervals.
+    6. Generate historical and future data points for charting.
+    7. Analyze business context (Risk, Trajectory).
+    8. Generate insights (via AI, with heuristic fallback).
+
+    Args:
+        data_payload (Union[UploadFile, str]): File object or raw CSV string.
+        is_file_upload (bool): True if processing a file.
+        input_filename (str): Name of the file (for validation).
+        date_column (str): Name of the column containing dates.
+        target_column (str): Name of the column containing values to predict.
+        forecast_periods (int): Number of periods to forecast into the future.
+        confidence_level (float): Statistical confidence (0.0 - 1.0).
+        model_type (str, optional): Specific model to use. Defaults to "auto".
+
+    Returns:
+        Dict[str, Any]: Comprehensive analysis result including predictions, charts data,
+                        model performance metrics, and business insights.
+
+    Raises:
+        HTTPException(400): If data is invalid, empty, or columns are missing.
+        HTTPException(500): If forecasting or internal processing fails.
+    """
+    print("🚀 Starting Enhanced Predictive Analysis")
+    print_parameters(data_payload, is_file_upload, input_filename, date_column, target_column, forecast_periods, confidence_level, model_type)
 
     df: Optional[pd.DataFrame] = None
     initial_rows: int = 0
@@ -675,7 +987,7 @@ async def perform_prediction(
 
     try:
         # --- 1. Load Data ---
-        debug_log("Step 1: Loading data...", "INFO")
+        print("Step 1: Loading data...")
         filename_lower = input_filename.lower() if input_filename else ""
         na_vals = ['-', '', ' ', 'NA', 'N/A', 'null', 'None', '#N/A', '#VALUE!', '#DIV/0!', 'NaN', 'nan']
         file_content = None
@@ -683,7 +995,7 @@ async def perform_prediction(
         if is_file_upload:
             if not isinstance(data_payload, UploadFile):
                 raise TypeError("Expected UploadFile for file upload.")
-            debug_log(f"Processing file upload: {data_payload.filename}", "DEBUG")
+            print(f"[DEBUG] Processing file upload: {data_payload.filename}")
             file_content = await data_payload.read()
             if not file_content:
                 raise HTTPException(status_code=400, detail="Uploaded file is empty.")
@@ -692,7 +1004,7 @@ async def perform_prediction(
                 try:
                     decoded_content = file_content.decode('utf-8')
                 except UnicodeDecodeError:
-                    debug_log("UTF-8 decode failed, trying latin1.", "WARN")
+                    print("[WARN] UTF-8 decode failed, trying latin1.")
                     decoded_content = file_content.decode('latin1')
                 data_io_source = io.StringIO(decoded_content)
                 source_type = 'csv'
@@ -704,7 +1016,7 @@ async def perform_prediction(
         else:
             if not isinstance(data_payload, str) or not data_payload.strip():
                 raise HTTPException(status_code=400, detail="Pasted text data is empty or invalid.")
-            debug_log("Processing pasted text data", "DEBUG")
+            print("[DEBUG] Processing pasted text data")
             data_io_source = io.StringIO(data_payload)
             source_type = 'csv'
 
@@ -725,16 +1037,16 @@ async def perform_prediction(
                 raise ValueError("Unknown data source type.")
 
         except Exception as read_err:
-            debug_log(f"Error reading data: {read_err}", "ERROR")
+            print(f"[ERROR] Error reading data: {read_err}")
             raise HTTPException(status_code=400, detail=f"Failed to read data file/text. Check format and encoding. Error: {str(read_err)[:100]}")
 
         if df is None or df.empty:
             raise HTTPException(status_code=400, detail="Data is empty or could not be parsed.")
         initial_rows = len(df)
-        debug_data_info(df, "Data loaded successfully")
+        print_data_info(df, "Data loaded successfully")
 
-        # --- 2-5. Data cleaning (same as before) ---
-        debug_log("Step 2: Validating columns...", "INFO")
+        # --- 2-5. Data cleaning ---
+        print("Step 2: Validating columns...")
         original_columns = df.columns.tolist()
         df.columns = df.columns.str.replace('[^A-Za-z0-9_]+', '', regex=True).str.replace('^[^A-Za-z_]+', '', regex=True)
         cleaned_date_col = date_column.replace('[^A-Za-z0-9_]+', '').replace('^[^A-Za-z_]+', '')
@@ -752,7 +1064,7 @@ async def perform_prediction(
         internal_date_col = cleaned_date_col
         internal_target_col = cleaned_target_col
 
-        debug_log(f"Step 3: Parsing date column '{internal_date_col}'...", "INFO")
+        print(f"Step 3: Parsing date column '{internal_date_col}'...")
         try:
             df[internal_date_col] = parse_date_column(df[internal_date_col], col_map.get(internal_date_col, internal_date_col))
         except ValueError as date_err:
@@ -760,41 +1072,41 @@ async def perform_prediction(
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Unexpected error parsing date column '{col_map.get(internal_date_col, internal_date_col)}': {str(e)}")
 
-        debug_log(f"Step 4: Cleaning target column '{internal_target_col}'...", "INFO")
+        print(f"Step 4: Cleaning target column '{internal_target_col}'...")
         df[internal_target_col] = pd.to_numeric(df[internal_target_col], errors='coerce')
         rows_before_drop = len(df)
         df = df.dropna(subset=[internal_date_col, internal_target_col])
         rows_after_clean = len(df)
         dropped_rows = rows_before_drop - rows_after_clean
         if dropped_rows > 0:
-            debug_log(f"Dropped {dropped_rows} rows due to missing dates or non-numeric target values.", "WARN")
+            print(f"[WARN] Dropped {dropped_rows} rows due to missing dates or non-numeric target values.")
 
         if rows_after_clean < 5:
             raise HTTPException(status_code=400, detail=f"Insufficient valid data points after cleaning. Need at least 5, found {rows_after_clean}.")
-        debug_log(f"Data cleaned. Rows remaining: {rows_after_clean}", "DEBUG")
+        print(f"[DEBUG] Data cleaned. Rows remaining: {rows_after_clean}")
 
-        debug_log("Step 5: Sorting data and handling duplicates...", "INFO")
+        print("Step 5: Sorting data and handling duplicates...")
         df = df.sort_values(by=internal_date_col).reset_index(drop=True)
         if df[internal_date_col].duplicated().any():
-            debug_log("Duplicate dates found. Aggregating target column by mean for each date.", "WARN")
+            print("[WARN] Duplicate dates found. Aggregating target column by mean for each date.")
             df = df.groupby(internal_date_col)[internal_target_col].mean().reset_index()
             rows_after_clean = len(df)
-            debug_log(f"Data aggregated. Rows remaining: {rows_after_clean}", "DEBUG")
+            print(f"[DEBUG] Data aggregated. Rows remaining: {rows_after_clean}")
 
-        debug_data_info(df, "Data after cleaning and sorting")
+        print_data_info(df, "Data after cleaning and sorting")
 
         # --- 6. Enhanced Model Selection ---
-        debug_log("Step 6: Enhanced model selection...", "INFO")
+        print("Step 6: Enhanced model selection...")
         try:
             model_selection_result = enhanced_model_selection(df, internal_date_col, internal_target_col, model_type, forecast_periods)
             selected_model = model_selection_result["selected_model"]
             selection_reason = model_selection_result["reason"]
-            debug_log(f"Selected model: {selected_model}. Reason: {selection_reason}", "INFO")
+            print(f"[INFO] Selected model: {selected_model}. Reason: {selection_reason}")
         except ValueError as model_err:
             raise HTTPException(status_code=400, detail=str(model_err))
 
         # --- 7. Enhanced Forecasting ---
-        debug_log(f"Step 7: Performing enhanced '{selected_model}' forecast...", "INFO")
+        print(f"Step 7: Performing enhanced '{selected_model}' forecast...")
         forecast_results: Dict[str, Any] = {}
         model_func_map = {
             'linear': perform_linear_forecast,
@@ -815,10 +1127,10 @@ async def perform_prediction(
                     forecast_results['validation_metrics'] = model_selection_result['validation_results']
                     
             except Exception as forecast_err:
-                debug_log(f"Error during {selected_model} forecast: {forecast_err}", "ERROR")
-                debug_log(traceback.format_exc(), "ERROR")
+                print(f"[ERROR] Error during {selected_model} forecast: {forecast_err}")
+                print(traceback.format_exc())
                 if selected_model != 'trend':
-                    debug_log("Falling back to simple trend forecast due to error.", "WARN")
+                    print("[WARN] Falling back to simple trend forecast due to error.")
                     try:
                         forecast_results = perform_trend_forecast(
                             data=df,
@@ -829,7 +1141,7 @@ async def perform_prediction(
                         )
                         selected_model = 'trend'
                     except Exception as fallback_err:
-                        debug_log(f"Fallback trend forecast also failed: {fallback_err}", "ERROR")
+                        print(f"[ERROR] Fallback trend forecast also failed: {fallback_err}")
                         raise HTTPException(status_code=500, detail=f"Forecasting failed for {selected_model} and fallback trend model. Error: {fallback_err}")
                 else:
                     raise HTTPException(status_code=500, detail=f"Trend forecasting failed. Error: {forecast_err}")
@@ -838,16 +1150,16 @@ async def perform_prediction(
 
         if not forecast_results or 'predictions' not in forecast_results:
             raise HTTPException(status_code=500, detail="Forecasting process did not return valid results.")
-        debug_log(f"Forecast completed using {forecast_results.get('model_name', 'Unknown Model')}", "DEBUG")
+        print(f"[DEBUG] Forecast completed using {forecast_results.get('model_name', 'Unknown Model')}")
 
         # --- 8. Generate Future Periods ---
-        debug_log("Step 8: Generating future periods...", "INFO")
+        print("Step 8: Generating future periods...")
         last_date = df[internal_date_col].iloc[-1]
         future_periods_formatted = generate_forecast_periods(last_date, forecast_periods)
 
         pred_len = len(forecast_results.get('predictions', []))
         if pred_len != forecast_periods:
-            debug_log(f"Prediction length mismatch ({pred_len} vs {forecast_periods}). Adjusting output.", "WARN")
+            print(f"[WARN] Prediction length mismatch ({pred_len} vs {forecast_periods}). Adjusting output.")
             preds = forecast_results.get('predictions', np.full(forecast_periods, np.nan))[:forecast_periods]
             lowers = forecast_results.get('lower_bounds', np.full(forecast_periods, np.nan))[:forecast_periods]
             uppers = forecast_results.get('upper_bounds', np.full(forecast_periods, np.nan))[:forecast_periods]
@@ -865,16 +1177,16 @@ async def perform_prediction(
                 "upper_bound": safe_float(uppers[i], default=None)
             })
 
-        # --- NEW: 8.1 Prepare Historical Data for Charts ---
-        debug_log("Step 8.1: Preparing historical data for charts...", "INFO")
+        # --- 8.1 Prepare Historical Data for Charts ---
+        print("Step 8.1: Preparing historical data for charts...")
         historical_data = prepare_historical_data_for_charts(df, internal_date_col, internal_target_col)
 
         # --- 9. Enhanced Business Context Analysis ---
-        debug_log("Step 9: Analyzing business context...", "INFO")
+        print("Step 9: Analyzing business context...")
         business_context = analyze_business_context(df, internal_target_col, predictions_list, target_column)
 
         # --- 10. Calculate Enhanced Summary Statistics ---
-        debug_log("Step 10: Calculating enhanced summary statistics...", "INFO")
+        print("Step 10: Calculating enhanced summary statistics...")
         values = df[internal_target_col].values
         data_summary = {
             "mean": safe_float(np.mean(values), default=None),
@@ -888,12 +1200,10 @@ async def perform_prediction(
             "date_range_days": (df[internal_date_col].max() - df[internal_date_col].min()).days
         }
 
-        # --- 11. Generate Enhanced Insights ---
-        debug_log("Step 11: Generating enhanced insights...", "INFO")
-        insights = generate_enhanced_insights(df, internal_target_col, forecast_results, selected_model, forecast_periods, business_context)
-
-        # --- 12. Prepare Enhanced Final Response ---
-        debug_log("Step 12: Preparing enhanced final response...", "INFO")
+        # --- 11 & 12. Model Performance & Insight Generation (AI Integrated) ---
+        print("Step 11 & 12: Generating AI insights...")
+        
+        # Prepare metrics for both AI and Fallback
         perf_metrics = forecast_results.get('metrics', {})
         model_performance = {
             "model_used": forecast_results.get('model_name', selected_model.capitalize() + ' Forecast'),
@@ -906,7 +1216,8 @@ async def perform_prediction(
             "confidence_level": confidence_level,
             "validation_folds": forecast_results.get('validation_metrics', {}).get('folds', 0)
         }
-
+        
+        # Add textual interpretation for R2
         r2_interp = "Model fit (R-squared) interpretation unavailable."
         if model_performance['r_squared'] is not None:
             r2_val = model_performance['r_squared']
@@ -915,14 +1226,37 @@ async def perform_prediction(
             r2_interp = f"R-squared of {r2_val:.3f} indicates that approximately {r2_pct:.1f}% of the variance in the historical data is explained by the model, suggesting a {fit_desc} fit."
         model_performance["interpretation"] = r2_interp
 
-        # --- ENHANCED RESPONSE: Include historical_data for frontend charts ---
+        # 1. Generate Standard Heuristic Insights (Fallback/Baseline)
+        heuristic_insights = generate_enhanced_insights(
+            df, internal_target_col, forecast_results, 
+            selected_model, forecast_periods, business_context
+        )
+
+        # 2. Attempt AI Insight Generation
+        ai_insights = await generate_llm_insights(
+            data_summary=data_summary,
+            model_performance=model_performance,
+            business_context=business_context,
+            forecast_periods=forecast_periods,
+            target_column=target_column
+        )
+
+        # 3. Select Final Insights
+        if ai_insights:
+            final_insights = ai_insights
+        else:
+            final_insights = heuristic_insights
+
+        # --- 13. Prepare Final Response ---
+        print("Step 13: Preparing enhanced final response...")
+        
         response_data = {
             "predictions": predictions_list,
-            "historical_data": historical_data,  # NEW: Critical for frontend chart differentiation
+            "historical_data": historical_data,
             "data_summary": data_summary,
             "model_performance": model_performance,
             "business_context": business_context,
-            "insights": insights,
+            "insights": final_insights,
             "data_info": {
                 "total_points": len(df),
                 "target_column": target_column,
@@ -932,14 +1266,14 @@ async def perform_prediction(
             }
         }
 
-        debug_log("✅ Enhanced predictive analysis completed successfully", "INFO")
+        print("✅ Enhanced predictive analysis completed successfully")
         return response_data
 
     except HTTPException as http_exc:
-        debug_log(f"❌ HTTP Exception during prediction: {http_exc.status_code} - {http_exc.detail}", "ERROR")
+        print(f"❌ HTTP Exception during prediction: {http_exc.status_code} - {http_exc.detail}")
         raise http_exc
     except Exception as e:
         error_msg = f"❌ Unexpected error during prediction: {type(e).__name__}: {str(e)}"
-        debug_log(error_msg, "ERROR")
-        debug_log(f"Full traceback:\n{traceback.format_exc()}", "ERROR")
+        print(error_msg)
+        print(f"Full traceback:\n{traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=error_msg)

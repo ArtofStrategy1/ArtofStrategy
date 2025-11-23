@@ -21,6 +21,9 @@ from analysis_modules import prescriptive_analysis
 # Assuming these exist and work as intended
 # from save_modules import save_pdf, save_docx
 
+# --- Import regression analysis function ---
+from analysis_modules import regression_analysis
+
 app = FastAPI(docs_url="/")
 
 # --- CORS ---
@@ -53,10 +56,23 @@ def get_data_payload(
     data_file: Optional[UploadFile], 
     data_text: Optional[str]
 ) -> Tuple[Union[UploadFile, str], str, bool]:
-    """
-    Determines the data source (file or text) and returns
-    (payload, filename, is_file_upload_flag).
-    Raises HTTPException if no data is provided.
+    """Determines the data source (file upload or raw text) and validates the input.
+
+    Checks if a file was uploaded or if text was pasted. If a file is provided,
+    it validates the extension (.csv, .xlsx, .xls).
+
+    Args:
+        data_file (Optional[UploadFile]): The file object uploaded by the user.
+        data_text (Optional[str]): Raw CSV/JSON text pasted by the user.
+
+    Returns:
+        Tuple[Union[UploadFile, str], str, bool]: A tuple containing:
+            - The data payload (File object or string).
+            - The filename (or "pasted_data").
+            - A boolean flag (True if file upload, False if text).
+
+    Raises:
+        HTTPException(400): If the file type is invalid or if no data is provided.
     """
     if data_file:
         filename = data_file.filename or "unknown"
@@ -74,7 +90,14 @@ def get_data_payload(
         raise HTTPException(status_code=400, detail="No data provided. Please either upload a file or paste text data.")
 
 async def safe_close_file(file: Optional[UploadFile]):
-    """Safely closes an uploaded file if it exists."""
+    """Safely closes an uploaded file stream if it exists.
+    
+    Attempting to close a file that is already closed or None usually raises
+    an error; this function handles that gracefully to prevent server crashes.
+
+    Args:
+        file (Optional[UploadFile]): The file object to close.
+    """
     if file and isinstance(file, UploadFile):
         try:
             await file.close()
@@ -91,7 +114,24 @@ async def run_prescriptive_analysis(
     business_goal: str = Form(...),
     context_file: Optional[UploadFile] = File(None)
 ):
-    """Runs Prescriptive analysis to generate actionable recommendations."""
+    """Runs Prescriptive Analysis to generate actionable recommendations based on business goals.
+
+    Takes a dataset and a specific business goal (e.g., "Increase retention") and
+    uses the prescriptive engine to determine optimal actions.
+
+    Args:
+        data_file (Optional[UploadFile]): The source dataset (CSV/Excel).
+        data_text (Optional[str]): The source dataset as raw text.
+        business_goal (str): The specific outcome the user wants to achieve.
+        context_file (Optional[UploadFile]): Additional context document (PDF/Doc) to aid analysis.
+
+    Returns:
+        JSONResponse: A JSON object containing the analysis results and recommendations.
+
+    Raises:
+        HTTPException(400): If the business goal is missing.
+        HTTPException(500): If an internal processing error occurs.
+    """
     try:
         # 1. Get data
         data_payload, input_filename, is_file_upload = get_data_payload(data_file, data_text)
@@ -133,7 +173,24 @@ async def run_pls_analysis(
     measurement_syntax: Optional[str] = Form(None),
     structural_syntax: Optional[str] = Form(None)
 ):
-    """Runs PLS-SEM (Partial Least Squares Structural Equation Modeling) analysis."""
+    """Runs Partial Least Squares Structural Equation Modeling (PLS-SEM) analysis.
+
+    Processes the data using the provided measurement (outer model) and 
+    structural (inner model) syntax.
+
+    Args:
+        data_file (Optional[UploadFile]): The source dataset (CSV/Excel).
+        data_text (Optional[str]): The source dataset as raw text.
+        measurement_syntax (Optional[str]): Syntax defining the latent variables and indicators.
+        structural_syntax (Optional[str]): Syntax defining relationships between latent variables.
+
+    Returns:
+        JSONResponse: The PLS-SEM path coefficients, R-squared values, and validity metrics.
+
+    Raises:
+        HTTPException(400): If neither measurement nor structural syntax is provided.
+        HTTPException(500): If the analysis engine fails.
+    """
     try:
         # 1. Get data (uses your existing helper)
         data_payload, input_filename, is_file_upload = get_data_payload(data_file, data_text)
@@ -175,7 +232,25 @@ async def run_sem_analysis(
     structural_syntax: Optional[str] = Form(None),
     context_text: Optional[str] = Form("")  # <--- NEW FIELD
 ):
-    """Runs Structural Equation Modeling (SEM) analysis."""
+    """Runs Covariance-Based Structural Equation Modeling (CB-SEM) analysis.
+
+    Uses the 'lavaan' or 'semopy' syntax to model relationships between observed
+    and latent variables.
+
+    Args:
+        data_file (Optional[UploadFile]): The source dataset.
+        data_text (Optional[str]): The source dataset as text.
+        measurement_syntax (Optional[str]): Syntax defining latent variable mappings.
+        structural_syntax (Optional[str]): Syntax defining regressions between variables.
+        context_text (Optional[str]): Optional text context to help interpret results.
+
+    Returns:
+        JSONResponse: Model fit indices (CFI, RMSEA), coefficients, and p-values.
+
+    Raises:
+        HTTPException(400): If syntax is missing.
+        HTTPException(500): If the SEM solver fails (e.g., non-convergence).
+    """
     try:
         # 1. Get data
         data_payload, input_filename, is_file_upload = get_data_payload(data_file, data_text)
@@ -218,7 +293,27 @@ async def run_predictive_analysis(
     confidenceLevel: Optional[str] = Form(None),
     modelType: Optional[str] = Form(None)
 ):
-    """Runs Predictive (forecasting) analysis."""
+    """Runs time-series forecasting (Predictive Analysis) on the provided dataset.
+
+    Generates future predictions based on historical data using the specified
+    date and target columns.
+
+    Args:
+        data_file (Optional[UploadFile]): The source dataset.
+        data_text (Optional[str]): The source dataset as text.
+        dateColumn (str): The column name containing datetime values.
+        targetColumn (str): The column name containing the values to forecast.
+        forecastPeriods (Optional[str]): Number of future periods to predict (default: 12).
+        confidenceLevel (Optional[str]): Statistical confidence level, e.g., 0.95 (default: 0.90).
+        modelType (Optional[str]): Specific algorithm to use (default: 'auto').
+
+    Returns:
+        JSONResponse: Forecasted data points, confidence intervals, and trend analysis.
+
+    Raises:
+        HTTPException(400): If parameters (periods, confidence) are malformed or out of range.
+        HTTPException(500): If the forecasting model fails.
+    """
     try:
         # 1. Get data
         data_payload, input_filename, is_file_upload = get_data_payload(data_file, data_text)
@@ -266,35 +361,88 @@ async def run_predictive_analysis(
 
 @app.post("/api/dematel")
 async def run_dematel_analysis(
-    dematel_factors: str = Form(...), # JSON string list
-    dematel_matrix: str = Form(...)  # JSON string 2D list
+    analysis_type: str = Form("dematel"),  # Default to matrix analysis for backward compatibility
+    # For text processing (NEW)
+    user_text: str = Form(None),
+    # For direct matrix input (EXISTING)
+    dematel_factors: str = Form(None),
+    dematel_matrix: str = Form(None)
 ):
-    """Runs DEMATEL analysis (no data file required)."""
+    """
+    Runs DEMATEL (Decision Making Trial and Evaluation Laboratory) analysis.
+    
+    Supports two modes:
+    1. Text Analysis: Analyzes user-provided text to extract factors and relationships automatically via AI
+    2. Matrix Analysis: Analyzes cause-and-effect relationships based on pre-defined factors and matrix
+    
+    Args:
+        analysis_type (str): Either "dematel_from_text" or "dematel" (default).
+        user_text (str): Raw text for AI analysis (required for text mode).
+        dematel_factors (str): JSON string representation of the list of factors (required for matrix mode).
+        dematel_matrix (str): JSON string representation of the 2D influence matrix (required for matrix mode).
+    
+    Returns:
+        JSONResponse: The Prominence and Relation values, classifying factors as cause or effect,
+                     plus diagnostics and visualizations.
+    
+    Raises:
+        HTTPException(400): If the input parameters are missing or malformed.
+        HTTPException(500): If AI processing or matrix calculation fails.
+    """
     try:
-        # 1. Validate and convert DEMATEL parameters
-        try:
-            factors_list = json.loads(dematel_factors)
-            matrix_list = json.loads(dematel_matrix)
-        except json.JSONDecodeError:
-            raise HTTPException(status_code=400, detail="Invalid JSON format for DEMATEL factors or matrix.")
+        if analysis_type == "dematel_from_text":
+            # NEW: Process text through Ollama in backend
+            if not user_text:
+                raise HTTPException(
+                    status_code=400, 
+                    detail="user_text is required for text analysis mode"
+                )
+            
+            print(f"🔍 Processing DEMATEL from text (length: {len(user_text)})")
+            results = await dematel_analysis.perform_dematel_from_text(user_text)
+            
+        elif analysis_type == "dematel":
+            # EXISTING: Process factors and matrix directly
+            if not dematel_factors or not dematel_matrix:
+                raise HTTPException(
+                    status_code=400, 
+                    detail="dematel_factors and dematel_matrix are required for matrix analysis mode"
+                )
+            
+            # Validate and convert DEMATEL parameters
+            try:
+                factors_list = json.loads(dematel_factors)
+                matrix_list = json.loads(dematel_matrix)
+            except json.JSONDecodeError as json_err:
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Invalid JSON format for DEMATEL factors or matrix: {str(json_err)}"
+                )
+            
+            print(f"🔢 Processing DEMATEL from factors/matrix ({len(factors_list)} factors)")
+            results = await dematel_analysis.perform_dematel(
+                factors=factors_list,
+                direct_matrix=matrix_list
+            )
+            
+        else:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Unknown analysis_type: '{analysis_type}'. Use 'dematel_from_text' or 'dematel'."
+            )
         
-        # 2. Run analysis
-        print(f"Routing to DEMATEL Analysis with {len(factors_list)} factors...")
-        results = await dematel_analysis.perform_dematel(
-            factors=factors_list,
-            direct_matrix=matrix_list
-        )
         return JSONResponse(content=results)
-
+        
     except HTTPException as http_exc:
         print(f"HTTP Exception in DEMATEL: {http_exc.status_code} - {http_exc.detail}")
         raise http_exc
     except Exception as e:
         print(f"Error during DEMATEL analysis: {type(e).__name__} - {e}")
         print(traceback.format_exc())
-        raise HTTPException(status_code=500, detail=f"An internal server error occurred: {str(e)}")
-    # No 'finally' block needed as no files are uploaded
-
+        raise HTTPException(
+            status_code=500, 
+            detail=f"An internal server error occurred during DEMATEL analysis: {str(e)}"
+        )
 
 @app.post("/api/descriptive")
 async def run_descriptive_analysis(
@@ -303,7 +451,24 @@ async def run_descriptive_analysis(
     context_file: Optional[UploadFile] = File(None),
     descriptive_analysis_types: Optional[str] = Form(None) # JSON string list
 ):
-    """Runs Descriptive analysis."""
+    """Runs Descriptive Analysis (Summary Statistics).
+
+    Calculates mean, median, mode, standard deviation, and other statistical
+    descriptions for the provided dataset.
+
+    Args:
+        data_file (Optional[UploadFile]): The source dataset.
+        data_text (Optional[str]): The source dataset as text.
+        context_file (Optional[UploadFile]): Optional file providing extra context.
+        descriptive_analysis_types (Optional[str]): JSON string list of specific stats to run (e.g., ["mean", "correlation"]).
+
+    Returns:
+        JSONResponse: A dictionary of calculated statistics.
+
+    Raises:
+        HTTPException(400): If analysis_types JSON is malformed.
+        HTTPException(500): If data processing fails.
+    """
     try:
         # 1. Get data
         data_payload, input_filename, is_file_upload = get_data_payload(data_file, data_text)
@@ -349,7 +514,24 @@ async def run_visualization_analysis(
     context_file: Optional[UploadFile] = File(None),
     chart_configs: Optional[str] = Form(None) # JSON string with chart configurations
 ):
-    """Runs Visualization analysis and suggestions."""
+    """Generates charts and visualizations based on the dataset.
+
+    Can automatically suggest charts or build specific charts based on the
+    provided configuration.
+
+    Args:
+        data_file (Optional[UploadFile]): The source dataset.
+        data_text (Optional[str]): The source dataset as text.
+        context_file (Optional[UploadFile]): Optional context file.
+        chart_configs (Optional[str]): JSON string defining chart types and axes.
+
+    Returns:
+        JSONResponse: Plotly JSON configuration or image data for the generated charts.
+
+    Raises:
+        HTTPException(400): If chart_configs JSON is malformed.
+        HTTPException(500): If visualization generation fails.
+    """
     try:
         # 1. Get data
         data_payload, input_filename, is_file_upload = get_data_payload(data_file, data_text)
@@ -388,11 +570,6 @@ async def run_visualization_analysis(
         await safe_close_file(context_file)
 
 
-# Add this to your main.py file after the other analysis imports
-
-# --- Import regression analysis function ---
-from analysis_modules import regression_analysis
-
 # --- Add this endpoint after your other analysis endpoints ---
 
 @app.post("/api/regression")
@@ -405,7 +582,27 @@ async def run_regression_analysis(
     test_size: Optional[str] = Form(None),        # Float as string
     context_file: Optional[UploadFile] = File(None)
 ):
-    """Runs Regression analysis."""
+    """Runs standard Regression Analysis to predict a continuous target variable.
+
+    Supports multiple model types (Linear, Ridge, Lasso, RandomForest, etc.)
+    and allows configuration of train/test splits.
+
+    Args:
+        data_file (Optional[UploadFile]): The source dataset.
+        data_text (Optional[str]): The source dataset as text.
+        target_column (str): The name of the dependent variable column.
+        feature_columns (Optional[str]): JSON list of independent variable columns.
+        model_types (Optional[str]): JSON list of algorithms to test (e.g., ["linear", "random_forest"]).
+        test_size (Optional[str]): String representation of float (0.1 to 0.5) for the test split.
+        context_file (Optional[UploadFile]): Optional context file.
+
+    Returns:
+        JSONResponse: Regression metrics (R2, MSE) and model coefficients.
+
+    Raises:
+        HTTPException(400): If JSON parsing fails, invalid model types are requested, or test size is out of bounds.
+        HTTPException(500): If regression fitting fails.
+    """
     try:
         # 1. Get data
         data_payload, input_filename, is_file_upload = get_data_payload(data_file, data_text)
@@ -484,8 +681,22 @@ async def export_analysis_report(
     format: str = Form(...),
     analysis_data_json: str = Form(...) # We'll receive the results JSON as a string
 ):
-    """
-    Generates a PDF or DOCX file from a JSON object of analysis results.
+    """Exports the analysis results into a downloadable document (PDF or DOCX).
+    
+    Current implementation is partial; raises 501 Not Implemented for actual export logic
+    until the save modules are fully integrated.
+
+    Args:
+        format (str): The desired file format ('pdf' or 'docx').
+        analysis_data_json (str): The analysis results (as a JSON string) to include in the report.
+
+    Returns:
+        StreamingResponse: The downloadable file stream.
+
+    Raises:
+        HTTPException(400): If the JSON data is invalid or the format is not supported.
+        HTTPException(501): If the requested export format is not yet implemented.
+        HTTPException(500): If file generation fails.
     """
     try:
         # Parse the JSON string sent from the frontend
@@ -528,7 +739,11 @@ async def export_analysis_report(
 # --- Status Endpoint ---
 @app.get("/status")
 def read_root():
-    """Returns the API status."""
+    """Checks the health of the API.
+
+    Returns:
+        dict: A status message indicating the API is running.
+    """
     return {"status": "Analysis API is running"}
 
 if __name__ == '__main__':

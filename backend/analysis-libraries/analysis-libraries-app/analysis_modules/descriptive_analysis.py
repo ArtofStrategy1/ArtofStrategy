@@ -13,8 +13,8 @@ from scipy import stats
 from collections import Counter
 
 # --- NEW: OLLAMA Configuration ---
-OLLAMA_URL = "https://ollama.data2int.com/api/generate"
-OLLAMA_MODEL = "llama3.1:latest" # Or "qwen3:30b-a3b"
+OLLAMA_URL = "https://ollama.sageaios.com/api/generate"
+OLLAMA_MODEL = "llama3.1:latest"
 
 # --- Helper to load data (Unchanged) ---
 async def load_dataframe(
@@ -22,6 +22,25 @@ async def load_dataframe(
     is_file_upload: bool,
     input_filename: str
 ) -> pd.DataFrame:
+    """
+    Asynchronously loads a pandas DataFrame from an uploaded file or a raw string.
+
+    This function handles file format detection (CSV vs Excel) based on the filename extension,
+    decodes bytes, handles common missing value markers, and creates the DataFrame.
+
+    Args:
+        data_payload (Union[UploadFile, str]): The input data, either as a Starlette UploadFile
+            object or a raw string (for pasted text).
+        is_file_upload (bool): Flag indicating if the payload is a file upload.
+        input_filename (str): The name of the file, used to determine the parser (CSV or Excel).
+
+    Returns:
+        pd.DataFrame: A pandas DataFrame containing the loaded data.
+
+    Raises:
+        TypeError: If `is_file_upload` is True but `data_payload` is not an UploadFile.
+        HTTPException: If the file is empty, the file type is invalid, or parsing fails.
+    """
     print("📊 Loading data...")
     filename_lower = input_filename.lower()
     na_vals = ['-', '', ' ', 'NA', 'N/A', 'null', 'None', '#N/A', '#VALUE!', '#DIV/0!', 'NaN', 'nan']
@@ -66,6 +85,23 @@ async def load_dataframe(
 
 # --- NEW: LLM Insights Generator ---
 async def get_llm_insights(stats_summary: Dict, context: str) -> List[Dict[str, str]]:
+    """
+    Generates actionable business insights using an external LLM (Ollama) based on statistical summaries.
+
+    Constructs a prompt containing the business context and the calculated statistics,
+    then queries the LLM to interpret skewness, variability, and central tendencies.
+    It includes robust error handling to return fallback insights if the API call fails.
+
+    Args:
+        stats_summary (Dict): A dictionary containing summaries of numerical (mean, median, etc.)
+            and categorical (mode, unique count) variables.
+        context (str): A string describing the business context or background of the data.
+
+    Returns:
+        List[Dict[str, str]]: A list of dictionaries, where each dictionary represents an insight
+            with keys "observation", "interpretation", and "business_implication".
+            Returns a list containing an error object if the process fails.
+    """
     """
     Calls Ollama to generate business insights based on statistical summary.
     This logic is moved from your frontend JS file.
@@ -161,6 +197,39 @@ async def perform_descriptive_analysis(
     context_file: Optional[UploadFile] = None, # Added to accept context file
     analysis_types: List[str] = None # This is no longer used, but kept for signature
 ) -> Dict[str, Any]:
+    """
+    Orchestrates the complete descriptive analysis pipeline for a dataset.
+
+    This function performs the following steps:
+    1. Loads the dataframe from the input source.
+    2. Reads an optional business context file.
+    3. Iterates through all columns to calculate statistics:
+       - For numerical columns: Mean, median, std dev, min/max, IQR.
+       - For categorical columns: Mode, unique count, frequency tables.
+    4. Generates visualization data structures (histograms for numerical, bar charts for categorical).
+    5. Calls an LLM to generate narrative insights based on the calculated stats and context.
+    6. Formats the final output into a specific JSON structure required by the frontend.
+
+    Args:
+        data_payload (Union[UploadFile, str]): The dataset to analyze.
+        is_file_upload (bool): Whether the payload is a file upload.
+        input_filename (str): The name of the input file.
+        context_file (Optional[UploadFile]): An optional text file containing business context.
+        analysis_types (List[str], optional): Deprecated argument kept for compatibility. Defaults to None.
+
+    Returns:
+        Dict[str, Any]: A dictionary containing the analysis results, structured as:
+            - 'summary': Overview of dataset dimensions and variable types.
+            - 'numerical_summary': List of stats for numerical variables.
+            - 'categorical_summary': List of stats for categorical variables.
+            - 'visualizations': List of chart data objects.
+            - 'business_insights': List of AI-generated insights.
+
+    Raises:
+        HTTPException: If the file upload fails or is invalid.
+        Exception: Catches generic errors during analysis and returns a structured error response 
+            instead of crashing, allowing the frontend to display the error message.
+    """
     """
     Main function to perform descriptive analysis.
     
