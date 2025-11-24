@@ -31476,7 +31476,6 @@ function renderSystemGoalsPage(container, data) {
             const useDoc = document.getElementById("docUpload").checked;
             let text = "";
 
-            // FIX: Use the correct IDs from createMiscLayout_MSC
             const companyNameEl = document.getElementById("miscCompanyName");
             const locationEl = document.getElementById("miscLocation");
 
@@ -31495,7 +31494,6 @@ function renderSystemGoalsPage(container, data) {
                 if (!text) throw new Error("Please provide your document content.");
                 const textBlob = new Blob([text], { type: 'text/plain' });
                 n8nFormData.append("file", textBlob, "context_input.txt");
-                // Some workflows look for 'miscContent' specifically
                 n8nFormData.append("miscContent", text); 
             }
 
@@ -31510,23 +31508,54 @@ function renderSystemGoalsPage(container, data) {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) throw new Error("Please log in.");
 
-            // 2. Trigger N8N Workflow
-            // UPDATED URL
+            // 2. Trigger N8N Workflow WITH RETRY LOGIC
             const N8N_URL = "https://n8n.data2int.com/webhook/Strategic-Planning"; 
             
             console.log(`Sending data to n8n workflow at ${N8N_URL}...`);
-            const response = await fetch(N8N_URL, {
-                method: "POST",
-                headers: { 'Authorization': `Bearer ${session.access_token}` },
-                body: n8nFormData
-            });
 
-            if (!response.ok) {
-                const errText = await response.text();
-                throw new Error(`n8n Trigger Error: ${response.status} - ${errText}`);
+            let response;
+            let attempts = 0;
+            const maxAttempts = 2; // Try twice
+            let success = false;
+            let lastErrorText = "";
+
+            while (attempts < maxAttempts && !success) {
+                try {
+                    attempts++;
+                    if (attempts > 1) console.log(`Retry attempt ${attempts} for n8n workflow...`);
+
+                    response = await fetch(N8N_URL, {
+                        method: "POST",
+                        headers: { 'Authorization': `Bearer ${session.access_token}` },
+                        body: n8nFormData // Note: FormData can be reused in fetch
+                    });
+
+                    if (response.ok) {
+                        success = true;
+                    } else {
+                        // If it's a 500 error, we throw to trigger the catch block and retry
+                        const errText = await response.text();
+                        if (response.status === 500) {
+                            lastErrorText = errText;
+                            throw new Error(`Server 500: ${errText}`);
+                        } else {
+                            // If it's 400/401/etc, don't retry, just fail
+                            throw new Error(`n8n Trigger Error: ${response.status} - ${errText}`);
+                        }
+                    }
+                } catch (err) {
+                    console.warn(`Attempt ${attempts} failed:`, err);
+                    if (attempts >= maxAttempts) {
+                        // If we are out of attempts, throw the error to the main catch block
+                        throw new Error(`n8n Workflow failed after ${maxAttempts} attempts. Last error: ${lastErrorText || err.message}`);
+                    }
+                    // Wait 1 second before retrying to allow n8n to stabilize
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
             }
             
             // Workflow triggered successfully. 
+            console.log("n8n Workflow triggered successfully.");
             // The logic now pauses here. 
             // 'handleWebSocketMessage' will pick up the response when n8n finishes.
 
