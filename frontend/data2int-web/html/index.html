@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>S.A.G.E. - AI Strategy Assistant</title>
+    <title>SAGE AI - Strategy Assistant</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -2277,6 +2277,365 @@
             vertical-align: super;
             margin-left: 2px;
         }
+
+        /* --- NEW ADMIN LAYOUT: Vertical Command Center --- */
+
+/* 1. The Grid Wrapper */
+.admin-layout-wrapper {
+    display: grid;
+    grid-template-columns: 280px 1fr; /* Sidebar | Content */
+    gap: 2rem;
+    min-height: 600px;
+}
+
+/* 2. Left Sidebar Navigation */
+.admin-sidebar {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    height: fit-content;
+    position: sticky;
+    top: 100px; /* Stick on scroll */
+    backdrop-filter: blur(10px);
+}
+
+.admin-sidebar-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.admin-nav-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* Sidebar Buttons */
+.admin-side-btn {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    color: rgba(255, 255, 255, 0.6);
+    transition: all 0.2s ease;
+    text-align: left;
+    background: transparent;
+    border: 1px solid transparent;
+}
+
+.admin-side-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    transform: translateX(5px);
+}
+
+.admin-side-btn.active {
+    background: linear-gradient(90deg, rgba(142, 45, 226, 0.2), transparent);
+    border-left: 4px solid var(--primary);
+    color: white;
+    font-weight: 600;
+}
+
+.admin-btn-icon {
+    font-size: 1.25rem;
+    margin-right: 1rem;
+    width: 24px;
+    text-align: center;
+}
+
+/* 3. Right Content Area */
+.admin-content-area {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* 4. HUD (Heads Up Display) Stats Row */
+.admin-hud-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+}
+
+.admin-hud-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.admin-hud-val {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    line-height: 1.2;
+}
+
+.admin-hud-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 0.25rem;
+}
+
+/* 5. Refresh Button Styling within Sidebar */
+.admin-refresh-wrapper {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 1024px) {
+    .admin-layout-wrapper {
+        grid-template-columns: 1fr; /* Stack vertically */
+    }
+    .admin-sidebar {
+        position: relative;
+        top: 0;
+    }
+    .admin-nav-group {
+        flex-direction: row;
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+    }
+    .admin-side-btn {
+        width: auto;
+        white-space: nowrap;
+        border-left: 1px solid transparent; /* Reset border for mobile */
+    }
+    .admin-side-btn.active {
+        border-left: 1px solid transparent;
+        border-bottom: 4px solid var(--primary);
+        background: linear-gradient(0deg, rgba(142, 45, 226, 0.2), transparent);
+    }
+}
+
+    /* --- New Metric Tile Styling --- */
+
+/* The grid container for the metrics */
+.metric-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 2 columns by default */
+    gap: 1rem;
+}
+
+/* Individual Metric Tile */
+.metric-tile {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.2s ease;
+}
+
+.metric-tile:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.metric-tile.full-width {
+    grid-column: span 2; /* Spans across */
+}
+
+.metric-label {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.metric-value {
+    font-family: 'Monaco', 'Consolas', monospace; /* Tech font */
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Status Indicators */
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.status-dot.green { background-color: #10B981; box-shadow: 0 0 8px #10B981; }
+.status-dot.blue { background-color: #3B82F6; box-shadow: 0 0 8px #3B82F6; }
+.status-dot.purple { background-color: #8B5CF6; box-shadow: 0 0 8px #8B5CF6; }
+
+/* Specific Colors for Values */
+.val-green { color: #34D399; }
+.val-blue { color: #60A5FA; }
+.val-purple { color: #A78BFA; }
+.val-yellow { color: #FBBF24; }
+
+/* --- User Management Specific Styles --- */
+
+/* The Control Bar (Search & Filters) */
+.admin-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 1rem;
+    border-radius: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.admin-search-wrapper {
+    flex-grow: 1;
+    position: relative;
+    min-width: 250px;
+}
+
+.admin-search-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.admin-search-input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.5rem; /* Space for icon */
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.5rem;
+    color: white;
+    transition: all 0.2s;
+}
+
+.admin-search-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: rgba(0, 0, 0, 0.4);
+}
+
+/* Tier Badges */
+.tier-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 99px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-block;
+}
+
+.tier-basic {
+    background: rgba(148, 163, 184, 0.2);
+    color: #cbd5e1;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.tier-premium {
+    background: rgba(250, 204, 21, 0.2);
+    color: #fde047;
+    border: 1px solid rgba(250, 204, 21, 0.3);
+    box-shadow: 0 0 10px rgba(250, 204, 21, 0.1);
+}
+
+.tier-admin {
+    background: rgba(168, 85, 247, 0.2);
+    color: #d8b4fe;
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.1);
+}
+
+/* Table Overrides for this view */
+.user-row {
+    transition: background 0.2s;
+}
+.user-row:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+.user-uid {
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+    background: rgba(0, 0, 0, 0.3);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* --- Subscription Tab Specifics --- */
+
+/* Nested Sub-Tab Navigation (Pill Style) */
+.sub-nav-container {
+    display: flex;
+    gap: 0.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 0.25rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    width: fit-content;
+    margin-bottom: 1.5rem;
+}
+
+.sub-nav-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+    transition: all 0.2s;
+}
+
+.sub-nav-btn:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.sub-nav-btn.active {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Finance Cards */
+.finance-card {
+    background: linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 1rem;
+    padding: 1.5rem;
+}
+
+/* Status Badges for Payments */
+.status-badge {
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.status-active { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.3); }
+.status-canceled { background: rgba(100, 116, 139, 0.2); color: #94a3b8; border: 1px solid rgba(100, 116, 139, 0.3); }
+.status-past_due { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); }
+.status-trialing { background: rgba(59, 130, 246, 0.2); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.3); }
+
+        
     </style>
 </head>
 
@@ -2290,7 +2649,7 @@
             <div class="container mx-auto px-4">
                 <div class="flex justify-between items-center h-16">
                     <a href="#" class="text-2xl font-bold text-white tracking-wider nav-link transition-all duration-300 hover:scale-105 hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-indigo-400 hover:via-purple-400 hover:to-pink-400 drop-shadow-sm hover:drop-shadow-[0_0_15px_rgba(168,85,247,0.5)]" data-page="home">
-                        S.A.G.E.
+                        SAGE AI
                     </a>
                     
                     <div class="hidden md:flex space-x-4 items-center">
@@ -3232,10 +3591,6 @@
                 <div class="feature-card p-6 blog-article-link cursor-pointer" data-article-id="operational-art">
                     <h3 class="text-xl font-bold mb-2">Operational Art in the Malayan Campaign</h3>
                     <p class="text-white/70 text-sm">A historical analysis of the Malayan Campaign through the lens of Operational Art by LTC Gurbachan Singh.</p>
-                </div>
-                <div class="feature-card p-6 blog-article-link cursor-pointer" data-article-id="strategic-leadership">
-                    <h3 class="text-xl font-bold mb-2">Strategic Leadership</h3>
-                    <p class="text-white/70 text-sm">Exploring the qualities of great strategic leaders, from Clausewitz to Lee Kuan Yew.</p>
                 </div>
                 <div class="feature-card p-6 blog-article-link cursor-pointer" data-article-id="innovation-nexus">
                     <h3 class="text-xl font-bold mb-2">The Strategy, Innovation & Entrepreneurship Nexus</h3>
@@ -4525,114 +4880,228 @@ Profit_USD ~ Sales_Performance + Customer_Metrics`;
     }
 
 function createAdminDashboardTabs() {
-    const dashboardContainer = $("adminDashboard");
+    const dashboardContainer = document.getElementById("adminDashboard");
     if (!dashboardContainer) return;
 
-    // 1. Capture existing static content (metrics and stats panels)
-    const usersOnlineGrid = dashboardContainer.querySelector('.grid.md\\:grid-cols-3');
-    const statsContainer = dashboardContainer.querySelector('.glass-container.mt-8');
-
-    // 2. Clear the dashboard content
     dashboardContainer.innerHTML = '';
 
-    // 3. Define Tab Navigation (MODIFIED - Added Feedback)
-    const tabNav = document.createElement("div");
-    tabNav.id = "adminTabsNav";
-    tabNav.className = "flex flex-wrap space-x-2 border-b-2 border-white/10 mt-8 mb-8";
-    tabNav.innerHTML = `
-        <button class="home-tab-btn active" data-tab="dbStats">📊 Database Statistics</button>
-        <button class="home-tab-btn" data-tab="users">👥 Users</button>
-        <button class="home-tab-btn" data-tab="feedback">🎫 Feedback</button>
-        <button class="home-tab-btn" data-tab="contacts">📨 Contacts</button>
-        <button class="home-tab-btn" data-tab="subscriptions">💳 Subscriptions</button>
+    const dashboardHTML = `
+        <div class="admin-layout-wrapper">
+            
+            <aside class="admin-sidebar">
+                <div class="admin-sidebar-header">
+                    <h2 class="text-2xl font-bold text-white">S.A.G.E. Admin</h2>
+                    <p class="text-xs text-white/50 mt-1">Control Panel</p>
+                </div>
+                <div id="adminSidebarNav" class="admin-nav-group">
+                    <button class="admin-side-btn active" data-tab="dbStats"><span class="admin-btn-icon">📊</span><span>Database Stats</span></button>
+                    <button class="admin-side-btn" data-tab="users"><span class="admin-btn-icon">👥</span><span>Users</span></button>
+                    <button class="admin-side-btn" data-tab="feedback"><span class="admin-btn-icon">💬</span><span>Feedback</span></button>
+                    <button class="admin-side-btn" data-tab="contacts"><span class="admin-btn-icon">📨</span><span>Contacts</span></button>
+                    <button class="admin-side-btn" data-tab="subscriptions"><span class="admin-btn-icon">💳</span><span>Subscriptions</span></button>
+                </div>
+                <div class="admin-refresh-wrapper">
+                    <button id="refreshStatsBtn" class="btn btn-secondary w-full text-xs flex items-center justify-center gap-2">
+                        <span id="refreshStatsBtnText">Refresh Data</span>
+                        <span id="refreshStatsSpinner" class="loading-spinner hidden" style="width:12px;height:12px;"></span>
+                    </button>
+                    <div class="mt-4 flex items-center justify-center gap-2 text-xs text-white/60 bg-black/20 py-2 rounded">
+                        <span id="dashServerDot" class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                        <span id="dashServerText">System Online</span>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="admin-content-area">
+                
+                <div class="admin-hud-grid">
+                    <div class="admin-hud-card">
+                        <div class="admin-hud-val val-blue" id="dashUsersOnline">--</div>
+                        <div class="admin-hud-label">Live Visitors</div>
+                    </div>
+                    <div class="admin-hud-card">
+                        <div class="admin-hud-val val-yellow" id="dashQueryCount">--</div>
+                        <div class="admin-hud-label">Total Queries</div>
+                    </div>
+                    <div class="admin-hud-card">
+                        <div class="admin-hud-val val-purple" id="headerDbSize">--</div>
+                        <div class="admin-hud-label">DB Storage</div>
+                    </div>
+                    <div class="admin-hud-card">
+                        <div class="admin-hud-val val-green" id="headerVectors">--</div>
+                        <div class="admin-hud-label">AI Vectors</div>
+                    </div>
+                </div>
+
+                <div id="adminTabsContent" class="flex-grow">
+                    
+                    <div id="dbStatsPanel" class="home-tab-panel active">
+                        <div class="glass-container p-8">
+                            <h3 class="text-xl font-bold mb-6 text-white border-b border-white/10 pb-4 flex items-center">
+                                <span class="text-2xl mr-3">🏥</span> Database Health Metrics
+                            </h3>
+                            
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                
+                                <div>
+                                    <h4 class="text-sm font-bold text-blue-400 uppercase tracking-widest mb-4 pl-1">PostgreSQL</h4>
+                                    <div class="metric-grid">
+                                        <div class="metric-tile">
+                                            <span class="metric-label"><span class="status-dot blue"></span>Total Users</span>
+                                            <span class="metric-value" id="statTotalUsers">Loading...</span>
+                                        </div>
+                                        <div class="metric-tile">
+                                            <span class="metric-label"><span class="status-dot green"></span>Active (1h)</span>
+                                            <span class="metric-value val-green" id="statActiveUsers">Loading...</span>
+                                        </div>
+                                        <div class="metric-tile">
+                                            <span class="metric-label">Total Queries</span>
+                                            <span class="metric-value val-yellow" id="statTotalQueries">Loading...</span>
+                                        </div>
+                                        <div class="metric-tile">
+                                            <span class="metric-label">Avg Query Time</span>
+                                            <span class="metric-value" id="statAvgTime">Loading...</span>
+                                        </div>
+                                        <div class="metric-tile full-width">
+                                            <div class="flex justify-between items-end">
+                                                <div>
+                                                    <span class="metric-label">Database Size</span>
+                                                    <span class="metric-value val-purple" id="statDbSize">Loading...</span>
+                                                </div>
+                                                <div class="text-xs text-white/40 text-right">
+                                                    Snapshot: <span id="statRecordedAt" class="font-mono">--</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="pineconeStatsContainer" class="hidden">
+                                    <h4 class="text-sm font-bold text-green-400 uppercase tracking-widest mb-4 pl-1">Pinecone (AI Memory)</h4>
+                                    <div class="metric-grid">
+                                        <div class="metric-tile full-width">
+                                            <span class="metric-label">Index Name</span>
+                                            <span class="metric-value text-sm" id="statPineconeName">--</span>
+                                        </div>
+                                        <div class="metric-tile">
+                                            <span class="metric-label"><span class="status-dot green"></span>Total Vectors</span>
+                                            <span class="metric-value val-green" id="statTotalVectors">--</span>
+                                        </div>
+                                        <div class="metric-tile">
+                                            <span class="metric-label">Book Namespc</span>
+                                            <span class="metric-value" id="statBookVectors">--</span>
+                                        </div>
+                                        <div class="metric-tile">
+                                            <span class="metric-label">Dimensions</span>
+                                            <span class="metric-value val-blue" id="statPineconeDimension">--</span>
+                                        </div>
+                                        <div class="metric-tile">
+                                            <span class="metric-label">Status</span>
+                                            <span class="metric-value val-green" id="statPineconeStatus">--</span>
+                                        </div>
+                                        <div id="statPineconeCloud" class="hidden"></div>
+                                    </div>
+                                </div>
+
+                            </div> <div id="statsMessage" class="mt-4 hidden"></div>
+                        </div>
+                    </div>
+
+                    <div id="usersPanel" class="home-tab-panel"></div>
+                    <div id="feedbackPanel" class="home-tab-panel"></div>
+                    <div id="contactsPanel" class="home-tab-panel"></div>
+                    <div id="subscriptionsPanel" class="home-tab-panel"></div>
+                    
+                </div>
+            </main>
+        </div>
     `;
-    
-    // 4. Define Tab Content Panels (MODIFIED - Added feedbackPanel)
-    const tabContent = document.createElement("div");
-    tabContent.id = "adminTabsContent";
-    tabContent.innerHTML = `
-        
-        <div id="dbStatsPanel" class="home-tab-panel active grid grid-cols-1 gap-8">
-            ${usersOnlineGrid ? usersOnlineGrid.outerHTML : ''}
-            ${statsContainer ? statsContainer.outerHTML : ''}
-        </div>
 
-        <div id="usersPanel" class="home-tab-panel">
-        </div>
+    dashboardContainer.innerHTML = dashboardHTML;
 
-        <div id="feedbackPanel" class="home-tab-panel">
-        </div>
+    // Re-attach listeners
+    const refreshBtn = document.getElementById("refreshStatsBtn");
+    if (refreshBtn) {
+        refreshBtn.addEventListener("click", () => {
+            if(typeof fetchAndDisplayStatistics === 'function') fetchAndDisplayStatistics();
+            const activeTab = document.querySelector(".admin-side-btn.active")?.dataset.tab;
+            if(activeTab === 'users' && typeof fetchAndRenderUsers === 'function') fetchAndRenderUsers(1);
+            if(activeTab === 'feedback' && typeof fetchAndRenderFeedback === 'function') fetchAndRenderFeedback();
+            if(activeTab === 'contacts' && typeof fetchAndRenderContacts === 'function') fetchAndRenderContacts(1);
+            if(activeTab === 'subscriptions' && typeof fetchAndRenderSubscriptions === 'function') fetchAndRenderSubscriptions('overview');
+        });
+    }
 
-        <div id="contactsPanel" class="home-tab-panel">
-        </div>
+    const dbObserver = new MutationObserver((mutations) => {
+        const src = document.getElementById("statDbSize");
+        const dest = document.getElementById("headerDbSize");
+        if (src && dest) dest.textContent = src.textContent;
+    });
+    const dbTarget = document.getElementById("statDbSize");
+    if(dbTarget) dbObserver.observe(dbTarget, { childList: true, characterData: true, subtree: true });
 
-        <div id="subscriptionsPanel" class="home-tab-panel">
-        </div>
-    `;
+    const vecObserver = new MutationObserver((mutations) => {
+        const src = document.getElementById("statTotalVectors");
+        const dest = document.getElementById("headerVectors");
+        if (src && dest) dest.textContent = src.textContent;
+    });
+    const vecTarget = document.getElementById("statTotalVectors");
+    if(vecTarget) vecObserver.observe(vecTarget, { childList: true, characterData: true, subtree: true });
 
-    // 5. Append new elements to the dashboard
-    dashboardContainer.appendChild(tabNav);
-    dashboardContainer.appendChild(tabContent);
-    
-    // 6. Attach the common tab switching listener
-    setupAdminTabsListeners();
+    setupSidebarLogic();
+    if(typeof fetchAndDisplayStatistics === 'function') fetchAndDisplayStatistics();
+
+    // Force visibility of default tab
+    setTimeout(() => {
+        const defaultPanel = document.getElementById("dbStatsPanel");
+        if (defaultPanel) {
+            defaultPanel.style.display = "block";
+            requestAnimationFrame(() => {
+                defaultPanel.style.opacity = "1";
+                defaultPanel.style.transform = "translateY(0)";
+            });
+        }
+    }, 50);
 }
 
-function setupAdminTabsListeners() {
-    const tabsNav = $("adminTabsNav");
-    const tabPanels = document.querySelectorAll("#adminTabsContent .home-tab-panel");
-    const tabBtns = document.querySelectorAll("#adminTabsNav .home-tab-btn");
+// Helper to handle sidebar switching
+function setupSidebarLogic() {
+    const btns = document.querySelectorAll(".admin-side-btn");
+    const panels = document.querySelectorAll("#adminTabsContent .home-tab-panel");
 
-    // 1. Initial State: Force the active tab to be visible immediately
-    tabPanels.forEach(panel => {
-        if (panel.id === "dbStatsPanel") { // Default active tab
-            panel.style.display = "grid";
-            panel.style.opacity = "1"; // FIX: Force visible
-            panel.classList.add("active");
-        } else {
-            panel.style.display = "none";
-            panel.style.opacity = "0"; // FIX: Ensure hidden state
-            panel.classList.remove("active");
-        }
-    });
+    btns.forEach(btn => {
+        btn.addEventListener("click", () => {
+            // 1. UI Toggle
+            btns.forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
 
-    tabsNav.addEventListener("click", (e) => {
-        if (e.target.tagName !== "BUTTON") return;
-        const targetTab = e.target.dataset.tab;
+            // 2. Panel Toggle
+            const targetId = btn.dataset.tab;
+            panels.forEach(p => {
+                if (p.id === targetId + "Panel") {
+                    p.classList.add("active");
+                    p.style.display = "block"; // Explicitly show
+                    
+                    // Animation effect
+                    p.style.opacity = "0";
+                    p.style.transform = "translateY(10px)";
+                    setTimeout(() => {
+                         p.style.transition = "all 0.3s ease";
+                         p.style.opacity = "1";
+                         p.style.transform = "translateY(0)";
+                    }, 50);
 
-        tabBtns.forEach((btn) => {
-            btn.classList.toggle("active", btn.dataset.tab === targetTab);
-        });
-
-        tabPanels.forEach((panel) => {
-            if (panel.id === targetTab + "Panel") {
-                panel.classList.add("active");
-                panel.style.display = "grid";
-                
-                // --- FIX: Force Opacity back to 1 to prevent "disappearing" ---
-                requestAnimationFrame(() => {
-                    panel.style.opacity = "1";
-                });
-
-                // --- FIX: Re-trigger animation for elements inside this tab ---
-                setTimeout(() => {
-                    const elementsToAnimate = panel.querySelectorAll('.glass-container, .summary-stat-card');
-                    if (typeof animateElements === 'function') {
-                        animateElements(elementsToAnimate);
-                    }
-                }, 50);
-                
-                // Trigger specific tab renders
-                if (targetTab === 'users') renderViewDatabaseTab(); 
-                if (targetTab === 'feedback') renderFeedbackTab();
-                if (targetTab === 'contacts') renderContactsTab();
-                if (targetTab === 'subscriptions') renderSubscriptionsTab();
-
-            } else {
-                panel.classList.remove("active");
-                panel.style.display = "none";
-                panel.style.opacity = "0"; // Reset opacity for next time
-            }
+                    // 3. Trigger Data Loads
+                    if (targetId === 'users' && typeof renderViewDatabaseTab === 'function') renderViewDatabaseTab();
+                    if (targetId === 'feedback' && typeof renderFeedbackTab === 'function') renderFeedbackTab();
+                    if (targetId === 'contacts' && typeof renderContactsTab === 'function') renderContactsTab();
+                    if (targetId === 'subscriptions' && typeof renderSubscriptionsTab === 'function') renderSubscriptionsTab();
+                    
+                } else {
+                    p.classList.remove("active");
+                    p.style.display = "none";
+                }
+            });
         });
     });
 }
@@ -4718,147 +5187,194 @@ async function renderViewDatabaseTab() {
  * Renders the user table and wires up the "Manage" button logic.
  */
 function renderUserTable(container, users, pagination) {
-    console.log("DEBUG: renderUserTable() called");
     if (!Array.isArray(users) || users.length === 0) {
-        container.innerHTML = `<p class="text-white/70 text-center p-10">No users found matching your criteria.</p>`;
+        container.innerHTML = `
+            <div class="flex flex-col items-center justify-center p-16 text-white/40">
+                <div class="text-4xl mb-2">👥</div>
+                <p>No users found matching your criteria.</p>
+            </div>`;
         return;
     }
 
     let tableHtml = `
-        <table class="w-full text-left styled-table">
-            <thead>
+        <table class="w-full text-left border-collapse">
+            <thead class="bg-white/5 text-xs uppercase text-white/50 font-semibold tracking-wider">
                 <tr>
-                    <th class="p-3 w-10"><input type="checkbox" id="selectAllUsers" /></th>
-                    <th class="p-3">UID</th>
-                    <th class="p-3">Display Name</th>
-                    <th class="p-3">Email</th>
-                    <th class="p-3">Tier</th>
-                    <th class="p-3">Created At</th>
+                    <th class="p-4 w-10"><input type="checkbox" id="selectAllUsers" class="method-checkbox" /></th>
+                    <th class="p-4">User Identity</th>
+                    <th class="p-4">Email Address</th>
+                    <th class="p-4">Access Tier</th>
+                    <th class="p-4">Joined</th>
+                    <th class="p-4 w-20">Actions</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="text-sm divide-y divide-white/5">
     `;
 
     users.forEach(user => {
-        const displayName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'N/A';
-        const uid = user.auth_user_id || user.id; 
+        const displayName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unknown';
+        const uid = user.auth_user_id || user.id;
+        const shortUid = uid ? uid.substring(0, 8) + '...' : 'N/A';
         
+        // Determine Badge Style
+        const tier = (user.tier || 'basic').toLowerCase();
+        let badgeClass = 'tier-basic';
+        if (tier === 'admin') badgeClass = 'tier-admin';
+        if (tier === 'premium') badgeClass = 'tier-premium';
+
         tableHtml += `
-            <tr class="border-b border-white/10">
-                <td class="p-3"><input type="checkbox" class="user-checkbox" data-id="${user.id}" /></td>
-                <td class="p-3 text-xs font-mono" title="${uid}">${uid ? uid.split('-')[0] + '...' : 'N/A'}</td>
-                <td class="p-3">${displayName}</td>
-                <td class="p-3">${user.email || 'N/A'}</td>
-                <td class="p-3">${user.tier || 'N/A'}</td>
-                <td class="p-3 text-sm">${user.created_at ? new Date(user.created_at).toLocaleString() : 'N/A'}</td>
+            <tr class="user-row group">
+                <td class="p-4">
+                    <input type="checkbox" class="user-checkbox method-checkbox" data-id="${user.id}" />
+                </td>
+                <td class="p-4">
+                    <div class="font-bold text-white">${displayName}</div>
+                    <div class="user-uid mt-1 inline-block" title="${uid}">${shortUid}</div>
+                </td>
+                <td class="p-4 text-white/80">
+                    ${user.email || 'N/A'}
+                </td>
+                <td class="p-4">
+                    <span class="tier-badge ${badgeClass}">${tier}</span>
+                </td>
+                <td class="p-4 text-white/60">
+                    ${user.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}
+                    <div class="text-xs text-white/40">${user.created_at ? new Date(user.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}</div>
+                </td>
+                <td class="p-4">
+                    <button class="btn btn-secondary p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity text-xs" onclick="openUserManagementModal('${user.id}')" title="Edit User">
+                        ✏️
+                    </button>
+                </td>
             </tr>
         `;
     });
 
     tableHtml += `</tbody></table>`;
 
-    // Add Pagination controls
+    // Pagination Controls (Styled)
     if (pagination && pagination.totalPages > 1) {
-        tableHtml += `<div class="flex justify-between items-center mt-4 text-sm">`;
-        tableHtml += `<span class="text-white/70">Page ${pagination.page} of ${pagination.totalPages} (Total: ${pagination.total})</span>`;
-        tableHtml += `<div class="flex gap-2">`;
-        if (pagination.page > 1) {
-            tableHtml += `<button class="btn btn-secondary pagination-btn" data-page="${pagination.page - 1}">Previous</button>`;
-        }
-        if (pagination.page < pagination.totalPages) {
-            tableHtml += `<button class="btn btn-secondary pagination-btn" data-page="${pagination.page + 1}">Next</button>`;
-        }
-        tableHtml += `</div></div>`;
+        tableHtml += `
+            <div class="flex justify-between items-center p-4 bg-white/5 border-t border-white/10">
+                <span class="text-xs text-white/50">
+                    Showing page ${pagination.page} of ${pagination.totalPages} (${pagination.total} users)
+                </span>
+                <div class="flex gap-2">
+                    <button class="btn btn-secondary text-xs py-1 px-3 pagination-btn" ${pagination.page <= 1 ? 'disabled' : ''} data-page="${pagination.page - 1}">
+                        ← Prev
+                    </button>
+                    <button class="btn btn-secondary text-xs py-1 px-3 pagination-btn" ${pagination.page >= pagination.totalPages ? 'disabled' : ''} data-page="${pagination.page + 1}">
+                        Next →
+                    </button>
+                </div>
+            </div>
+        `;
     }
 
     container.innerHTML = tableHtml;
 
-    // --- "SMART BUTTON" LOGIC ---
-    const manageBtn = $("adminManageBtn"); 
-    const allUserCheckboxes = container.querySelectorAll('.user-checkbox');
-    const selectAllCheckbox = container.querySelector('#selectAllUsers');
-
-    function updateManageButtonState() {
-        const checkedBoxes = container.querySelectorAll('.user-checkbox:checked');
-        const checkedCount = checkedBoxes.length;
-        console.log(`DEBUG: updateManageButtonState() - ${checkedCount} boxes checked`);
-
-        if (checkedCount === 0) {
-            // 0 selected: Disable button
-            manageBtn.disabled = true;
-            manageBtn.textContent = "Manage";
-            manageBtn.onclick = null;
-        } else if (checkedCount === 1) {
-            // 1 selected: Set to "Manage" and open singular modal
-            manageBtn.disabled = false;
-            manageBtn.textContent = "Manage";
-            manageBtn.onclick = () => {
-                const userId = checkedBoxes[0].dataset.id;
-                console.log("DEBUG: Manage button (single) clicked for userId:", userId);
-                openUserManagementModal(userId);
-            };
-        } else {
-            // 2+ selected: Set to "Manage (x)" and open bulk modal
-            manageBtn.disabled = false;
-            manageBtn.textContent = `Manage (${checkedCount})`; // Show count
-            manageBtn.onclick = () => {
-                console.log("DEBUG: Manage button (bulk) clicked");
-                const modal = $("bulkActionModal");
-                const countSpan = $("bulkUserCount");
-                const confirmBtn = $("modalConfirmBulkBtn");
-                const closeModalBtn = $("closeBulkModalBtn");
-                const actionSelect = $("bulkActionSelect");
-                const messageEl = $("bulkModalMessage");
-
-                const userIds = Array.from(checkedBoxes).map(cb => cb.dataset.id);
-
-                countSpan.textContent = userIds.length;
-                actionSelect.value = ""; // Reset dropdown
-                messageEl.classList.add("hidden");
-                modal.classList.remove("hidden");
-
-                closeModalBtn.onclick = () => modal.classList.add("hidden");
-                
-                confirmBtn.onclick = async () => {
-                    const action = actionSelect.value;
-                    if (!action) {
-                        showMessage("bulkModalMessage", "Please select an action.", "error");
-                        return;
-                    }
-                    console.log("DEBUG: Bulk 'Apply Action' clicked for action:", action);
-                    await handleBulkUserUpdate(action, userIds); 
-                };
-            };
-        } 
-        
-        selectAllCheckbox.checked = checkedCount > 0 && checkedCount === allUserCheckboxes.length;
-    }
-
-    // Add listeners for all checkboxes
-    selectAllCheckbox.addEventListener('change', (e) => {
-        console.log("DEBUG: 'Select All' checkbox changed");
-        const isChecked = e.target.checked;
-        allUserCheckboxes.forEach(cb => cb.checked = isChecked);
-        updateManageButtonState();
-    });
-
-    allUserCheckboxes.forEach(cb => {
-        cb.addEventListener('change', updateManageButtonState);
-    });
-
-    // Add event listeners for pagination buttons
+    // --- Re-attach Logic for Selection and Pagination (Required for functionality) ---
+    
+    // 1. Pagination Click Logic
     container.querySelectorAll('.pagination-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            const newPage = e.target.dataset.page;
-            console.log("DEBUG: Pagination button clicked for page:", newPage);
-            fetchAndRenderUsers(parseInt(newPage));
+            const newPage = parseInt(e.target.dataset.page);
+            if(!isNaN(newPage)) fetchAndRenderUsers(newPage);
         });
     });
-    
-    // Set the initial state of the button (disabled)
-    updateManageButtonState();
+
+    // 2. Manage Button Logic (Re-implemented from previous logic block)
+    const manageBtn = document.getElementById("adminManageBtn");
+    const allUserCheckboxes = container.querySelectorAll('.user-checkbox');
+    const selectAllCheckbox = document.getElementById('selectAllUsers');
+
+    function updateManageButton() {
+        const checked = container.querySelectorAll('.user-checkbox:checked');
+        const count = checked.length;
+        
+        if (count === 0) {
+            manageBtn.disabled = true;
+            manageBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            manageBtn.innerHTML = `⚙️ Manage Selected`;
+            manageBtn.onclick = null;
+        } else {
+            manageBtn.disabled = false;
+            manageBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            
+            if (count === 1) {
+                manageBtn.innerHTML = `✏️ Edit User`;
+                manageBtn.onclick = () => openUserManagementModal(checked[0].dataset.id);
+            } else {
+                manageBtn.innerHTML = `⚙️ Manage (${count})`;
+                // Re-attach bulk action logic if you have it, or leave placeholder
+                manageBtn.onclick = () => { /* Open bulk modal logic here if needed */ };
+            }
+        }
+        
+        if(selectAllCheckbox) {
+            selectAllCheckbox.checked = count > 0 && count === allUserCheckboxes.length;
+        }
+    }
+
+    if(selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', (e) => {
+            allUserCheckboxes.forEach(cb => cb.checked = e.target.checked);
+            updateManageButton();
+        });
+    }
+
+    allUserCheckboxes.forEach(cb => cb.addEventListener('change', updateManageButton));
 }
 
+
+// Re-defining handleUserUpdate to ensure it matches the IDs in the new modal HTML above
+async function handleUserUpdate(userId) {
+    const btn = document.getElementById("saveUserChangesBtn");
+    const msg = document.getElementById("editUserMessage");
+    const originalText = btn.innerText;
+    
+    btn.disabled = true;
+    btn.innerHTML = `<span class="loading-spinner mr-2"></span> Saving...`;
+    msg.className = "hidden";
+
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error("Not logged in");
+
+        const updates = {
+            first_name: document.getElementById("editFirstName").value,
+            last_name: document.getElementById("editLastName").value,
+            email: document.getElementById("editEmail").value,
+            tier: document.getElementById("editTier").value
+        };
+
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-users-secure/users/${userId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify(updates)
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Update failed");
+
+        msg.textContent = "Profile updated successfully!";
+        msg.className = "p-3 rounded text-sm text-center bg-green-500/20 text-green-300 border border-green-500/30 block";
+        
+        // Refresh the main table behind the modal
+        if(typeof fetchAndRenderUsers === 'function') fetchAndRenderUsers(1);
+
+    } catch (error) {
+        console.error(error);
+        msg.textContent = error.message;
+        msg.className = "p-3 rounded text-sm text-center bg-red-500/20 text-red-300 border border-red-500/30 block";
+    } finally {
+        btn.disabled = false;
+        btn.innerText = originalText;
+    }
+}
 /**
  * Fetches user data from the API and calls the renderer.
  */
@@ -5071,6 +5587,8 @@ async function openUserManagementModal(userId) {
         document.getElementById("errCloseBtn").onclick = closeModal;
     }
 }
+
+window.openUserManagementModal = openUserManagementModal;
 
 /**
  * Handles the PUT /users/:id request to update a user.
@@ -5301,6 +5819,100 @@ function openCreateUserModal() {
 }
 
 /**
+ * Handles the POST request to create a new user via the admin API.
+ */
+async function handleUserCreate() {
+    console.log("DEBUG: handleUserCreate() called");
+    
+    const createBtn = document.getElementById("modalCreateUserBtn");
+    const messageEl = document.getElementById("userModalMessage");
+    
+    // Reset UI
+    const originalBtnText = createBtn.innerHTML;
+    createBtn.disabled = true;
+    createBtn.innerHTML = `<span class="loading-spinner mr-2"></span> Creating...`;
+    
+    if (messageEl) {
+        messageEl.style.display = 'none';
+        messageEl.className = '';
+    }
+
+    try {
+        // 1. Gather Inputs
+        const email = document.getElementById("modalUserEmail").value.trim();
+        const password = document.getElementById("modalUserPassword").value;
+        const firstName = document.getElementById("modalUserFirstName").value.trim();
+        const lastName = document.getElementById("modalUserLastName").value.trim();
+        const tier = document.getElementById("modalUserTier").value;
+
+        // 2. Validation
+        if (!email || !password || !firstName) {
+            throw new Error("Email, Password, and First Name are required.");
+        }
+        if (password.length < 6) {
+            throw new Error("Password must be at least 6 characters.");
+        }
+
+        // 3. Get Session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!session) throw new Error("Not logged in");
+
+        // 4. API Call (POST /users)
+        const url = `${SUPABASE_URL}/functions/v1/admin-users-secure/users`;
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify({
+                email,
+                password,
+                first_name: firstName,
+                last_name: lastName,
+                tier
+            })
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Failed to create user");
+
+        // 5. Success
+        if (messageEl) {
+            messageEl.textContent = "User created successfully!";
+            messageEl.className = "modal-message modal-message-success";
+            messageEl.style.display = "block";
+        }
+
+        // Refresh list and close modal
+        await fetchAndRenderUsers(1);
+        
+        setTimeout(() => {
+            const modal = document.getElementById("userManagementModal");
+            if (modal) {
+                modal.classList.remove('modal-open');
+                setTimeout(() => modal.style.display = 'none', 300);
+            }
+        }, 1500);
+
+    } catch (error) {
+        console.error("Error creating user:", error);
+        if (messageEl) {
+            messageEl.textContent = error.message;
+            messageEl.className = "modal-message modal-message-error";
+            messageEl.style.display = "block";
+        } else {
+            alert(error.message);
+        }
+    } finally {
+        createBtn.disabled = false;
+        createBtn.innerHTML = originalBtnText;
+    }
+}
+
+/**
  * NEW: Handles bulk actions from the bulk action modal.
  */
 async function handleBulkUserUpdate(action, userIds) {
@@ -5397,55 +6009,69 @@ function getTag(label, value, tagType = 'type') {
  * Main controller for the Feedback Tab.
  */
 function renderFeedbackTab() {
-    console.log("DEBUG: renderFeedbackTab() called. Building UI..."); 
-    const panel = $("feedbackPanel");
-    if (!panel) {
-        console.error("DEBUG: feedbackPanel element not found!"); 
-        return;
-    }
+    console.log("DEBUG: renderFeedbackTab() called."); 
+    const panel = document.getElementById("feedbackPanel");
+    if (!panel) return;
 
+    // 1. Build the Layout (Header + Toolbar + Table Container)
     panel.innerHTML = `
-        <div class="glass-container p-6"> 
-            <h2 class="text-3xl font-bold mb-4">Feedback Management</h2>
+        <div class="glass-container p-6 min-h-[600px]"> 
             
-            <div id="feedbackStatusTabs" class="feedback-tabs">
-                <button class="feedback-tab-btn active" data-status="">All</button>
-                <button class="feedback-tab-btn" data-status="Open">Open</button>
-                <button class="feedback-tab-btn" data-status="In Progress">In Progress</button>
-                <button class="feedback-tab-btn" data-status="Pending">Pending</button>
-                <button class="feedback-tab-btn" data-status="Resolved">Resolved</button>
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="text-3xl font-bold text-white">Feedback Inbox</h2>
+                    <p class="text-white/60 text-sm mt-1">User suggestions and bug reports</p>
+                </div>
+                <div id="feedbackStatusTabs" class="flex bg-black/20 p-1 rounded-lg">
+                    <button class="px-4 py-1.5 text-xs font-medium rounded-md bg-white/10 text-white shadow" data-status="">All</button>
+                    <button class="px-4 py-1.5 text-xs font-medium rounded-md text-white/60 hover:text-white hover:bg-white/5" data-status="Open">Open</button>
+                    <button class="px-4 py-1.5 text-xs font-medium rounded-md text-white/60 hover:text-white hover:bg-white/5" data-status="In Progress">In Progress</button>
+                    <button class="px-4 py-1.5 text-xs font-medium rounded-md text-white/60 hover:text-white hover:bg-white/5" data-status="Resolved">Resolved</button>
+                </div>
             </div>
             
-            <div class="flex flex-col md:flex-row gap-4 mb-6">
-                <div class="flex-grow">
-                    <input type="text" id="feedbackSearch" class="input-field" placeholder="Search feedback...">
+            <div class="admin-toolbar">
+                <div class="admin-search-wrapper">
+                    <span class="admin-search-icon">🔍</span>
+                    <input type="text" id="feedbackSearch" class="admin-search-input" placeholder="Search content or user...">
                 </div>
-                <div class="flex-shrink-0">
-                    <select id="feedbackTypeFilter" class="input-field">
+
+                <div class="flex gap-2">
+                    <select id="feedbackTypeFilter" class="input-field bg-black/20 border-white/10 text-sm py-2" style="width: auto;">
                         <option value="">All Types</option>
                         <option value="Bug / Error">Bug / Error</option>
-                        <option value="Suggestion / Improvement">Suggestion / Improvement</option>
-                        <option value="Not Satisfied">Not Satisfied</option>
+                        <option value="Suggestion / Improvement">Suggestion</option>
+                        <option value="Not Satisfied">Complaint</option>
                         <option value="Other">Other</option>
                     </select>
                 </div>
             </div>
             
-            <div id="feedbackCardContainer">
-                <p class="text-white/70 text-center p-10">Initializing feedback tab...</p>
+            <div id="feedbackCardContainer" class="overflow-hidden rounded-xl border border-white/10 bg-black/20">
+                <div class="flex items-center justify-center p-20">
+                    <div class="loading-spinner mr-3"></div>
+                    <span class="text-white/60">Loading feedback...</span>
+                </div>
             </div>
         </div>
     `;
 
+    // 2. Attach Event Listeners
     const statusTabs = panel.querySelector("#feedbackStatusTabs");
     const searchInput = panel.querySelector("#feedbackSearch");
     const typeFilter = panel.querySelector("#feedbackTypeFilter");
 
+    // Tab Click Logic
     statusTabs.addEventListener("click", (e) => {
         if (e.target.tagName === "BUTTON") {
-            console.log(`DEBUG: Status tab clicked. New status: '${e.target.dataset.status}'`); 
-            statusTabs.querySelectorAll(".feedback-tab-btn").forEach(btn => btn.classList.remove("active"));
-            e.target.classList.add("active");
+            // Visual Update
+            statusTabs.querySelectorAll("button").forEach(btn => {
+                btn.className = "px-4 py-1.5 text-xs font-medium rounded-md text-white/60 hover:text-white hover:bg-white/5";
+            });
+            e.target.className = "px-4 py-1.5 text-xs font-medium rounded-md bg-white/10 text-white shadow";
+            
+            // Set active status for fetch logic (you might need to store this in a variable or read from DOM in fetch)
+            statusTabs.dataset.activeStatus = e.target.dataset.status; 
             fetchAndRenderFeedback();
         }
     });
@@ -5453,18 +6079,12 @@ function renderFeedbackTab() {
     let searchTimeout;
     searchInput.addEventListener("input", () => {
         clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-            console.log(`DEBUG: Search triggered. Term: '${searchInput.value}'`); 
-            fetchAndRenderFeedback();
-        }, 500);
+        searchTimeout = setTimeout(() => fetchAndRenderFeedback(), 500);
     });
 
-    typeFilter.addEventListener("change", () => {
-        console.log(`DEBUG: Type filter changed. New type: '${typeFilter.value}'`); 
-        fetchAndRenderFeedback();
-    });
+    typeFilter.addEventListener("change", () => fetchAndRenderFeedback());
 
-    console.log("DEBUG: renderFeedbackTab() finished. Calling fetchAndRenderFeedback() for the first time."); 
+    // 3. Initial Fetch
     fetchAndRenderFeedback();
 }
 
@@ -5472,36 +6092,34 @@ function renderFeedbackTab() {
  * Fetches feedback data from the SECURE EDGE FUNCTION.
  */
 async function fetchAndRenderFeedback() {
-    console.log("DEBUG: fetchAndRenderFeedback() called."); 
-    const container = $("feedbackCardContainer");
+    const container = document.getElementById("feedbackCardContainer");
     if (!container) return;
 
     container.innerHTML = `
-        <div class="flex items-center justify-center p-10">
+        <div class="flex items-center justify-center p-20">
             <div class="loading-spinner mr-3"></div>
-            <span class="text-white/80">Fetching secure feedback...</span>
+            <span class="text-white/60">Fetching feedback...</span>
         </div>
     `;
 
     try {
-        // 1. Get session token
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) throw sessionError;
-        if (!session) throw new Error("You are not logged in.");
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error("Not logged in.");
 
-        // 2. Get filter values
-        const status = document.querySelector("#feedbackStatusTabs .active").dataset.status || "";
-        const searchTerm = $("feedbackSearch").value.trim();
-        const reason = $("feedbackTypeFilter").value; // 'reason' matches the new function
+        // 1. Get Filter Values
+        // Read from the data attribute we set in the click listener above, or default to empty
+        const statusTabs = document.getElementById("feedbackStatusTabs");
+        const status = statusTabs ? (statusTabs.dataset.activeStatus || "") : "";
         
-        console.log(`DEBUG: Fetching with filters: Status='${status}', Search='${searchTerm}', Reason='${reason}'`); 
+        const searchTerm = document.getElementById("feedbackSearch").value.trim();
+        const reason = document.getElementById("feedbackTypeFilter").value;
 
-        // 3. Build URL with query parameters
+        // 2. Build URL
         const params = new URLSearchParams({
-            page: 1, // Add pagination later if needed
+            page: 1, 
             limit: 50,
-            sortBy: 'priority',
-            sortOrder: 'asc'
+            sortBy: 'created_at', // Usually better to see newest first
+            sortOrder: 'desc'
         });
         if (status) params.append('status', status);
         if (reason) params.append('reason', reason);
@@ -5509,7 +6127,7 @@ async function fetchAndRenderFeedback() {
 
         const url = `${SUPABASE_URL}/functions/v1/admin-feedback-secure/feedback?${params.toString()}`;
 
-        // 4. Call the secure Edge Function
+        // 3. Fetch
         const response = await fetch(url, {
             method: 'GET',
             headers: {
@@ -5519,86 +6137,116 @@ async function fetchAndRenderFeedback() {
         });
 
         const data = await response.json();
-        if (!response.ok) {
-            throw new Error(data.error || `Failed to fetch feedback: ${response.statusText}`);
-        }
+        if (!response.ok) throw new Error(data.error || "Failed to fetch feedback");
 
-        const feedbackItems = data.data || [];
-        const count = data.pagination?.total || 0;
-
-        console.log(`DEBUG: Supabase fetch success. Received ${feedbackItems.length} items. Total count: ${count}`); 
-
-        currentFeedbackItems = feedbackItems;
-        console.log("DEBUG: Updated 'currentFeedbackItems' cache.", currentFeedbackItems); 
-
-        renderFeedbackCards(container, feedbackItems, count);
+        currentFeedbackItems = data.data || []; // Update cache
+        renderFeedbackTable(container, currentFeedbackItems); // Call the NEW table renderer
 
     } catch (error) {
         console.error("Error fetching feedback:", error);
-        container.innerHTML = `<div class="error-message p-4">${error.message}</div>`;
+        container.innerHTML = `<div class="p-10 text-center text-red-400">Error: ${error.message}</div>`;
     }
 }
 
 /**
  * Renders the individual feedback cards into the container.
  */
-function renderFeedbackCards(container, feedbackItems, totalCount) {
-    console.log(`DEBUG: renderFeedbackCards() called. Rendering ${feedbackItems ? feedbackItems.length : 0} cards.`); 
+function renderFeedbackTable(container, feedbackItems) {
     if (!feedbackItems || feedbackItems.length === 0) {
-        container.innerHTML = `<p class="text-white/70 text-center p-10">No feedback found matching your criteria.</p>`;
+        container.innerHTML = `
+            <div class="flex flex-col items-center justify-center p-16 text-white/40">
+                <div class="text-4xl mb-2">📭</div>
+                <p>No feedback found matching filters.</p>
+            </div>`;
         return;
     }
 
-    let cardsHtml = `<p class="text-white/70 text-sm mb-4">Showing ${feedbackItems.length} of ${totalCount} items.</p>`;
+    // Helper for stars
+    const getStarsSimple = (rating) => {
+        if (!rating) return '<span class="text-white/20">-</span>';
+        return '<span class="text-yellow-400">★</span>'.repeat(rating) + '<span class="text-white/10">★</span>'.repeat(5-rating);
+    };
+
+    let tableHtml = `
+        <table class="w-full text-left border-collapse">
+            <thead class="bg-white/5 text-xs uppercase text-white/50 font-semibold tracking-wider">
+                <tr>
+                    <th class="p-4">Date</th>
+                    <th class="p-4">User</th>
+                    <th class="p-4">Type</th>
+                    <th class="p-4">Preview</th>
+                    <th class="p-4">Rating</th>
+                    <th class="p-4">Status</th>
+                    <th class="p-4 w-20">Action</th>
+                </tr>
+            </thead>
+            <tbody class="text-sm divide-y divide-white/5">
+    `;
 
     feedbackItems.forEach(item => {
         const user = item.users;
-        const displayName = (user && user.first_name) 
-            ? `${user.first_name} ${user.last_name || ''}`.trim() 
-            : (user && user.email) ? user.email.split('@')[0] : 'Anonymous';
-        const displayEmail = user ? user.email : 'N/A';
+        const displayName = (user && user.first_name) ? `${user.first_name} ${user.last_name}` : (user?.email || 'Anonymous');
+        
+        // Badge Styles
+        let statusClass = 'bg-white/10 text-white/70';
+        if (item.status === 'New' || item.status === 'Open') statusClass = 'bg-green-500/20 text-green-300 border border-green-500/30';
+        if (item.status === 'In Progress') statusClass = 'bg-blue-500/20 text-blue-300 border border-blue-500/30';
+        if (item.status === 'Resolved') statusClass = 'bg-purple-500/20 text-purple-300 border border-purple-500/30';
 
-        cardsHtml += `
-            <div class="feedback-card">
-                <div class="flex justify-between items-center mb-3">
-                    <div>
-                        ${getTag('Type', item.reason, 'type')}
-                        ${getTag('Priority', item.priority, 'priority')}
-                        ${getTag('Status', item.status, 'status')}
+        let typeIcon = '📝';
+        if (item.reason === 'Bug / Error') typeIcon = '🪲';
+        if (item.reason === 'Suggestion / Improvement') typeIcon = '💡';
+        if (item.reason === 'Not Satisfied') typeIcon = '⚠️';
+
+        tableHtml += `
+            <tr class="user-row group hover:bg-white/5 transition-colors">
+                <td class="p-4 text-white/60 whitespace-nowrap">
+                    ${new Date(item.created_at).toLocaleDateString()}
+                </td>
+                <td class="p-4 font-medium text-white/90">
+                    ${displayName}
+                </td>
+                <td class="p-4">
+                    <div class="flex items-center gap-2 text-white/80">
+                        <span>${typeIcon}</span> <span>${item.reason}</span>
                     </div>
-                    
-                    <button class="admin-view-feedback-btn btn btn-secondary py-1 px-3 text-xs" title="View details" data-id="${item.id}">
-                        View Details
+                </td>
+                <td class="p-4 text-white/60 truncate max-w-xs">
+                    ${item.content}
+                </td>
+                <td class="p-4 text-xs">
+                    ${getStarsSimple(item.rating)}
+                </td>
+                <td class="p-4">
+                    <span class="px-2 py-1 rounded text-xs font-bold ${statusClass} uppercase tracking-wide">${item.status}</span>
+                </td>
+                <td class="p-4">
+                    <button class="btn btn-secondary p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity text-xs view-feedback-btn" data-id="${item.id}" title="View Details">
+                        👁️
                     </button>
-                </div>
-                
-                <h4 class="text-xl font-bold text-white mb-2">${item.reason || 'Feedback Submitted'}</h4> 
-                <p class="text-white/80 text-sm mb-4">${item.content}</p>
-                
-                <div class="flex justify-between items-center border-t border-white/10 pt-3">
-                    <div class="text-xs text-white/60">
-                        <span class="font-medium">${displayName}</span>
-                        <span class="mx-1">·</span>
-                        <span>${displayEmail}</span>
-                    </div>
-                    ${getStars(item.rating)}
-                </div>
-            </div>
+                </td>
+            </tr>
         `;
     });
 
-    container.innerHTML = cardsHtml;
+    tableHtml += `</tbody></table>`;
+    
+    // Add footer count
+    tableHtml += `
+        <div class="p-4 bg-white/5 border-t border-white/10 text-xs text-white/40 text-center">
+            Showing ${feedbackItems.length} items
+        </div>
+    `;
 
-    console.log("DEBUG: Cards HTML rendered. Attaching click listeners..."); 
+    container.innerHTML = tableHtml;
 
-    container.querySelectorAll('.admin-view-feedback-btn').forEach(btn => {
+    // Attach Listeners
+    container.querySelectorAll('.view-feedback-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            const feedbackId = e.currentTarget.dataset.id;
-            console.log(`DEBUG: 'View Details' button clicked for feedback ID: ${feedbackId}`); 
-            openFeedbackModal(feedbackId);
+            const id = e.currentTarget.dataset.id;
+            openFeedbackModal(id);
         });
     });
-    console.log("DEBUG: Click listeners attached."); 
 }
 
 /**
@@ -5899,62 +6547,79 @@ document.addEventListener('keydown', (e) => {
  * Builds the UI and triggers the first data fetch.
  */
 function renderContactsTab() {
-    console.log("DEBUG: renderContactsTab() called. Building UI...");
-    const panel = $("contactsPanel");
-    if (!panel) {
-        console.error("DEBUG: contactsPanel element not found!");
-        return;
-    }
+    console.log("DEBUG: renderContactsTab() called.");
+    const panel = document.getElementById("contactsPanel");
+    if (!panel) return;
 
-    // 1. Build the UI (Toolbar + Table Placeholder)
+    // 1. Build Layout
     panel.innerHTML = `
-        <div class="glass-container p-6"> 
-            <h2 class="text-3xl font-bold mb-4">Contact Form Submissions</h2>
+        <div class="glass-container p-6 min-h-[600px]"> 
             
-            <div class="flex flex-col md:flex-row gap-4 mb-6">
-                <div class="flex-grow">
-                    <input type="text" id="contactSearch" class="input-field" placeholder="Search email, subject, or message...">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="text-3xl font-bold text-white">Contact Inbox</h2>
+                    <p class="text-white/60 text-sm mt-1">Messages from the contact form</p>
                 </div>
-                <div class="flex-shrink-0">
-                    <select id="contactStatusFilter" class="input-field">
-                        <option value="">All Statuses</option>
-                        <option value="New">New</option>
-                        <option value="Replied">Replied</option>
-                        <option value="Archived">Archived</option>
-                    </select>
+                <div id="contactStatusTabs" class="flex bg-black/20 p-1 rounded-lg">
+                    <button class="px-4 py-1.5 text-xs font-medium rounded-md bg-white/10 text-white shadow" data-status="">All</button>
+                    <button class="px-4 py-1.5 text-xs font-medium rounded-md text-white/60 hover:text-white hover:bg-white/5" data-status="New">New</button>
+                    <button class="px-4 py-1.5 text-xs font-medium rounded-md text-white/60 hover:text-white hover:bg-white/5" data-status="Replied">Replied</button>
+                    <button class="px-4 py-1.5 text-xs font-medium rounded-md text-white/60 hover:text-white hover:bg-white/5" data-status="Archived">Archived</button>
                 </div>
-                <div class="flex-shrink-0">
-                    <select id="contactSortBy" class="input-field">
-                        <option value="created_at" selected>Sort by: Newest</option>
-                        <option value="email">Sort by: Email</option>
-                        <option value="last_name">Sort by: Last Name</option>
+            </div>
+            
+            <div class="admin-toolbar">
+                <div class="admin-search-wrapper">
+                    <span class="admin-search-icon">🔍</span>
+                    <input type="text" id="contactSearch" class="admin-search-input" placeholder="Search subject, email, or name...">
+                </div>
+
+                <div class="flex gap-2">
+                    <select id="contactSortBy" class="input-field bg-black/20 border-white/10 text-sm py-2" style="width: auto;">
+                        <option value="created_at">Newest First</option>
+                        <option value="last_name">Last Name</option>
+                        <option value="company_name">Company</option>
                     </select>
                 </div>
             </div>
             
-            <div id="contactCardContainer" class="overflow-x-auto">
-                <p class="text-white/70 text-center p-10">Initializing contacts tab...</p>
+            <div id="contactCardContainer" class="overflow-hidden rounded-xl border border-white/10 bg-black/20">
+                <div class="flex items-center justify-center p-20">
+                    <div class="loading-spinner mr-3"></div>
+                    <span class="text-white/60">Loading messages...</span>
+                </div>
             </div>
         </div>
     `;
 
-    // 2. Attach event listeners
+    // 2. Attach Listeners
+    const statusTabs = panel.querySelector("#contactStatusTabs");
     const searchInput = panel.querySelector("#contactSearch");
-    const statusFilter = panel.querySelector("#contactStatusFilter");
     const sortSelect = panel.querySelector("#contactSortBy");
+
+    // Tab Logic
+    statusTabs.addEventListener("click", (e) => {
+        if (e.target.tagName === "BUTTON") {
+            statusTabs.querySelectorAll("button").forEach(btn => {
+                btn.className = "px-4 py-1.5 text-xs font-medium rounded-md text-white/60 hover:text-white hover:bg-white/5";
+            });
+            e.target.className = "px-4 py-1.5 text-xs font-medium rounded-md bg-white/10 text-white shadow";
+            
+            // Store status for the fetch function
+            statusTabs.dataset.activeStatus = e.target.dataset.status;
+            fetchAndRenderContacts(1);
+        }
+    });
 
     let searchTimeout;
     searchInput.addEventListener("input", () => {
         clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-            fetchAndRenderContacts(1); // Reset to page 1
-        }, 500);
+        searchTimeout = setTimeout(() => fetchAndRenderContacts(1), 500);
     });
 
-    statusFilter.addEventListener("change", () => fetchAndRenderContacts(1));
     sortSelect.addEventListener("change", () => fetchAndRenderContacts(1));
 
-    // 3. Initial data load
+    // 3. Initial Fetch
     fetchAndRenderContacts(1);
 }
 
@@ -6272,23 +6937,28 @@ function renderSubscriptionsTable(container, subs, pagination) {
                            sub.status === 'canceled' ? 'bg-gray-500/20 text-gray-400 border-gray-500/30' :
                            'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
 
+        // --- FIX: Multiply timestamps by 1000 ---
+        // Handle cases where date might be null or undefined
+        const startDate = sub.current_period_start ? new Date(sub.current_period_start * 1000).toLocaleDateString() : 'N/A';
+        const endDate = sub.current_period_end ? new Date(sub.current_period_end * 1000).toLocaleDateString() : 'N/A';
+
         tableHtml += `
             <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
                 <td class="p-3"><span class="px-2 py-1 rounded text-xs border ${badgeStyle}">${sub.status}</span></td>
                 <td class="p-3">
-                    <div class="font-bold text-white">${sub.customer_email || "Unknown"}</div>
-                    <div class="text-xs text-white/50 font-mono">${sub.stripe_subscription_id.slice(0, 14)}...</div>
+                    <div class="font-bold text-white">${sub.customer_email || "Unknown Email"}</div>
+                    <div class="text-xs text-white/50 font-mono">${sub.stripe_subscription_id ? sub.stripe_subscription_id.slice(0, 14) + '...' : 'N/A'}</div>
                 </td>
                 <td class="p-3">
-                    <div class="font-medium text-indigo-300">${sub.product_name || "Unknown Product"}</div>
+                    <div class="font-medium text-indigo-300">${sub.product_name || "Standard Plan"}</div>
                     <div class="text-xs text-white/60 truncate max-w-[150px]">${sub.product_desc || ""}</div>
                 </td>
                 <td class="p-3 text-white font-bold">
                     $${((sub.plan_amount || 0) / 100).toFixed(2)} <span class="text-xs font-normal text-white/60">/${sub.plan_interval}</span>
                 </td>
                 <td class="p-3 text-white/80">
-                    <div><span class="text-white/50">Start:</span> ${new Date(sub.current_period_start).toLocaleDateString()}</div>
-                    <div><span class="text-white/50">End:</span> ${new Date(sub.current_period_end).toLocaleDateString()}</div>
+                    <div><span class="text-white/50">Start:</span> ${startDate}</div>
+                    <div><span class="text-white/50">End:</span> ${endDate}</div>
                 </td>
                 <td class="p-3 text-xs">
                     ${sub.cancel_at_period_end ? '<span class="text-yellow-400">Cancels at end</span>' : '<span class="text-green-400">Auto-renews</span>'}
@@ -6298,7 +6968,7 @@ function renderSubscriptionsTable(container, subs, pagination) {
     });
     tableHtml += `</tbody></table>`;
 
-    // 3. Add Pagination Controls
+    // 3. Add Pagination Controls (Keep existing logic)
     if (pagination && pagination.totalPages > 1) {
         tableHtml += `
             <div class="flex justify-between items-center mt-4 px-2">
@@ -6545,34 +7215,30 @@ function debounce(func, wait) {
  * Fetches contact data from the SECURE EDGE FUNCTION.
  */
 async function fetchAndRenderContacts(page = 1) {
-    console.log("DEBUG: fetchAndRenderContacts() called."); 
-    const container = $("contactCardContainer");
+    const container = document.getElementById("contactCardContainer");
     if (!container) return;
 
     container.innerHTML = `
-        <div class="flex items-center justify-center p-10">
+        <div class="flex items-center justify-center p-20">
             <div class="loading-spinner mr-3"></div>
-            <span class="text-white/80">Fetching secure contacts...</span>
+            <span class="text-white/80">Fetching messages...</span>
         </div>
     `;
 
     try {
-        // 1. Get session token
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) throw sessionError;
-        if (!session) throw new Error("You are not logged in.");
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error("Not logged in.");
 
-        // 2. Get filter values
-        const status = $("contactStatusFilter").value;
-        const searchTerm = $("contactSearch").value.trim();
-        const sortBy = $("contactSortBy").value;
+        // 1. Get Filters
+        const statusTabs = document.getElementById("contactStatusTabs");
+        const status = statusTabs ? (statusTabs.dataset.activeStatus || "") : "";
         
-        console.log(`DEBUG: Fetching contacts: Status='${status}', Search='${searchTerm}', Sort='${sortBy}'`); 
+        const searchTerm = document.getElementById("contactSearch").value.trim();
+        const sortBy = document.getElementById("contactSortBy").value;
 
-        // 3. Build URL
         const params = new URLSearchParams({
             page: page,
-            limit: 20, // 20 per page
+            limit: 20,
             sortBy: sortBy,
             sortOrder: 'desc'
         });
@@ -6581,7 +7247,6 @@ async function fetchAndRenderContacts(page = 1) {
 
         const url = `${SUPABASE_URL}/functions/v1/admin-contacts-secure/contacts?${params.toString()}`;
 
-        // 4. Call the secure Edge Function
         const response = await fetch(url, {
             method: 'GET',
             headers: {
@@ -6591,21 +7256,14 @@ async function fetchAndRenderContacts(page = 1) {
         });
 
         const data = await response.json();
-        if (!response.ok) {
-            throw new Error(data.error || `Failed to fetch contacts: ${response.statusText}`);
-        }
+        if (!response.ok) throw new Error(data.error || "Failed to fetch contacts");
 
-        const contactItems = data.data || [];
-        const pagination = data.pagination || {};
-
-        console.log(`DEBUG: Contact fetch success. Received ${contactItems.length} items.`); 
-
-        currentContactItems = contactItems; // Update cache
-        renderContactsTable(container, contactItems, pagination); // Render as a table
+        currentContactItems = data.data || []; 
+        renderContactsTable(container, data.data, data.pagination); // Call the NEW table renderer
 
     } catch (error) {
         console.error("Error fetching contacts:", error);
-        container.innerHTML = `<div class="error-message p-4">${error.message}</div>`;
+        container.innerHTML = `<div class="p-10 text-center text-red-400">Error: ${error.message}</div>`;
     }
 }
 
@@ -6614,43 +7272,58 @@ async function fetchAndRenderContacts(page = 1) {
  */
 function renderContactsTable(container, contacts, pagination) {
     if (!contacts || contacts.length === 0) {
-        container.innerHTML = `<p class="text-white/70 text-center p-10">No contacts found matching your criteria.</p>`;
+        container.innerHTML = `
+            <div class="flex flex-col items-center justify-center p-16 text-white/40">
+                <div class="text-4xl mb-2">📭</div>
+                <p>No messages found.</p>
+            </div>`;
         return;
     }
 
     let tableHtml = `
-        <table class="w-full text-left styled-table">
-            <thead>
+        <table class="w-full text-left border-collapse">
+            <thead class="bg-white/5 text-xs uppercase text-white/50 font-semibold tracking-wider">
                 <tr>
-                    <th class="p-3">Status</th>
-                    <th class="p-3">Date</th>
-                    <th class="p-3">From</th>
-                    <th class="p-3">Subject</th>
-                    <th class="p-3">Company</th>
-                    <th class="p-3 w-24">Actions</th>
+                    <th class="p-4">Date</th>
+                    <th class="p-4">From</th>
+                    <th class="p-4">Subject</th>
+                    <th class="p-4">Status</th>
+                    <th class="p-4 w-20">Action</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="text-sm divide-y divide-white/5">
     `;
 
     contacts.forEach(item => {
-        const displayName = `${item.first_name || ''} ${item.last_name || ''}`.trim() || 'N/A';
-        const statusTag = item.status === 'New' ? 'tag-status-open' : 
-                          item.status === 'Replied' ? 'tag-status-resolved' : 'tag-type';
+        const displayName = `${item.first_name || ''} ${item.last_name || ''}`.trim() || 'Unknown';
+        const company = item.company_name ? `<div class="text-xs text-white/40 mt-0.5">${item.company_name}</div>` : '';
         
+        let statusClass = 'bg-white/10 text-white/60';
+        if (item.status === 'New') statusClass = 'bg-green-500/20 text-green-300 border border-green-500/30';
+        if (item.status === 'Replied') statusClass = 'bg-blue-500/20 text-blue-300 border border-blue-500/30';
+        if (item.status === 'Archived') statusClass = 'bg-white/5 text-white/40 border border-white/10';
+
         tableHtml += `
-            <tr class="border-b border-white/10">
-                <td class="p-3"><span class="feedback-tag ${statusTag}">${item.status}</span></td>
-                <td class="p-3 text-sm">${new Date(item.created_at).toLocaleDateString()}</td>
-                <td class="p-3">
-                    <div>${displayName}</div>
-                    <div class="text-xs text-white/60" style="overflow-wrap: break-word;">${item.email}</div>
+            <tr class="user-row group hover:bg-white/5 transition-colors">
+                <td class="p-4 text-white/60 whitespace-nowrap">
+                    ${new Date(item.created_at).toLocaleDateString()}
+                    <div class="text-xs text-white/30">${new Date(item.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
                 </td>
-                <td class="p-3">${item.subject}</td>
-                <td class="p-3 text-sm text-white/70">${item.company_name || 'N/A'}</td>
-                <td class="p-3">
-                    <button class="admin-view-contact-btn btn btn-secondary py-1 px-3 text-xs" data-id="${item.id}">
-                        View
+                <td class="p-4">
+                    <div class="font-bold text-white">${displayName}</div>
+                    <div class="text-xs text-white/50">${item.email}</div>
+                    ${company}
+                </td>
+                <td class="p-4 font-medium text-white/90">
+                    ${item.subject}
+                    <div class="text-xs text-white/40 truncate max-w-xs font-normal mt-0.5">${item.message.substring(0, 50)}...</div>
+                </td>
+                <td class="p-4">
+                    <span class="px-2 py-1 rounded text-xs font-bold ${statusClass} uppercase tracking-wide">${item.status}</span>
+                </td>
+                <td class="p-4">
+                    <button class="btn btn-secondary p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity text-xs view-contact-btn" data-id="${item.id}" title="Read Message">
+                        ✉️
                     </button>
                 </td>
             </tr>
@@ -6659,35 +7332,40 @@ function renderContactsTable(container, contacts, pagination) {
 
     tableHtml += `</tbody></table>`;
 
-    // Add Pagination controls
+    // Pagination
     if (pagination && pagination.totalPages > 1) {
-        tableHtml += `<div class="flex justify-between items-center mt-4 text-sm">`;
-        tableHtml += `<span class="text-white/70">Page ${pagination.page} of ${pagination.totalPages} (Total: ${pagination.total})</span>`;
-        tableHtml += `<div class="flex gap-2">`;
-        if (pagination.page > 1) {
-            tableHtml += `<button class="btn btn-secondary pagination-btn-contact" data-page="${pagination.page - 1}">Previous</button>`;
-        }
-        if (pagination.page < pagination.totalPages) {
-            tableHtml += `<button class="btn btn-secondary pagination-btn-contact" data-page="${pagination.page + 1}">Next</button>`;
-        }
-        tableHtml += `</div></div>`;
+        tableHtml += `
+            <div class="flex justify-between items-center p-4 bg-white/5 border-t border-white/10">
+                <span class="text-xs text-white/50">
+                    Page ${pagination.page} of ${pagination.totalPages}
+                </span>
+                <div class="flex gap-2">
+                    <button class="btn btn-secondary text-xs py-1 px-3 pagination-btn-contact" ${pagination.page <= 1 ? 'disabled' : ''} data-page="${pagination.page - 1}">
+                        ← Prev
+                    </button>
+                    <button class="btn btn-secondary text-xs py-1 px-3 pagination-btn-contact" ${pagination.page >= pagination.totalPages ? 'disabled' : ''} data-page="${pagination.page + 1}">
+                        Next →
+                    </button>
+                </div>
+            </div>
+        `;
     }
 
     container.innerHTML = tableHtml;
 
-    // Attach "View" button listeners
-    container.querySelectorAll('.admin-view-contact-btn').forEach(btn => {
+    // Attach View Listeners (Safe approach)
+    container.querySelectorAll('.view-contact-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const contactId = e.currentTarget.dataset.id;
             openContactModal(contactId);
         });
     });
 
-    // Attach pagination listeners
+    // Attach Pagination Listeners
     container.querySelectorAll('.pagination-btn-contact').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            const newPage = e.target.dataset.page;
-            fetchAndRenderContacts(parseInt(newPage));
+            const newPage = parseInt(e.target.dataset.page);
+            if(!isNaN(newPage)) fetchAndRenderContacts(newPage);
         });
     });
 }
