@@ -82,8 +82,10 @@ services:
             - "https://matt.data2int.com"     # Dev website (old)
             - "https://khaled.data2int.com"   # Dev website (old)
             - "https://mohammed.data2int.com" # Dev website (old)
+            ## Testing
             - "http://localhost:3000"
             - "http://127.0.0.1:5500"
+            - "http://127.0.0.1:5500/index-latest.html"
             ## New sageaios.com ##
             - "https://sageaios.com"          # Main Website
             - "https://n8n.sageaios.com"      # N8N domain
@@ -105,6 +107,15 @@ services:
             - apikey
             - x-client-info
             - x-supabase-api-version  # <-- Add this line
+            - x-access-token          # <-- ADD THIS (Common for DELETE/Auth)
+            - access-token            # <-- ADD THIS (Sometimes client libraries send this)
+          methods:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE                # <-- This method is needed for logout
+            - OPTIONS
           credentials: true
           max_age: 3600
       - name: key-auth

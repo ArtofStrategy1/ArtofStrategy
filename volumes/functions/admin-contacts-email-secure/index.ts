@@ -5,12 +5,7 @@ const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') || 're_iXKQvKau_8k3SJvk8Nd
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
-const ALLOWED_ADMIN_EMAILS = [
-  'supadatain@gmail.com',
-  'elijahfurlonge@yahoo.com',
-  'gurby1@gmail.com',
-  'gurby1@yahoo.com'
-]
+const ALLOWED_ADMIN_EMAILS = Deno.env.get('ADMIN_EMAILS')?.split(',').map(email => email.trim()) || [];
 
 serve(async (req) => {
   const headers = {

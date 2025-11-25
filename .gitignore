@@ -8,6 +8,7 @@
 *api_key.txt
 resend_api_key.txt
 full_access_resend_api_key.txt
+stripe_keys.txt
 
 # Database backups and exports
 *.sql

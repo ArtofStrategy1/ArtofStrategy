@@ -40,12 +40,7 @@ serve(async (req) => {
     }
 
     // 4. SECURITY LAYER 2: Email Whitelist
-    const ALLOWED_ADMIN_EMAILS = [
-      'supadatain@gmail.com',
-      'elijahfurlonge@yahoo.com',
-      'gurby1@gmail.com',
-      'gurby1@yahoo.com'
-    ]
+    const ALLOWED_ADMIN_EMAILS = Deno.env.get('ADMIN_EMAILS')?.split(',').map(email => email.trim()) || [];
     
     if (!ALLOWED_ADMIN_EMAILS.includes(user.email)) {
       return new Response(JSON.stringify({

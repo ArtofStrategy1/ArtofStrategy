@@ -85,7 +85,7 @@ else
 fi
 
 echo -e "\n--- Testing payment intent creation ---"
-PAYMENT_RESPONSE=$(make_stripe_request "POST" "/create-payment-intent" \
+PAYMENT_RESPONSE=$(make_stripe_request "POST" "/stripe-create-payment-intent" \
   '{"amount": 1000, "currency": "usd"}')
 echo "Payment Intent Response: $PAYMENT_RESPONSE"
 
@@ -104,17 +104,17 @@ fi
 echo -e "\n=== Testing with Different Payment Amounts ==="
 
 echo -e "\n--- Testing $5.00 payment ---"
-PAYMENT_5_RESPONSE=$(make_stripe_request "POST" "/create-payment-intent" \
+PAYMENT_5_RESPONSE=$(make_stripe_request "POST" "/stripe-create-payment-intent" \
   '{"amount": 500, "currency": "usd"}')
 echo "Response: $PAYMENT_5_RESPONSE"
 
 echo -e "\n--- Testing $50.00 payment ---"
-PAYMENT_50_RESPONSE=$(make_stripe_request "POST" "/create-payment-intent" \
+PAYMENT_50_RESPONSE=$(make_stripe_request "POST" "/stripe-create-payment-intent" \
   '{"amount": 5000, "currency": "usd"}')
 echo "Response: $PAYMENT_50_RESPONSE"
 
 echo -e "\n--- Testing invalid amount (too small) ---"
-INVALID_PAYMENT_RESPONSE=$(make_stripe_request "POST" "/create-payment-intent" \
+INVALID_PAYMENT_RESPONSE=$(make_stripe_request "POST" "/stripe-create-payment-intent" \
   '{"amount": 10, "currency": "usd"}')
 echo "Response: $INVALID_PAYMENT_RESPONSE"
 if echo "$INVALID_PAYMENT_RESPONSE" | grep -q "at least"; then
