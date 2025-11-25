@@ -10,6 +10,7 @@
 *-khaled*
 *-latest*
 *-old*
+*latest-*
 open-webui-data
 ollama-data
 n8n-data
@@ -146,4 +147,4 @@ eslint.config.mjs
 webpack.config.js
 .gemini/
 .geminiignore
-GEMINI.md
+*GEMINI*

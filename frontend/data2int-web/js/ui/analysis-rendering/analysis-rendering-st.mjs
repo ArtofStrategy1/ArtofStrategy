@@ -1013,10 +1013,31 @@ function renderSystemNetworkTab(concepts, relationships, containerId) {
 
     const nodes = concepts.map(c => ({ id: c.name, ...c }));
     
-    // Filter out relationships where the source or target node doesn't exist
-    const validRelationships = relationships.filter(link => 
-        nodes.some(node => node.id === link.from) && nodes.some(node => node.id === link.to)
-    );
+    // Normalize names for robust matching.
+    // Create a map from a normalized name back to the canonical name to handle case/whitespace inconsistencies from the LLM.
+    const canonicalNameMap = new Map();
+    nodes.forEach(node => {
+        canonicalNameMap.set(node.id.trim().toLowerCase(), node.id);
+    });
+
+    // Filter relationships by checking if their normalized 'from' and 'to' values exist in the map.
+    // Create a new array with the canonical names to ensure perfect matching later.
+    const validRelationships = relationships.reduce((acc, link) => {
+        if (link.from && link.to) {
+            const fromLower = link.from.trim().toLowerCase();
+            const toLower = link.to.trim().toLowerCase();
+
+            if (canonicalNameMap.has(fromLower) && canonicalNameMap.has(toLower)) {
+                // If a match is found, push a new object with the CANONICAL names.
+                acc.push({
+                    ...link,
+                    from: canonicalNameMap.get(fromLower),
+                    to: canonicalNameMap.get(toLower)
+                });
+            }
+        }
+        return acc;
+    }, []);
 
     const edges = validRelationships.map(r => ({ source: r.from, target: r.to, ...r }));
 
