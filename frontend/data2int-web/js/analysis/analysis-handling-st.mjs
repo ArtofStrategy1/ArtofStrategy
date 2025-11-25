@@ -395,7 +395,7 @@ async function handleSystemThinkingAnalysis() {
     setLoading("generate", true);
 
     // Define URL and Model
-    const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
+    const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
     const MODEL_NAME = "llama3.1:latest";
 
     let text = "";
