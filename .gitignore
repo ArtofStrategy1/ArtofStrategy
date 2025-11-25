@@ -147,4 +147,5 @@ eslint.config.mjs
 webpack.config.js
 .gemini/
 .geminiignore
+*gemini*
 *GEMINI*
