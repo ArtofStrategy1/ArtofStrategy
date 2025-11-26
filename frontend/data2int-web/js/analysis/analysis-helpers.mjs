@@ -47,7 +47,7 @@ async function handleGenerate() {
         // <-- ADD THIS BLOCK
         await handleNS.handleCreativeDissonanceAnalysis_NS();
     } else if (appState.currentTemplateId === "pareto-fishbone") {
-        await handleST.handleParetoFishboneAnalysisComb();
+        await handleST.handleParetoFishboneAnalysis();
     } else if (appState.currentTemplateId === "system-actions") {
         // <-- ADD THIS BLOCK
         await handleST.handleSystemActionsAnalysis_ST();
