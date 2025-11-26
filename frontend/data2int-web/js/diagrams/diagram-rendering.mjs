@@ -2,8 +2,6 @@
 mermaid.initialize({ startOnLoad: true, theme: 'dark', darkMode: true });
 // Variable for panzoomObject instance.
 let panzoomInstance = null;
-// Variable for cytoscape instance.
-// let fishboneCy = null;
 
 /**
  * Renders a Mermaid.js diagram based on provided Mermaid.js code into a specified container.
@@ -78,7 +76,7 @@ function renderFishboneDiagram(containerId, elements) {
                     'text-max-width': '150px',
                     'text-valign': 'center',
                     'text-halign': 'center',
-                    'width': 'auto'
+                    'width': 'label'
                 }
             },
             {
@@ -99,9 +97,11 @@ function renderFishboneDiagram(containerId, elements) {
                     'font-size': '14px',
                     'padding': '15px',
                     'text-halign': 'center',
-                    // --- MODIFIED LINES ---
-                    'width': 'auto',        // Automatically size width to content
-                    'height': 'auto'       // Automatically size height to content
+                    'text-valign': 'center',
+                    'text-max-width': '400px',  // Allows the text to spread out more 
+                    'text-wrap': 'wrap',        // Allows text to wrap within node.
+                    'width': 'label',           // Automatically size width to content
+                    'height': 'label',          // Automatically size height to content                                       
                 }
             },
             {
