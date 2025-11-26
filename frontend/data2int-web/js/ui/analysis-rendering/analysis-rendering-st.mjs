@@ -372,8 +372,8 @@ function renderParetoFishbonePage(container, data) {
 
     fishboneHtml += `</div></div>`; // Close grid and p-4
     fishboneHtml += `
-        <div id="fishboneCy" class="fishboneCy"></div>
-        <div class="diagram-controls">
+        <div id="fishboneCy" class="fishboneCy" flex justify-center></div>
+        <div class="diagram-controls" flex justify-center gap-2 mt-4>
             <button class="diagram-fit-btn" data-action="fit">Fit to View</button>
             <button class="diagram-reset-btn" data-action="reset">Reset Zoom</button>
             <button class="diagram-export-btn" data-action="export">Export as PNG</button>

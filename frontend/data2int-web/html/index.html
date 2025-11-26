@@ -1422,16 +1422,18 @@
             box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
             background-color: rgba(25, 25, 25, 0.8); 	/* Slightly transparent background */
             padding: 1.5rem;
+            margin: auto;
         }
 
         .diagram-controls {
-            padding: 20px 32px;
-            /* background: #f8f9fa; */
-            background: transparent;
-            /* border-top: 1px solid #e9ecef; */
             display: flex;
+            justify-content: center;
+            align-items: center;
             gap: 12px;
             flex-wrap: wrap;
+            margin: auto;
+            padding: 20px 32px;
+            background: transparent;
         }
 
         .diagram-fit-btn, .diagram-reset-btn, .diagram-export-btn {
@@ -3791,7 +3793,7 @@
 // =========================================================
 // SCRIPT
 // =========================================================
-import { renderMermaidDiagram } from '../js/diagrams/diagram-rendering.mjs';
+import { renderMermaidDiagram, renderFishboneDiagram } from '../js/diagrams/diagram-rendering.mjs';
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -3807,7 +3809,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- GLOBAL DOWNLOAD HELPER (Uses Python Backend) ---
     window.triggerBackendDownload = async function(category, filename) {
         // Construct the backend URL
-        const url = `https://analysis.data2int.com/api/samples/${category}/${filename}`;
+        const url = `https://analysis.sageaios.com/api/samples/${category}/${filename}`;
         
         // Get the button element to show status
         const btn = event.currentTarget;
@@ -4085,7 +4087,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const wsStatus = document.getElementById("wsStatus");
 
         try {
-            websocket = new WebSocket("wss://n8n-api.data2int.com/ws");
+            websocket = new WebSocket("wss://n8n-api.sageaios.com/ws");
 
             wsStatus.textContent = "Connecting...";
             wsStatus.className = "ws-status connecting";
@@ -4139,7 +4141,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // relativePath example: "predictive/predictive-sample-data.csv"
         
         // 1. Construct the Backend URL
-        const API_BASE = "https://analysis.data2int.com/api/samples";
+        const API_BASE = "https://analysis.sageaios.com/api/samples";
         const url = `${API_BASE}/${relativePath}`;
 
         console.log(`Attempting to fetch sample from: ${url}`);
@@ -11393,7 +11395,7 @@ CustomerID,Tenure_Months,Support_Tickets,Used_Feature_X,Churned<br>
 
             // --- Function B: Call Ollama Directly (Deep Analysis) ---
             async function fetchOllama_Objectives() {
-                const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
+                const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
                 const MODEL_NAME = "llama3.1:latest";
                 
                 let ollamaText = fullContext;
@@ -12450,7 +12452,7 @@ CustomerID,Tenure_Months,Support_Tickets,Used_Feature_X,Churned<br>
         setLoading("generate", true);
 
         // Define URL and Model
-        const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
+        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
         const MODEL_NAME = "llama3.1:latest"; // Consistent model
 
         try {
@@ -12965,7 +12967,7 @@ function createSystemObjectivesLayout_ST(template) {
         setLoading("generate", true);
 
         // Define URL and Model
-        const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
+        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
         const MODEL_NAME = "llama3.1:latest";
 
         try {
@@ -13430,7 +13432,7 @@ function createSystemObjectivesLayout_ST(template) {
         analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white mb-4">Analyzing Creative Gap (Prioritizing Files)...</h3><p class="text-white/80 mb-2">Generating initiatives based primarily on document and data context...</p></div>`;
         setLoading("generate", true); // Set loading state
 
-        const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
+        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
         const MODEL_NAME = "llama3.1:latest"; // Using Llama 3.1 as requested
 
         try {
@@ -13902,7 +13904,7 @@ function createSystemObjectivesLayout_ST(template) {
         analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white mb-4">Diagnosing System Health...</h3><p class="text-white/80 mb-2">Analyzing metabolism, nervous system, and immune response using enhanced, context-aware prompting...</p></div>`;
         setLoading("generate", true); // Set loading state
 
-        const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
+        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
         const MODEL_NAME = "llama3.1:latest"; // Using Llama 3.1 as requested
 
         try {
@@ -14369,7 +14371,7 @@ function createSystemObjectivesLayout_ST(template) {
         analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white mb-4">Deconstructing Mental Models...</h3><p class="text-white/80 mb-2">Analyzing your thought process with enhanced prompting to uncover new paths...</p></div>`;
         setLoading("generate", true); // Set loading state
 
-        const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
+        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
         const MODEL_NAME = "llama3.1:latest"; // Using Llama 3.1 as requested
 
         try {
@@ -16705,7 +16707,7 @@ The AI will read this and build the matrix for you."></textarea>
         setLoading("generate", true);
 
         const statusEl = $("analysisStatus");
-        const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
+        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
         const MODEL_NAME = "llama3.1:latest";
 
         try {
@@ -17999,7 +18001,7 @@ The AI will read this and build the matrix for you."></textarea>
         setLoading("generate", true);
 
         // Define URL and Model
-        const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
+        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
         const MODEL_NAME = "llama3.1:latest"; // Consistent model
 
         try {
@@ -18025,7 +18027,7 @@ The AI will read this and build the matrix for you."></textarea>
             // --- END NEW LOGIC ---
 
             // Truncate if necessary
-            const MAX_CONTEXT_LENGTH = 15000;
+            const MAX_CONTEXT_LENGTH = 50000;
             let truncatedNote = "";
             if (problemContext.length > MAX_CONTEXT_LENGTH) {
                 problemContext = problemContext.substring(0, MAX_CONTEXT_LENGTH);
@@ -18184,6 +18186,7 @@ The AI will read this and build the matrix for you."></textarea>
             return;
         }
 
+        const fishboneElements = parseFishboneData(data);
         const { problem_statement, fishbone, pareto_analysis, action_plan } = data;
 
         // --- Create Tab Navigation ---
@@ -18269,8 +18272,15 @@ The AI will read this and build the matrix for you."></textarea>
         });
 
         fishboneHtml += `</div></div>`; // Close grid and p-4
+        fishboneHtml += `
+            <div id="fishboneCy" class="fishboneCy" flex justify-center></div>
+            <div class="diagram-controls" flex justify-center gap-2 mt-4>
+                <button class="diagram-fit-btn" data-action="fit">Fit to View</button>
+                <button class="diagram-reset-btn" data-action="reset">Reset Zoom</button>
+                <button class="diagram-export-btn" data-action="export">Export as PNG</button>
+            </div>
+            `;
         fishbonePanel.innerHTML = fishboneHtml;
-
 
         // --- 3. Populate Action Plan Tab ---
         const actionPanel = $("actionPanel");
@@ -18373,6 +18383,17 @@ The AI will read this and build the matrix for you."></textarea>
                     }
                 } else {
                     console.warn("Target panel not found:", targetPanelId);
+                }
+
+                if (e.target.dataset.tab === "fishbone") {
+                    const fishboneDiagramContainer = targetPanel.querySelector("#fishboneCy");
+                    if (fishboneDiagramContainer && fishboneElements) {
+                        let cy;
+                        cy = renderFishboneDiagram(fishboneDiagramContainer, fishboneElements);
+                        document.querySelector('.diagram-fit-btn').addEventListener('click', () => fitDiagram(cy));
+                        document.querySelector('.diagram-reset-btn').addEventListener('click', () => resetZoom(cy));
+                        document.querySelector('.diagram-export-btn').addEventListener('click', () => exportPNG(cy));
+                    }
                 }
             }
         });
@@ -18497,6 +18518,140 @@ The AI will read this and build the matrix for you."></textarea>
 
 
 
+    /**
+     * Parses the fishbone JSON schema and generates a Cytoscape.js elements array
+     * with preset positions for a fishbone diagram layout.
+     *
+     * @param {object} jsonData The input JSON data.
+     * @returns {Array} A Cytoscape.js elements array.
+     */
+    function parseFishboneData(jsonData) {
+        const elements = [];
+
+        // --- 1. Layout Constants (Tweak these to change the diagram's appearance) ---
+        const Y_SPINE = 500;        // Y-coordinate for the horizontal spine
+        const X_HEAD = 1300;        // X-coordinate for the "Problem" node (the head)
+        const X_TAIL = 0;           // X-coordinate for the tail
+        
+        const Y_RIB_TOP = 250;      // Y-coordinate for top-row categories
+        const Y_RIB_BOTTOM = 750;   // Y-coordinate for bottom-row categories
+        
+        const X_RIB_START = 250;    // X-coordinate for the first group of ribs
+        const X_RIB_SPACING = 350;  // Horizontal gap between rib groups
+
+        // --- 2. Add Head and Tail Nodes ---
+        
+        // Add the "Head" (Problem)
+        elements.push({
+            data: { id: 'problem', label: jsonData.problem_statement, type: 'head' },
+            position: { x: X_HEAD, y: Y_SPINE },
+            locked: true,
+        });
+
+        // Add the "Tail" (an invisible node to anchor the spine)
+        elements.push({
+            data: { id: 'tail', type: 'spine' },
+            position: { x: X_TAIL, y: Y_SPINE },
+            locked: true,
+        });
+
+        // --- 3. Process Categories (Ribs) and Causes (Bones) ---
+
+        // Filter out any categories that have no causes
+        const categories = Object.keys(jsonData.fishbone)
+                                .filter(key => jsonData.fishbone[key].length > 0);
+
+        const spineNodesToConnect = ['tail']; // Start the spine connection list
+
+        categories.forEach((categoryName, index) => {
+            const causes = jsonData.fishbone[categoryName];
+            const n = causes.length;
+
+            // Alternate categories between top and bottom
+            const isTop = index % 2 === 0;
+            const yCategory = isTop ? Y_RIB_TOP : Y_RIB_BOTTOM;
+            
+            // Group ribs in pairs (e.g., 0 & 1, 2 & 3) at the same horizontal level
+            const ribGroupIndex = Math.floor(index / 2);
+            const xCategory = X_RIB_START + (ribGroupIndex * X_RIB_SPACING);
+
+            // A. Create the invisible "Spine" node for this rib group to connect to
+            const spineNodeId = 'spine-' + ribGroupIndex;
+            let xSpinePoint;
+            if (!elements.find(el => el.data.id === spineNodeId)) {
+                xSpinePoint = xCategory + (X_RIB_SPACING / 3); // Make ribs angle forward
+                elements.push({
+                    data: { id: spineNodeId, type: 'spine' },
+                    position: { x: xSpinePoint, y: Y_SPINE },
+                    locked: true,
+                });
+                spineNodesToConnect.push(spineNodeId);
+            } else {
+                // Get position of existing spine node
+                xSpinePoint = elements.find(el => el.data.id === spineNodeId).position.x;
+            }
+            
+            // B. Create the "Category" node (the rib end)
+            const categoryNodeId = 'cat-' + index;
+            elements.push({
+                data: { id: categoryNodeId, label: categoryName, type: 'category' },
+                position: { x: xCategory, y: yCategory },
+                locked: true,
+            });
+
+            // C. Create the "Cause" nodes and chain the edges
+            let lastNodeId = categoryNodeId; // Start the chain from the category node
+
+            causes.forEach((causeText, causeIndex) => {
+                const causeNodeId = 'cause-' + index + '-' + causeIndex;
+                
+                // Calculate position by interpolating between category and spine node
+                // (causeIndex + 1) / (n + 1) ensures nodes are evenly spaced *between* start and end
+                const percent = (causeIndex + 1) / (n + 1);
+                
+                const xCause = xCategory + (percent * (xSpinePoint - xCategory));
+                const yCause = yCategory + (percent * (Y_SPINE - yCategory));
+
+                // Add the cause node
+                elements.push({
+                    data: { id: causeNodeId, label: causeText, type: 'cause' },
+                    position: { x: xCause, y: yCause },
+                    locked: true
+                });
+
+                // Add the "bone" edge from the *previous* node in the chain
+                elements.push({
+                    data: { id: 'edge-' + lastNodeId + '-' + causeNodeId, source: lastNodeId, target: causeNodeId, type: 'bone' },
+                });
+                
+                lastNodeId = causeNodeId; // This cause becomes the next source
+            });
+
+            // D. Connect the *last* cause node to the spine node
+            elements.push({
+                data: { id: 'edge-' + lastNodeId + '-' + spineNodeId, source: lastNodeId, target: spineNodeId, type: 'bone' },
+            });
+        });
+
+        // --- 4. Connect the Spine Nodes ---
+        spineNodesToConnect.push('problem'); // Add the head as the final connection
+
+        for (let i = 0; i < spineNodesToConnect.length - 1; i++) {
+            elements.push({
+                data: {
+                    id: 'spine-edge-' + i,
+                    source: spineNodesToConnect[i],
+                    target: spineNodesToConnect[i+1],
+                    type: 'spine-bone'
+                },
+            });
+        }
+
+        return elements;
+    }
+
+
+
     // =========================================================================
     // ===== SPECIALIZED ANALYSIS LOGIC (SWOT, ARCHETYPE, FACTOR, etc.)   =====
     // =========================================================================
@@ -18507,7 +18662,7 @@ The AI will read this and build the matrix for you."></textarea>
         analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white mb-4">Mapping Horizons of Growth...</h3><p class="text-white/80 mb-2">Analyzing your ambition using a refined, context-aware prompt...</p></div>`;
         setLoading("generate", true);
 
-        const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
+        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
         const MODEL_NAME = "llama3.1:latest"; // Using Llama 3.1 as requested
 
         try {
@@ -18671,7 +18826,7 @@ The AI will read this and build the matrix for you."></textarea>
                     </div>`;
 
         const statusEl = $("analysisStatus");
-        const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
+        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
         const MODEL_NAME = "llama3.1:latest";
 
         try {
@@ -18822,201 +18977,200 @@ The AI will read this and build the matrix for you."></textarea>
     
 
     async function handleProcessMappingAnalysis() {
-    const analysisResultContainer = $("analysisResult");
-    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white">Mapping and Analyzing Your Process...</h3><p class="text-white/80 mb-2">Identifying steps, bottlenecks, and potential optimizations...</p></div>`; // Updated text
-    setLoading("generate", true);
+        const analysisResultContainer = $("analysisResult");
+        analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white">Mapping and Analyzing Your Process...</h3><p class="text-white/80 mb-2">Identifying steps, bottlenecks, and potential optimizations...</p></div>`; // Updated text
+        setLoading("generate", true);
 
-    // Define URL and Model
-    const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
-    const MODEL_NAME = "llama3.1:latest"; // Consistent model
+        // Define URL and Model
+        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
+        const MODEL_NAME = "llama3.1:latest"; // Consistent model
 
-    try {
-        // 1. Gather Inputs
-        const useDoc = document.querySelector('input[name="inputType"]:checked').id === "docUpload";
-        let content = "";
-        if (useDoc) {
-            const file = $("processFile").files[0];
-            if (!file) throw new Error("Please select a document.");
-            content = await extractTextFromFile(file);
-        } else {
-            content = $("processContent").value.trim();
-            if (!content) throw new Error("Please describe the process.");
-        }
-
-        // --- NEW: INJECT LOCATION ---
-        const location = $("processLocation").value.trim();
-        if (location) {
-            content = `Target Location/Region: ${location}\n\n${content}`;
-            console.log("Injected location into Process Mapping prompt:", location);
-        }
-        // --- END NEW LOGIC ---
-
-        // Truncate if necessary
-        const MAX_CONTEXT_LENGTH = 15000;
-        let truncatedNote = "";
-        if (content.length > MAX_CONTEXT_LENGTH) {
-            content = content.substring(0, MAX_CONTEXT_LENGTH);
-            truncatedNote = `(Note: Analysis based on the first ${MAX_CONTEXT_LENGTH} characters.)`;
-            console.warn(`Process Mapping context truncated.`);
-        }
-
-        // 2. Construct ENHANCED Prompt
-        const prompt = `
-            You are an expert business process analyst. Analyze the following process description provided by the user and model it comprehensively. Focus on identifying bottlenecks and suggesting concrete optimizations based *only* on the provided text. ${truncatedNote}
-
-            **USER'S PROCESS DESCRIPTION:**
-            \`\`\`
-            ${content}
-            \`\`\`
-
-            **DETAILED TASKS:**
-            1.  **Process Definition:** Define a clear \`process_name\` based on the description.
-            2.  **Identify Steps (8-12 steps):** Extract the sequential steps. For each step, provide:
-                * \`id\`: A unique sequential number (1, 2, 3...).
-                * \`name\`: A concise action-oriented name (2-5 words).
-                * \`description\`: A brief explanation of the step based on the context.
-                * \`owner\`: The role or department responsible, as mentioned or implied in the context.
-                * \`type\`: Classify as "Start", "Task", "Decision", "End", or "Sub-process" based on context.
-            3.  **Define Connections:** Specify the flow between steps. For each connection:
-                * \`from\`: The ID of the source step.
-                * \`to\`: The ID of the target step.
-                * \`label\`: The condition or transition (e.g., "Next", "Yes", "No", "Approved", "Rejected"), inferred from context.
-            4.  **Identify Bottlenecks (2-3 bottlenecks):** Pinpoint specific steps or transitions that appear inefficient, slow, or problematic based *only* on the description. For each bottleneck:
-                * \`step_name\`: The name of the bottleneck step (or transition description like "Handover from Sales to Ops").
-                * \`reason\`: A detailed explanation *citing evidence from the context* why it's considered a bottleneck (e.g., "Context mentions manual data entry here", "Description implies waiting time", "Multiple approvals required as stated in text").
-            5.  **Suggest Optimizations (2-3 suggestions):** For the identified bottlenecks or other inefficient steps described, propose specific improvements. For each optimization:
-                * \`target_step_name\`: The step the optimization applies to.
-                * \`suggestion\`: A clear description of the proposed change (e.g., "Automate data entry", "Implement parallel processing", "Simplify approval workflow").
-                * \`rationale\`: Explain *how* this optimization addresses the inefficiency *described in the context*.
-                * \`type\`: Categorize the optimization (e.g., "Automation", "Simplification", "Parallelization", "Standardization", "Resource Allocation").
-            6.  **Recommend KPIs (4-5 KPIs):** Suggest relevant Key Performance Indicators to measure the process's efficiency and effectiveness, based on the context. For each KPI:
-                * \`name\`: Name of the KPI (e.g., "Cycle Time").
-                * \`description\`: What it measures specifically in relation to this process.
-
-            7.  **Self-Correction:** Before outputting JSON, rigorously check: Is every piece of information (steps, owners, types, connections, bottlenecks, reasons, optimizations, KPIs) derived *solely* from the user's text? Are connections logical? Are bottleneck reasons and optimization rationales explicitly linked to the text? Is the JSON structure perfect? Fix all errors.
-
-            **ABSOLUTE CONSTRAINTS:**
-            - **CONTEXT GROUNDING:** All output MUST be based *exclusively* on the provided PROCESS DESCRIPTION. Do NOT invent steps, roles, bottlenecks, or optimizations not supported by the text.
-            - **SPECIFICITY:** Be specific in descriptions, reasons, and rationales, referencing the context where possible.
-            - **JSON FORMAT:** Adhere EXACTLY. Include ALL specified keys and sub-keys.
-
-            **RETURN FORMAT:**
-            Provide ONLY a valid JSON object. **CRITICAL: Include ALL keys specified below.**
-            {
-              "process_name": "Example: Customer Order Fulfillment",
-              "steps": [
-                {"id": 1, "name": "Receive Order", "description": "System receives order via web form.", "owner": "System/Sales", "type": "Start"},
-                {"id": 2, "name": "Check Inventory", "description": "Warehouse staff manually check stock levels.", "owner": "Warehouse", "type": "Task"},
-                {"id": 3, "name": "Stock Available?", "description": "Decision based on inventory check.", "owner": "Warehouse", "type": "Decision"},
-                {"id": 4, "name": "Allocate Stock", "description": "If available, reserve items.", "owner": "Warehouse", "type": "Task"},
-                {"id": 5, "name": "Notify Backorder", "description": "If unavailable, inform customer.", "owner": "Customer Service", "type": "Task"},
-                {"id": 6, "name": "Pack Order", "description": "Warehouse packs the allocated items.", "owner": "Warehouse", "type": "Task"},
-                {"id": 7, "name": "Ship Order", "description": "Logistics arranges shipment.", "owner": "Logistics", "type": "Task"},
-                {"id": 8, "name": "Send Confirmation", "description": "System sends shipping confirmation.", "owner": "System", "type": "Task"},
-                {"id": 9, "name": "Process Complete", "description": "Order fulfillment cycle ends.", "owner": "System", "type": "End"}
-              ],
-              "connections": [
-                {"from": 1, "to": 2, "label": "Next"},
-                {"from": 2, "to": 3, "label": "Next"},
-                {"from": 3, "to": 4, "label": "Yes"},
-                {"from": 3, "to": 5, "label": "No"},
-                {"from": 4, "to": 6, "label": "Next"},
-                {"from": 5, "to": 9, "label": "End Cycle"}, // Example connection
-                {"from": 6, "to": 7, "label": "Ready to Ship"},
-                {"from": 7, "to": 8, "label": "Shipped"},
-                {"from": 8, "to": 9, "label": "Confirmed"}
-              ],
-              "bottlenecks": [
-                {"step_name": "Check Inventory", "reason": "Context states 'Warehouse staff manually check stock levels', indicating a slow, error-prone step compared to automated checks."},
-                {"step_name": "Handover from Warehouse to Logistics", "reason": "The description implies a potential delay between packing ('Pack Order') and shipping ('Ship Order') without specifying a clear trigger or SLA, suggesting a possible bottleneck."}
-              ],
-              "optimizations": [
-                {
-                  "target_step_name": "Check Inventory",
-                  "suggestion": "Implement a real-time inventory management system.",
-                  "rationale": "Replaces the slow 'manual check' mentioned in the context with an automated system, reducing errors and speeding up the decision at step 3 ('Stock Available?').",
-                  "type": "Automation"
-                },
-                {
-                  "target_step_name": "Pack Order / Ship Order Transition",
-                  "suggestion": "Establish automated notification from Warehouse to Logistics upon packing completion.",
-                  "rationale": "Addresses the implied delay between steps 6 and 7 by creating a clear trigger, potentially reducing wait time as suggested by the lack of explicit connection in the description.",
-                  "type": "Process Improvement/Automation"
-                }
-              ],
-              "kpis": [
-                {"name": "Order Cycle Time", "description": "Total time from 'Receive Order' (Step 1) to 'Send Confirmation' (Step 8)."},
-                {"name": "Inventory Check Time", "description": "Time taken specifically for the 'Check Inventory' step (Step 2)."},
-                {"name": "Picking and Packing Time", "description": "Time taken for 'Allocate Stock' and 'Pack Order' (Steps 4 & 6)."},
-                {"name": "On-Time Shipment Rate", "description": "Percentage of orders shipped by the promised date."},
-                {"name": "Order Accuracy Rate", "description": "Percentage of orders shipped without errors (correct items, quantity)."}
-              ]
-            }
-        `;
-
-        // 3. Send Request to Ollama
-        console.log(`Sending ENHANCED Process Mapping prompt to ${MODEL_NAME}...`);
-        const response = await fetch(OLLAMA_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ model: MODEL_NAME, prompt: prompt, stream: false, format: "json", options: { num_ctx: 32768 } })
-        });
-
-        if (!response.ok) {
-            let errorBody = `API error ${response.status}`;
-            try { errorBody += `: ${await response.text()}`; } catch (e) {}
-            throw new Error(errorBody);
-        }
-
-        const data = await response.json();
-        let parsedData;
-        console.log('Raw AI Response (Process Mapping):', data.response); // Log raw response
         try {
-            parsedData = JSON.parse(data.response);
-             // *** Refined Robust Validation ***
-             console.log('--- RAW AI JSON RESPONSE (Parsed - Enhanced Process Mapping) ---');
-             console.log(JSON.stringify(parsedData, null, 2));
-             console.log('------------------------------------');
+            // 1. Gather Inputs
+            const useDoc = document.querySelector('input[name="inputType"]:checked').id === "docUpload";
+            let content = "";
+            if (useDoc) {
+                const file = $("processFile").files[0];
+                if (!file) throw new Error("Please select a document.");
+                content = await extractTextFromFile(file);
+            } else {
+                content = $("processContent").value.trim();
+                if (!content) throw new Error("Please describe the process.");
+            }
 
-             if (!parsedData || typeof parsedData !== 'object' ||
-                 !parsedData.process_name || typeof parsedData.process_name !== 'string' ||
-                 !Array.isArray(parsedData.steps) || parsedData.steps.length < 3 ||
-                 !Array.isArray(parsedData.connections) || parsedData.connections.length < parsedData.steps.length - 1 || // At least n-1 connections usually
-                 !Array.isArray(parsedData.bottlenecks) || // Can be empty, but must exist
-                 !Array.isArray(parsedData.optimizations) || // Can be empty, but must exist
-                 !Array.isArray(parsedData.kpis) || parsedData.kpis.length < 2 || // Expect at least a couple of KPIs
-                 // Check structure of first elements if they exist
-                 (parsedData.steps.length > 0 && (typeof parsedData.steps[0] !== 'object' || !parsedData.steps[0].hasOwnProperty('id') || !parsedData.steps[0].hasOwnProperty('name') || !parsedData.steps[0].hasOwnProperty('type'))) ||
-                 (parsedData.connections.length > 0 && (typeof parsedData.connections[0] !== 'object' || !parsedData.connections[0].hasOwnProperty('from') || !parsedData.connections[0].hasOwnProperty('to'))) ||
-                 (parsedData.bottlenecks.length > 0 && (typeof parsedData.bottlenecks[0] !== 'object' || !parsedData.bottlenecks[0].hasOwnProperty('step_name') || !parsedData.bottlenecks[0].hasOwnProperty('reason'))) ||
-                 (parsedData.optimizations.length > 0 && (typeof parsedData.optimizations[0] !== 'object' || !parsedData.optimizations[0].hasOwnProperty('suggestion') || !parsedData.optimizations[0].hasOwnProperty('rationale'))) ||
-                 (parsedData.kpis.length > 0 && (typeof parsedData.kpis[0] !== 'object' || !parsedData.kpis[0].hasOwnProperty('name') || !parsedData.kpis[0].hasOwnProperty('description')))
-                )
-             {
-                  console.error("Validation Failed (Enhanced Process Mapping): Required fields missing or invalid structure.", parsedData);
-                  throw new Error(`AI response structure is incorrect or inconsistent (Enhanced Process Mapping). Check process_name, steps, connections, bottlenecks, optimizations, and kpis. See console logs.`);
-             }
-             console.log(`Successfully parsed ENHANCED Process Mapping JSON using ${MODEL_NAME}. Found ${parsedData.steps.length} steps.`);
+            // --- INJECT LOCATION ---
+            const location = $("processLocation").value.trim();
+            if (location) {
+                content = `Target Location/Region: ${location}\n\n${content}`;
+                console.log("Injected location into Process Mapping prompt:", location);
+            }
 
-        } catch (e) {
-            console.error(`Failed to parse/validate ENHANCED Process Mapping JSON using ${MODEL_NAME}:`, data?.response, e);
-            throw new Error(`Invalid JSON received or validation failed (Enhanced Process Mapping): ${e.message}. See raw response in console.`);
-        }
+            // Truncate if necessary
+            const MAX_CONTEXT_LENGTH = 15000;
+            let truncatedNote = "";
+            if (content.length > MAX_CONTEXT_LENGTH) {
+                content = content.substring(0, MAX_CONTEXT_LENGTH);
+                truncatedNote = `(Note: Analysis based on the first ${MAX_CONTEXT_LENGTH} characters.)`;
+                console.warn(`Process Mapping context truncated.`);
+            }
 
-        // 4. Render Results
-        renderProcessMappingPage(analysisResultContainer, parsedData);
+            // 2. Construct ENHANCED Prompt
+            const prompt = `
+                You are an expert business process analyst. Analyze the following process description provided by the user and model it comprehensively. Focus on identifying bottlenecks and suggesting concrete optimizations based *only* on the provided text. ${truncatedNote}
 
-    } catch (error) {
-        console.error(`Error in handleProcessMappingAnalysis (Enhanced) using ${MODEL_NAME}:`, error);
-        analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
-        setLoading("generate", false);
-    } finally {
-        // Ensure loading stops reliably
-         if ($("generateSpinner") && !$("generateSpinner").classList.contains("hidden")) {
+                **USER'S PROCESS DESCRIPTION:**
+                \`\`\`
+                ${content}
+                \`\`\`
+
+                **DETAILED TASKS:**
+                1.  **Process Definition:** Define a clear \`process_name\` based on the description.
+                2.  **Identify Steps (8-12 steps):** Extract the sequential steps. For each step, provide:
+                    * \`id\`: A unique sequential number (1, 2, 3...).
+                    * \`name\`: A concise action-oriented name (2-5 words).
+                    * \`description\`: A brief explanation of the step based on the context.
+                    * \`owner\`: The role or department responsible, as mentioned or implied in the context.
+                    * \`type\`: Classify as "Start", "Task", "Decision", "End", or "Sub-process" based on context.
+                3.  **Define Connections:** Specify the flow between steps. For each connection:
+                    * \`from\`: The ID of the source step.
+                    * \`to\`: The ID of the target step.
+                    * \`label\`: The condition or transition (e.g., "Next", "Yes", "No", "Approved", "Rejected"), inferred from context.
+                4.  **Identify Bottlenecks (2-3 bottlenecks):** Pinpoint specific steps or transitions that appear inefficient, slow, or problematic based *only* on the description. For each bottleneck:
+                    * \`step_name\`: The name of the bottleneck step (or transition description like "Handover from Sales to Ops").
+                    * \`reason\`: A detailed explanation *citing evidence from the context* why it's considered a bottleneck (e.g., "Context mentions manual data entry here", "Description implies waiting time", "Multiple approvals required as stated in text").
+                5.  **Suggest Optimizations (2-3 suggestions):** For the identified bottlenecks or other inefficient steps described, propose specific improvements. For each optimization:
+                    * \`target_step_name\`: The step the optimization applies to.
+                    * \`suggestion\`: A clear description of the proposed change (e.g., "Automate data entry", "Implement parallel processing", "Simplify approval workflow").
+                    * \`rationale\`: Explain *how* this optimization addresses the inefficiency *described in the context*.
+                    * \`type\`: Categorize the optimization (e.g., "Automation", "Simplification", "Parallelization", "Standardization", "Resource Allocation").
+                6.  **Recommend KPIs (4-5 KPIs):** Suggest relevant Key Performance Indicators to measure the process's efficiency and effectiveness, based on the context. For each KPI:
+                    * \`name\`: Name of the KPI (e.g., "Cycle Time").
+                    * \`description\`: What it measures specifically in relation to this process.
+
+                7.  **Self-Correction:** Before outputting JSON, rigorously check: Is every piece of information (steps, owners, types, connections, bottlenecks, reasons, optimizations, KPIs) derived *solely* from the user's text? Are connections logical? Are bottleneck reasons and optimization rationales explicitly linked to the text? Is the JSON structure perfect? Fix all errors.
+
+                **ABSOLUTE CONSTRAINTS:**
+                - **CONTEXT GROUNDING:** All output MUST be based *exclusively* on the provided PROCESS DESCRIPTION. Do NOT invent steps, roles, bottlenecks, or optimizations not supported by the text.
+                - **SPECIFICITY:** Be specific in descriptions, reasons, and rationales, referencing the context where possible.
+                - **JSON FORMAT:** Adhere EXACTLY. Include ALL specified keys and sub-keys.
+
+                **RETURN FORMAT:**
+                Provide ONLY a valid JSON object. **CRITICAL: Include ALL keys specified below.**
+                {
+                "process_name": "Example: Customer Order Fulfillment",
+                "steps": [
+                    {"id": 1, "name": "Receive Order", "description": "System receives order via web form.", "owner": "System/Sales", "type": "Start"},
+                    {"id": 2, "name": "Check Inventory", "description": "Warehouse staff manually check stock levels.", "owner": "Warehouse", "type": "Task"},
+                    {"id": 3, "name": "Stock Available?", "description": "Decision based on inventory check.", "owner": "Warehouse", "type": "Decision"},
+                    {"id": 4, "name": "Allocate Stock", "description": "If available, reserve items.", "owner": "Warehouse", "type": "Task"},
+                    {"id": 5, "name": "Notify Backorder", "description": "If unavailable, inform customer.", "owner": "Customer Service", "type": "Task"},
+                    {"id": 6, "name": "Pack Order", "description": "Warehouse packs the allocated items.", "owner": "Warehouse", "type": "Task"},
+                    {"id": 7, "name": "Ship Order", "description": "Logistics arranges shipment.", "owner": "Logistics", "type": "Task"},
+                    {"id": 8, "name": "Send Confirmation", "description": "System sends shipping confirmation.", "owner": "System", "type": "Task"},
+                    {"id": 9, "name": "Process Complete", "description": "Order fulfillment cycle ends.", "owner": "System", "type": "End"}
+                ],
+                "connections": [
+                    {"from": 1, "to": 2, "label": "Next"},
+                    {"from": 2, "to": 3, "label": "Next"},
+                    {"from": 3, "to": 4, "label": "Yes"},
+                    {"from": 3, "to": 5, "label": "No"},
+                    {"from": 4, "to": 6, "label": "Next"},
+                    {"from": 5, "to": 9, "label": "End Cycle"}, // Example connection
+                    {"from": 6, "to": 7, "label": "Ready to Ship"},
+                    {"from": 7, "to": 8, "label": "Shipped"},
+                    {"from": 8, "to": 9, "label": "Confirmed"}
+                ],
+                "bottlenecks": [
+                    {"step_name": "Check Inventory", "reason": "Context states 'Warehouse staff manually check stock levels', indicating a slow, error-prone step compared to automated checks."},
+                    {"step_name": "Handover from Warehouse to Logistics", "reason": "The description implies a potential delay between packing ('Pack Order') and shipping ('Ship Order') without specifying a clear trigger or SLA, suggesting a possible bottleneck."}
+                ],
+                "optimizations": [
+                    {
+                    "target_step_name": "Check Inventory",
+                    "suggestion": "Implement a real-time inventory management system.",
+                    "rationale": "Replaces the slow 'manual check' mentioned in the context with an automated system, reducing errors and speeding up the decision at step 3 ('Stock Available?').",
+                    "type": "Automation"
+                    },
+                    {
+                    "target_step_name": "Pack Order / Ship Order Transition",
+                    "suggestion": "Establish automated notification from Warehouse to Logistics upon packing completion.",
+                    "rationale": "Addresses the implied delay between steps 6 and 7 by creating a clear trigger, potentially reducing wait time as suggested by the lack of explicit connection in the description.",
+                    "type": "Process Improvement/Automation"
+                    }
+                ],
+                "kpis": [
+                    {"name": "Order Cycle Time", "description": "Total time from 'Receive Order' (Step 1) to 'Send Confirmation' (Step 8)."},
+                    {"name": "Inventory Check Time", "description": "Time taken specifically for the 'Check Inventory' step (Step 2)."},
+                    {"name": "Picking and Packing Time", "description": "Time taken for 'Allocate Stock' and 'Pack Order' (Steps 4 & 6)."},
+                    {"name": "On-Time Shipment Rate", "description": "Percentage of orders shipped by the promised date."},
+                    {"name": "Order Accuracy Rate", "description": "Percentage of orders shipped without errors (correct items, quantity)."}
+                ]
+                }
+            `;
+
+            // 3. Send Request to Ollama
+            console.log(`Sending ENHANCED Process Mapping prompt to ${MODEL_NAME}...`);
+            const response = await fetch(OLLAMA_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ model: MODEL_NAME, prompt: prompt, stream: false, format: "json", options: { num_ctx: 32768 } })
+            });
+
+            if (!response.ok) {
+                let errorBody = `API error ${response.status}`;
+                try { errorBody += `: ${await response.text()}`; } catch (e) {}
+                throw new Error(errorBody);
+            }
+
+            const data = await response.json();
+            let parsedData;
+            console.log('Raw AI Response (Process Mapping):', data.response); // Log raw response
+            try {
+                parsedData = JSON.parse(data.response);
+                // *** Refined Robust Validation ***
+                console.log('--- RAW AI JSON RESPONSE (Parsed - Enhanced Process Mapping) ---');
+                console.log(JSON.stringify(parsedData, null, 2));
+                console.log('------------------------------------');
+
+                if (!parsedData || typeof parsedData !== 'object' ||
+                    !parsedData.process_name || typeof parsedData.process_name !== 'string' ||
+                    !Array.isArray(parsedData.steps) || parsedData.steps.length < 3 ||
+                    !Array.isArray(parsedData.connections) || parsedData.connections.length < parsedData.steps.length - 1 || // At least n-1 connections usually
+                    !Array.isArray(parsedData.bottlenecks) || // Can be empty, but must exist
+                    !Array.isArray(parsedData.optimizations) || // Can be empty, but must exist
+                    !Array.isArray(parsedData.kpis) || parsedData.kpis.length < 2 || // Expect at least a couple of KPIs
+                    // Check structure of first elements if they exist
+                    (parsedData.steps.length > 0 && (typeof parsedData.steps[0] !== 'object' || !parsedData.steps[0].hasOwnProperty('id') || !parsedData.steps[0].hasOwnProperty('name') || !parsedData.steps[0].hasOwnProperty('type'))) ||
+                    (parsedData.connections.length > 0 && (typeof parsedData.connections[0] !== 'object' || !parsedData.connections[0].hasOwnProperty('from') || !parsedData.connections[0].hasOwnProperty('to'))) ||
+                    (parsedData.bottlenecks.length > 0 && (typeof parsedData.bottlenecks[0] !== 'object' || !parsedData.bottlenecks[0].hasOwnProperty('step_name') || !parsedData.bottlenecks[0].hasOwnProperty('reason'))) ||
+                    (parsedData.optimizations.length > 0 && (typeof parsedData.optimizations[0] !== 'object' || !parsedData.optimizations[0].hasOwnProperty('suggestion') || !parsedData.optimizations[0].hasOwnProperty('rationale'))) ||
+                    (parsedData.kpis.length > 0 && (typeof parsedData.kpis[0] !== 'object' || !parsedData.kpis[0].hasOwnProperty('name') || !parsedData.kpis[0].hasOwnProperty('description')))
+                    )
+                {
+                    console.error("Validation Failed (Enhanced Process Mapping): Required fields missing or invalid structure.", parsedData);
+                    throw new Error(`AI response structure is incorrect or inconsistent (Enhanced Process Mapping). Check process_name, steps, connections, bottlenecks, optimizations, and kpis. See console logs.`);
+                }
+                console.log(`Successfully parsed ENHANCED Process Mapping JSON using ${MODEL_NAME}. Found ${parsedData.steps.length} steps.`);
+
+            } catch (e) {
+                console.error(`Failed to parse/validate ENHANCED Process Mapping JSON using ${MODEL_NAME}:`, data?.response, e);
+                throw new Error(`Invalid JSON received or validation failed (Enhanced Process Mapping): ${e.message}. See raw response in console.`);
+            }
+
+            // 4. Render Results
+            renderProcessMappingPage(analysisResultContainer, parsedData);
+
+        } catch (error) {
+            console.error(`Error in handleProcessMappingAnalysis (Enhanced) using ${MODEL_NAME}:`, error);
+            analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
             setLoading("generate", false);
-         }
+        } finally {
+            // Ensure loading stops reliably
+            if ($("generateSpinner") && !$("generateSpinner").classList.contains("hidden")) {
+                setLoading("generate", false);
+            }
+        }
     }
-}
 
 
     function renderProcessMappingPage(container, data) {
@@ -19038,10 +19192,10 @@ The AI will read this and build the matrix for you."></textarea>
         tabNav.innerHTML = `
             <button class="analysis-tab-btn active" data-tab="flowchart">🗺️ Process Flowchart</button>
             <button class="analysis-tab-btn" data-tab="details">📋 Step Details</button>
-            <button class="analysis-tab-btn" data-tab="optimizations">✨ Optimizations</button> <!-- New Tab -->
-            <button class="analysis-tab-btn" data-tab="kpis">📊 KPIs & Bottlenecks</button> <!-- Renamed & Combined -->
+            <button class="analysis-tab-btn" data-tab="optimizations">✨ Optimizations</button>
+            <button class="analysis-tab-btn" data-tab="kpis">📊 KPIs & Bottlenecks</button>
             <button class="analysis-tab-btn" data-tab="mermaid"> Mermaid Diagram</button>
-            <button class="analysis-tab-btn" data-tab="learn">🎓 Learn Mapping</button> <!-- New Tab -->
+            <button class="analysis-tab-btn" data-tab="learn">🎓 Learn Mapping</button>
         `;
         container.appendChild(tabNav);
 
@@ -19051,13 +19205,13 @@ The AI will read this and build the matrix for you."></textarea>
         tabContent.innerHTML = `
             <div id="flowchartPanel" class="analysis-tab-panel active"></div>
             <div id="detailsPanel" class="analysis-tab-panel"></div>
-            <div id="optimizationsPanel" class="analysis-tab-panel"></div> <!-- New Panel -->
-            <div id="kpisPanel" class="analysis-tab-panel"></div> <!-- Renamed Panel -->
+            <div id="optimizationsPanel" class="analysis-tab-panel"></div>
+            <div id="kpisPanel" class="analysis-tab-panel"></div>
             <div id="mermaidPanel" class="analysis-tab-panel">
-                <h3 class="text-2xl font-bold mb-4">Mermaid Process Diagram</h3>
+                <!-- <h3 class="text-2xl font-bold mb-4">Mermaid Process Diagram</h3> -->
                 <div id="diagram-container" class="mermaid"></div>
             </div>
-            <div id="learnPanel" class="analysis-tab-panel"></div> <!-- New Panel -->
+            <div id="learnPanel" class="analysis-tab-panel"></div>
         `;
 
         // --- 1. Populate Flowchart Panel (Keep as is, but add better icons) ---
@@ -23996,7 +24150,7 @@ async function handleFactorAnalysis() {
         </div>`;
     setLoading("generate", true);
 
-    const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
+    const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
     const MODEL_NAME = "llama3.1:latest";
 
     try {
@@ -24894,7 +25048,7 @@ async function handleKpiAnalysis_KE() {
         setLoading("generate", true);
 
         // Define URL and Model
-        const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
+        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
         const MODEL_NAME = "llama3.1:latest";
 
         try {
@@ -25593,7 +25747,7 @@ function renderKpiPage_KE(container, data) {
     async function ollamaCascadeStrategicPlan(n8nResult, fullContext) {
         console.log("Ollama Cascade: Starting Comprehensive Strategic Plan generation (Expanded)...");
         
-        const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
+        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
         const MODEL_NAME = "llama3.1:latest";
         
         const statusEl = document.getElementById("analysisStatus");
@@ -25698,7 +25852,7 @@ function renderKpiPage_KE(container, data) {
     async function ollamaCascadeGoals(n8nResult, fullContext) {
         console.log("Ollama Cascade: Starting deep synthesis with contextual breakdowns.");
         
-        const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
+        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
         const MODEL_NAME = "llama3.1:latest";
         
         const statusEl = document.getElementById("analysisStatus");
@@ -26183,7 +26337,7 @@ function renderKpiPage_KE(container, data) {
         setLoading("generate", true); // Ensure loading state is set
 
         const statusEl = $("analysisStatus");
-        const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
+        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
         const MODEL_NAME = "llama3.1:latest"; // Consistent model
 
         try {
@@ -26832,7 +26986,7 @@ function renderDetailedAnalysis(swotData, towsData, containerId) {
         setLoading("generate", true);
 
         // Define URL and Model
-        const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
+        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
         const MODEL_NAME = "llama3.1:latest"; // Consistent model
 
         try {
@@ -28261,7 +28415,7 @@ function renderLearnRegressionPanel(containerId) {
         setLoading("generate", true);
 
         // Define URL and Model
-        const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
+        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
         const MODEL_NAME = "llama3.1:latest";
 
         try {
@@ -28700,7 +28854,7 @@ async function handleSystemThinkingAnalysis() {
         </div>`;
     setLoading("generate", true);
 
-    const provider = "open-router" //$("providerSelect").value;
+    const provider = "ollama" //$("providerSelect").value;
     const analysisType = "(Systems Thinking)";
     let text = "";
     
@@ -31136,7 +31290,7 @@ function renderPrescriptivePage_DA(container, data) {
         setLoading("generate", true);
 
         // Define URL and Model
-        const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
+        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
         const MODEL_NAME = "llama3.1:latest";
 
         try {
@@ -31586,7 +31740,7 @@ function renderActionPlansPage_AP(container, data) {
         setLoading("generate", true);
 
         // Define URL and Model
-        const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
+        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
         const MODEL_NAME = "llama3.1:latest"; // Consistent model
 
 
@@ -32612,7 +32766,7 @@ function renderSystemGoalsPage(container, data) {
      */
     async function enrichN8nGoal(goalString, fullContext) {
         console.log(`Enriching n8n goal: "${goalString.substring(0, 30)}..."`);
-        const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
+        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
         const MODEL_NAME = "llama3.1:latest";
 
         const prompt = `
@@ -33282,7 +33436,7 @@ async function handlePasswordUpdate() {
 
     function onDocumentMouseMove(event) {
         mouseX = (event.clientX / window.innerWidth) * 2 - 1;
-        mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+        mouseY = (event.clientY / window.innerHeight) * 2 - 1;
     }
 
     function animateThreeJS() {
