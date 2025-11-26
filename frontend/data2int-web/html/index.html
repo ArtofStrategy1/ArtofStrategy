@@ -11,7 +11,6 @@
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
@@ -20,12 +19,16 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/lite.render.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4/dist/panzoom.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dagre@0.8.5/dist/dagre.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cytoscape@3.33.1/dist/cytoscape.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cytoscape-dagre@2.5.0/cytoscape-dagre.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs" type="module"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs" type="module"></script>
     <script src="https://js.stripe.com/v3/"></script>
+    <script src="https://cdn.plot.ly/plotly-3.3.0.min.js"></script>
 
     <style>
-        /* --- THEME COLORS (CSS VARIABLES) --- */
+                /* --- THEME COLORS (CSS VARIABLES) --- */
         :root {
             --grad-1: #C33764;
             --grad-2: #1D2671;
@@ -92,10 +95,10 @@
         #login.active,
         #signup.active,
         #emailVerification.active,
-        #emailVerifiedSuccess.active,  /* <-- ADD THIS LINE */
-        #emailVerifiedAlready.active,  /* <-- ADD THIS LINE */
-        #passwordResetRequest.active,  /* <-- ADD THIS LINE */
-        #passwordResetUpdate.active {  /* <-- ADD THIS LINE */
+        #emailVerifiedSuccess.active,
+        #emailVerifiedAlready.active,
+        #passwordResetRequest.active,
+        #passwordResetUpdate.active {
             display: flex;
             /* Centered pages */
         }
@@ -1398,6 +1401,69 @@
             font-weight: 600;
         }
 
+        #mermaidPanel {
+            width: 100%;
+            height: 500px; /* Adjust height as needed */
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 1.5rem;	/* The amount of rounding you want to apply */
+            overflow: hidden; /* So content inside is also rounded */
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            background-color: rgba(30, 30, 30, 0.8); 	/* Slightly transparent background */
+            padding: 1.5rem;
+        }
+
+        #fishboneCy {
+            position: relative;
+            width: 90%;
+            height: 500px; /* Adjust height as needed */
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 1.5rem;	/* The amount of rounding you want to apply */
+            overflow: hidden; /* So content inside is also rounded */
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            background-color: rgba(25, 25, 25, 0.8); 	/* Slightly transparent background */
+            padding: 1.5rem;
+        }
+
+        .diagram-controls {
+            padding: 20px 32px;
+            /* background: #f8f9fa; */
+            background: transparent;
+            /* border-top: 1px solid #e9ecef; */
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .diagram-fit-btn, .diagram-reset-btn, .diagram-export-btn {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .diagram-fit-btn:hover, .diagram-reset-btn:hover, .diagram-export-btn:hover {
+            background: #5568d3;
+        }
+
+        .diagram-fit-btn:active, .diagram-reset-btn:active, .diagram-export-btn:active {
+            transform: scale(0.98);
+        }
+
+        .error {
+            color: #e74c3c;
+            margin-top: 8px;
+            font-size: 14px;
+        }
+
+        #cy-tooltip {
+            pointer-events: none !important;
+        }
+
         /* --- Feedback Tab Styles --- */
         .feedback-tabs {
             display: flex;
@@ -1564,7 +1630,7 @@
         }
 
         .modal-body {
-    /* Responsive padding: smaller on mobile */
+        /* Responsive padding: smaller on mobile */
         padding: 1rem; 
         max-height: 80vh;
         overflow-y: auto;
@@ -1855,8 +1921,8 @@
         @media (min-width: 768px) {
             .modal-body {
             padding: 1.5rem 1.5rem 3.5rem;
+            }
         }
-}
 
         /* Mobile responsiveness */
         @media (max-width: 768px) {
@@ -2034,65 +2100,63 @@
 
         /* --- ENHANCED HOME TABS ANIMATION --- */
 
-/* The Button Itself */
-.home-tab-btn {
-    position: relative;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.6);
-    padding: 0.75rem 1rem;
-    transition: color 0.3s ease, text-shadow 0.3s ease;
-    /* Remove old border transition to prevent conflict */
-    border-bottom: 2px solid transparent; 
-}
+        /* The Button Itself */
+        .home-tab-btn {
+            position: relative;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.6);
+            padding: 0.75rem 1rem;
+            transition: color 0.3s ease, text-shadow 0.3s ease;
+            /* Remove old border transition to prevent conflict */
+            border-bottom: 2px solid transparent; 
+        }
 
-.home-tab-btn:hover {
-    color: white;
-}
+        .home-tab-btn:hover {
+            color: white;
+        }
 
-/* The Sliding Glow Line (Pseudo-element) */
-.home-tab-btn::after {
-    content: '';
-    position: absolute;
-    bottom: -2px; /* Align perfectly with the bottom */
-    left: 0;
-    width: 100%;
-    height: 3px;
-    
-    /* Premium Gradient */
-    background: linear-gradient(90deg, var(--primary), var(--accent));
-    box-shadow: 0 -2px 10px rgba(142, 45, 226, 0.4); /* Subtle glow upwards */
-    
-    /* Animation State: Hidden */
-    transform: scaleX(0);
-    transform-origin: right;
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
+        /* The Sliding Glow Line (Pseudo-element) */
+        .home-tab-btn::after {
+            content: '';
+            position: absolute;
+            bottom: -2px; /* Align perfectly with the bottom */
+            left: 0;
+            width: 100%;
+            height: 3px;
+            /* Premium Gradient */
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            box-shadow: 0 -2px 10px rgba(142, 45, 226, 0.4); /* Subtle glow upwards */
+            /* Animation State: Hidden */
+            transform: scaleX(0);
+            transform-origin: right;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
 
-/* Active State */
-.home-tab-btn.active {
-    color: white;
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3); /* Text glow */
-}
+        /* Active State */
+        .home-tab-btn.active {
+            color: white;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3); /* Text glow */
+        }
 
-/* Animation State: Visible */
-.home-tab-btn.active::after {
-    transform: scaleX(1);
-    transform-origin: left;
-}
+        /* Animation State: Visible */
+        .home-tab-btn.active::after {
+            transform: scaleX(1);
+            transform-origin: left;
+        }
 
-/* Content Panel Transitions */
-.home-tab-panel {
-    opacity: 0;
-    transform: translateY(15px); /* Start slightly lower */
-    transition: opacity 0.4s ease-out, transform 0.4s ease-out;
-    display: none; /* Hidden by default */
-}
+        /* Content Panel Transitions */
+        .home-tab-panel {
+            opacity: 0;
+            transform: translateY(15px); /* Start slightly lower */
+            transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+            display: none; /* Hidden by default */
+        }
 
-/* Class to trigger the fade-in-up */
-.home-tab-panel.active-anim {
-    opacity: 1;
-    transform: translateY(0);
-}
+        /* Class to trigger the fade-in-up */
+        .home-tab-panel.active-anim {
+            opacity: 1;
+            transform: translateY(0);
+        }
 
         /* Responsive Grid */
         @media (max-width: 768px) {
@@ -2280,362 +2344,360 @@
 
         /* --- NEW ADMIN LAYOUT: Vertical Command Center --- */
 
-/* 1. The Grid Wrapper */
-.admin-layout-wrapper {
-    display: grid;
-    grid-template-columns: 280px 1fr; /* Sidebar | Content */
-    gap: 2rem;
-    min-height: 600px;
-}
+        /* 1. The Grid Wrapper */
+        .admin-layout-wrapper {
+            display: grid;
+            grid-template-columns: 280px 1fr; /* Sidebar | Content */
+            gap: 2rem;
+            min-height: 600px;
+        }
 
-/* 2. Left Sidebar Navigation */
-.admin-sidebar {
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 1rem;
-    padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    height: fit-content;
-    position: sticky;
-    top: 100px; /* Stick on scroll */
-    backdrop-filter: blur(10px);
-}
+        /* 2. Left Sidebar Navigation */
+        .admin-sidebar {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            height: fit-content;
+            position: sticky;
+            top: 100px; /* Stick on scroll */
+            backdrop-filter: blur(10px);
+        }
 
-.admin-sidebar-header {
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
+        .admin-sidebar-header {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
 
-.admin-nav-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
+        .admin-nav-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
 
-/* Sidebar Buttons */
-.admin-side-btn {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    padding: 1rem;
-    border-radius: 0.75rem;
-    color: rgba(255, 255, 255, 0.6);
-    transition: all 0.2s ease;
-    text-align: left;
-    background: transparent;
-    border: 1px solid transparent;
-}
+        /* Sidebar Buttons */
+        .admin-side-btn {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            color: rgba(255, 255, 255, 0.6);
+            transition: all 0.2s ease;
+            text-align: left;
+            background: transparent;
+            border: 1px solid transparent;
+        }
 
-.admin-side-btn:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: white;
-    transform: translateX(5px);
-}
+        .admin-side-btn:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            transform: translateX(5px);
+        }
 
-.admin-side-btn.active {
-    background: linear-gradient(90deg, rgba(142, 45, 226, 0.2), transparent);
-    border-left: 4px solid var(--primary);
-    color: white;
-    font-weight: 600;
-}
+        .admin-side-btn.active {
+            background: linear-gradient(90deg, rgba(142, 45, 226, 0.2), transparent);
+            border-left: 4px solid var(--primary);
+            color: white;
+            font-weight: 600;
+        }
 
-.admin-btn-icon {
-    font-size: 1.25rem;
-    margin-right: 1rem;
-    width: 24px;
-    text-align: center;
-}
+        .admin-btn-icon {
+            font-size: 1.25rem;
+            margin-right: 1rem;
+            width: 24px;
+            text-align: center;
+        }
 
-/* 3. Right Content Area */
-.admin-content-area {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
+        /* 3. Right Content Area */
+        .admin-content-area {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
 
-/* 4. HUD (Heads Up Display) Stats Row */
-.admin-hud-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 1rem;
-}
+        /* 4. HUD (Heads Up Display) Stats Row */
+        .admin-hud-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+        }
 
-.admin-hud-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 0.75rem;
-    padding: 1rem 1.25rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
+        .admin-hud-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.75rem;
+            padding: 1rem 1.25rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
 
-.admin-hud-val {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: white;
-    line-height: 1.2;
-}
+        .admin-hud-val {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            line-height: 1.2;
+        }
 
-.admin-hud-label {
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: rgba(255, 255, 255, 0.5);
-    margin-top: 0.25rem;
-}
+        .admin-hud-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 0.25rem;
+        }
 
-/* 5. Refresh Button Styling within Sidebar */
-.admin-refresh-wrapper {
-    margin-top: 2rem;
-    padding-top: 1rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
+        /* 5. Refresh Button Styling within Sidebar */
+        .admin-refresh-wrapper {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
 
-/* Mobile Responsiveness */
-@media (max-width: 1024px) {
-    .admin-layout-wrapper {
-        grid-template-columns: 1fr; /* Stack vertically */
-    }
-    .admin-sidebar {
-        position: relative;
-        top: 0;
-    }
-    .admin-nav-group {
-        flex-direction: row;
-        overflow-x: auto;
-        padding-bottom: 0.5rem;
-    }
-    .admin-side-btn {
-        width: auto;
-        white-space: nowrap;
-        border-left: 1px solid transparent; /* Reset border for mobile */
-    }
-    .admin-side-btn.active {
-        border-left: 1px solid transparent;
-        border-bottom: 4px solid var(--primary);
-        background: linear-gradient(0deg, rgba(142, 45, 226, 0.2), transparent);
-    }
-}
+        /* Mobile Responsiveness */
+        @media (max-width: 1024px) {
+            .admin-layout-wrapper {
+                grid-template-columns: 1fr; /* Stack vertically */
+            }
+            .admin-sidebar {
+                position: relative;
+                top: 0;
+            }
+            .admin-nav-group {
+                flex-direction: row;
+                overflow-x: auto;
+                padding-bottom: 0.5rem;
+            }
+            .admin-side-btn {
+                width: auto;
+                white-space: nowrap;
+                border-left: 1px solid transparent; /* Reset border for mobile */
+            }
+            .admin-side-btn.active {
+                border-left: 1px solid transparent;
+                border-bottom: 4px solid var(--primary);
+                background: linear-gradient(0deg, rgba(142, 45, 226, 0.2), transparent);
+            }
+        }
 
-    /* --- New Metric Tile Styling --- */
+            /* --- New Metric Tile Styling --- */
 
-/* The grid container for the metrics */
-.metric-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr); /* 2 columns by default */
-    gap: 1rem;
-}
+        /* The grid container for the metrics */
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* 2 columns by default */
+            gap: 1rem;
+        }
 
-/* Individual Metric Tile */
-.metric-tile {
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 0.75rem;
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    transition: all 0.2s ease;
-}
+        /* Individual Metric Tile */
+        .metric-tile {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.2s ease;
+        }
 
-.metric-tile:hover {
-    border-color: rgba(255, 255, 255, 0.2);
-    background: rgba(255, 255, 255, 0.05);
-}
+        .metric-tile:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+        }
 
-.metric-tile.full-width {
-    grid-column: span 2; /* Spans across */
-}
+        .metric-tile.full-width {
+            grid-column: span 2; /* Spans across */
+        }
 
-.metric-label {
-    font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.5);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 0.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
+        .metric-label {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
 
-.metric-value {
-    font-family: 'Monaco', 'Consolas', monospace; /* Tech font */
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: white;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
+        .metric-value {
+            font-family: 'Monaco', 'Consolas', monospace; /* Tech font */
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: white;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
-/* Status Indicators */
-.status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    display: inline-block;
-}
-.status-dot.green { background-color: #10B981; box-shadow: 0 0 8px #10B981; }
-.status-dot.blue { background-color: #3B82F6; box-shadow: 0 0 8px #3B82F6; }
-.status-dot.purple { background-color: #8B5CF6; box-shadow: 0 0 8px #8B5CF6; }
+        /* Status Indicators */
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .status-dot.green { background-color: #10B981; box-shadow: 0 0 8px #10B981; }
+        .status-dot.blue { background-color: #3B82F6; box-shadow: 0 0 8px #3B82F6; }
+        .status-dot.purple { background-color: #8B5CF6; box-shadow: 0 0 8px #8B5CF6; }
 
-/* Specific Colors for Values */
-.val-green { color: #34D399; }
-.val-blue { color: #60A5FA; }
-.val-purple { color: #A78BFA; }
-.val-yellow { color: #FBBF24; }
+        /* Specific Colors for Values */
+        .val-green { color: #34D399; }
+        .val-blue { color: #60A5FA; }
+        .val-purple { color: #A78BFA; }
+        .val-yellow { color: #FBBF24; }
 
-/* --- User Management Specific Styles --- */
+        /* --- User Management Specific Styles --- */
 
-/* The Control Bar (Search & Filters) */
-.admin-toolbar {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    align-items: center;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 1rem;
-    border-radius: 0.75rem;
-    margin-bottom: 1.5rem;
-}
+        /* The Control Bar (Search & Filters) */
+        .admin-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
 
-.admin-search-wrapper {
-    flex-grow: 1;
-    position: relative;
-    min-width: 250px;
-}
+        .admin-search-wrapper {
+            flex-grow: 1;
+            position: relative;
+            min-width: 250px;
+        }
 
-.admin-search-icon {
-    position: absolute;
-    left: 1rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: rgba(255, 255, 255, 0.4);
-}
+        .admin-search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.4);
+        }
 
-.admin-search-input {
-    width: 100%;
-    padding: 0.75rem 1rem 0.75rem 2.5rem; /* Space for icon */
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 0.5rem;
-    color: white;
-    transition: all 0.2s;
-}
+        .admin-search-input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.5rem; /* Space for icon */
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.5rem;
+            color: white;
+            transition: all 0.2s;
+        }
 
-.admin-search-input:focus {
-    outline: none;
-    border-color: var(--primary);
-    background: rgba(0, 0, 0, 0.4);
-}
+        .admin-search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(0, 0, 0, 0.4);
+        }
 
-/* Tier Badges */
-.tier-badge {
-    padding: 0.25rem 0.75rem;
-    border-radius: 99px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    display: inline-block;
-}
+        /* Tier Badges */
+        .tier-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 99px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-block;
+        }
 
-.tier-basic {
-    background: rgba(148, 163, 184, 0.2);
-    color: #cbd5e1;
-    border: 1px solid rgba(148, 163, 184, 0.3);
-}
+        .tier-basic {
+            background: rgba(148, 163, 184, 0.2);
+            color: #cbd5e1;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+        }
 
-.tier-premium {
-    background: rgba(250, 204, 21, 0.2);
-    color: #fde047;
-    border: 1px solid rgba(250, 204, 21, 0.3);
-    box-shadow: 0 0 10px rgba(250, 204, 21, 0.1);
-}
+        .tier-premium {
+            background: rgba(250, 204, 21, 0.2);
+            color: #fde047;
+            border: 1px solid rgba(250, 204, 21, 0.3);
+            box-shadow: 0 0 10px rgba(250, 204, 21, 0.1);
+        }
 
-.tier-admin {
-    background: rgba(168, 85, 247, 0.2);
-    color: #d8b4fe;
-    border: 1px solid rgba(168, 85, 247, 0.3);
-    box-shadow: 0 0 10px rgba(168, 85, 247, 0.1);
-}
+        .tier-admin {
+            background: rgba(168, 85, 247, 0.2);
+            color: #d8b4fe;
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            box-shadow: 0 0 10px rgba(168, 85, 247, 0.1);
+        }
 
-/* Table Overrides for this view */
-.user-row {
-    transition: background 0.2s;
-}
-.user-row:hover {
-    background: rgba(255, 255, 255, 0.05);
-}
-.user-uid {
-    font-family: 'Monaco', 'Consolas', monospace;
-    font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.5);
-    background: rgba(0, 0, 0, 0.3);
-    padding: 2px 6px;
-    border-radius: 4px;
-}
+        /* Table Overrides for this view */
+        .user-row {
+            transition: background 0.2s;
+        }
+        .user-row:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .user-uid {
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
 
-/* --- Subscription Tab Specifics --- */
+        /* --- Subscription Tab Specifics --- */
 
-/* Nested Sub-Tab Navigation (Pill Style) */
-.sub-nav-container {
-    display: flex;
-    gap: 0.5rem;
-    background: rgba(0, 0, 0, 0.2);
-    padding: 0.25rem;
-    border-radius: 0.5rem;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    width: fit-content;
-    margin-bottom: 1.5rem;
-}
+        /* Nested Sub-Tab Navigation (Pill Style) */
+        .sub-nav-container {
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 0.25rem;
+            border-radius: 0.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            width: fit-content;
+            margin-bottom: 1.5rem;
+        }
 
-.sub-nav-btn {
-    padding: 0.5rem 1rem;
-    border-radius: 0.375rem;
-    font-size: 0.85rem;
-    color: rgba(255, 255, 255, 0.6);
-    transition: all 0.2s;
-}
+        .sub-nav-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+            transition: all 0.2s;
+        }
 
-.sub-nav-btn:hover {
-    color: white;
-    background: rgba(255, 255, 255, 0.05);
-}
+        .sub-nav-btn:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.05);
+        }
 
-.sub-nav-btn.active {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    font-weight: 600;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
+        .sub-nav-btn.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
 
-/* Finance Cards */
-.finance-card {
-    background: linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 1rem;
-    padding: 1.5rem;
-}
+        /* Finance Cards */
+        .finance-card {
+            background: linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 1rem;
+            padding: 1.5rem;
+        }
 
-/* Status Badges for Payments */
-.status-badge {
-    padding: 0.25rem 0.6rem;
-    border-radius: 6px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-.status-active { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.3); }
-.status-canceled { background: rgba(100, 116, 139, 0.2); color: #94a3b8; border: 1px solid rgba(100, 116, 139, 0.3); }
-.status-past_due { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); }
-.status-trialing { background: rgba(59, 130, 246, 0.2); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.3); }
-
-        
+        /* Status Badges for Payments */
+        .status-badge {
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .status-active { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .status-canceled { background: rgba(100, 116, 139, 0.2); color: #94a3b8; border: 1px solid rgba(100, 116, 139, 0.3); }
+        .status-past_due { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .status-trialing { background: rgba(59, 130, 246, 0.2); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.3); }
     </style>
 </head>
 
@@ -3729,7 +3791,7 @@
 // =========================================================
 // SCRIPT
 // =========================================================
-import { renderMermaidDiagram } from '../js/diagrams/diagram-renderer.mjs';
+import { renderMermaidDiagram } from '../js/diagrams/diagram-rendering.mjs';
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -4329,6 +4391,137 @@ Profit_USD ~ Sales_Performance + Customer_Metrics`;
             button.innerHTML = originalText;
         } 
         // NO finally block. We want the button to *stay* in its new state.
+    }
+
+    async function fetchOllama(systemPrompt, userContext, analysisType) {
+        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
+        const OLLAMA_MODEL = "llama3.1:latest";
+        const MAX_CONTEXT_LENGTH = 100000;
+        let userPrompt = userContext;
+        let truncatedNote = "";
+
+        if (userPrompt.length > MAX_CONTEXT_LENGTH) {
+            userPrompt = userPrompt.substring(0, MAX_CONTEXT_LENGTH);
+            truncatedNote = `(Note: Analysis based on the first ${MAX_CONTEXT_LENGTH} characters.)`;
+        }
+
+        const fullPrompt = `${systemPrompt}\n\n${userPrompt}\n\n${truncatedNote}`;
+        const response = await fetch(OLLAMA_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                model: OLLAMA_MODEL,
+                prompt: fullPrompt,
+                stream: false,
+                format: "json",
+                options: { num_ctx: 32768 }
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log(`Raw AI Response ${analysisType}:`, data.response); // Log raw response
+        return JSON.parse(data.response);
+    }
+
+
+    async function fetchGroq(systemPrompt, userContext, analysisType) {
+        const GROQ_URL = "https://matt-groq.data2int.com/api/groq/chat";
+        const GROQ_MODEL = "llama-3.1-8b-instant";
+        const messages = [
+                {"role": "system", "content": `${systemPrompt}`},
+                {"role": "user", "content": `${userContext}`}
+            ]
+
+            const response = await fetch(GROQ_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    model: GROQ_MODEL, 
+                    messages: messages, 
+                    stream: false, 
+                    response_format: { type: "json_object" }
+                })
+            });
+
+            if (!response.ok) {
+                let errorBody = `Groq API Proxy error ${response.status}`;
+                try { errorBody += `: ${await response.text()}`; } catch (e) {}
+                throw new Error(errorBody);
+            }
+            
+            const data = await response.json();
+            console.log(`Raw AI Response ${analysisType}:`, data.response); // Log raw response
+            return JSON.parse(data.choices[0].message.content);
+    }
+
+
+    async function fetchOpenRouter(systemPrompt, userContext, jsonSchema, analysisType) {
+        const OPRT_URL = "https://matt-groq.data2int.com/api/oprt/chat";
+        const OPRT_MODEL = "openai/gpt-oss-20b:free";
+        const messages = [
+                {"role": "user", "content": `${systemPrompt}\n\n${userContext}`}
+            ]
+
+        console.log("JSON Schema: ", jsonSchema);
+
+            const response = await fetch(OPRT_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    model: OPRT_MODEL, 
+                    messages: messages, 
+                    stream: false, 
+                    response_format: jsonSchema
+                })
+            });
+
+            if (!response.ok) {
+                let errorBody = `Open Router API Proxy error ${response.status}`;
+                try { errorBody += `: ${await response.text()}`; } catch (e) {}
+                throw new Error(errorBody);
+            }
+            
+            console.log(`Fetched from model: ${OPRT_MODEL}`);
+            const data = await response.json();
+            console.log(`Raw AI Response ${analysisType}:`, data.response); // Log raw response
+            return JSON.parse(data.choices[0].message.content);
+    }
+
+
+    async function fetchLLM(provider, systemPrompt, userContext, jsonSchema, analysisType) {
+        try {
+            if (provider === "ollama") {
+                return await fetchOllama(systemPrompt, userContext, analysisType);
+            } else if (provider === "groq") {
+                return await fetchGroq(systemPrompt, userContext, analysisType);
+            } else if (provider == "open-router") {
+                return await fetchOpenRouter(systemPrompt, userContext, jsonSchema, analysisType);
+            }
+        } catch (error) {
+            console.error(`Error calling ${provider}:`, error);
+            throw error;
+        }
+    }
+
+    function fitDiagram(cy) {
+        cy.fit(null, 60);
+    }
+
+    function resetZoom(cy) {
+        cy.zoom(1);
+        cy.center();
+    }
+
+    function exportPNG(cy, filename = 'diagram.png') {
+        const png = cy.png({ full: true, scale: 2, bg: '#383838cc' });
+        const link = document.createElement('a');
+        link.href = png;
+        link.download = filename;
+        link.click();
     }
 
    // =========================================================
@@ -22960,357 +23153,247 @@ function renderFitIndices(indices) {
 
 /**
  * RENDERER: System Thinking Analysis
- * - NEW (v3): This renderer is now flexible.
- * - It checks if `system_archetype` exists. If not, it assumes a "research_plan"
- * and displays `focus_areas` instead of `leverage_points` and archetypes.
- * - FIX (v4): Added checks for loop.type, finalFocusAreas, and system_archetype before access.
- * - FIX (v5): Added check for "Unanalyzable" state.
+ * - NEW (v5 - Comprehensive): This renderer is completely overhauled to handle
+ *   the rich JSON output from the new comprehensive system mapping prompt.
+ * - It creates a multi-tab view to explore the deep analysis.
  */
 function renderSystemThinkingPage(container, data) {
     container.innerHTML = ""; // Clear the loading indicator
 
-    // --- Validation for the flexible structure ---
-    if (!data || !data.summary || !data.elements || !data.causal_links ||
-        (data.system_archetype === undefined && data.focus_areas === undefined)) {
-        console.error("Incomplete data passed to renderSystemThinkingPage (v3):", data);
-        container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. Cannot render results.</div>`;
+    // --- Validation for the comprehensive new structure ---
+    if (!data || !Array.isArray(data.concepts) || !Array.isArray(data.relationships) || !Array.isArray(data.archetypes) || !Array.isArray(data.leverage_points)) {
+        console.error("Incomplete data passed to renderSystemThinkingPage (v5):", data);
+        container.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error: Incomplete analysis data received. The AI response is missing key fields like concepts, relationships, archetypes, or leverage_points.</div>`;
         $("analysisActions").classList.add("hidden");
         return;
     }
     
-    // --- NEW CHECK FOR UNANALYZABLE TEXT ---
-    // If the AI returns no elements AND (no leverage points AND no focus areas), it's unanalyzable.
-    if (data.elements.length === 0 && (!data.leverage_points || data.leverage_points.length === 0) && (!data.focus_areas || data.focus_areas.length === 0)) {
-        console.warn("Data is unanalyzable. Displaying summary as error.");
-        container.innerHTML = `<div class="p-4 text-center text-yellow-300">
-                                 <h4 class="text-xl font-bold mb-3">Analysis Incomplete</h4>
-                                 <p class="text-white/80">${data.summary}</p>
-                                 <p class="text-sm text-white/70 mt-2">Please try again with text describing a business, a system problem, or a research plan.</p>
-                               </div>`;
-        $("analysisActions").classList.add("hidden"); // Hide save buttons
-        return; // Stop rendering
-    }
-    // --- END NEW CHECK ---
-
-    // Destructure all possible fields
+    // Destructure all new fields for clarity
     const {
-        elements,
-        feedback_loops,
-        summary,
-        causal_links,
-        system_archetype,
-        focus_areas,
-        leverage_points
+        concepts,
+        relationships,
+        goals,
+        stakeholders,
+        constraints,
+        assumptions,
+        missing_factors,
+        leverage_points,
+        second_order_effects,
+        archetypes,
+        feedback_loops
     } = data;
 
-    // Determine which mode we are in
-    // A research model is identified by having `focus_areas` and no `system_archetype`.
-    const isResearchModel = (!!focus_areas && !system_archetype);
-    // Use leverage_points OR focus_areas. Ensure finalFocusAreas is an array.
-    const finalFocusAreas = focus_areas || leverage_points || [];
-
-    // --- Create Tab Navigation (5 Tabs) ---
+    // --- Create Tab Navigation (New Tabs for Deep Analysis) ---
     const tabNav = document.createElement("div");
     tabNav.className = "flex flex-wrap border-b border-white/20 -mx-6 px-6";
-    // Customize tab name based on input type
-    const focusTabName = isResearchModel ? "⚡ Key Research Questions" : "⚡ Elements & Leverage";
-    const loopTabName = (feedback_loops && feedback_loops.length > 0) ? "🔄 Feedback Loops" : "🔗 Causal Links (Hypotheses)"; // <-- Use feedback_loops to decide name
     tabNav.innerHTML = `
         <button class="analysis-tab-btn active" data-tab="dashboard">📊 Dashboard</button>
-        <button class="analysis-tab-btn" data-tab="diagram">🗺️ Causal Diagram</button>
-        <button class="analysis-tab-btn" data-tab="loops">${loopTabName}</button>
-        <button class="analysis-tab-btn" data-tab="focus">${focusTabName}</button>
-        <button class="analysis-tab-btn" data-tab="learn">🎓 Learn System Thinking</button>
+        <button class="analysis-tab-btn" data-tab="network">🕸️ System Map</button>
+        <button class="analysis-tab-btn" data-tab="variables">🔬 Variables</button>
+        <button class="analysis-tab-btn" data-tab="relations">🔗 Relationships</button>
+        <button class="analysis-tab-btn" data-tab="loops">🔄 Loops & Archetypes</button>
+        <button class="analysis-tab-btn" data-tab="strategy">🎯 Strategic Context</button>
+        <button class="analysis-tab-btn" data-tab="leverage">⚡ Leverage Points</button>
+        <button class="analysis-tab-btn" data-tab="learn">🎓 Learn</button>
     `;
     container.appendChild(tabNav);
 
-    // --- Create Tab Panels (5 Panels) ---
+    // --- Create Tab Panels ---
     const tabContent = document.createElement("div");
     container.appendChild(tabContent);
     tabContent.innerHTML = `
         <div id="dashboardPanel" class="analysis-tab-panel active"></div>
-        <div id="diagramPanel" class="analysis-tab-panel"></div>
+        <div id="networkPanel" class="analysis-tab-panel"></div>
+        <div id="variablesPanel" class="analysis-tab-panel"></div>
+        <div id="relationsPanel" class="analysis-tab-panel"></div>
         <div id="loopsPanel" class="analysis-tab-panel"></div>
-        <div id="focusPanel" class="analysis-tab-panel"></div>
+        <div id="strategyPanel" class="analysis-tab-panel"></div>
+        <div id="leveragePanel" class="analysis-tab-panel"></div>
         <div id="learnPanel" class="analysis-tab-panel"></div>
     `;
 
     // --- 1. Populate Dashboard Panel ---
     const dashboardPanel = $("dashboardPanel");
+    let dashboardHtml = `<div class="p-4 space-y-6">
+        <h3 class="text-2xl font-bold mb-4 text-center">System Analysis Dashboard</h3>`;
 
-    // Find the top focus area/leverage point
-    let topFocusHtml = "";
-    if (finalFocusAreas && finalFocusAreas.length > 0) { // <-- Added check for finalFocusAreas
-        // Find the first item (either ranked "High" or just the first in the list)
-        const topFocus = [...finalFocusAreas].sort((a, b) => { // <-- Use spread to avoid mutating original
-            const order = {
-                "High": 1,
-                "Medium": 2,
-                "Low": 3
-            };
-            // Handle both 'impact' and 'potential_impact_rank' keys
-            const rankA = order[a.potential_impact_rank || a.impact] || 4;
-            const rankB = order[b.potential_impact_rank || b.impact] || 4;
-            return rankA - rankB;
-        })[0];
-
-        const title = isResearchModel ? "Top Research Question" : "Top Leverage Point";
-        // Handle both 'description'/'intervention' and 'area_name'/'point_name'
-        const desc = topFocus.description || topFocus.intervention || "No description provided.";
-        const pointName = topFocus.area_name || topFocus.point_name || "Unnamed Point";
-
-        topFocusHtml = `
-            <div class="prescription-card border-l-4 border-red-500">
-                <h3 class="text-lg font-bold text-red-300">${title}</h3>
-                <p class="text-xl font-semibold mt-1">${pointName}</p>
-                <p class="text-sm text-white/80 mt-2"><strong>Description:</strong> ${desc}</p>
-            </div>`;
-    }
-
-    // Find the archetype (if it exists)
-    let archetypeHtml = "";
-    // Check for archetype *object* and *name property*
-    if (system_archetype && typeof system_archetype === 'object' && system_archetype.name) {
-        archetypeHtml = `
-            <div class="archetype-card">
-                <h3 class="text-lg font-bold text-indigo-300">Dominant System Archetype</h3>
-                <p class="text-2xl font-semibold mt-1">${system_archetype.name}</p>
-                <p class="text-sm text-white/80 mt-2 italic">${system_archetype.description || 'No description provided.'}</p>
-            </div>`;
-    } else if (isResearchModel) {
-        // If it's a research model, create a simpler card
-        archetypeHtml = `
-            <div class="archetype-card">
-                <h3 class="text-lg font-bold text-indigo-300">Analysis Type</h3>
-                <p class="text-2xl font-semibold mt-1">Hypothesis Model</p>
-                <p class="text-sm text-white/80 mt-2 italic">The system is a set of hypothesized causal links to be tested, not a dynamic problem archetype.</p>
-            </div>`;
-    } else {
-        // Fallback if archetype is null/undefined but not a research model
-        archetypeHtml = `
-            <div class="archetype-card">
-                <h3 class="text-lg font-bold text-indigo-300">Dominant System Archetype</h3>
-                <p class="text-2xl font-semibold mt-1">Not Identified</p>
-                <p class="text-sm text-white/80 mt-2 italic">No single dominant archetype was identified from the text.</p>
-            </div>`;
-    }
-
-    dashboardPanel.innerHTML = `
-        <div class="p-4 space-y-6">
-            <h3 class="text-2xl font-bold mb-4 text-center">System Analysis Dashboard</h3>
-            <blockquote class="p-4 italic border-l-4 border-gray-500 bg-black/20 text-white/90 text-sm">
-                <strong>Analysis Summary:</strong> ${summary}
-            </blockquote>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                ${archetypeHtml}
-                ${topFocusHtml}
-            </div>
+    // Top Archetype
+    if (archetypes && archetypes.length > 0) {
+        dashboardHtml += `
+        <div class="archetype-card">
+            <h3 class="text-lg font-bold text-indigo-300">Dominant System Archetype</h3>
+            <p class="text-2xl font-semibold mt-1">${archetypes[0].name}</p>
+            <p class="text-sm text-white/80 mt-2 italic">${archetypes[0].description || 'No description.'}</p>
         </div>`;
-
-    // --- 2. Populate Causal Loop Diagram Panel ---
-    const diagramPanel = $("diagramPanel");
-    const diagramTitle = isResearchModel ? "Hypothesis Model Diagram" : "Causal Loop Diagram (CLD)";
-    diagramPanel.innerHTML = `
-        <div class="p-4">
-            <h3 class="text-2xl font-bold mb-4 text-center">${diagramTitle}</h3>
-            <p class="text-sm text-white/70 text-center mb-4 italic">This diagram shows the causal relationships between system elements.</p>
-            <div id="cldGraphContainer" class="w-full min-h-[600px] flex justify-center items-center bg-black/10 rounded-lg">
-                <p class="text-white/70">Rendering diagram...</p>
-            </div>
-            <div id="cldKey" class="mt-4 text-xs text-white/70 text-center space-x-4"></div>
-        </div>`;
-
-    try {
-        // This assumes buildDotString is available in the global scope and has the fix
-        const dotString = buildDotString(elements, causal_links, feedback_loops);
-        const viz = new Viz();
-        viz.renderSVGElement(dotString)
-            .then(svgElement => {
-                const container = $("cldGraphContainer");
-                container.innerHTML = "";
-                svgElement.style.width = "100%";
-                svgElement.style.height = "auto";
-                container.appendChild(svgElement);
-
-                // Add key
-                const keyContainer = $("cldKey");
-                let keyHtml = "";
-                if (feedback_loops && feedback_loops.length > 0) {
-                    // --- START FIX ---
-                    // Check for loop types again with safety
-                    const hasR = feedback_loops.some(l => l && l.type && typeof l.type === 'string' && l.type.toLowerCase() === 'reinforcing');
-                    const hasB = feedback_loops.some(l => l && l.type && typeof l.type === 'string' && l.type.toLowerCase() === 'balancing');
-                    // --- END FIX ---
-                    if (hasR) keyHtml += `<span><span class="inline-block w-3 h-3 rounded-full bg-green-400 mr-1"></span> Reinforcing Loop</span> `;
-                    if (hasB) keyHtml += `<span><span class="inline-block w-3 h-3 rounded-full bg-yellow-400 mr-1"></span> Balancing Loop</span>`;
-                }
-                keyHtml += `<span><span class="inline-block w-3 h-0.5 bg-white mr-1" style="transform: translateY(-2px);"></span> (+) Same Direction</span> <span><span class="inline-block w-3 h-0.5 bg-white mr-1" style="transform: translateY(-2px); clip-path: polygon(0% 0%, 75% 0%, 75% 100%, 0% 100%);">T</span> (-) Opposite Direction</span>`;
-                keyContainer.innerHTML = keyHtml;
-            })
-            .catch(error => {
-                console.error("Viz.js rendering error:", error);
-                $("cldGraphContainer").innerHTML = `<p class="text-red-400">Error rendering diagram: ${error.message}</p>`;
-            });
-    } catch (e) {
-        console.error("Error creating DOT string or initializing Viz.js:", e);
-        $("cldGraphContainer").innerHTML = `<p class="text-red-400">Error initializing diagram: ${e.message}</p>`;
     }
 
+    // Top Leverage Point
+    if (leverage_points && leverage_points.length > 0) {
+        const topLeverage = [...leverage_points].sort((a,b) => a.level - b.level)[0];
+        dashboardHtml += `
+        <div class="prescription-card border-l-4 border-red-500">
+            <h3 class="text-lg font-bold text-red-300">Top Leverage Point (Level ${topLeverage.level})</h3>
+            <p class="text-xl font-semibold mt-1">${topLeverage.type}</p>
+            <p class="text-sm text-white/80 mt-2"><strong>Recommendation:</strong> ${topLeverage.recommendation}</p>
+        </div>`;
+    }
+    
+    // Summary cards
+    dashboardHtml += `<div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+        <div class="summary-stat-card"><p class="font-bold text-3xl">${concepts.length}</p><p class="text-xs">Variables</p></div>
+        <div class="summary-stat-card"><p class="font-bold text-3xl">${relationships.length}</p><p class="text-xs">Relationships</p></div>
+        <div class="summary-stat-card"><p class="font-bold text-3xl">${feedback_loops.length}</p><p class="text-xs">Feedback Loops</p></div>
+        <div class="summary-stat-card"><p class="font-bold text-3xl">${archetypes.length}</p><p class="text-xs">Archetypes</p></div>
+    </div></div>`;
+    dashboardPanel.innerHTML = dashboardHtml;
 
-    // --- 3. Populate Feedback Loops / Causal Links Panel ---
+    // --- 2. Populate System Map (Network) Panel ---
+    // This is deferred until the tab is clicked, but we set up the container.
+    const networkPanel = $("networkPanel");
+    networkPanel.innerHTML = `
+    <div class="p-4"><h3 class="text-2xl font-bold mb-4 text-center">System Map</h3>
+        <div id="systemNetworkChart" class="w-full h-[700px] bg-black/10 rounded-lg"></div>
+        <div class="diagram-controls flex justify-center gap-2 mt-4">
+            <button class="diagram-fit-btn" data-action="fit">Fit to View</button>
+            <button class="diagram-reset-btn" data-action="reset">Reset Zoom</button>
+            <button class="diagram-export-btn" data-action="export">Export as PNG</button>
+        </div>
+    </div>`;
+    
+    // --- 3. Populate Variables Panel ---
+    const variablesPanel = $("variablesPanel");
+    let variablesHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">System Variables (Concepts)</h3><div class="overflow-x-auto"><table class="coeff-table styled-table text-sm">
+        <thead><tr><th>Name</th><th>Type</th><th>Leverage Lvl (1-12)</th><th>Description</th></tr></thead><tbody>`;
+    concepts.forEach(c => {
+        variablesHtml += `<tr>
+            <td class="font-semibold">${c.name}</td>
+            <td>${c.type}</td>
+            <td class="text-center">${c.leverage_level}</td>
+            <td class="text-white/80">${c.description}</td>
+        </tr>`;
+    });
+    variablesHtml += `</tbody></table></div></div>`;
+    variablesPanel.innerHTML = variablesHtml;
+    
+    // --- 4. Populate Relationships Panel ---
+    const relationsPanel = $("relationsPanel");
+    let relationsHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">Causal Relationships</h3><div class="overflow-x-auto"><table class="coeff-table styled-table text-sm">
+        <thead><tr><th>From</th><th>To</th><th>Polarity</th><th>Strength</th><th>Delay</th><th>Evidence</th></tr></thead><tbody>`;
+    relationships.forEach(r => {
+        relationsHtml += `<tr>
+            <td class="font-semibold">${r.from}</td>
+            <td class="font-semibold">${r.to}</td>
+            <td class="text-center font-bold ${r.polarity === '+' ? 'text-green-400' : 'text-red-400'}">${r.polarity}</td>
+            <td>${r.strength}</td>
+            <td>${r.delay}</td>
+            <td class="text-white/80 italic">"${r.evidence}"</td>
+        </tr>`;
+    });
+    relationsHtml += `</tbody></table></div></div>`;
+    relationsPanel.innerHTML = relationsHtml;
+    
+    // --- 5. Populate Loops & Archetypes Panel ---
     const loopsPanel = $("loopsPanel");
-    let loopsHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4 text-center">${loopTabName}</h3><div class="space-y-6">`;
-    if (feedback_loops && feedback_loops.length > 0) {
-        // Mode A: Dynamic Problem
-        feedback_loops.forEach((loop) => {
-            // --- START FIX ---
-            // Check if loop and loop.type are valid before calling toLowerCase()
-            const loopType = (loop && loop.type && typeof loop.type === 'string') ? loop.type.toLowerCase() : 'unknown';
-            const isReinforcing = loopType === "reinforcing";
-            // --- END FIX ---
-
-            const loopIcon = isReinforcing ? "📈" : "⚖️";
-            const loopColor = isReinforcing ? "border-green-400" : "border-yellow-400";
-            const elementsList = Array.isArray(loop.elements) ? loop.elements.join(", ") : 'Elements not specified';
-            const loopTypeName = loop.type || 'Type N/A'; // <-- Use safe value for display
-            const loopName = loop.name || loop.loop_name || "Unnamed Loop"; // <-- Handle missing name
-
-            loopsHtml += `
-                <div class="bg-black/20 p-4 rounded-lg border-l-4 ${loopColor}">
-                    <h4 class="text-lg font-bold flex items-center gap-2">${loopIcon} ${loopName} <span class="text-xs font-light text-white/60">(${loopTypeName})</span></h4>
-                    <p class="text-sm text-white/80 my-3 italic"><strong>Causal Chain:</strong> ${loop.description || 'No description provided.'}</p>
-                    <div class="text-xs text-white/60"><strong>Key Elements Involved:</strong> ${elementsList}</div>
-                </div>`;
-        });
-    } else if (isResearchModel && causal_links.length > 0) {
-        // Mode B: Research Plan
-        causal_links.forEach((link) => {
-            loopsHtml += `
-                <div class="bg-black/20 p-4 rounded-lg border-l-4 border-blue-400">
-                    <h4 class="text-lg font-bold flex items-center gap-2">🔗 ${link.description || `${link.from} -> ${link.to}`}</h4>
-                    <p class="text-sm text-white/80 my-3 font-mono"><code>${link.from}</code> --( ${link.polarity} )--> <code>${link.to}</code></p>
-                </div>`;
-        });
-    } else {
-        loopsHtml += `<p class="text-center text-white/70 italic">No feedback loops or causal links were identified from the text.</p>`;
-    }
+    let loopsHtml = `<div class="p-4 space-y-8">`;
+    // Archetypes
+    loopsHtml += `<div><h3 class="text-2xl font-bold mb-4">System Archetypes</h3><div class="space-y-4">`;
+    archetypes.forEach(a => {
+        loopsHtml += `<div class="archetype-card p-4">
+            <h4 class="text-xl font-bold text-indigo-300">${a.name}</h4>
+            <p class="text-sm text-white/80 my-2 italic">${a.description}</p>
+            <p class="text-xs text-white/60"><strong>Dynamic:</strong> ${a.dynamic}</p>
+            <p class="text-xs text-white/60"><strong>Nodes:</strong> ${a.nodes_involved.join(", ")}</p>
+        </div>`;
+    });
     loopsHtml += `</div></div>`;
+    // Feedback Loops
+    loopsHtml += `<div><h3 class="text-2xl font-bold mb-4">Feedback Loops</h3><div class="space-y-4">`;
+    feedback_loops.forEach(l => {
+        const isReinforcing = l.type === 'reinforcing';
+        loopsHtml += `<div class="bg-black/20 p-4 rounded-lg border-l-4 ${isReinforcing ? 'border-green-400' : 'border-yellow-400'}">
+            <h4 class="text-lg font-bold">${isReinforcing ? '📈' : '⚖️'} ${l.type.toUpperCase()} Loop</h4>
+            <p class="text-sm text-white/80 my-2 italic">${l.description}</p>
+            <p class="text-xs text-white/60"><strong>Variables:</strong> ${l.variables.join(" → ")} → ...</p>
+        </div>`;
+    });
+    loopsHtml += `</div></div></div>`;
     loopsPanel.innerHTML = loopsHtml;
-
-    // --- 4. Populate Elements & Focus Panel ---
-    const focusPanel = $("focusPanel");
-    let focusHtml = `<div class="p-4 space-y-8">
-                        <div>
-                            <h3 class="text-2xl font-bold mb-4 text-center">Key System Elements</h3>
-                            <div class="overflow-x-auto">
-                                <table class="coeff-table styled-table text-sm">
-                                    <thead><tr><th>Element Name</th><th>Type</th><th>Role in Model</th></tr></thead>
-                                    <tbody>`;
-    elements.forEach(el => {
-        let description = "A key construct in the model.";
-        if (causal_links.some(l => l.from === el.name) && !causal_links.some(l => l.to === el.name)) {
-            description = "Exogenous Driver (Predictor)";
-        } else if (!causal_links.some(l => l.from === el.name) && causal_links.some(l => l.to === el.name)) {
-            description = "Endogenous Outcome (Result)";
-        } else if (causal_links.some(l => l.from === el.name) && causal_links.some(l => l.to === el.name)) {
-            description = "Mediating Variable (Driver & Outcome)";
-        }
-
-        focusHtml += `<tr>
-                            <td class="font-semibold">${el.name}</td>
-                            <td class="font-mono text-xs">${el.type}</td>
-                            <td class="text-white/70">${description}</td>
-                         </tr>`;
+    
+    // --- 6. Populate Strategic Context Panel ---
+    const strategyPanel = $("strategyPanel");
+    let strategyHtml = `<div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-black/20 p-4 rounded-lg">
+            <h4 class="text-lg font-bold mb-2 text-indigo-300">Goals</h4>
+            <ul class="list-disc list-inside text-sm space-y-1">${goals.map(g => `<li>${g}</li>`).join('')}</ul>
+        </div>
+        <div class="bg-black/20 p-4 rounded-lg">
+            <h4 class="text-lg font-bold mb-2 text-indigo-300">Stakeholders</h4>
+            <ul class="list-disc list-inside text-sm space-y-1">${stakeholders.map(s => `<li>${s}</li>`).join('')}</ul>
+        </div>
+        <div class="bg-black/20 p-4 rounded-lg">
+            <h4 class="text-lg font-bold mb-2 text-yellow-400">Constraints</h4>
+            <ul class="list-disc list-inside text-sm space-y-1">${constraints.map(c => `<li>${c}</li>`).join('')}</ul>
+        </div>
+        <div class="bg-black/20 p-4 rounded-lg">
+            <h4 class="text-lg font-bold mb-2 text-yellow-400">Assumptions</h4>
+            <ul class="list-disc list-inside text-sm space-y-1">${assumptions.map(a => `<li>${a}</li>`).join('')}</ul>
+        </div>
+        <div class="bg-black/20 p-4 rounded-lg col-span-1 md:col-span-2">
+            <h4 class="text-lg font-bold mb-2 text-red-400">Risks & Second-Order Effects</h4>
+            <p class="text-sm text-white/70 mb-2"><strong>Missing Factors:</strong> ${missing_factors.join(", ")}</p>
+            <ul class="text-sm space-y-2 mt-4">${second_order_effects.map(e => `
+                <li class="border-t border-white/10 pt-2">
+                    <strong>Action:</strong> ${e.action}<br>
+                    <span class="text-green-400"><strong>Immediate:</strong> ${e.immediate}</span> → 
+                    <span class="text-red-400"><strong>Delayed (${e.timeline}):</strong> ${e.delayed}</span>
+                </li>`).join('')}
+            </ul>
+        </div>
+    </div>`;
+    strategyPanel.innerHTML = strategyHtml;
+    
+    // --- 7. Populate Leverage Points Panel ---
+    const leveragePanel = $("leveragePanel");
+    let leverageHtml = `<div class="p-4"><h3 class="text-2xl font-bold mb-4">Leverage Points (after Donella Meadows)</h3><div class="space-y-6">`;
+    [...leverage_points].sort((a,b) => a.level - b.level).forEach(lp => {
+        leverageHtml += `<div class="prescription-card border-l-4" style="border-color: hsl(${lp.level * 25}, 70%, 50%)">
+            <h4 class="text-xl font-bold">Level ${lp.level}: ${lp.type}</h4>
+            <p class="text-sm my-2 text-white/80">${lp.description}</p>
+            <div class="p-3 bg-black/20 rounded mt-3 text-sm">
+                <p><strong>Impact:</strong> <span class="font-semibold">${lp.impact}</span></p>
+                <p><strong>Recommendation:</strong> ${lp.recommendation}</p>
+            </div>
+        </div>`;
     });
-    focusHtml += `</tbody></table></div></div>`;
+    leverageHtml += `</div></div>`;
+    leveragePanel.innerHTML = leverageHtml;
 
-    // Focus Areas / Leverage Points Section
-    focusHtml += `<div><h3 class="text-2xl font-bold mb-4 text-center">${focusTabName}</h3><div class="space-y-6">`;
-    const sortedFocusAreas = [...finalFocusAreas].sort((a, b) => {
-        const order = {
-            "High": 1,
-            "Medium": 2,
-            "Low": 3
-        };
-        const rankA = order[a.potential_impact_rank || a.impact] || 4;
-        const rankB = order[b.potential_impact_rank || b.impact] || 4;
-        return rankA - rankB;
-    });
-    sortedFocusAreas.forEach((point, index) => {
-        const impact = point.potential_impact_rank || point.impact;
-        let borderColor = "border-indigo-400";
-        if (impact === "High") borderColor = "border-red-500";
-        else if (impact === "Medium") borderColor = "border-yellow-500";
-        else if (impact === "Low") borderColor = "border-blue-500";
-
-        const pointName = point.area_name || point.point_name;
-        const pointDesc = point.description || point.intervention;
-        const pointRationale = point.rationale;
-        const pointOutcome = point.expected_outcome;
-
-        focusHtml += `
-            <div class="prescription-card ${borderColor}">
-                 <h4 class="text-xl font-bold">${index + 1}. ${pointName}</h4>
-                 ${impact ? `<p class="text-xs font-semibold my-1 ${borderColor.replace('border-', 'text-')}">${impact}</p>` : ''}
-                 <p class="rationale mt-3"><strong>Description/Intervention:</strong> ${pointDesc}</p>
-                 ${pointRationale ? `<p class="text-sm text-white/80 mt-2 italic"><strong>Rationale:</strong> ${pointRationale}</p>` : ''}
-                 ${pointOutcome ? `<div class="p-3 bg-black/20 rounded mt-3 text-sm"><p><strong>Expected Outcome:</strong> ${pointOutcome}</p></div>` : ''}
-            </div>`;
-    });
-    focusHtml += `</div></div></div>`;
-    focusPanel.innerHTML = focusHtml;
-
-    // --- 5. Populate Learn System Thinking Panel (Unchanged) ---
+    // --- 8. Populate Learn Panel ---
     const learnPanel = $("learnPanel");
     learnPanel.innerHTML = `
     <div class="p-6 space-y-6 text-white/90">
         <h3 class="text-2xl font-bold text-center mb-4">🎓 Understanding System Thinking</h3>
-        
         <div class="bg-black/20 p-4 rounded-lg">
             <h4 class="text-lg font-bold mb-2 text-indigo-300">What is System Thinking?</h4>
-            <p class="text-sm text-white/80">System thinking is a holistic approach to analysis that focuses on how a system's constituent parts interrelate and how systems work over time and within the context of larger systems. It contrasts with traditional analysis, which studies systems by breaking them down into their separate elements.</p>
+            <p class="text-sm text-white/80">System thinking is a holistic approach to analysis that focuses on how a system's constituent parts interrelate and how systems work over time and within the context of larger systems. This analysis extracts variables, relationships, and feedback loops to build a comprehensive model of your situation.</p>
         </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-white/5 p-4 rounded-lg border border-white/10">
-                <h4 class="text-lg font-bold mb-2">Key Concepts:</h4>
-                <ul class="list-disc list-inside space-y-2 text-sm">
-                    <li><strong>Interconnectedness:</strong> Elements within a system are interconnected; changing one part affects others.</li>
-                    <li><strong>Feedback Loops:</strong> Circular causal relationships that amplify (reinforcing) or stabilize (balancing) change. </li>
-                    <li><strong>Stocks & Flows:</strong> Stocks are accumulations (like water in a tub); Flows are the rates that change stocks (like the faucet and drain).</li>
-                    <li><strong>Delays:</strong> Time lags between actions and their effects, often causing oscillations or overshoots.</li>
-                    <li><strong>Leverage Points:</strong> Places in a system where a small change can have a large effect.</li>
-                </ul>
-            </div>
-            <div class="bg-white/5 p-4 rounded-lg border border-white/10">
-                <h4 class="text-lg font-bold mb-2">Why Use System Thinking?</h4>
-                 <ul class="list-disc list-inside space-y-1 text-sm">
-                    <li><strong>See the Bigger Picture:</strong> Understand context and connections.</li>
-                    <li><strong>Identify Root Causes:</strong> Move beyond addressing symptoms to find underlying structural issues.</li>
-                    <li><strong>Find High-Leverage Interventions:</strong> Identify points where small efforts yield significant results.</li>
-                    <li><strong>Anticipate Unintended Consequences:</strong> Recognize how changes might ripple through the system.</li>
-                 </ul>
-            </div>
-        </div>
-
-         <details class="styled-details text-sm mt-4" open>
+        <details class="styled-details text-sm mt-4" open>
             <summary class="font-semibold">Common System Archetypes (Recurring Patterns)</summary>
             <div class="bg-black/20 p-4 rounded-b-lg space-y-2">
-                <p><strong>Limits to Growth:</strong> Growth eventually slows or stops due to a limiting factor (a balancing loop).</p>
-                <p><strong>Shifting the Burden:</strong> Using a short-term fix distracts from or undermines a fundamental long-term solution.</p>
-                <p><strong>Fixes that Fail:</strong> A solution creates unintended consequences elsewhere that worsen the original problem later.</p>
-                <p><strong>Tragedy of the Commons:</strong> Individuals overusing a shared resource deplete it for everyone.</p>
+                <p><strong>Limits to Growth:</strong> Growth eventually slows or stops due to a limiting factor.</p>
+                <p><strong>Shifting the Burden:</strong> Using a short-term fix distracts from a fundamental solution.</p>
+                <p><strong>Fixes that Fail:</strong> A solution creates unintended consequences that worsen the original problem.</p>
+                <p><strong>Success to the Successful:</strong> One group gets more resources, leading to even better performance and more resources, starving others.</p>
             </div>
         </details>
-         <p class="text-xs text-center text-white/60 mt-4">This tool analyzes your text to identify elements, causal links, and key focus areas to help you understand the structure of your system.</p>
     </div>
     `;
 
     // --- NEW: Animate the new content ---
-    const newElementsToAnimate = container.querySelectorAll(
-        '.glass-container, .feature-card, .project-card, .kpi-card, .summary-stat-card, .prescription-card, .insight-card, .action-card, .ladder-rung, .dissonance-pole, .cascade-objective, .cascade-goal-card, .st-objective-card, .st-goal-card, .feedback-card, .plotly-chart, .styled-table'
-    );
-    animateElements(newElementsToAnimate);
+    // const newElementsToAnimate = container.querySelectorAll(
+    //     '.glass-container, .feature-card, .project-card, .kpi-card, .summary-stat-card, .prescription-card, .insight-card, .action-card, .ladder-rung, .dissonance-pole, .cascade-objective, .cascade-goal-card, .st-objective-card, .st-goal-card, .feedback-card, .plotly-chart, .styled-table'
+    // );
+    // animateElements(newElementsToAnimate);
 
     // --- Final Touches ---
     analysisCache[currentTemplateId] = container.innerHTML; // Cache result
@@ -23325,21 +23408,203 @@ function renderSystemThinkingPage(container, data) {
             const targetPanel = $(targetPanelId);
             if (targetPanel) {
                 targetPanel.classList.add("active");
-                // Resize diagram if its tab is clicked
-                if (targetPanelId === "diagramPanel") {
-                    const svg = targetPanel.querySelector("svg");
-                    if (svg) {
-                        // Viz.js SVG should resize automatically
+                if (e.target.dataset.tab === 'network') {
+                    // Render the network chart only when its tab is clicked for the first time
+                    const chartDiv = $('systemNetworkChart');
+                    if (chartDiv && !chartDiv.hasChildNodes()) {
+                        let cy = renderSystemNetworkTab(concepts, relationships, chartDiv);
+                        document.querySelector('.diagram-fit-btn').addEventListener('click', () => fitDiagram(cy));
+                        document.querySelector('.diagram-reset-btn').addEventListener('click', () => resetZoom(cy));
+                        document.querySelector('.diagram-export-btn').addEventListener('click', () => exportPNG(cy));
                     }
                 }
-            } else {
-                console.warn("Target panel not found:", targetPanelId);
             }
         }
     });
 
     $("analysisActions").classList.remove("hidden"); // Show save buttons
 }
+
+
+
+/**
+ * RENDERER: System Network Diagram (with Cytoscape.js)
+ * - NEW (v3 - Cytoscape): Replaces Plotly.js with Cytoscape.js for dynamic, automatic graph layout.
+ * - Retains all data-driven styling: node size/color, edge width/color.
+ * - Implements a simple hover tooltip to display node details.
+ */
+function renderSystemNetworkTab(concepts, relationships, containerId) {
+    //const container = $(containerId);
+    if (!containerId) return;
+
+    // Robustly filter and normalize relationships.
+    const nodesForFilter = concepts.map(c => ({ id: c.name, ...c }));
+    const canonicalNameMap = new Map();
+    nodesForFilter.forEach(node => {
+        canonicalNameMap.set(node.id.trim().toLowerCase(), node.id);
+    });
+    const validRelationships = relationships.reduce((acc, link) => {
+        if (link.from && link.to) {
+            const fromLower = link.from.trim().toLowerCase();
+            const toLower = link.to.trim().toLowerCase();
+            if (canonicalNameMap.has(fromLower) && canonicalNameMap.has(toLower)) {
+                acc.push({ ...link, from: canonicalNameMap.get(fromLower), to: canonicalNameMap.get(toLower) });
+            }
+        }
+        return acc;
+    }, []);
+
+    // Transform data for Cytoscape.
+    const cyNodes = concepts.map(c => ({
+        group: 'nodes',
+        data: { id: c.name, label: c.name, ...c }
+    }));
+
+    let nodeArray = cyNodes.slice(); // Use slice() to create a copy
+
+    // 2. Perform the Fisher-Yates (or equivalent) shuffle
+    for (let i = nodeArray.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [nodeArray[i], nodeArray[j]] = [nodeArray[j], nodeArray[i]];
+}
+
+    const strengthMap = { 'weak': 1, 'medium': 2, 'strong': 3 };
+    const cyEdges = validRelationships.map(r => ({
+        group: 'edges',
+        data: {
+            id: `${r.from}->${r.to}_${Math.random()}`, // Add random to avoid duplicate IDs
+            source: r.from,
+            target: r.to,
+            strengthNum: strengthMap[r.strength] || 1,
+            ...r
+        }
+    }));
+    const elements = [...nodeArray, ...cyEdges];
+
+    // Define style mappings
+    const typeToColor = { 'driver': '#FBBC05', 'outcome': '#4285F4', 'constraint': '#EA4335', 'resource': '#34A853' };
+    const polarityToColor = { '+': 'rgba(52, 168, 83, 0.9)', '-': 'rgba(234, 67, 53, 0.9)' };
+
+    // Initialize Cytoscape
+    try {
+        const cy = cytoscape({
+            container: containerId,
+            elements: elements,
+            // Zoom and pan settings
+            zoom: 1,
+            minZoom: 0.2,
+            maxZoom: 5,
+            zoomingEnabled: true,
+            userZoomingEnabled: true,
+            panningEnabled: true,
+            userPanningEnabled: true,
+            style: [
+                {
+                    selector: 'node',
+                    style: {
+                        'label': 'data(label)',
+                        'font-size': '12px',
+                        'color': '#fff',
+                        'text-valign': 'bottom',
+                        'text-halign': 'center',
+                        'text-margin-y': '5px',
+                        'text-wrap': 'wrap',
+                        'text-max-width': '80px',
+                        // Node size based on leverage level (lower number = higher leverage = bigger size)
+                        'width': 'mapData(leverage_level, 12, 1, 20, 70)',
+                        'height': 'mapData(leverage_level, 12, 1, 20, 70)',
+                        // Node color based on variable type
+                        'background-color': (ele) => typeToColor[ele.data('type')] || '#808080',
+                    }
+                },
+                {
+                    selector: 'edge',
+                    style: {
+                        'curve-style': 'bezier',
+                        'target-arrow-shape': 'triangle',
+                        // Edge width based on relationship strength.
+                        'width': 'mapData(strengthNum, 1, 3, 1, 5)',
+                        // Edge color based on polarity.
+                        'line-color': (ele) => polarityToColor[ele.data('polarity')] || '#808080',
+                        'target-arrow-color': (ele) => polarityToColor[ele.data('polarity')] || '#808080',
+                    }
+                },
+                { // Style for showing selection
+                    selector: 'node:selected',
+                    style: { 'border-width': 3, 'border-color': '#fff' }
+                }
+            ],
+            layout: {
+                name: 'circle',
+                fit: true,
+                avoidOverlap: true,
+            }
+        });
+        
+        // Show tooltip on hover.
+        cy.on('mouseover', 'node', function(event) {
+            const node = event.target;
+            const data = node.data();
+            const tooltipText = `<b>${data.label}</b><br>Type: ${data.type}<br>Leverage: ${data.leverage_level}<br>Desc: <i>${data.description}</i>`;
+            
+            let tooltip = document.getElementById('cy-tooltip');
+            if (!tooltip) {
+                tooltip = document.createElement('div');
+                tooltip.id = 'cy-tooltip';
+                tooltip.style.position = 'fixed';
+                tooltip.style.padding = '8px';
+                tooltip.style.backgroundColor = 'rgba(20, 20, 20, 0.85)';
+                tooltip.style.color = 'white';
+                tooltip.style.border = '1px solid #555';
+                tooltip.style.borderRadius = '5px';
+                tooltip.style.fontSize = '12px';
+                tooltip.style.pointerEvents = 'none';
+                tooltip.style.zIndex = '10000';
+                tooltip.style.display = 'none';
+                document.body.appendChild(tooltip);
+            }
+    
+            tooltip.innerHTML = tooltipText;
+            tooltip.style.display = 'block';
+
+            // Position using native mouse coordinates.
+            const mouseX = event.originalEvent.clientX;
+            const mouseY = event.originalEvent.clientY;
+            tooltip.style.left = mouseX + 15 + 'px';
+            tooltip.style.top = mouseY - 15 + 'px';
+        });
+
+        // Hide tooltip when the mouse moves off of a node.
+        cy.on('mouseout', 'node', function(event) {
+            const tooltip = document.getElementById('cy-tooltip');
+            if (tooltip) {
+                tooltip.style.display = 'none';
+            }
+        });
+
+        // Hide tooltip on drag.
+        cy.on('drag', 'node', function(event) {
+            const tooltip = document.getElementById('cy-tooltip');
+            if (tooltip) {
+                tooltip.style.display = 'none';
+            }
+        });
+
+        // Fit the diagram to the viewport.
+        cy.fit();
+
+        return cy;
+    } catch (e) {
+        console.error("Failed to render Cytoscape Systems Thinking Network diagram:", e);
+        containerId.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error rendering diagram: ${e.message}</div>`;
+    }
+
+    return;
+}
+
+
+
+
 /**
  * Helper function to build a DOT string for Viz.js from analysis data.
  * --- FIX v2 --- Added safety checks for loop and loop.type
@@ -28241,155 +28506,296 @@ function renderLeveragePointsPage(container, data) {
 
 /**
  * HANDLER: System Thinking Analysis
- * - NEW (v4 - Unified Prompt): Abandons rigid classification.
- * - This single, intelligent prompt asks the AI to find *all* components.
- * - It instructs the AI that if the text is a research plan, `feedback_loops`
- * and `system_archetype` will be null, and it should populate `causal_links`
- * and `focus_areas` instead. This forces accuracy based on the *context*.
+ * - NEW (v5 - Comprehensive Mapping): Uses a highly detailed prompt to extract
+ *   a rich, structured model of the system including variables, relationships,
+ *   archetypes, leverage points, and strategic context. This provides a much
+ *   deeper analysis than previous versions.
  */
 async function handleSystemThinkingAnalysis() {
-        const analysisResultContainer = $("analysisResult");
-        analysisResultContainer.innerHTML = `
-            <div class="text-center text-white/70 p-8">
-                <div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div>
-                <h3 class="text-xl font-semibold text-white mb-4">Analyzing System Context...</h3>
-                <p class="text-white/80 mb-2">Reading and interpreting your provided text...</p>
-            </div>`;
-        setLoading("generate", true);
+    const analysisResultContainer = $("analysisResult");
+    analysisResultContainer.innerHTML = `
+        <div class="text-center text-white/70 p-8">
+            <div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class.typing-dot"></div> </div>
+            <h3 class="text-xl font-semibold text-white mb-4">Performing Comprehensive System Analysis...</h3>
+            <p class="text-white/80 mb-2">This deep analysis may take a moment. Extracting variables, relationships, and archetypes...</p>
+        </div>`;
+    setLoading("generate", true);
 
-        // Define URL and Model
-        const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
-        const MODEL_NAME = "llama3.1:latest";
+    const provider = "open-router" //$("providerSelect").value;
+    const analysisType = "(Systems Thinking)";
+    let text = "";
+    
+    try {
+        // 1. Gather Inputs
+        const useDoc = document.querySelector('input[name="inputType"]:checked').id === "docUpload";
+        if (useDoc) {
+            const file = $("systemFile").files[0];
+            if (!file) throw new Error("Please select a document to upload.");
+            text = await extractTextFromFile(file);
+        } else {
+            text = $("systemContent").value.trim();
+            if (!text.trim()) throw new Error("Please describe the system.");
+        }
 
-        let text = "";
-        let truncatedNote = "";
-        
-        try {
-            // 1. Gather Inputs
-            const useDoc = document.querySelector('input[name="inputType"]:checked').id === "docUpload";
-            if (useDoc) {
-                const file = $("systemFile").files[0];
-                if (!file) throw new Error("Please select a document to upload.");
-                text = await extractTextFromFile(file);
-            } else {
-                text = $("systemContent").value.trim();
-                if (!text.trim()) throw new Error("Please describe the system.");
-            }
-
-            // --- NEW: INJECT LOCATION ---
+        // --- NEW: INJECT LOCATION ---
             const location = $("systemLocation").value.trim();
             if (location) {
                 text = `Target Location/Region: ${location}\n\n${text}`;
                 console.log("Injected location into System Thinking prompt:", location);
             }
-            // --- END NEW LOGIC ---
 
-            // Truncate if necessary
-            const MAX_CONTEXT_LENGTH = 15000;
-            if (text.length > MAX_CONTEXT_LENGTH) {
-                text = text.substring(0, MAX_CONTEXT_LENGTH);
-                truncatedNote = `(Note: Analysis based on the first ${MAX_CONTEXT_LENGTH} characters.)`;
-                console.warn(`System Thinking analysis context truncated.`);
-            }
+        // 2. --- STEP 2: Run the new Comprehensive Analysis Prompt ---
+        analysisResultContainer.querySelector("p").textContent = "Running comprehensive system mapping...";
+        
+        // This new prompt a bit more detailed, asking for a full system map.
+        const systemPrompt = `You are an expert systems analyst trained in causal mapping, Donella Meadows' leverage points, and Peter Senge's system archetypes.
+            **CRITICAL INSTRUCTIONS:**
+                1. Read the ENTIRE user-provided context carefully. 
+                2. Extract 15-25 key variables (not just 5-8!).
+                3. Identify ALL causal relationships mentioned or implied.
+                4. Look for feedback loops explicitly.
+                5. Identify system archetypes (Success to Successful, Limits to Growth, Shifting the Burden, etc.).
+                6. Assign leverage levels based on Meadows' framework.
+                7. **Self-Correction:** Before outputting JSON, rigorously check: Is the JSON structure perfect? Fix all errors, if present.
 
-            // 2. --- STEP 2: Run the Unified Analysis Prompt ---
-            analysisResultContainer.querySelector("p").textContent = "Running unified analysis...";
-            
-            const analysis_prompt = `
-                You are a master systems thinking analyst. Your task is to intelligently analyze the provided text and extract its systemic components.
-                You MUST first determine the text's *intent*.
-                - If the text is a **research plan or hypothesis list** (e.g., "H1: X -> Y", "Our study will..."), your job is to map *that* model. ` +
-                  `You will find causal_links and focus_areas. In this case, feedback_loops MUST be an empty array [] and system_archetype MUST be null.
-                - If the text is a **dynamic system problem** (e.g., "Sales are up but quality is down..."), your job is to find the problem's structure. ` +
-                  `You will find feedback_loops, causal_links (for those loops), a system_archetype, and leverage_points. In this case, focus_areas MUST be null.
-                
-                Analyze the text and return ONLY a valid JSON object based on what you find. ${truncatedNote}
+            **DETAILED TASKS:**
+                STEP 1 - VARIABLE EXTRACTION:
+                Identify 15-25 variables. For each, determine:
+                - name (clear, specific)
+                - description (what it represents)
+                - type: "driver" (causes other things), "outcome" (result of other things), "constraint" (limits), "resource" (stock/capacity)
+                - leverage_level (1-12, where 1=paradigm shift, 3=goals, 5=rules, 7=feedback gain, 9=delays, 12=parameters)
 
-                **USER'S TEXT:**
-                \`\`\`
-                ${text}
-                \`\`\`
+                STEP 2 - RELATIONSHIP MAPPING:
+                For EVERY cause-effect relationship in the document:
+                - Identify source and target variables ("from", "to")
+                - Determine polarity: "+" (same direction) or "-" (opposite direction)
+                - Assess strength: "strong" (explicit, direct), "medium" (mentioned), "weak" (implied)
+                - Note evidence: quote or reference from text
+                - Estimate delay: "immediate" (<1 month), "short" (1-6 months), "medium" (6-12 months), "long" (>1 year)
 
-                **DETAILED TASKS (Ground all answers *strictly* in the text):**
-                1.  **Summary (\`summary\`):** A concise summary explaining *what the text is* (a research plan, a problem, etc.) and its main objective.
-                2.  **Elements (\`elements\`):** Extract 5-8 key system elements/constructs. For each:
-                    * \`name\`: Concise name (e.g., "Sales", "Customer Satisfaction").
-                    * \`type\`: Classify as "Stock" (an accumulation) or "Variable" (a factor, state, or flow).
-                3.  **Feedback Loops (\`feedback_loops\`):** Identify any *circular* reinforcing (R) or balancing (B) loops *if they are explicitly described*. If the text is a linear hypothesis model, this MUST be an empty array [].
-                4.  **Causal Links (\`causal_links\`):** List ALL 1-to-1 causal links *stated in the text* (e.g., from hypotheses H1-H7, or from loop descriptions). For each link:
-                    * \`from\`: The name of the cause element.
-                    * \`to\`: The name of the effect element.
-                    * \`polarity\`: "+" or "-".
-                    * \`loop_name\`: The loop name (e.g., "R1", "B1") or "H" (for Hypothesis).
-                    * \`description\`: The rationale/hypothesis from the text (e.g., "H1: ...").
-                5.  **System Archetype (\`system_archetype\`):** If the text describes a dynamic problem, identify the dominant archetype (e.g., "Limits to Growth"). If it is a research plan, this MUST be null.
-                6.  **Leverage Points (\`leverage_points\`):** If it is a dynamic problem, identify 3-4 problem-solving interventions, ranked by "High", "Medium", "Low" impact. If it is a research plan, this MUST be null.
-                7.  **Focus Areas (\`focus_areas\`):** If it is a research plan, extract the key research questions or goals from the text. If it is a dynamic problem, this MUST be null.
+                STEP 3 - FEEDBACK LOOP IDENTIFICATION:
+                Look for circular causation patterns:
+                - type: "reinforcing" (growth/decline spirals) or "balancing" (goal-seeking, regulation)
+                - variables: list of variables involved
+                - description: explain the dynamic behavior of the loop
 
-                **ABSOLUTE CONSTRAINTS:**
-                - **NO HALLUCINATION:** Do NOT invent feedback loops, archetypes, or leverage points if the text is a research plan.
-                - **STICK TO CONTEXT:** All output MUST be based *exclusively* on the provided text.
-                - **JSON FORMAT:** Adhere EXACTLY.
+                STEP 4 - SYSTEM ARCHETYPES:
+                Check for these patterns:
+                1. Success to the Successful, 2. Limits to Growth, 3. Shifting the Burden, 4. Eroding Goals, 5. Escalation, 6. Tragedy of the Commons, 7. Fixes that Fail, 8. Growth and Underinvestment
 
-                **RETURN FORMAT (Example for a RESEARCH PLAN):**
+                STEP 5 - STRATEGIC ANALYSIS:
+                - goals: What objectives are stated or implied?
+                - stakeholders: Who is mentioned or affected?
+                - constraints: What limits are mentioned?
+                - assumptions: What beliefs underpin the logic?
+                - missing_factors: What important variables are NOT mentioned but should be?
+                - second_order_effects: What delayed consequences are discussed?
+
+            **ABSOLUTE CONSTRAINTS:**
+                - EXTRACT AT LEAST 15 CONCEPTS AND 20 RELATIONSHIPS. Be thorough and comprehensive.
+                - **JSON FORMAT:** Adhere EXACTLY. Include ALL specified keys and sub-keys.
+
+            **RETURN FORMAT:**
+            Provide ONLY a valid JSON object. **CRITICAL: Include ALL keys specified below.**
+            ---
+            {
+              "concepts": [
                 {
-                  "summary": "This is a research plan to understand hypothesized drivers of loyalty (Service Quality, etc.) using SEM to guide a 3-year roadmap.",
-                  "elements": [
-                    {"name": "Service Quality", "type": "Variable"}, {"name": "Product Quality", "type": "Variable"}, {"name": "Brand Trust", "type": "Stock"},
-                    {"name": "Customer Satisfaction", "type": "Variable"}, {"name": "Customer Loyalty", "type": "Stock"}
-                  ],
-                  "feedback_loops": [],
-                  "causal_links": [
-                    {"from": "Service Quality", "to": "Customer Satisfaction", "polarity": "+", "loop_name": "H", "description": "H1: Service Quality positively influences Customer Satisfaction"},
-                    {"from": "Product Quality", "to": "Customer Satisfaction", "polarity": "+", "loop_name": "H", "description": "H2: Product Quality positively influences Customer Satisfaction"}
-                  ],
-                  "system_archetype": null,
-                  "leverage_points": null,
-                  "focus_areas": [
-                    {"area_name": "Test Brand Trust Mediation", "description": "Understand if Brand Trust acts as a mediator..."},
-                    {"area_name": "Prioritize Investment (Service vs. Product)", "description": "Compare path coefficients for H1 and H2..."}
-                  ]
+                  "name": "Customer Satisfaction",
+                  "description": "degree of customer happiness with product/service",
+                  "type": "outcome",
+                  "leverage_level": 8
                 }
-            `;
-            
-            // 3. Send the chosen analysis prompt
-            const analysis_response = await fetch(OLLAMA_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ model: MODEL_NAME, prompt: analysis_prompt, stream: false, format: "json", options: { num_ctx: 32768 } })
-            });
-            
-            if (!analysis_response.ok) throw new Error(`AI Analysis Error: ${analysis_response.statusText}`);
-            
-            const analysis_data = await analysis_response.json();
-            const finalParsedData = JSON.parse(analysis_data.response);
-            
-            // 4. --- STEP 3: Render ---
-            analysisResultContainer.querySelector("p").textContent = "Step 3/3: Assembling analysis...";
-            
-            // *** Validation for the final data (flexible) ***
-            if (!finalParsedData || !finalParsedData.summary || !finalParsedData.elements || !finalParsedData.causal_links || 
-                (finalParsedData.system_archetype === undefined && finalParsedData.focus_areas === undefined)
-               ) {
-                 console.error("Validation Failed (Unified Handler): Final analysis data is missing key components.", finalParsedData);
-                 throw new Error("AI response was incomplete. Missing summary, elements, or focus/leverage points.");
+              ],
+              "relationships": [
+                {
+                  "from": "Product Quality",
+                  "to": "Customer Satisfaction",
+                  "polarity": "+",
+                  "strength": "strong",
+                  "evidence": "higher quality leads to more satisfied customers",
+                  "delay": "short"
+                }
+              ],
+              "goals": ["Increase market share", "Improve profitability"],
+              "stakeholders": ["Customers", "Employees", "Investors", "Suppliers"],
+              "constraints": ["Limited budget", "Regulatory compliance", "Time constraints"],
+              "assumptions": ["Customers value quality over price", "Market will continue to grow"],
+              "missing_factors": ["Competitor actions", "Economic conditions", "Technology disruption"],
+              "leverage_points": [
+                {
+                  "level": 3,
+                  "type": "System Goals",
+                  "description": "Organization optimizing for wrong metrics - focusing on growth instead of sustainability",
+                  "impact": "high",
+                  "recommendation": "Redefine success metrics to include long-term resilience"
+                }
+              ],
+              "second_order_effects": [
+                {
+                  "action": "Cut prices to increase sales",
+                  "immediate": "Sales volume increases",
+                  "delayed": "Brand perception as 'cheap' erodes premium positioning",
+                  "timeline": "6-12 months"
+                }
+              ],
+              "archetypes": [
+                {
+                  "name": "Limits to Growth",
+                  "description": "Rapid growth eventually hits capacity constraints, slowing expansion",
+                  "nodes_involved": ["Sales Growth", "Production Capacity", "Quality"],
+                  "dynamic": "Initial success leads to resource strain"
+                }
+              ],
+              "feedback_loops": [
+                {
+                  "type": "reinforcing",
+                  "variables": ["Product Quality", "Customer Satisfaction", "Revenue", "Investment in Quality"],
+                  "description": "Better quality -> happier customers -> more revenue -> more investment in quality"
+                }
+              ]
             }
-            
-            console.log("Successfully parsed unified analysis JSON:", finalParsedData);
+            ---
+        `;
 
-            // 5. Render Results
-            renderSystemThinkingPage(analysisResultContainer, finalParsedData); // Call the flexible renderer
+        const userContext = `**USER'S PROVIDED CONTEXT:**
+            ---
+            ${text}
+            ---
+        `;
 
-        } catch (error) {
-            console.error(`Error in handleSystemThinkingAnalysis (Unified v4):`, error);
-            analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
+        const jsonSchema = {
+            "type": "json_schema",
+            "schema": {
+            "type": "object",
+            "properties": {
+                "concepts": {
+                "type": "array",
+                "description": "A list of 15-25 key variables/concepts extracted from the document.",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                    "name": { "type": "string", "description": "Clear, specific name of the variable." },
+                    "description": { "type": "string", "description": "What the variable represents." },
+                    "type": { "type": "string", "enum": ["driver", "outcome", "constraint", "resource"], "description": "Variable type: driver, outcome, constraint, or resource." },
+                    "leverage_level": { "type": "integer", "description": "Meadows' leverage level (1-12)." }
+                    },
+                    "required": ["name", "description", "type", "leverage_level"]
+                }
+                },
+                "relationships": {
+                "type": "array",
+                "description": "A list of causal relationships between the concepts.",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                    "from": { "type": "string", "description": "Name of the source variable." },
+                    "to": { "type": "string", "description": "Name of the target variable." },
+                    "polarity": { "type": "string", "enum": ["+", "-"], "description": "Causal polarity: '+' for same direction, '-' for opposite." },
+                    "strength": { "type": "string", "enum": ["strong", "medium", "weak"], "description": "Causal strength." },
+                    "evidence": { "type": "string", "description": "Quote or reference from the text." },
+                    "delay": { "type": "string", "enum": ["immediate", "short", "medium", "long"], "description": "Estimated time delay of the effect." }
+                    },
+                    "required": ["from", "to", "polarity", "strength", "evidence", "delay"]
+                }
+                },
+                "goals": { "type": "array", "items": { "type": "string" }, "description": "Stated or implied objectives." },
+                "stakeholders": { "type": "array", "items": { "type": "string" }, "description": "People or groups affected." },
+                "constraints": { "type": "array", "items": { "type": "string" }, "description": "Limits mentioned in the document." },
+                "assumptions": { "type": "array", "items": { "type": "string" }, "description": "Beliefs underpinning the logic." },
+                "missing_factors": { "type": "array", "items": { "type": "string" }, "description": "Important variables NOT mentioned." },
+                "leverage_points": {
+                "type": "array",
+                "description": "Specific high-leverage intervention points based on Meadows' framework.",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                    "level": { "type": "integer", "description": "Meadows' leverage level (1-12)." },
+                    "type": { "type": "string", "description": "General type of leverage point (e.g., System Goals, Rules)." },
+                    "description": { "type": "string", "description": "Explanation of the leverage point." },
+                    "impact": { "type": "string", "enum": ["high", "medium", "low"] },
+                    "recommendation": { "type": "string", "description": "Actionable recommendation." }
+                    },
+                    "required": ["level", "type", "description", "impact", "recommendation"]
+                }
+                },
+                "second_order_effects": {
+                "type": "array",
+                "description": "Delayed consequences of actions discussed.",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                    "action": { "type": "string" },
+                    "immediate": { "type": "string" },
+                    "delayed": { "type": "string" },
+                    "timeline": { "type": "string" }
+                    },
+                    "required": ["action", "immediate", "delayed", "timeline"]
+                }
+                },
+                "archetypes": {
+                "type": "array",
+                "description": "Identified Peter Senge system archetypes.",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                    "name": { "type": "string", "description": "Name of the archetype (e.g., Limits to Growth)." },
+                    "description": { "type": "string" },
+                    "nodes_involved": { "type": "array", "items": { "type": "string" }, "description": "List of concepts involved." },
+                    "dynamic": { "type": "string", "description": "Brief explanation of the dynamic." }
+                    },
+                    "required": ["name", "description", "nodes_involved", "dynamic"]
+                }
+                },
+                "feedback_loops": {
+                "type": "array",
+                "description": "Identified circular causation patterns (reinforcing/balancing).",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                    "type": { "type": "string", "enum": ["reinforcing", "balancing"] },
+                    "variables": { "type": "array", "items": { "type": "string" }, "description": "List of variables in the loop." },
+                    "description": { "type": "string", "description": "Explanation of the loop's behavior." }
+                    },
+                    "required": ["type", "variables", "description"]
+                }
+                }
+            },
+            "required": ["concepts", "relationships", "goals", "stakeholders", "constraints", "assumptions", "missing_factors", "leverage_points", "second_order_effects", "archetypes", "feedback_loops"]
+            }
+        };
+        
+        // Send the analysis system prompt and user prompt.
+        const finalParsedData = await fetchLLM(provider, systemPrompt, userContext, jsonSchema, analysisType);
+        
+        // 4. --- STEP 3: Render ---
+        analysisResultContainer.querySelector("p").textContent = "Assembling comprehensive analysis...";
+        
+        // *** NEW validation for the comprehensive data structure ***
+        if (!finalParsedData || !Array.isArray(finalParsedData.concepts) || finalParsedData.concepts.length < 5 ||
+            !Array.isArray(finalParsedData.relationships) || finalParsedData.relationships.length < 5 ||
+            !Array.isArray(finalParsedData.archetypes)
+           ) {
+             console.error("Validation Failed (Comprehensive Handler): Final analysis data is missing key components or has too few items.", finalParsedData);
+             throw new Error("AI response was incomplete or malformed. It must include at least 5 concepts and 5 relationships.");
+        }
+        
+        console.log("Successfully parsed comprehensive analysis JSON:", finalParsedData);
+
+        // 5. Render Results
+        renderSystemThinkingPage(analysisResultContainer, finalParsedData); // Call the flexible renderer
+
+    } catch (error) {
+        console.error(`Error in handleSystemThinkingAnalysis (Comprehensive v5):`, error);
+        analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
+        setLoading("generate", false);
+    } finally {
+        if ($("generateSpinner") && !$("generateSpinner").classList.contains("hidden")) {
             setLoading("generate", false);
-        } finally {
-            if ($("generateSpinner") && !$("generateSpinner").classList.contains("hidden")) {
-                setLoading("generate", false);
-            }
         }
     }
+}
 
     /**
  * Handles the PLS-SEM analysis request to the backend.
@@ -33127,6 +33533,8 @@ async function handlePasswordUpdate() {
             }
         }
     }
+
+    
 
     // Attach password button listeners
     const resetBtn = $("passwordResetRequestBtn");

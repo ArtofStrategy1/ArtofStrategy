@@ -199,14 +199,14 @@ body {
     justify-content: center;
 
     /* --- The New Prominent Style --- */
-    background-color: #10B981;/* Solid Success Green [cite: 34] */
+    background-color: #10B981;
     color: white;
     border: 1px solid #10B981;
     text-shadow: 0 1px 2px rgba(0,0,0,0.3);
 }
 
 .btn-sample:hover {
-    background-color: #059669;/* Darker Green on hover [cite: 35] */
+    background-color: #059669;
     border-color: #047857;
     transform: translateY(-1px);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
@@ -214,7 +214,7 @@ body {
 
 /* Style for when it's loaded */
 .btn-sample:disabled {
-    background-color: rgba(5, 150, 105, 0.8);/* Connected Green [cite: 10] */
+    background-color: rgba(5, 150, 105, 0.8);
     color: #a7f3d0;
     border-color: transparent;
     cursor: not-allowed;
@@ -1430,6 +1430,10 @@ select.input-field option {
     font-size: 14px;
 }
 
+#cy-tooltip {
+    pointer-events: none !important;
+}
+
 /* --- Feedback Tab Styles --- */
 .feedback-tabs {
     display: flex;
@@ -1596,12 +1600,10 @@ select.input-field option {
 }
 
 .modal-body {
-    padding: 1.5rem 1.5rem 3.5rem;
+    /* Responsive padding: smaller on mobile */
+    padding: 1rem; 
     max-height: 80vh;
     overflow-y: auto;
-    /* Custom scrollbar */
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }
 
 .modal-body::-webkit-scrollbar {
@@ -1884,6 +1886,12 @@ select.input-field option {
 .modal-rating .star-rating .star-filled {
     color: #fbbf24;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+@media (min-width: 768px) {
+    .modal-body {
+        padding: 1.5rem 1.5rem 3.5rem;
+    }
 }
 
 /* Mobile responsiveness */

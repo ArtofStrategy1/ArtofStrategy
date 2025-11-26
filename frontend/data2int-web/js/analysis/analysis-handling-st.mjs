@@ -5,6 +5,7 @@
 import { dom } from '../utils/dom-utils.mjs';
 import { setLoading } from '../utils/ui-utils.mjs';
 import { extractTextFromFile } from '../utils/file-utils.mjs';
+import { fetchLLM } from './analysis-helpers.mjs';
 import * as renderST from '../ui/analysis-rendering/analysis-rendering-st.mjs';
 
 async function handleProcessMappingAnalysis() {
@@ -394,12 +395,9 @@ async function handleSystemThinkingAnalysis() {
         </div>`;
     setLoading("generate", true);
 
-    // Define URL and Model
-    const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
-    const MODEL_NAME = "llama3.1:latest";
-
+    const provider = "ollama" //dom.$("providerSelect").value;
+    const analysisType = "(Systems Thinking)";
     let text = "";
-    let truncatedNote = "";
     
     try {
         // 1. Gather Inputs
@@ -413,66 +411,61 @@ async function handleSystemThinkingAnalysis() {
             if (!text.trim()) throw new Error("Please describe the system.");
         }
 
-        // Truncate if necessary
-        const MAX_CONTEXT_LENGTH = 15000;
-        if (text.length > MAX_CONTEXT_LENGTH) {
-            text = text.substring(0, MAX_CONTEXT_LENGTH);
-            truncatedNote = `(Note: Analysis based on the first ${MAX_CONTEXT_LENGTH} characters.)`;
-            console.warn(`System Thinking analysis context truncated.`);
-        }
-
         // 2. --- STEP 2: Run the new Comprehensive Analysis Prompt ---
         analysisResultContainer.querySelector("p").textContent = "Running comprehensive system mapping...";
         
         // This new prompt a bit more detailed, asking for a full system map.
-        const analysis_prompt = `You are an expert systems analyst trained in causal mapping, Donella Meadows' leverage points, and Peter Senge's system archetypes.
-            CRITICAL INSTRUCTIONS:
-            1. Read the ENTIRE document carefully. ${truncatedNote}
-            2. Extract 15-25 key variables (not just 5-8!).
-            3. Identify ALL causal relationships mentioned or implied.
-            4. Look for feedback loops explicitly.
-            5. Identify system archetypes (Success to Successful, Limits to Growth, Shifting the Burden, etc.).
-            6. Assign leverage levels based on Meadows' framework.
+        const systemPrompt = `You are an expert systems analyst trained in causal mapping, Donella Meadows' leverage points, and Peter Senge's system archetypes.
+            **CRITICAL INSTRUCTIONS:**
+                1. Read the ENTIRE user-provided context carefully. 
+                2. Extract 15-25 key variables (not just 5-8!).
+                3. Identify ALL causal relationships mentioned or implied.
+                4. Look for feedback loops explicitly.
+                5. Identify system archetypes (Success to Successful, Limits to Growth, Shifting the Burden, etc.).
+                6. Assign leverage levels based on Meadows' framework.
+                7. **Self-Correction:** Before outputting JSON, rigorously check: Is the JSON structure perfect? Fix all errors, if present.
 
-            Document to analyze:
-            \`\`\`
-            ${text}
-            \`\`\`
+            **DETAILED TASKS:**
+                STEP 1 - VARIABLE EXTRACTION:
+                Identify 15-25 variables. For each, determine:
+                - name (clear, specific)
+                - description (what it represents)
+                - type: "driver" (causes other things), "outcome" (result of other things), "constraint" (limits), "resource" (stock/capacity)
+                - leverage_level (1-12, where 1=paradigm shift, 3=goals, 5=rules, 7=feedback gain, 9=delays, 12=parameters)
 
-            STEP 1 - VARIABLE EXTRACTION:
-            Identify 15-25 variables. For each, determine:
-            - name (clear, specific)
-            - description (what it represents)
-            - type: "driver" (causes other things), "outcome" (result of other things), "constraint" (limits), "resource" (stock/capacity)
-            - leverage_level (1-12, where 1=paradigm shift, 3=goals, 5=rules, 7=feedback gain, 9=delays, 12=parameters)
+                STEP 2 - RELATIONSHIP MAPPING:
+                For EVERY cause-effect relationship in the document:
+                - Identify source and target variables ("from", "to")
+                - Determine polarity: "+" (same direction) or "-" (opposite direction)
+                - Assess strength: "strong" (explicit, direct), "medium" (mentioned), "weak" (implied)
+                - Note evidence: quote or reference from text
+                - Estimate delay: "immediate" (<1 month), "short" (1-6 months), "medium" (6-12 months), "long" (>1 year)
 
-            STEP 2 - RELATIONSHIP MAPPING:
-            For EVERY cause-effect relationship in the document:
-            - Identify source and target variables ("from", "to")
-            - Determine polarity: "+" (same direction) or "-" (opposite direction)
-            - Assess strength: "strong" (explicit, direct), "medium" (mentioned), "weak" (implied)
-            - Note evidence: quote or reference from text
-            - Estimate delay: "immediate" (<1 month), "short" (1-6 months), "medium" (6-12 months), "long" (>1 year)
+                STEP 3 - FEEDBACK LOOP IDENTIFICATION:
+                Look for circular causation patterns:
+                - type: "reinforcing" (growth/decline spirals) or "balancing" (goal-seeking, regulation)
+                - variables: list of variables involved
+                - description: explain the dynamic behavior of the loop
 
-            STEP 3 - FEEDBACK LOOP IDENTIFICATION:
-            Look for circular causation patterns:
-            - type: "reinforcing" (growth/decline spirals) or "balancing" (goal-seeking, regulation)
-            - variables: list of variables involved
-            - description: explain the dynamic behavior of the loop
+                STEP 4 - SYSTEM ARCHETYPES:
+                Check for these patterns:
+                1. Success to the Successful, 2. Limits to Growth, 3. Shifting the Burden, 4. Eroding Goals, 5. Escalation, 6. Tragedy of the Commons, 7. Fixes that Fail, 8. Growth and Underinvestment
 
-            STEP 4 - SYSTEM ARCHETYPES:
-            Check for these patterns:
-            1. Success to the Successful, 2. Limits to Growth, 3. Shifting the Burden, 4. Eroding Goals, 5. Escalation, 6. Tragedy of the Commons, 7. Fixes that Fail, 8. Growth and Underinvestment
+                STEP 5 - STRATEGIC ANALYSIS:
+                - goals: What objectives are stated or implied?
+                - stakeholders: Who is mentioned or affected?
+                - constraints: What limits are mentioned?
+                - assumptions: What beliefs underpin the logic?
+                - missing_factors: What important variables are NOT mentioned but should be?
+                - second_order_effects: What delayed consequences are discussed?
 
-            STEP 5 - STRATEGIC ANALYSIS:
-            - goals: What objectives are stated or implied?
-            - stakeholders: Who is mentioned or affected?
-            - constraints: What limits are mentioned?
-            - assumptions: What beliefs underpin the logic?
-            - missing_factors: What important variables are NOT mentioned but should be?
-            - second_order_effects: What delayed consequences are discussed?
+            **ABSOLUTE CONSTRAINTS:**
+                - EXTRACT AT LEAST 15 CONCEPTS AND 20 RELATIONSHIPS. Be thorough and comprehensive.
+                - **JSON FORMAT:** Adhere EXACTLY. Include ALL specified keys and sub-keys.
 
-            Return ONLY this JSON structure (NO markdown, NO explanation):
+            **RETURN FORMAT:**
+            Provide ONLY a valid JSON object. **CRITICAL: Include ALL keys specified below.**
+            ---
             {
               "concepts": [
                 {
@@ -530,20 +523,118 @@ async function handleSystemThinkingAnalysis() {
                 }
               ]
             }
+            ---
+        `;
 
-            EXTRACT AT LEAST 15 CONCEPTS AND 20 RELATIONSHIPS. Be thorough and comprehensive.`;
+        const userContext = `**USER'S PROVIDED CONTEXT:**
+            ---
+            ${text}
+            ---
+        `;
+
+        const jsonSchema = {
+            "type": "json_schema",
+            "schema": {
+            "type": "object",
+            "properties": {
+                "concepts": {
+                "type": "array",
+                "description": "A list of 15-25 key variables/concepts extracted from the document.",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                    "name": { "type": "string", "description": "Clear, specific name of the variable." },
+                    "description": { "type": "string", "description": "What the variable represents." },
+                    "type": { "type": "string", "enum": ["driver", "outcome", "constraint", "resource"], "description": "Variable type: driver, outcome, constraint, or resource." },
+                    "leverage_level": { "type": "integer", "description": "Meadows' leverage level (1-12)." }
+                    },
+                    "required": ["name", "description", "type", "leverage_level"]
+                }
+                },
+                "relationships": {
+                "type": "array",
+                "description": "A list of causal relationships between the concepts.",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                    "from": { "type": "string", "description": "Name of the source variable." },
+                    "to": { "type": "string", "description": "Name of the target variable." },
+                    "polarity": { "type": "string", "enum": ["+", "-"], "description": "Causal polarity: '+' for same direction, '-' for opposite." },
+                    "strength": { "type": "string", "enum": ["strong", "medium", "weak"], "description": "Causal strength." },
+                    "evidence": { "type": "string", "description": "Quote or reference from the text." },
+                    "delay": { "type": "string", "enum": ["immediate", "short", "medium", "long"], "description": "Estimated time delay of the effect." }
+                    },
+                    "required": ["from", "to", "polarity", "strength", "evidence", "delay"]
+                }
+                },
+                "goals": { "type": "array", "items": { "type": "string" }, "description": "Stated or implied objectives." },
+                "stakeholders": { "type": "array", "items": { "type": "string" }, "description": "People or groups affected." },
+                "constraints": { "type": "array", "items": { "type": "string" }, "description": "Limits mentioned in the document." },
+                "assumptions": { "type": "array", "items": { "type": "string" }, "description": "Beliefs underpinning the logic." },
+                "missing_factors": { "type": "array", "items": { "type": "string" }, "description": "Important variables NOT mentioned." },
+                "leverage_points": {
+                "type": "array",
+                "description": "Specific high-leverage intervention points based on Meadows' framework.",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                    "level": { "type": "integer", "description": "Meadows' leverage level (1-12)." },
+                    "type": { "type": "string", "description": "General type of leverage point (e.g., System Goals, Rules)." },
+                    "description": { "type": "string", "description": "Explanation of the leverage point." },
+                    "impact": { "type": "string", "enum": ["high", "medium", "low"] },
+                    "recommendation": { "type": "string", "description": "Actionable recommendation." }
+                    },
+                    "required": ["level", "type", "description", "impact", "recommendation"]
+                }
+                },
+                "second_order_effects": {
+                "type": "array",
+                "description": "Delayed consequences of actions discussed.",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                    "action": { "type": "string" },
+                    "immediate": { "type": "string" },
+                    "delayed": { "type": "string" },
+                    "timeline": { "type": "string" }
+                    },
+                    "required": ["action", "immediate", "delayed", "timeline"]
+                }
+                },
+                "archetypes": {
+                "type": "array",
+                "description": "Identified Peter Senge system archetypes.",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                    "name": { "type": "string", "description": "Name of the archetype (e.g., Limits to Growth)." },
+                    "description": { "type": "string" },
+                    "nodes_involved": { "type": "array", "items": { "type": "string" }, "description": "List of concepts involved." },
+                    "dynamic": { "type": "string", "description": "Brief explanation of the dynamic." }
+                    },
+                    "required": ["name", "description", "nodes_involved", "dynamic"]
+                }
+                },
+                "feedback_loops": {
+                "type": "array",
+                "description": "Identified circular causation patterns (reinforcing/balancing).",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                    "type": { "type": "string", "enum": ["reinforcing", "balancing"] },
+                    "variables": { "type": "array", "items": { "type": "string" }, "description": "List of variables in the loop." },
+                    "description": { "type": "string", "description": "Explanation of the loop's behavior." }
+                    },
+                    "required": ["type", "variables", "description"]
+                }
+                }
+            },
+            "required": ["concepts", "relationships", "goals", "stakeholders", "constraints", "assumptions", "missing_factors", "leverage_points", "second_order_effects", "archetypes", "feedback_loops"]
+            }
+        };
         
-        // 3. Send the chosen analysis prompt
-        const analysis_response = await fetch(OLLAMA_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ model: MODEL_NAME, prompt: analysis_prompt, stream: false, format: "json", options: { num_ctx: 32768 } })
-        });
-        
-        if (!analysis_response.ok) throw new Error(`AI Analysis Error: ${analysis_response.statusText}`);
-        
-        const analysis_data = await analysis_response.json();
-        const finalParsedData = JSON.parse(analysis_data.response);
+        // Send the analysis system prompt and user prompt.
+        const finalParsedData = await fetchLLM(provider, systemPrompt, userContext, jsonSchema, analysisType);
         
         // 4. --- STEP 3: Render ---
         analysisResultContainer.querySelector("p").textContent = "Assembling comprehensive analysis...";
