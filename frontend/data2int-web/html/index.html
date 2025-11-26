@@ -3916,11 +3916,16 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- Regression Analysis ---
     let currentRegressionRowCount = 0; // Stores the row count for ratio validation
 
+    // --- Stripe ---
     const stripe = Stripe('pk_test_51SUzA4Dv9QN5xDTmXlUbWtgQxo2SZwZGGEf47pJZfUrND5pPV3LOaFX8aUELfzEVwPK67YvDvPZQfItugXa70ord00d27aMudy'); 
     let elements;
 
     // --- Usage ---
     let currentUserUsage = 0;
+
+    // --- GLOBAL STATE FOR SAMPLES ---
+    window.tempSampleDataFile = null;    // Holds the CSV File object
+    window.tempSampleContextFile = null; // Holds the Text/Context File object
 
     // --- Template Data ---
     const templates = {
@@ -4175,310 +4180,219 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // --- NEW MASTER HANDLER: For all "Use Sample" buttons (v5 - Preload Only) ---
+    // --- Use Sample Handler (Populates Inputs & Globals) ---
     async function handleUseSampleClick(e) {
         const button = e.currentTarget;
         const templateId = button.dataset.templateId;
         if (!templateId) return;
 
-        // Set loading state
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = `<span class="loading-spinner" style="width: 12px; height: 12px; margin-right: 5px;"></span> Loading...`;
         
-        // --- THIS IS THE NEW FLAG ---
-        window.isSampleModeActive = false; // Reset flag at start
-        
-        let dataFile, contextFile, dataText, contextText;
+        // 1. Reset Globals
+        window.isSampleModeActive = false; 
+        window.tempSampleDataFile = null;
+        window.tempSampleContextFile = null;
 
-        // --- Helper logic to build preview (inline) ---
-        const buildPreview = (csvText) => {
-            if (!csvText) return '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Sample file is empty.</td></tr></tbody>';
-            const lines = csvText.split(/[\r\n]+/).filter(Boolean);
-            if (lines.length < 1) return '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">No data in sample file.</td></tr></tbody>';
-            
-            const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, '')).filter(Boolean);
-            if (headers.length === 0) return '<tbody><tr><td class="p-4 text-center text-red-400" colspan="100%">Could not parse headers from sample file.</td></tr></tbody>';
+        // Helper: "Force Upload" a file into an input element
+        const forceInputFile = (inputId, fileObj) => {
+            const input = $(inputId);
+            if (!input || !fileObj) return;
 
-            let tableHtml = '<thead class="bg-white/10 text-xs uppercase"><tr>';
-            headers.forEach(h => { tableHtml += `<th class="px-4 py-2">${h}</th>`; });
-            tableHtml += '</tr></thead><tbody>';
+            // The Trick: Use DataTransfer to simulate a user upload
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(fileObj);
+            input.files = dataTransfer.files;
 
-            const rows = lines.slice(1, 6); // Get up to 5 data rows
-            if (rows.length === 0) {
-                 tableHtml += `<tr><td class="p-4 text-center text-white/60" colspan="${headers.length}">No data rows found in sample.</td></tr>`;
-            } else {
-                rows.forEach((line, rowIndex) => {
-                    const values = line.split(',');
-                    tableHtml += `<tr class="border-t border-white/10 ${rowIndex % 2 === 0 ? 'bg-white/5' : ''}">`;
-                    headers.forEach((_, cellIndex) => {
-                        const val = values[cellIndex] ? values[cellIndex].trim().replace(/^"|"$/g, '') : '';
-                        tableHtml += `<td class="px-4 py-2 whitespace-nowrap">${val}</td>`;
-                    });
-                    tableHtml += '</tr>';
-                });
+            // Trigger visual update on the label
+            const labelId = inputId + "Label"; // e.g., "descriptiveFileLabel"
+            const label = $(labelId);
+            if (label) {
+                const nameSpan = label.querySelector(".file-name");
+                if (nameSpan) nameSpan.textContent = fileObj.name;
+                label.classList.add("has-file");
             }
-            tableHtml += '</tbody>';
-            return tableHtml;
+        };
+
+        // Helper to build preview table
+        const buildPreview = (csvText) => {
+            if (!csvText) return '<tbody><tr><td class="p-4 text-center text-white/60">Empty file.</td></tr></tbody>';
+            const lines = csvText.split(/[\r\n]+/).filter(Boolean);
+            if (lines.length < 1) return '<tbody><tr><td class="p-4 text-center text-white/60">No data.</td></tr></tbody>';
+            const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+            let html = '<thead class="bg-white/10 text-xs uppercase"><tr>' + headers.map(h => `<th class="px-4 py-2">${h}</th>`).join('') + '</tr></thead><tbody>';
+            lines.slice(1, 6).forEach((line, i) => {
+                const vals = line.split(',');
+                html += `<tr class="border-t border-white/10 ${i%2===0?'bg-white/5':''}">${vals.map(v => `<td class="px-4 py-2">${v}</td>`).join('')}</tr>`;
+            });
+            return html + '</tbody>';
         };
 
         try {
+            await new Promise(r => setTimeout(r, 300));
+            let dataFile, contextFile, dataText, contextText;
+
             switch (templateId) {
-                
                 case "descriptive-analysis":
-                    // 1. Fetch files
+                    // 1. Fetch Files
                     dataFile = await fetchFileAsObject('descriptive/descriptive-sample-data.csv');
                     contextFile = await fetchFileAsObject('descriptive/descriptive-sample-doc.txt');
-                    if (!dataFile || !contextFile) throw new Error("Sample file(s) failed to load.");
-                                        
-                    // 2. Read text content
+                    
+                    // 2. Force into Inputs (The Trick)
+                    forceInputFile("descriptiveFile", dataFile);
+                    forceInputFile("descriptiveContextFile", contextFile);
+                    
+                    // 3. Populate Globals & Text Areas
+                    window.tempSampleDataFile = dataFile;
+                    window.tempSampleContextFile = contextFile;
+                    
                     dataText = await dataFile.text();
                     contextText = await contextFile.text();
-
-                    // 3. Update UI
-                    $("descriptiveFileLabel").querySelector(".file-name").textContent = dataFile.name;
-                    $("descriptiveFileLabel").classList.add("has-file");
-                    $("descriptivePreviewTable").innerHTML = buildPreview(dataText); // Use real data
+                    
+                    $("descriptivePreviewTable").innerHTML = buildPreview(dataText);
                     $("descriptiveDataPreview").classList.remove("hidden");
                     $("descriptiveContextText").value = contextText;
-                    $("textInput").checked = true; // Select the text input radio
-                    $("docUpload").checked = false;
-                    $("descriptiveContextTextArea").classList.remove("hidden");
-                    $("descriptiveContextFileArea").classList.add("hidden");
                     break;
                 
-                case "predictive-analysis":
-                    dataFile = await fetchFileAsObject('predictive/predictive-sample-data.csv');
-                    if (!dataFile) throw new Error("Sample data file failed to load.");
-
-                    dataText = await dataFile.text();
-                    const predHeaders = dataText.split(/[\r\n]+/)[0].split(',').map(h => h.trim());
-
-                    // 1. Update file label
-                    $("predictiveFileLabel").querySelector(".file-name").textContent = dataFile.name;
-                    $("predictiveFileLabel").classList.add("has-file");
-
-                    // 2. Update assumed date column
-                    $("assumedDateColName").textContent = predHeaders[0] || "N/A";
-
-                    // 3. Manually populate dropdowns
-                    const targetSelect = $("predictiveTargetColumn");
-                    if (targetSelect) {
-                        targetSelect.innerHTML = ""; // Clear
-                        predHeaders.slice(1).forEach(h => { // Add all headers except the first one
-                            targetSelect.add(new Option(h, h));
-                        });
-                        targetSelect.value = "Revenue"; // Select sample default
-                        targetSelect.disabled = false;
-                    }
-                    
-                    // 4. Show the preview table
-                    $("predictivePreviewTable").innerHTML = buildPreview(dataText);
-                    $("predictiveDataPreview").classList.remove("hidden");
-                    break;
-
-                case "prescriptive-analysis":
-                    // 1. Fetch files
-                    dataFile = await fetchFileAsObject('prescriptive/prescriptive-sample-data.csv');
-                    contextFile = await fetchFileAsObject('prescriptive/prescriptive-sample-doc.txt');
-                    if (!dataFile || !contextFile) throw new Error("Sample file(s) failed to load.");
-                    
-                    // 2. Read text content
-                    dataText = await dataFile.text();
-                    contextText = await contextFile.text();
-
-                    // 3. Update UI
-                    $("prescriptiveFileLabel").querySelector(".file-name").textContent = dataFile.name;
-                    $("prescriptiveFileLabel").classList.add("has-file");
-                    $("prescriptivePreviewTable").innerHTML = buildPreview(dataText);
-                    $("prescriptiveDataPreview").classList.remove("hidden");
-                    $("prescriptiveGoalText").value = contextText;
-                    $("prescriptiveInputTextToggle").checked = true; // Select text input
-                    $("prescriptiveInputFileToggle").checked = false;
-                    $("prescriptiveTextInputArea").classList.remove("hidden");
-                    $("prescriptiveFileInputArea").classList.add("hidden");
-                    break;
-
                 case "visualization":
-                    // 1. Fetch files
                     dataFile = await fetchFileAsObject('visualization/visualization-sample.csv');
                     contextFile = await fetchFileAsObject('visualization/visualization-sample-doc.txt');
-                    if (!dataFile || !contextFile) throw new Error("Sample file(s) failed to load.");
                     
-                    // 2. Read text content
+                    forceInputFile("vizFile", dataFile);
+                    forceInputFile("vizContextFile", contextFile);
+                    
+                    window.tempSampleDataFile = dataFile;
+                    window.tempSampleContextFile = contextFile;
+                    
                     dataText = await dataFile.text();
                     contextText = await contextFile.text();
 
-                    // 3. Update UI
-                    $("vizFileLabel").querySelector(".file-name").textContent = dataFile.name;
-                    $("vizFileLabel").classList.add("has-file");
                     $("vizPreviewTable").innerHTML = buildPreview(dataText);
                     $("vizDataPreview").classList.remove("hidden");
                     $("vizRequestText").value = contextText;
-                    $("vizInputTextToggle").checked = true; // Select text input
-                    $("vizInputFileToggle").checked = false;
-                    $("vizTextInputArea").classList.remove("hidden");
-                    $("vizFileInputArea").classList.add("hidden");
                     break;
 
-                case "regression-analysis":
-    // 1. Fetch files
-    dataFile = await fetchFileAsObject('regression/regression-sample.csv');
-    contextFile = await fetchFileAsObject('regression/regression-sample-doc.txt');
-    if (!dataFile || !contextFile) throw new Error("Sample file(s) failed to load.");
-    
-    // 2. Read text content
-    dataText = await dataFile.text();
-    contextText = await contextFile.text();
-    
-    // 3. Update UI (File Label, Preview, Context Text)
-    $("regressionFileLabel").querySelector(".file-name").textContent = dataFile.name;
-    $("regressionFileLabel").classList.add("has-file");
-    $("regressionPreviewTable").innerHTML = buildPreview(dataText);
-    $("regressionDataPreview").classList.remove("hidden");
-    $("regressionContextText").value = contextText;
-    $("textInput").checked = true; // Select text input
-    $("docUpload").checked = false;
-    $("regressionContextTextArea").classList.remove("hidden");
-    $("regressionContextFileArea").classList.add("hidden");
-
-    // 4. Update dropdowns - Use exact column names: marketing_spend,product_price,customer_rating,region,sales_revenue
-    const regHeaders = ["marketing_spend", "product_price", "customer_rating", "region", "sales_revenue"];
-    console.log("Using exact column names:", regHeaders); // Debug log
-    
-    const regDepSelect = $("dependentVar");
-    const regIndepContainer = $("independentVarsContainer");
-    
-    regDepSelect.innerHTML = ""; // Clear
-    regIndepContainer.innerHTML = ""; // Clear
-    
-    // Add all columns to both dependent and independent options
-    regHeaders.forEach(h => {
-        regDepSelect.add(new Option(h, h));
-        regIndepContainer.innerHTML += `
-            <label class="flex items-center space-x-2"><input type="checkbox" class="method-checkbox independent-var-checkbox" value="${h}"><span>${h}</span></label>
-        `;
-    });
-    
-    // Set defaults based on what's actually selected in your UI
-    regDepSelect.value = "marketing_spend"; // Match the actual selection
-    regDepSelect.disabled = false;
-    
-    // Check the correct boxes based on actual UI selections
-    regIndepContainer.querySelectorAll('.independent-var-checkbox').forEach(cb => {
-        // Check these specific columns that are selected in your screenshot
-        if (cb.value === "product_price" || cb.value === "customer_rating" || 
-            cb.value === "region" || cb.value === "sales_revenue") {
-            cb.checked = true;
-        }
-        // Disable the dependent variable checkbox
-        if (cb.value === "marketing_spend") {
-            cb.disabled = true;
-        }
-    });
-    
-    currentRegressionRowCount = dataText.split(/[\r\n]+/).filter(Boolean).length - 1;
-    break;
+                case "prescriptive-analysis":
+                    dataFile = await fetchFileAsObject('prescriptive/prescriptive-sample-data.csv');
+                    contextFile = await fetchFileAsObject('prescriptive/prescriptive-sample-doc.txt');
                     
-                case "pls-analysis":
-                    // 1. Fetch file
-                    dataFile = await fetchFileAsObject('pls/pls-sample-data.csv');
-                    if (!dataFile) throw new Error("Sample data file failed to load.");
+                    forceInputFile("prescriptiveFile", dataFile);
+                    forceInputFile("prescriptiveContextFile", contextFile);
+                    
+                    window.tempSampleDataFile = dataFile;
+                    window.tempSampleContextFile = contextFile;
+                    
+                    dataText = await dataFile.text();
+                    contextText = await contextFile.text();
+
+                    $("prescriptivePreviewTable").innerHTML = buildPreview(dataText);
+                    $("prescriptiveDataPreview").classList.remove("hidden");
+                    $("prescriptiveGoalText").value = contextText;
+                    break;
+
+                case "predictive-analysis":
+                    dataFile = await fetchFileAsObject('predictive/predictive-sample-data.csv');
+                    forceInputFile("predictiveFile", dataFile);
+                    
+                    window.tempSampleDataFile = dataFile;
                     
                     dataText = await dataFile.text();
                     
-                    // 2. Update UI
-                    $("plsFileLabel").querySelector(".file-name").textContent = dataFile.name;
-                    $("plsFileLabel").classList.add("has-file");
-                    $("plsPreviewTable").innerHTML = buildPreview(dataText);
-                    $("plsDataPreview").classList.remove("hidden");
-                    $("plsInputFileToggle").checked = true; // Select file input
-                    $("plsInputTextToggle").checked = false;
-                    $("plsFileUploadArea").classList.remove("hidden");
-                    $("plsTextInputArea").classList.add("hidden");
-
-                    // 3. Update syntax boxes
-                    $("plsModelTemplate").disabled = true;
-                    $("plsModelTemplate").innerHTML = `<option value="custom">Custom Syntax</option>`;
-                    $("plsModelTemplate").value = "custom";
-                    $("plsMeasurementSyntax").value = "Quality =~ qual1 + qual2 + qual3\nSatisfaction =~ sat1 + sat2 + sat3\nLoyalty =~ loy1 + loy2 + loy3";
-                    $("plsStructuralSyntax").value = "Satisfaction ~ Quality\nLoyalty ~ Satisfaction + Quality";
+                    $("predictivePreviewTable").innerHTML = buildPreview(dataText);
+                    $("predictiveDataPreview").classList.remove("hidden");
+                    
+                    const headers = dataText.split('\n')[0].split(',');
+                    $("assumedDateColName").textContent = headers[0];
+                    
+                    const targetSelect = $("predictiveTargetColumn");
+                    targetSelect.innerHTML = "";
+                    headers.slice(1).forEach(h => targetSelect.add(new Option(h, h)));
+                    targetSelect.value = headers[1];
+                    targetSelect.disabled = false;
                     break;
 
+                case "regression-analysis":
+                    dataFile = await fetchFileAsObject('regression/regression-sample.csv');
+                    contextFile = await fetchFileAsObject('regression/regression-sample-doc.txt');
+
+                    forceInputFile("regressionFile", dataFile);
+                    forceInputFile("regressionContextFile", contextFile);
+
+                    window.tempSampleDataFile = dataFile;
+                    window.tempSampleContextFile = contextFile;
+                    
+                    dataText = await dataFile.text();
+                    contextText = await contextFile.text();
+                    
+                    $("regressionPreviewTable").innerHTML = buildPreview(dataText);
+                    $("regressionDataPreview").classList.remove("hidden");
+                    $("regressionContextText").value = contextText;
+                    
+                    const regHeaders = dataText.split('\n')[0].split(',');
+                    const regDepSelect = $("dependentVar");
+                    const regIndepContainer = $("independentVarsContainer");
+                    regDepSelect.innerHTML = "";
+                    regIndepContainer.innerHTML = "";
+                    regHeaders.forEach(h => {
+                        regDepSelect.add(new Option(h, h));
+                        regIndepContainer.innerHTML += `<label class="flex items-center space-x-2"><input type="checkbox" class="method-checkbox independent-var-checkbox" value="${h}"><span>${h}</span></label>`;
+                    });
+                    regDepSelect.value = "sales_revenue";
+                    regDepSelect.disabled = false;
+                    break;
+
+                case "pls-analysis":
                 case "sem-analysis":
-    // 1. Fetch file
-    dataFile = await fetchFileAsObject('sem/sem-sample-data.csv');
-    if (!dataFile) throw new Error("Sample data file failed to load.");
+                    const isPls = templateId === "pls-analysis";
+                    const path = isPls ? 'pls/pls-sample-data.csv' : 'sem/sem-sample-data.csv';
+                    const prefix = isPls ? "pls" : "sem";
 
-    dataText = await dataFile.text();
+                    dataFile = await fetchFileAsObject(path);
+                    forceInputFile(prefix + "File", dataFile);
 
-    // 2. Update UI
-    $("semFileLabel").querySelector(".file-name").textContent = dataFile.name;
-    $("semFileLabel").classList.add("has-file");
-    $("semPreviewTable").innerHTML = buildPreview(dataText);
-    $("semDataPreview").classList.remove("hidden");
-    $("semInputFileToggle").checked = true; // Select file input
-    $("semInputTextToggle").checked = false;
-    $("semFileUploadArea").classList.remove("hidden");
-    $("semTextInputArea").classList.add("hidden");
-
-    // 3. Update syntax boxes with actual column names
-    // Column names: Date,Year,Month,Quarter,Ad_Spend_USD,Ad_Spend_Level,Brand_Awareness_Pct,Brand_Awareness_Level,
-    // Online_Sales_USD,Retail_Sales_USD,Total_Sales_USD,New_Customers_Count,Profit_USD,ROI_Pct,
-    // Customer_Acquisition_Cost,Sales_Per_Customer,Online_Sales_Ratio
-    
-    $("semModelTemplate").disabled = true;
-    $("semModelTemplate").innerHTML = `<option value="custom">Custom Syntax</option>`;
-    $("semModelTemplate").value = "custom";
-    
-    // Set measurement syntax using actual column names
-    $("semMeasurementSyntax").value = `Marketing_Performance =~ Ad_Spend_USD + Brand_Awareness_Pct
-Sales_Performance =~ Online_Sales_USD + Retail_Sales_USD + Total_Sales_USD
-Customer_Metrics =~ New_Customers_Count + Sales_Per_Customer`;
-
-    // Set structural syntax using actual column names and latent variables
-    $("semStructuralSyntax").value = `Sales_Performance ~ Marketing_Performance
-Customer_Metrics ~ Marketing_Performance + Sales_Performance
-Profit_USD ~ Sales_Performance + Customer_Metrics`;
-    break;
+                    window.tempSampleDataFile = dataFile;
+                    
+                    dataText = await dataFile.text();
+                    
+                    $(`${prefix}PreviewTable`).innerHTML = buildPreview(dataText);
+                    $(`${prefix}DataPreview`).classList.remove("hidden");
+                    
+                    $(`${prefix}ModelTemplate`).innerHTML = `<option value="custom">Custom Syntax</option>`;
+                    $(`${prefix}ModelTemplate`).value = "custom";
+                    if (isPls) {
+                         $(`${prefix}MeasurementSyntax`).value = "Quality =~ qual1 + qual2 + qual3\nSatisfaction =~ sat1 + sat2 + sat3\nLoyalty =~ loy1 + loy2 + loy3";
+                    } else {
+                         $(`${prefix}MeasurementSyntax`).value = "Marketing_Performance =~ Ad_Spend_USD + Brand_Awareness_Pct\nSales_Performance =~ Online_Sales_USD + Retail_Sales_USD + Total_Sales_USD\nCustomer_Metrics =~ New_Customers_Count + Sales_Per_Customer";
+                    }
+                    $(`${prefix}StructuralSyntax`).value = "Sales_Performance ~ Marketing_Performance\nCustomer_Metrics ~ Marketing_Performance + Sales_Performance\nProfit_USD ~ Sales_Performance + Customer_Metrics";
+                    break;
 
                 case "dematel-analysis":
-                    // 1. Fetch file and text
                     contextFile = await fetchFileAsObject('dematel/dematel-sample-doc.txt');
-                    if (!contextFile) throw new Error("Sample context file failed to load.");
-
+                    forceInputFile("dematelFile", contextFile);
+                    
+                    window.tempSampleContextFile = contextFile;
                     contextText = await contextFile.text();
 
-                    // 2. Update UI
-                    $("dematelFileLabel").querySelector(".file-name").textContent = contextFile.name;
-                    $("dematelFileLabel").classList.add("has-file");
                     $("dematelContent").value = contextText;
-                    $("dematelFilePreview").textContent = contextText.split('\n').slice(0, 10).join('\n');
-                    $("dematelFilePreviewContainer").classList.remove("hidden");
-                    $("dematelInputTextToggle").checked = true; // Select text input
+                    $("dematelInputTextToggle").checked = true;
                     $("dematelInputFileToggle").checked = false;
                     $("dematelTextInputArea").classList.remove("hidden");
                     $("dematelFileUploadArea").classList.add("hidden");
                     break;
             }
 
-            // --- THIS IS THE KEY CHANGE ---
-            // DO NOT call handleGenerate().
-            // Instead, set the flag and update the button text.
             window.isSampleModeActive = true;
             button.innerHTML = `✓ Sample Loaded!`;
-            // We leave it disabled so the user can't click it again.
-            // The user will now click the main "Generate Analysis" button.
 
         } catch (error) {
             console.error("Error in handleUseSampleClick:", error);
             alert(`Failed to load sample data: ${error.message}`);
-            window.isSampleModeActive = false; // Clear flag on error
-            // Restore button on error
+            window.isSampleModeActive = false;
             button.disabled = false;
             button.innerHTML = originalText;
-        } 
-        // NO finally block. We want the button to *stay* in its new state.
+        }
     }
 
     async function fetchOllama(systemPrompt, userContext, analysisType) {
@@ -11765,14 +11679,12 @@ CustomerID,Tenure_Months,Support_Tickets,Used_Feature_X,Churned<br>
         try {
             const formData = new FormData();
 
-            if (window.isSampleModeActive === true) {
-                // --- SAMPLE MODE ---
-                const dataFile = await fetchFileAsObject('visualization/visualization-sample.csv');
-                const contextFile = await fetchFileAsObject('visualization/visualization-sample-doc.txt');
-                if (!dataFile || !contextFile) throw new Error("Sample file(s) failed to load.");
-
-                formData.append("data_file", dataFile, dataFile.name);
-                formData.append("context_file", contextFile, contextFile.name);
+            if (window.isSampleModeActive === true && window.tempSampleDataFile) {
+                console.log("Using Global Sample Data for Visualization");
+                formData.append("data_file", window.tempSampleDataFile, window.tempSampleDataFile.name);
+                if (window.tempSampleContextFile) {
+                    formData.append("context_file", window.tempSampleContextFile, window.tempSampleContextFile.name);
+                }
             } else {
                 // --- MANUAL MODE ---
                 const dataFile = $("vizFile").files[0];
@@ -17930,15 +17842,13 @@ The AI will read this and build the matrix for you."></textarea>
             const formData = new FormData();
             formData.append("analysis_type", "descriptive");
             
-            if (window.isSampleModeActive === true) {
-                // --- SAMPLE MODE ---
-                const dataFile = await fetchFileAsObject('descriptive/descriptive-sample-data.csv');
-                const contextFile = await fetchFileAsObject('descriptive/descriptive-sample-doc.txt');
-                if (!dataFile || !contextFile) throw new Error("Sample files not found.");
-                
-                formData.append("data_file", dataFile, dataFile.name);
-                formData.append("context_file", contextFile, contextFile.name);
-
+            // --- CHECK: SAMPLE MODE VS MANUAL MODE ---
+            if (window.isSampleModeActive === true && window.tempSampleDataFile) {
+                console.log("Using Global Sample Data for Descriptive");
+                formData.append("data_file", window.tempSampleDataFile, window.tempSampleDataFile.name);
+                if (window.tempSampleContextFile) {
+                    formData.append("context_file", window.tempSampleContextFile, window.tempSampleContextFile.name);
+                }
             } else {
                 // --- MANUAL MODE ---
                 const dataFile = $("descriptiveFile").files[0];
@@ -19436,129 +19346,102 @@ The AI will read this and build the matrix for you."></textarea>
  * Sends data (file or text) and separate measurement/structural syntax.
  */
 async function handleSemAnalysis() {
-    const analysisResultContainer = $("analysisResult"); 
-    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div><h3 class="text-xl font-semibold text-white">Running Structural Equation Model...</h3></div>`;
-    setLoading("generate", true); 
-    
+    const analysisResultContainer = $("analysisResult");
+    analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div><h3 class="text-xl font-semibold text-white">Running Structural Equation Model...</h3><p class="text-white/80 mb-2">Please wait while the model is estimated.</p></div>`;
+    setLoading("generate", true);
+
     try {
         const formData = new FormData();
         formData.append("analysis_type", "sem");
+
         let measurementSyntax, structuralSyntax;
-        
-        if (window.isSampleModeActive === true) {
-            // --- SAMPLE MODE ---
-            console.log("🔍 SEM Sample mode active - using hardcoded syntax");
-            
-            // HARDCODE the syntax based on actual column names:
-            // Date,Year,Month,Quarter,Ad_Spend_USD,Ad_Spend_Level,Brand_Awareness_Pct,Brand_Awareness_Level,
-            // Online_Sales_USD,Retail_Sales_USD,Total_Sales_USD,New_Customers_Count,Profit_USD,ROI_Pct,
-            // Customer_Acquisition_Cost,Sales_Per_Customer,Online_Sales_Ratio
-            
-            // Create latent variables using actual column names
+
+        // --- CHECK: SAMPLE MODE VS MANUAL MODE ---
+        if (window.isSampleModeActive === true && window.tempSampleDataFile) {
+            console.log("🔍 SEM Sample mode active - using global temp file");
+
+            // 1. Use the file already loaded in the global variable
+            formData.append("data_file", window.tempSampleDataFile, window.tempSampleDataFile.name);
+
+            // 2. Set Hardcoded Syntax for the Sample
+            // (We do this because the text areas might be empty if the user didn't click anything else)
             measurementSyntax = `Marketing_Performance =~ Ad_Spend_USD + Brand_Awareness_Pct
-Sales_Performance =~ Online_Sales_USD + Retail_Sales_USD + Total_Sales_USD
-Customer_Metrics =~ New_Customers_Count + Sales_Per_Customer`;
+                                Sales_Performance =~ Online_Sales_USD + Retail_Sales_USD + Total_Sales_USD
+                                Customer_Metrics =~ New_Customers_Count + Sales_Per_Customer`;
 
             structuralSyntax = `Sales_Performance ~ Marketing_Performance
-Customer_Metrics ~ Marketing_Performance + Sales_Performance
-Profit_USD ~ Sales_Performance + Customer_Metrics`;
+                                Customer_Metrics ~ Marketing_Performance + Sales_Performance
+                                Profit_USD ~ Sales_Performance + Customer_Metrics`;
 
-            console.log("📋 Using measurement syntax:", measurementSyntax);
-            console.log("📋 Using structural syntax:", structuralSyntax);
-            
-            // Fetch the sample data file
-            try {
-                const dataFile = await fetchFileAsObject('sem/sem-sample-data.csv');
-                if (!dataFile) throw new Error("Sample file not found.");
-                
-                console.log("✅ Sample SEM file loaded:", dataFile.name);
-                formData.append("data_file", dataFile, dataFile.name);
-                
-                // Verify the data has expected columns
-                const dataText = await dataFile.text();
-                const headers = dataText.split(/[\r\n]+/)[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
-                console.log("📊 Available SEM columns:", headers);
-                
-                // Check if key columns exist
-                const requiredCols = ["Ad_Spend_USD", "Brand_Awareness_Pct", "Online_Sales_USD", "Retail_Sales_USD", "Total_Sales_USD", "New_Customers_Count", "Sales_Per_Customer", "Profit_USD"];
-                const missingCols = requiredCols.filter(col => !headers.includes(col));
-                if (missingCols.length > 0) {
-                    console.warn("⚠️ Missing expected columns:", missingCols);
-                }
-                
-            } catch (fileError) {
-                console.error("❌ Error loading SEM sample file:", fileError);
-                throw new Error(`SEM sample file loading failed: ${fileError.message}`);
-            }
-            
         } else {
             // --- MANUAL MODE ---
             console.log("🔧 SEM Manual mode - reading from UI");
-            
-            // READ syntax from UI
+
+            // 1. Get Syntax from UI
             measurementSyntax = $("semMeasurementSyntax").value.trim();
             structuralSyntax = $("semStructuralSyntax").value.trim();
-            const dataFile = $("semFile").files[0]; 
-            const dataText = $("semDataText").value.trim(); 
-            const isUsingFile = $("semInputFileToggle").checked; 
-            
-            if (isUsingFile) { 
+
+            // 2. Get Data from UI
+            const isUsingFile = $("semInputFileToggle").checked;
+
+            if (isUsingFile) {
+                const dataFile = $("semFile").files[0];
                 if (!dataFile) {
                     throw new Error("Please upload a data file (.csv or .xlsx).");
                 }
                 formData.append("data_file", dataFile, dataFile.name);
             } else {
+                const dataText = $("semDataText").value.trim();
                 if (!dataText) {
                     throw new Error("Please paste your CSV data into the text area.");
                 }
                 formData.append("data_text", dataText);
             }
         }
-        
-        // Validate syntax
+
+        // Validate syntax (Applies to both modes)
         if (!measurementSyntax && !structuralSyntax) {
             throw new Error("Please provide Measurement Model Syntax and/or Structural Model Syntax.");
         }
-        
+
         console.log("🎯 Final SEM syntax - Measurement:", measurementSyntax);
         console.log("🎯 Final SEM syntax - Structural:", structuralSyntax);
-        
+
         formData.append("measurement_syntax", measurementSyntax);
         formData.append("structural_syntax", structuralSyntax);
-        
+
         // --- 4. Send Request to Backend API ---
-        const API_URL = "https://analysis.sageaios.com/api/sem"; 
+        const API_URL = "https://analysis.sageaios.com/api/sem";
         console.log("🚀 Sending SEM request to backend...");
-        
+
         const response = await fetch(API_URL, {
             method: "POST",
             body: formData,
         });
-        
+
         // --- 5. Handle Backend Response ---
         if (!response.ok) {
             let errorDetail = `API request failed (${response.status})`;
             try {
-                const errorJson = await response.json(); 
-                errorDetail += `: ${errorJson.detail || JSON.stringify(errorJson)}`; 
+                const errorJson = await response.json();
+                errorDetail = errorJson.detail || `API Error: ${response.status}`;
             } catch (e) {
-                errorDetail += `: ${await response.text()}`;
+                errorDetail = `API Error: ${response.status} - ${response.statusText}`;
             }
-            throw new Error(errorDetail); 
+            throw new Error(errorDetail);
         }
-        
-        const parsedData = await response.json(); 
+
+        const parsedData = await response.json();
         console.log("📥 Received SEM response from backend");
-        console.log("✅ SEM analysis successful, rendering results...");
-        
+
         renderSemAnalysisPage(analysisResultContainer, parsedData);
-        
-    } catch (error) { 
+
+    } catch (error) {
         console.error("Error during SEM analysis:", error);
         analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400"><strong>Error:</strong> ${error.message}</div>`;
     } finally {
         window.isSampleModeActive = false; // Reset the flag
-        setLoading("generate", false); 
+        setLoading("generate", false);
     }
 }
 
@@ -19584,11 +19467,9 @@ async function handlePredictiveAnalysis() {
             const confidenceLevel = $("predictiveConfidenceLevel").value;
             const modelType = $("predictiveModelType").value;
 
-            if (window.isSampleModeActive === true) {
-                // --- SAMPLE MODE ---
-                const dataFile = await fetchFileAsObject('predictive/predictive-sample-data.csv');
-                if (!dataFile) throw new Error("Sample file not found.");
-                formData.append("data_file", dataFile, dataFile.name);
+            if (window.isSampleModeActive === true && window.tempSampleDataFile) {
+                console.log("Using Global Sample Data for Predictive");
+                formData.append("data_file", window.tempSampleDataFile, window.tempSampleDataFile.name);
             } else {
                 // --- MANUAL MODE ---
                 const dataFile = $("predictiveFile").files[0];
@@ -29000,7 +28881,7 @@ async function handlePlsAnalysis_DA() {
 
         try {
             const formData = new FormData();
-            formData.append("analysis_type", "pls"); 
+            formData.append("data_file", window.tempSampleDataFile, window.tempSampleDataFile.name);
 
             let measurementSyntax, structuralSyntax;
 
@@ -29010,6 +28891,9 @@ async function handlePlsAnalysis_DA() {
                 measurementSyntax = "Quality =~ qual1 + qual2 + qual3\nSatisfaction =~ sat1 + sat2 + sat3\nLoyalty =~ loy1 + loy2 + loy3";
                 structuralSyntax = "Satisfaction ~ Quality\nLoyalty ~ Satisfaction + Quality";
                 
+                console.log("📋 Using measurement syntax:", measurementSyntax);
+                console.log("📋 Using structural syntax:", structuralSyntax);
+
                 const dataFile = await fetchFileAsObject('pls/pls-sample-data.csv');
                 if (!dataFile) throw new Error("Sample file not found.");
                 formData.append("data_file", dataFile, dataFile.name);
@@ -30326,15 +30210,13 @@ function renderPlsDiagnosticsTab(data_summary, model_evaluation, reliability_val
         try {
             const formData = new FormData();
 
-            if (window.isSampleModeActive === true) {
-                // --- SAMPLE MODE ---
-                const dataFile = await fetchFileAsObject('prescriptive/prescriptive-sample-data.csv');
-                const contextFile = await fetchFileAsObject('prescriptive/prescriptive-sample-doc.txt');
-                if (!dataFile || !contextFile) throw new Error("Sample file(s) failed to load.");
-
-                formData.append("data_file", dataFile, dataFile.name);
-                formData.append("context_file", contextFile, contextFile.name);
-                formData.append("business_goal", "See attached context file");
+            if (window.isSampleModeActive === true && window.tempSampleDataFile) {
+                console.log("Using Global Sample Data for Prescriptive");
+                formData.append("data_file", window.tempSampleDataFile, window.tempSampleDataFile.name);
+                if (window.tempSampleContextFile) {
+                    formData.append("context_file", window.tempSampleContextFile, window.tempSampleContextFile.name);
+                    formData.append("business_goal", "See attached context file");
+                }
             } else {
                 // --- MANUAL MODE ---
                 const dataFile = $("prescriptiveFile").files[0];
