@@ -171,13 +171,12 @@ async function handleGenerate() {
     }
 }
 
-const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
-const OLLAMA_MODEL = "llama3.1:latest";
-const GROQ_URL = "https://matt-groq.data2int.com/api/groq/chat";
-const GROQ_MODEL = "llama-3.1-8b-instant";
-const MAX_CONTEXT_LENGTH = 15000;
+
 
 async function fetchOllama(systemPrompt, userContext, analysisType) {
+    const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
+    const OLLAMA_MODEL = "llama3.1:latest";
+    const MAX_CONTEXT_LENGTH = 100000;
     let userPrompt = userContext;
     let truncatedNote = "";
 
@@ -210,6 +209,8 @@ async function fetchOllama(systemPrompt, userContext, analysisType) {
 
 
 async function fetchGroq(systemPrompt, userContext, analysisType) {
+    const GROQ_URL = "https://matt-groq.data2int.com/api/groq/chat";
+    const GROQ_MODEL = "llama-3.1-8b-instant";
     const messages = [
             {"role": "system", "content": `${systemPrompt}`},
             {"role": "user", "content": `${userContext}`}
@@ -227,7 +228,7 @@ async function fetchGroq(systemPrompt, userContext, analysisType) {
         });
 
         if (!response.ok) {
-            let errorBody = `API error ${response.status}`;
+            let errorBody = `Groq API Proxy error ${response.status}`;
             try { errorBody += `: ${await response.text()}`; } catch (e) {}
             throw new Error(errorBody);
         }
@@ -238,12 +239,47 @@ async function fetchGroq(systemPrompt, userContext, analysisType) {
 }
 
 
-async function fetchLLM(provider, systemPrompt, userContext, analysisType) {
+async function fetchOpenRouter(systemPrompt, userContext, jsonSchema, analysisType) {
+    const OPRT_URL = "https://matt-groq.data2int.com/api/oprt/chat";
+    const OPRT_MODEL = "openai/gpt-oss-20b:free";
+    const messages = [
+            {"role": "user", "content": `${systemPrompt}\n\n${userContext}`}
+        ]
+
+    console.log("JSON Schema: ", jsonSchema);
+
+        const response = await fetch(OPRT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                model: OPRT_MODEL, 
+                messages: messages, 
+                stream: false, 
+                response_format: jsonSchema
+            })
+        });
+
+        if (!response.ok) {
+            let errorBody = `Open Router API Proxy error ${response.status}`;
+            try { errorBody += `: ${await response.text()}`; } catch (e) {}
+            throw new Error(errorBody);
+        }
+        
+        console.log(`Fetched from model: ${OPRT_MODEL}`);
+        const data = await response.json();
+        console.log(`Raw AI Response ${analysisType}:`, data.response); // Log raw response
+        return JSON.parse(data.choices[0].message.content);
+}
+
+
+async function fetchLLM(provider, systemPrompt, userContext, jsonSchema, analysisType) {
     try {
         if (provider === "ollama") {
             return await fetchOllama(systemPrompt, userContext, analysisType);
         } else if (provider === "groq") {
             return await fetchGroq(systemPrompt, userContext, analysisType);
+        } else if (provider == "open-router") {
+            return await fetchOpenRouter(systemPrompt, userContext, jsonSchema, analysisType);
         }
     } catch (error) {
         console.error(`Error calling ${provider}:`, error);

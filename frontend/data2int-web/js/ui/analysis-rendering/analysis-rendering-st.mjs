@@ -5,7 +5,7 @@ import { dom } from "../../utils/dom-utils.mjs";
 import { appState } from "../../state/app-state.mjs";
 import { animateElements } from "../../utils/ui-utils.mjs";
 import { generateProcessMappingMermaidCode, parseFishboneData, buildDotString } from '../../diagrams/diagram-generation.mjs'
-import { renderMermaidDiagram, renderFishboneDiagram } from '../../diagrams/diagram-renderer.mjs'
+import { renderMermaidDiagram, renderFishboneDiagram } from '../../diagrams/diagram-rendering.mjs'
 import { fitDiagram, resetZoom, exportPNG } from "../../diagrams/diagram-utils.mjs";
 
 function renderProcessMappingPage(container, data) {
@@ -607,7 +607,15 @@ function renderSystemThinkingPage(container, data) {
     // --- 2. Populate System Map (Network) Panel ---
     // This is deferred until the tab is clicked, but we set up the container.
     const networkPanel = dom.$("networkPanel");
-    networkPanel.innerHTML = `<div class="p-4"><h3 class="text-2xl font-bold mb-4 text-center">System Map</h3><div id="systemNetworkChart" class="w-full h-[700px] bg-black/10 rounded-lg"></div></div>`;
+    networkPanel.innerHTML = `
+    <div class="p-4"><h3 class="text-2xl font-bold mb-4 text-center">System Map</h3>
+        <div id="systemNetworkChart" class="w-full h-[700px] bg-black/10 rounded-lg"></div>
+        <div class="diagram-controls flex justify-center gap-2 mt-4">
+            <button class="diagram-fit-btn" data-action="fit">Fit to View</button>
+            <button class="diagram-reset-btn" data-action="reset">Reset Zoom</button>
+            <button class="diagram-export-btn" data-action="export">Export as PNG</button>
+        </div>
+    </div>`;
     
     // --- 3. Populate Variables Panel ---
     const variablesPanel = dom.$("variablesPanel");
@@ -754,9 +762,10 @@ function renderSystemThinkingPage(container, data) {
                     // Render the network chart only when its tab is clicked for the first time
                     const chartDiv = dom.$('systemNetworkChart');
                     if (chartDiv && !chartDiv.hasChildNodes()) {
-                        renderSystemNetworkTab(concepts, relationships, 'networkPanel');
-                    } else if (chartDiv) {
-                        Plotly.Plots.resize(chartDiv);
+                        let cy = renderSystemNetworkTab(concepts, relationships, chartDiv);
+                        document.querySelector('.diagram-fit-btn').addEventListener('click', () => fitDiagram(cy));
+                        document.querySelector('.diagram-reset-btn').addEventListener('click', () => resetZoom(cy));
+                        document.querySelector('.diagram-export-btn').addEventListener('click', () => exportPNG(cy));
                     }
                 }
             }
@@ -764,6 +773,182 @@ function renderSystemThinkingPage(container, data) {
     });
 
     dom.$("analysisActions").classList.remove("hidden"); // Show save buttons
+}
+
+
+
+/**
+ * RENDERER: System Network Diagram (with Cytoscape.js)
+ * - NEW (v3 - Cytoscape): Replaces Plotly.js with Cytoscape.js for dynamic, automatic graph layout.
+ * - Retains all data-driven styling: node size/color, edge width/color.
+ * - Implements a simple hover tooltip to display node details.
+ */
+function renderSystemNetworkTab(concepts, relationships, containerId) {
+    if (!containerId) return;
+
+    // Robustly filter and normalize relationships.
+    const nodesForFilter = concepts.map(c => ({ id: c.name, ...c }));
+    const canonicalNameMap = new Map();
+    nodesForFilter.forEach(node => {
+        canonicalNameMap.set(node.id.trim().toLowerCase(), node.id);
+    });
+    const validRelationships = relationships.reduce((acc, link) => {
+        if (link.from && link.to) {
+            const fromLower = link.from.trim().toLowerCase();
+            const toLower = link.to.trim().toLowerCase();
+            if (canonicalNameMap.has(fromLower) && canonicalNameMap.has(toLower)) {
+                acc.push({ ...link, from: canonicalNameMap.get(fromLower), to: canonicalNameMap.get(toLower) });
+            }
+        }
+        return acc;
+    }, []);
+
+    // Transform data for Cytoscape.
+    const cyNodes = concepts.map(c => ({
+        group: 'nodes',
+        data: { id: c.name, label: c.name, ...c }
+    }));
+
+    let nodeArray = cyNodes.slice(); // Use slice() to create a copy
+
+    // 2. Perform the Fisher-Yates (or equivalent) shuffle
+    for (let i = nodeArray.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [nodeArray[i], nodeArray[j]] = [nodeArray[j], nodeArray[i]];
+}
+
+    const strengthMap = { 'weak': 1, 'medium': 2, 'strong': 3 };
+    const cyEdges = validRelationships.map(r => ({
+        group: 'edges',
+        data: {
+            id: `${r.from}->${r.to}_${Math.random()}`, // Add random to avoid duplicate IDs
+            source: r.from,
+            target: r.to,
+            strengthNum: strengthMap[r.strength] || 1,
+            ...r
+        }
+    }));
+    const elements = [...nodeArray, ...cyEdges];
+
+    // Define style mappings
+    const typeToColor = { 'driver': '#FBBC05', 'outcome': '#4285F4', 'constraint': '#EA4335', 'resource': '#34A853' };
+    const polarityToColor = { '+': 'rgba(52, 168, 83, 0.9)', '-': 'rgba(234, 67, 53, 0.9)' };
+
+    // Initialize Cytoscape
+    try {
+        const cy = cytoscape({
+            container: containerId,
+            elements: elements,
+            // Zoom and pan settings
+            zoom: 1,
+            minZoom: 0.2,
+            maxZoom: 5,
+            zoomingEnabled: true,
+            userZoomingEnabled: true,
+            panningEnabled: true,
+            userPanningEnabled: true,
+            style: [
+                {
+                    selector: 'node',
+                    style: {
+                        'label': 'data(label)',
+                        'font-size': '12px',
+                        'color': '#fff',
+                        'text-valign': 'bottom',
+                        'text-halign': 'center',
+                        'text-margin-y': '5px',
+                        'text-wrap': 'wrap',
+                        'text-max-width': '80px',
+                        // Node size based on leverage level (lower number = higher leverage = bigger size)
+                        'width': 'mapData(leverage_level, 12, 1, 20, 70)',
+                        'height': 'mapData(leverage_level, 12, 1, 20, 70)',
+                        // Node color based on variable type
+                        'background-color': (ele) => typeToColor[ele.data('type')] || '#808080',
+                    }
+                },
+                {
+                    selector: 'edge',
+                    style: {
+                        'curve-style': 'bezier',
+                        'target-arrow-shape': 'triangle',
+                        // Edge width based on relationship strength.
+                        'width': 'mapData(strengthNum, 1, 3, 1, 5)',
+                        // Edge color based on polarity.
+                        'line-color': (ele) => polarityToColor[ele.data('polarity')] || '#808080',
+                        'target-arrow-color': (ele) => polarityToColor[ele.data('polarity')] || '#808080',
+                    }
+                },
+                { // Style for showing selection
+                    selector: 'node:selected',
+                    style: { 'border-width': 3, 'border-color': '#fff' }
+                }
+            ],
+            layout: {
+                name: 'circle',
+                fit: true,
+                avoidOverlap: true,
+            }
+        });
+        
+        // Show tooltip on hover.
+        cy.on('mouseover', 'node', function(event) {
+            const node = event.target;
+            const data = node.data();
+            const tooltipText = `<b>${data.label}</b><br>Type: ${data.type}<br>Leverage: ${data.leverage_level}<br>Desc: <i>${data.description}</i>`;
+            
+            let tooltip = document.getElementById('cy-tooltip');
+            if (!tooltip) {
+                tooltip = document.createElement('div');
+                tooltip.id = 'cy-tooltip';
+                tooltip.style.position = 'fixed';
+                tooltip.style.padding = '8px';
+                tooltip.style.backgroundColor = 'rgba(20, 20, 20, 0.85)';
+                tooltip.style.color = 'white';
+                tooltip.style.border = '1px solid #555';
+                tooltip.style.borderRadius = '5px';
+                tooltip.style.fontSize = '12px';
+                tooltip.style.pointerEvents = 'none';
+                tooltip.style.zIndex = '10000';
+                tooltip.style.display = 'none';
+                document.body.appendChild(tooltip);
+            }
+    
+            tooltip.innerHTML = tooltipText;
+            tooltip.style.display = 'block';
+
+            // Position using native mouse coordinates.
+            const mouseX = event.originalEvent.clientX;
+            const mouseY = event.originalEvent.clientY;
+            tooltip.style.left = mouseX + 15 + 'px';
+            tooltip.style.top = mouseY - 15 + 'px';
+        });
+
+        // Hide tooltip when the mouse moves off of a node.
+        cy.on('mouseout', 'node', function(event) {
+            const tooltip = document.getElementById('cy-tooltip');
+            if (tooltip) {
+                tooltip.style.display = 'none';
+            }
+        });
+
+        // Hide tooltip on drag.
+        cy.on('drag', 'node', function(event) {
+            const tooltip = document.getElementById('cy-tooltip');
+            if (tooltip) {
+                tooltip.style.display = 'none';
+            }
+        });
+
+        // Fit the diagram to the viewport.
+        cy.fit();
+
+        return cy;
+    } catch (e) {
+        console.error("Failed to render Cytoscape Systems Thinking Network diagram:", e);
+        containerId.innerHTML = `<div class="p-4 text-center text-red-400">❌ Error rendering diagram: ${e.message}</div>`;
+    }
+
+    return;
 }
 
 
@@ -989,137 +1174,6 @@ function renderLeveragePointsPage(container, data) {
 }
 
 
-/**
- * RENDERER: System Network Diagram
- * - NEW (v2 - Comprehensive): This function is enhanced to visualize the rich
- *   output from the new system mapping prompt.
- * - Node size is based on leverage level.
- * - Node color is based on variable type.
- * - Edge width is based on relationship strength.
- * - Edge color is based on polarity.
- * - FIX (v2.1): Corrected property access in annotation creation from `edge.source`
- *   to `edge.from`, preventing a TypeError. Added a guard clause.
- */
-function renderSystemNetworkTab(concepts, relationships, containerId) {
-    const container = dom.$(containerId);
-    if (!container) return;
-    
-    // Ensure the chart container exists
-    let chartDiv = dom.$('systemNetworkChart');
-    if (!chartDiv) {
-        container.innerHTML = `<div id="systemNetworkChart" class="w-full h-[700px] plotly-chart"></div>`;
-        chartDiv = dom.$('systemNetworkChart');
-    }
-
-    const nodes = concepts.map(c => ({ id: c.name, ...c }));
-    
-    // Normalize names for robust matching.
-    // Create a map from a normalized name back to the canonical name to handle case/whitespace inconsistencies from the LLM.
-    const canonicalNameMap = new Map();
-    nodes.forEach(node => {
-        canonicalNameMap.set(node.id.trim().toLowerCase(), node.id);
-    });
-
-    // Filter relationships by checking if their normalized 'from' and 'to' values exist in the map.
-    // Create a new array with the canonical names to ensure perfect matching later.
-    const validRelationships = relationships.reduce((acc, link) => {
-        if (link.from && link.to) {
-            const fromLower = link.from.trim().toLowerCase();
-            const toLower = link.to.trim().toLowerCase();
-
-            if (canonicalNameMap.has(fromLower) && canonicalNameMap.has(toLower)) {
-                // If a match is found, push a new object with the CANONICAL names.
-                acc.push({
-                    ...link,
-                    from: canonicalNameMap.get(fromLower),
-                    to: canonicalNameMap.get(toLower)
-                });
-            }
-        }
-        return acc;
-    }, []);
-
-    const edges = validRelationships.map(r => ({ source: r.from, target: r.to, ...r }));
-
-    // --- Layout Nodes in a Circle ---
-    const positions = {};
-    nodes.forEach((node, i) => {
-        const angle = (i / nodes.length) * 2 * Math.PI;
-        positions[node.id] = { x: nodes.length * 20 * Math.cos(angle), y: nodes.length * 20 * Math.sin(angle) };
-    });
-
-    // --- Create Edge Traces ---
-    const edge_traces = [];
-    const strengthToWidth = { 'strong': 3, 'medium': 1.5, 'weak': 0.5 };
-    
-    edges.forEach(edge => {
-        const sourcePos = positions[edge.source];
-        const targetPos = positions[edge.target];
-        if (sourcePos && targetPos) {
-            edge_traces.push({
-                x: [sourcePos.x, targetPos.x],
-                y: [sourcePos.y, targetPos.y],
-                mode: 'lines',
-                line: {
-                    width: strengthToWidth[edge.strength] || 1,
-                    color: edge.polarity === '+' ? 'rgba(52, 168, 83, 0.6)' : 'rgba(234, 67, 53, 0.6)' // Green for +, Red for -
-                },
-                hoverinfo: 'text',
-                text: `<b>${edge.from} → ${edge.to}</b><br>Polarity: ${edge.polarity}<br>Strength: ${edge.strength}<br>Delay: ${edge.delay}<br>Evidence: <i>${edge.evidence}</i>`
-            });
-        }
-    });
-
-    // --- Create Node Trace ---
-    const typeToColor = {
-        'driver': '#FBBC05',   // Yellow
-        'outcome': '#4285F4',  // Blue
-        'constraint': '#EA4335', // Red
-        'resource': '#34A853'   // Green
-    };
-
-    const nodeTrace = {
-        x: nodes.map(node => positions[node.id]?.x),
-        y: nodes.map(node => positions[node.id]?.y),
-        mode: 'markers+text',
-        text: nodes.map(n => n.name),
-        textposition: 'bottom center',
-        hoverinfo: 'text',
-        hovertext: nodes.map(n => `<b>${n.name}</b><br>Type: ${n.type}<br>Leverage: ${n.leverage_level}<br>Desc: <i>${n.description}</i>`),
-        marker: {
-            size: nodes.map(n => (13 - n.leverage_level) * 2.5 + 10), // Higher leverage (lower num) = bigger size
-            color: nodes.map(n => typeToColor[n.type] || 'grey'),
-            symbol: 'circle'
-        }
-    };
-
-    Plotly.newPlot(chartDiv, [...edge_traces, nodeTrace], {
-        title: 'System Map',
-        showlegend: false,
-        hovermode: 'closest',
-        paper_bgcolor: 'rgba(0,0,0,0)',
-        plot_bgcolor: 'rgba(0,0,0,0)',
-        font: { color: 'white' },
-        xaxis: { showgrid: false, zeroline: false, showticklabels: false },
-        yaxis: { showgrid: false, zeroline: false, showticklabels: false },
-        annotations: validRelationships.map(edge => {
-            const sourcePos = positions[edge.from]; // CORRECTED: from .source to .from
-            const targetPos = positions[edge.to];   // CORRECTED: from .target to .to
-            
-            // Add a guard to prevent errors if a position is somehow not found
-            if (!sourcePos || !targetPos) {
-                return null;
-            }
-
-            return {
-                ax: sourcePos.x, ay: sourcePos.y, axref: 'x', ayref: 'y',
-                x: (sourcePos.x + targetPos.x) / 2, y: (sourcePos.y + targetPos.y) / 2, xref: 'x', yref: 'y',
-                showarrow: true, arrowhead: 2, arrowsize: 1.5, arrowwidth: 1,
-                arrowcolor: edge.polarity === '+' ? 'rgba(52, 168, 83, 0.6)' : 'rgba(234, 67, 53, 0.6)'
-            }
-        }).filter(a => a !== null) // Filter out any null annotations from the guard
-    }, { responsive: true });
-}
 
 function renderArchetypeAnalysisPage(container, data) {
     container.innerHTML = "";
