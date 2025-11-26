@@ -11339,6 +11339,9 @@ CustomerID,Tenure_Months,Support_Tickets,Used_Feature_X,Churned<br>
                     ${ollamaText}
                     \`\`\`
 
+                    **VALIDATION:**
+                    If the text is gibberish/nonsense, return the INVALID JSON.
+
                     **DETAILED TASKS:**
                     1.  **Refine Main Goal:** Provide a concise, 1-sentence summary of the user's primary goal (\`main_goal\`) **based ONLY on the text**.
                     2.  **Formulate S.M.A.R.T. Objectives:** Create an array of 3-5 \`smart_objectives\`. For EACH objective, provide the following **strictly derived from the user's text**:
@@ -12420,6 +12423,9 @@ CustomerID,Tenure_Months,Support_Tickets,Used_Feature_X,Churned<br>
                 \`\`\`
 
                 **DETAILED TASKS:**
+                **VALIDATION:**
+                If the text is gibberish, return the INVALID structure.
+
                 1.  **Diagnose Problem/Goal:** Provide a concise, one-sentence \`problem_diagnosis\` stating the core systemic issue or goal described **in the user's text**.
                 2.  **Identify Archetype (If Applicable):** Identify the single most likely \`system_archetype\` (e.g., "Limits to Growth", "Shifting the Burden", etc.) evident **in the user's text**, *only if a clear recurring problem pattern is described*. If the text describes a *proactive initiative* rather than a problem cycle, state "Proactive Initiative - No Archetype" for the name. Include:
                     * \`name\`: The archetype name or "Proactive Initiative - No Archetype".
@@ -12934,6 +12940,8 @@ function createSystemObjectivesLayout_ST(template) {
                 \`\`\`
                 ${text}
                 \`\`\`
+                **VALIDATION:**
+                If the text is gibberish, return the INVALID structure.
 
                 **TASKS:**
                 1.  **Main Objective (\`main_objective\`):** A single, high-level statement of what the system *should* achieve.
@@ -13431,6 +13439,9 @@ function createSystemObjectivesLayout_ST(template) {
                 * **Current Reality (Framing):** ${currentReality}
                 * **Future Vision (Framing):** ${futureVision}
 
+                **VALIDATION:**
+                If the provided contexts are gibberish or empty, return the INVALID structure.
+
                 **TASK:**
                 Perform a Creative Dissonance analysis based *strictly* on the detailed information within the **Business Context** and **Data Context** files.
 
@@ -13877,6 +13888,9 @@ function createSystemObjectivesLayout_ST(template) {
                 """
                 ${systemDescription}
                 """
+
+                **VALIDATION:**
+                If the text is gibberish, return the INVALID structure.
 
                 **TASK:**
                 Perform a comprehensive Living System diagnosis. Identify the health status and provide analysis for each key system component *based solely on evidence within the user's description*. Formulate specific strategic interventions to address identified weaknesses, again, grounded *only* in the provided text.
@@ -14330,6 +14344,9 @@ function createSystemObjectivesLayout_ST(template) {
                 """
                 ${beliefOrProblemContext}
                 """
+
+                **VALIDATION:**
+                If the text is gibberish, return the INVALID structure.
 
                 **TASK:**
                 Perform a Ladder of Inference analysis grounded *exclusively* in the USER'S CONTEXT.
@@ -16694,7 +16711,7 @@ The AI will read this and build the matrix for you."></textarea>
             }
 
             // 3. Define ALL Framework Prompts
-            const textContext = `**USER'S BUSINESS CONTEXT:**\n\`\`\`\n${text}\n\`\`\`\n**ABSOLUTE CONSTRAINTS:** Base **ALL** output **EXCLUSIVELY** on the provided "USER'S BUSINESS CONTEXT". **DO NOT** invent information. ${truncatedNote}`;
+            const textContext = `**USER'S BUSINESS CONTEXT:**\n\`\`\`\n${text}\n\`\`\`\n**VALIDATION:** If the context is gibberish (e.g., "asdf"), return a JSON object where all array fields are empty [] and string fields say "Analysis failed: Invalid input". \n**ABSOLUTE CONSTRAINTS:** Base **ALL** output **EXCLUSIVELY** on the provided "USER'S BUSINESS CONTEXT". ${truncatedNote}`;
 
             // --- UPDATED PROMPT: Blue Ocean (Includes Novel Strategies) ---
             const prompt_blue_ocean = `
@@ -17966,6 +17983,8 @@ The AI will read this and build the matrix for you."></textarea>
                 \`\`\`
                 ${problemContext}
                 \`\`\`
+                **VALIDATION:**
+                If text is gibberish (e.g., "asdf"), return the INVALID structure.
 
                 **DETAILED TASKS:**
                 1.  **Problem Statement:** Clearly define the central \`problem_statement\` being analyzed, derived from the context.
@@ -18627,6 +18646,9 @@ The AI will read this and build the matrix for you."></textarea>
                 ${ambitionText}
                 """
 
+                **VALIDATION:**
+                If text is gibberish, return the INVALID structure.
+
                 **TASK:**
                 Formulate a Three Horizons plan derived *exclusively* from the details within the USER'S PROVIDED CONTEXT.
 
@@ -18797,7 +18819,8 @@ The AI will read this and build the matrix for you."></textarea>
             // Step 1: Extract Concepts
             statusEl.textContent = "Step 1/3: Extracting key system concepts...";
             const conceptPrompt = `
-                        Analyze the following text and extract key 2-4 word concepts. For each concept, provide:
+                        Analyze the following text and extract key 2-4 word concepts. If it is gibberish, return {"concepts": []}.
+                        Else, for each concept, provide:
                         1. name (2-4 words)
                         2. description (brief)
                         3. effect ("+", "-", or "0")
@@ -18946,6 +18969,8 @@ The AI will read this and build the matrix for you."></textarea>
                 ${content}
                 \`\`\`
 
+                **VALIDATION:**
+                If the text is gibberish, return the INVALID structure.
                 **DETAILED TASKS:**
                 1.  **Process Definition:** Define a clear \`process_name\` based on the description.
                 2.  **Identify Steps (8-12 steps):** Extract the sequential steps. For each step, provide:
@@ -24084,6 +24109,9 @@ async function handleFactorAnalysis() {
             ${documentText}
             \`\`\`
 
+            **VALIDATION:**
+            If the text is gibberish, return the INVALID structure.
+
             **DETAILED TASKS:**
             1.  **Identify Internal Factors:** Exhaustively scan the text for **ALL** internal positive factors (Strengths) and internal negative factors (Weaknesses).
             2.  **Identify External Factors:** Exhaustively scan the text for **ALL** external positive factors (Opportunities) and external negative factors (Threats).
@@ -24984,6 +25012,9 @@ async function handleKpiAnalysis_KE() {
             ${text}
             \`\`\`
 
+            **VALIDATION:**
+            If the text is gibberish or contains no meaningful content, return the INVALID structure.
+
             **DETAILED TASKS (Ground all answers *strictly* in the text):**
             1.  **Extract Goal:** Identify the \`main_goal\` of the research/project (e.g., "to understand the key drivers of customer satisfaction...").
             2.  **Extract KPI Groups:**
@@ -25436,12 +25467,11 @@ function renderKpiPage_KE(container, data) {
                         <textarea id="missionVisionContent" class="input-field h-32" placeholder="Describe your company, its purpose, its products, and its primary objectives... (Note: Uploading a document above is recommended)"></textarea>
                     </div>
                     
-                    <!-- Ollama/N8N Toggle Section -->
                     <div class="border-t border-white/10 pt-4 mt-4">
                         <h4 class="text-lg font-bold mb-3 text-white">Choose Analysis Engine</h4>
                         <div class="space-y-3">
                             <label class="custom-checkbox">
-                                <input type="checkbox" id="useOllama" class="custom-checkbox-input" checked>
+                                <input type="radio" name="analysisEngine" id="useOllama" class="custom-checkbox-input" value="ollama" checked>
                                 <span class="custom-checkbox-checkmark"></span>
                                 <span class="custom-checkbox-label">
                                     <span class="font-semibold text-white">🧠 Ollama AI</span>
@@ -25450,7 +25480,7 @@ function renderKpiPage_KE(container, data) {
                             </label>
                             
                             <label class="custom-checkbox">
-                                <input type="checkbox" id="useN8N" class="custom-checkbox-input" checked>
+                                <input type="radio" name="analysisEngine" id="useN8N" class="custom-checkbox-input" value="n8n">
                                 <span class="custom-checkbox-checkmark"></span>
                                 <span class="custom-checkbox-label">
                                     <span class="font-semibold text-white">⚡ RAG-Enhanced output</span>
@@ -25458,7 +25488,7 @@ function renderKpiPage_KE(container, data) {
                                 </span>
                             </label>
                             
-                            <p id="toggleError" class="text-red-400 text-xs hidden mt-2">⚠️ Please select at least one analysis engine</p>
+                            <p id="toggleError" class="text-red-400 text-xs hidden mt-2">⚠️ Please select an analysis engine</p>
                         </div>
                     </div>
                     
@@ -25480,7 +25510,7 @@ function renderKpiPage_KE(container, data) {
             </div>
         `;
 
-        // Add CSS for custom checkboxes
+        // Add CSS for custom Radio Buttons (Circular)
         const style = document.createElement('style');
         style.textContent = `
             .custom-checkbox {
@@ -25508,6 +25538,7 @@ function renderKpiPage_KE(container, data) {
                 width: 0;
             }
             
+            /* Circle Container for Radio */
             .custom-checkbox-checkmark {
                 position: relative;
                 top: 2px;
@@ -25515,7 +25546,7 @@ function renderKpiPage_KE(container, data) {
                 width: 20px;
                 background: rgba(255, 255, 255, 0.1);
                 border: 2px solid rgba(255, 255, 255, 0.3);
-                border-radius: 4px;
+                border-radius: 50%; /* Make it round */
                 margin-right: 12px;
                 flex-shrink: 0;
                 transition: all 0.2s ease;
@@ -25526,20 +25557,22 @@ function renderKpiPage_KE(container, data) {
             }
             
             .custom-checkbox-input:checked ~ .custom-checkbox-checkmark {
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                background: transparent;
                 border-color: #667eea;
             }
             
+            /* Dot Indicator for Radio */
             .custom-checkbox-input:checked ~ .custom-checkbox-checkmark::after {
                 content: "";
                 position: absolute;
-                left: 6px;
-                top: 2px;
-                width: 4px;
-                height: 8px;
-                border: solid white;
-                border-width: 0 2px 2px 0;
-                transform: rotate(45deg);
+                left: 50%;
+                top: 50%;
+                width: 10px;
+                height: 10px;
+                background: #667eea; /* Solid color dot */
+                border-radius: 50%;
+                transform: translate(-50%, -50%);
+                box-shadow: 0 0 5px rgba(102, 126, 234, 0.5);
             }
             
             .custom-checkbox-label {
@@ -25548,17 +25581,6 @@ function renderKpiPage_KE(container, data) {
             
             .custom-checkbox-input:focus ~ .custom-checkbox-checkmark {
                 box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
-            }
-            
-            /* Disabled state */
-            .custom-checkbox.disabled {
-                opacity: 0.6;
-                cursor: not-allowed;
-            }
-            
-            .custom-checkbox.disabled:hover {
-                background: rgba(255, 255, 255, 0.05);
-                border-color: rgba(255, 255, 255, 0.1);
             }
         `;
         document.head.appendChild(style);
@@ -25573,7 +25595,7 @@ function renderKpiPage_KE(container, data) {
         const docUploadToggle = $("docUpload");
         const textArea = $("textInputArea");
         
-        // Radio button logic
+        // Radio button logic for input type
         textInputToggle.addEventListener("change", () => {
             textArea.classList.remove("hidden");
         });
@@ -25589,7 +25611,6 @@ function renderKpiPage_KE(container, data) {
                 if (e.target.files.length > 0) {
                     fileNameSpan.textContent = e.target.files[0].name;
                     label.classList.add("has-file");
-                    // Automatically select "Use Document Above" and disable text area
                     docUploadToggle.checked = true;
                     docUploadToggle.disabled = false;
                     docUploadToggle.nextElementSibling.classList.remove("opacity-50", "cursor-not-allowed");
@@ -25598,7 +25619,6 @@ function renderKpiPage_KE(container, data) {
                 } else {
                     fileNameSpan.textContent = "Click to select a file...";
                     label.classList.remove("has-file");
-                    // Revert to text input
                     docUploadToggle.checked = false;
                     docUploadToggle.disabled = true;
                     docUploadToggle.nextElementSibling.classList.add("opacity-50", "cursor-not-allowed");
@@ -25607,20 +25627,6 @@ function renderKpiPage_KE(container, data) {
                 }
             });
         }
-        
-        // Toggle validation
-        const ollamaToggle = $("useOllama");
-        const n8nToggle = $("useN8N");
-        const toggleError = $("toggleError");
-        
-        function validateToggles() {
-            const hasSelection = ollamaToggle.checked || n8nToggle.checked;
-            toggleError.classList.toggle("hidden", hasSelection);
-            return hasSelection;
-        }
-        
-        ollamaToggle.addEventListener("change", validateToggles);
-        n8nToggle.addEventListener("change", validateToggles);
         
         // Restore from cache or set default
         if (analysisCache[currentTemplateId]) {
@@ -25773,6 +25779,7 @@ function renderKpiPage_KE(container, data) {
             ${ollamaText}
             \`\`\`
 
+
             **DETAILED TASKS:**
             1.  **Synthesize Mission (\`mission\`):** * Create a concise \`statement\` defining the organization's core purpose.
                 * Create a \`breakdown\` array. Break the mission into 3 components (e.g., "Target Audience", "Contribution", "Key Elements"). For the \`analysis\` of each, **you must explicitly reference facts from the context** (e.g., "The context mentions targeting SMEs in the fintech sector...").
@@ -25788,6 +25795,9 @@ function renderKpiPage_KE(container, data) {
                 * \`kpis_to_track\`: 2-3 specific KPIs.
 
             **ABSOLUTE CONSTRAINTS:**
+            **VALIDITY CHECK**
+            Check the context. Is it intelligible text describing a business or organization?
+            - If it is gibberish (e.g., "asdf", "lorem ipsum") or random keys: **STOP**. Return the INVALID format below.
             - **CONTEXT IS KING:** Do not generate generic analyses. Every breakdown analysis must mention specific details from the user's input (industry, specific products, stated challenges).
             - **JSON FORMAT:** Adhere EXACTLY.
 
@@ -26297,12 +26307,13 @@ function renderKpiPage_KE(container, data) {
             // --- Step 1: Extract Internal Factors (S/W) with Descriptions ---
             statusEl.textContent = "Step 1/4: Analyzing internal factors (Strengths & Weaknesses)...";
             const internalPrompt = `
-                Analyze the following business content based **ONLY** on the text provided. Identify 4-6 specific internal Strengths and 4-6 specific internal Weaknesses. ${truncatedNote}
+                Analyze the following business content based **ONLY** on the text provided. Identify 4-6 specific internal Strengths and 4-6 specific internal Weaknesses.  ${truncatedNote}
 
                 **USER'S BUSINESS CONTENT:**
                 \`\`\`
                 ${businessContent}
                 \`\`\`
+                **VALIDATION:** If gibberish, return: { "strengths": [], "weaknesses": [] }
 
                 **TASK:** For each Strength and Weakness identified **solely from the text**:
                 1.  Provide a concise \`factor\` name (2-5 words).
@@ -26342,6 +26353,7 @@ function renderKpiPage_KE(container, data) {
                 \`\`\`
                 ${businessContent}
                 \`\`\`
+                **VALIDATION:** If gibberish, return: { "strengths": [], "weaknesses": [] }
 
                 **TASK:** For each Opportunity and Threat identified **solely from the text**:
                 1.  Provide a concise \`factor\` name (2-5 words).
@@ -26922,6 +26934,9 @@ function renderDetailedAnalysis(swotData, towsData, containerId) {
                 \`\`\`
                 ${text}
                 \`\`\`
+
+                **VALIDATION:**
+                If the text is nonsense, gibberish, or too short to contain a goal, return the INVALID response.
 
                 **DETAILED TASKS:**
                 1.  **Define Objective:** Refine the user's input or infer from the context a single, clear, overarching, and ideally measurable \`main_objective\` (SMART if possible).
@@ -28355,6 +28370,9 @@ function renderLearnRegressionPanel(containerId) {
 
                 **DETAILED TASKS (Follow this order):**
 
+                **VALIDATION:**
+                If the text is gibberish or random characters, return the INVALID structure.
+
                 **Task 1: Determine Text Intent.**
                 First, read the text to determine its intent.
                 - Is it a **Dynamic System Problem** (contains "sales are falling", "growth stalled", "bottleneck", "we have a problem with...")?
@@ -28776,6 +28794,9 @@ async function handleSystemThinkingAnalysis() {
         
         // This new prompt a bit more detailed, asking for a full system map.
         const systemPrompt = `You are an expert systems analyst trained in causal mapping, Donella Meadows' leverage points, and Peter Senge's system archetypes.
+            **TASK 0: GIBBERISH DETECTION**
+            Check the User Text. If it is gibberish or nonsense, you MUST return the "INVALID" JSON structure below.
+
             **CRITICAL INSTRUCTIONS:**
                 1. Read the ENTIRE user-provided context carefully. 
                 2. Extract 15-25 key variables (not just 5-8!).
@@ -31229,6 +31250,8 @@ function renderPrescriptivePage_DA(container, data) {
                 \`\`\`
 
                 **DETAILED TASKS (Follow this order):**
+                **VALIDATION:**
+                Check if the text describes a project/goal. If it is gibberish, return the INVALID structure.
 
                 **Task 1: Determine Text Intent.**
                 First, read the text to determine its intent.
@@ -31678,6 +31701,9 @@ function renderActionPlansPage_AP(container, data) {
                 \`\`\`
                 ${text}
                 \`\`\`
+
+                **VALIDATION:**
+                If the text is gibberish, return the INVALID structure.
 
                 **DETAILED TASKS (Follow this order):**
 
