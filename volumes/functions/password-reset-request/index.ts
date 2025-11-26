@@ -24,9 +24,9 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Email is required' }), { status: 400, headers })
     }
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || 'https://supabase.data2int.com'
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-    const resendApiKey = Deno.env.get('RESEND_API_KEY') || 're_iXKQvKau_8k3SJvk8NdULzUkLVo2Dod3B'
+    const resendApiKey = Deno.env.get('RESEND_API_KEY')
 
     if (!supabaseServiceKey) {
       return new Response(JSON.stringify({ error: 'Server config error' }), { status: 500, headers })
@@ -109,7 +109,7 @@ serve(async (req) => {
     console.log('Reset token generated and stored')
 
     // Create reset URL with your domain
-    const resetUrl = `https://elijah.data2int.com/auth/reset-password?token=${resetToken}&email=${encodeURIComponent(body.email)}`
+    const resetUrl = `https://sageaios.com/auth/reset-password?token=${resetToken}&email=${encodeURIComponent(body.email)}`
 
     console.log('=== STEP 3: SENDING EMAIL VIA RESEND ===')
     

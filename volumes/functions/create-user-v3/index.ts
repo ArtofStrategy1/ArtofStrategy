@@ -40,9 +40,9 @@ serve(async (req) => {
       tier = 'basic'
     }
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || 'https://supabase.data2int.com'
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-    const resendApiKey = Deno.env.get('RESEND_API_KEY') || 're_iXKQvKau_8k3SJvk8NdULzUkLVo2Dod3B'
+    const resendApiKey = Deno.env.get('RESEND_API_KEY')
 
     console.log('Environment check:')
     console.log('- SUPABASE_URL:', supabaseUrl)
@@ -162,16 +162,16 @@ serve(async (req) => {
         })
 
         // Create confirmation URL with proper domain
-        const confirmationUrl = `https://supabase.data2int.com/functions/v1/email-verify?token=${confirmationToken}&type=signup&user_id=${signUpData.user.id}`
+        const confirmationUrl = `https://supabase.sageaios.com/functions/v1/email-verify?token=${confirmationToken}&type=signup&user_id=${signUpData.user.id}`
 
-        // Beautiful Data2Int email template
+        // Beautiful sageaios email template
         const emailHtml = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to Data2Int</title>
+    <title>Welcome to Sage AI</title>
 </head>
 <body style="background-color: #f8fafc; margin: 0; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;">
     <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);">
@@ -185,7 +185,7 @@ serve(async (req) => {
                     <path d="M2 12L12 17L22 12" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
             </div>
-            <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">Welcome to Data2Int!</h1>
+            <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">Welcome to Sage AI!</h1>
             <p style="color: rgba(255, 255, 255, 0.9); margin: 10px 0 0 0; font-size: 16px;">Your journey into intelligent data begins now</p>
         </div>
 
@@ -194,7 +194,7 @@ serve(async (req) => {
             <h2 style="color: #1f2937; margin: 0 0 20px 0; font-size: 24px; font-weight: 600;">Almost there${firstName ? `, ${firstName}` : ''}!</h2>
             
             <p style="color: #4b5563; line-height: 1.6; margin: 0 0 20px 0; font-size: 16px;">
-                Thank you for joining Data2Int! We're excited to help you unlock the power of your data with our advanced analytics platform.
+                Thank you for joining Sage AI! We're excited to help you unlock the power of your data with our advanced analytics platform.
             </p>
             
             <p style="color: #4b5563; line-height: 1.6; margin: 0 0 30px 0; font-size: 16px;">
@@ -253,19 +253,19 @@ serve(async (req) => {
         <div style="background-color: #f9fafb; padding: 30px; text-align: center; border-top: 1px solid #e5e7eb;">
             <p style="color: #6b7280; font-size: 14px; margin: 0 0 15px 0;">
                 Need help? Contact our support team at 
-                <a href="mailto:support@data2int.com" style="color: #4f46e5; text-decoration: none;">support@data2int.com</a>
+                <a href="mailto:support@sageaios.com" style="color: #4f46e5; text-decoration: none;">support@sageaios.com</a>
             </p>
             
             <div style="margin: 20px 0;">
-                <a href="https://elijah.data2int.com" style="color: #4f46e5; text-decoration: none; margin: 0 15px; font-size: 14px;">Website</a>
-                <a href="https://docs.data2int.com" style="color: #4f46e5; text-decoration: none; margin: 0 15px; font-size: 14px;">Documentation</a>
-                <a href="https://elijah.data2int.com/contact" style="color: #4f46e5; text-decoration: none; margin: 0 15px; font-size: 14px;">Contact Us</a>
+                <a href="https://sageaios.com" style="color: #4f46e5; text-decoration: none; margin: 0 15px; font-size: 14px;">Website</a>
+                <a href="https://sageaios.com" style="color: #4f46e5; text-decoration: none; margin: 0 15px; font-size: 14px;">Documentation</a>
+                <a href="https://sageaios.com/contact" style="color: #4f46e5; text-decoration: none; margin: 0 15px; font-size: 14px;">Contact Us</a>
             </div>
             
             <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 25px 0;">
             
             <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-                © 2025 Data2Int. All rights reserved.<br>
+                © 2025 sageaios. All rights reserved.<br>
                 Transform your data. Empower your decisions.
             </p>
         </div>
@@ -281,9 +281,9 @@ serve(async (req) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: 'SAGE Project <noreply@data2int.com>',
+            from: 'SAGE AI <noreply@data2int.com>', // Need to change after domain name change
             to: [body.email],
-            subject: 'Welcome to Data2Int - Please confirm your email',
+            subject: 'Welcome to Sage AI - Please confirm your email',
             html: emailHtml,
           }),
         })

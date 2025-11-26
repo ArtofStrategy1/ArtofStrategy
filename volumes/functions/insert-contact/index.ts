@@ -25,8 +25,8 @@ serve(async (req) => {
 
   try {
     // Initialize Supabase client - following your project pattern
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || 'https://supabase.data2int.com'
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || 'your-service-role-key'
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
     
     const supabase = createClient(supabaseUrl, supabaseKey, {
       db: { schema: 'publicv2' }

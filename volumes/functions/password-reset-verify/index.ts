@@ -36,7 +36,7 @@ serve(async (req) => {
       }), { status: 400, headers })
     }
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || 'https://supabase.data2int.com'
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || 'https://supabase.sageaios.com'
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
     if (!supabaseServiceKey) {

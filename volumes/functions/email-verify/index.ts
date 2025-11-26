@@ -35,7 +35,7 @@ serve(async (req) => {
       }), { status: 400, headers })
     }
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || 'https://supabase.data2int.com'
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
     if (!supabaseServiceKey) {
@@ -71,7 +71,7 @@ serve(async (req) => {
       return new Response(null, {
         status: 302,
         headers: new Headers({
-          'Location': 'https://elijah.data2int.com/auth/verified?already=true'
+          'Location': 'https://sageaios.com/auth/verified?already=true'
         })
       })
     }
@@ -146,7 +146,7 @@ serve(async (req) => {
     return new Response(null, {
       status: 302,
       headers: new Headers({
-        'Location': 'https://elijah.data2int.com/auth/verified?success=true'
+        'Location': 'https://sageaios.com/auth/verified?success=true'
       })
     })
 
