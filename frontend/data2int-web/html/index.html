@@ -3804,6 +3804,66 @@ document.addEventListener("DOMContentLoaded", () => {
         db: { schema: 'publicv2' }
     });
 
+    // --- GLOBAL DOWNLOAD HELPER (Uses Python Backend) ---
+    window.triggerBackendDownload = async function(category, filename) {
+        // Construct the backend URL
+        const url = `https://analysis.data2int.com/api/samples/${category}/${filename}`;
+        
+        // Get the button element to show status
+        const btn = event.currentTarget;
+        const originalText = btn.innerText;
+        
+        try {
+            btn.innerText = "Downloading...";
+            btn.disabled = true;
+            btn.style.opacity = "0.7";
+
+            // Fetch the file as a "blob" (binary large object)
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+                throw new Error(`Backend 404: File not found at ${url}`);
+            }
+
+            const blob = await response.blob();
+            
+            // Create a temporary invisible link to trigger the save
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = downloadUrl;
+            a.download = filename; // The name the file will have on the user's computer
+            document.body.appendChild(a);
+            a.click();
+            
+            // Cleanup
+            window.URL.revokeObjectURL(downloadUrl);
+            a.remove();
+
+            // Success Feedback
+            btn.innerText = "✓ Saved";
+            btn.style.background = "rgba(16, 185, 129, 0.2)"; // Green tint
+            btn.style.borderColor = "rgba(16, 185, 129, 0.5)";
+            
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.disabled = false;
+                btn.style.opacity = "1";
+                btn.style.background = ""; // Reset styles
+                btn.style.borderColor = "";
+            }, 2000);
+
+        } catch (error) {
+            console.error("Download failed:", error);
+            alert("Download failed: " + error.message);
+            btn.innerText = "Error ❌";
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }, 2000);
+        }
+    };
+
     
 
     // --- DOM Element References ---
@@ -3845,6 +3905,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const stripe = Stripe('pk_test_51SUzA4Dv9QN5xDTmXlUbWtgQxo2SZwZGGEf47pJZfUrND5pPV3LOaFX8aUELfzEVwPK67YvDvPZQfItugXa70ord00d27aMudy'); 
     let elements;
+
+    // --- Usage ---
+    let currentUserUsage = 0;
 
     // --- Template Data ---
     const templates = {
@@ -4071,19 +4134,31 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // --- NEW HELPER: Fetches a sample file and returns a File object ---
-    async function fetchFileAsObject(url) {
+    // --- HELPER: Fetch file from Python Backend ---
+    async function fetchFileAsObject(relativePath) {
+        // relativePath example: "predictive/predictive-sample-data.csv"
+        
+        // 1. Construct the Backend URL
+        const API_BASE = "https://analysis.data2int.com/api/samples";
+        const url = `${API_BASE}/${relativePath}`;
+
+        console.log(`Attempting to fetch sample from: ${url}`);
+
         try {
             const response = await fetch(url);
+            
             if (!response.ok) {
-                throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
+                throw new Error(`Backend 404: File not found at ${url}`);
             }
+
             const blob = await response.blob();
-            const fileName = url.substring(url.lastIndexOf('/') + 1);
+            // Extract filename from path
+            const fileName = relativePath.substring(relativePath.lastIndexOf('/') + 1);
+            
             return new File([blob], fileName, { type: blob.type });
         } catch (error) {
-            console.error("Error fetching sample file:", error);
-            return null; // Return null on failure
+            console.error("Sample fetch error:", error);
+            throw error;
         }
     }
 
@@ -4139,8 +4214,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 
                 case "descriptive-analysis":
                     // 1. Fetch files
-                    dataFile = await fetchFileAsObject('data-files/descriptive/descriptive-sample-data.csv');
-                    contextFile = await fetchFileAsObject('data-files/descriptive/descriptive-sample-doc.txt');
+                    dataFile = await fetchFileAsObject('descriptive/descriptive-sample-data.csv');
+                    contextFile = await fetchFileAsObject('descriptive/descriptive-sample-doc.txt');
                     if (!dataFile || !contextFile) throw new Error("Sample file(s) failed to load.");
                                         
                     // 2. Read text content
@@ -4160,7 +4235,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     break;
                 
                 case "predictive-analysis":
-                    dataFile = await fetchFileAsObject('data-files/predictive/predictive-sample-data.csv');
+                    dataFile = await fetchFileAsObject('predictive/predictive-sample-data.csv');
                     if (!dataFile) throw new Error("Sample data file failed to load.");
 
                     dataText = await dataFile.text();
@@ -4191,8 +4266,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 case "prescriptive-analysis":
                     // 1. Fetch files
-                    dataFile = await fetchFileAsObject('data-files/prescriptive/prescriptive-sample-data.csv');
-                    contextFile = await fetchFileAsObject('data-files/prescriptive/prescriptive-sample-doc.txt');
+                    dataFile = await fetchFileAsObject('prescriptive/prescriptive-sample-data.csv');
+                    contextFile = await fetchFileAsObject('prescriptive/prescriptive-sample-doc.txt');
                     if (!dataFile || !contextFile) throw new Error("Sample file(s) failed to load.");
                     
                     // 2. Read text content
@@ -4213,8 +4288,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 case "visualization":
                     // 1. Fetch files
-                    dataFile = await fetchFileAsObject('data-files/visualization/visualization-sample.csv');
-                    contextFile = await fetchFileAsObject('data-files/visualization/visualization-sample-doc.txt');
+                    dataFile = await fetchFileAsObject('visualization/visualization-sample.csv');
+                    contextFile = await fetchFileAsObject('visualization/visualization-sample-doc.txt');
                     if (!dataFile || !contextFile) throw new Error("Sample file(s) failed to load.");
                     
                     // 2. Read text content
@@ -4235,8 +4310,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 case "regression-analysis":
     // 1. Fetch files
-    dataFile = await fetchFileAsObject('data-files/regression/regression-sample.csv');
-    contextFile = await fetchFileAsObject('data-files/regression/regression-sample-doc.txt');
+    dataFile = await fetchFileAsObject('regression/regression-sample.csv');
+    contextFile = await fetchFileAsObject('regression/regression-sample-doc.txt');
     if (!dataFile || !contextFile) throw new Error("Sample file(s) failed to load.");
     
     // 2. Read text content
@@ -4294,7 +4369,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     
                 case "pls-analysis":
                     // 1. Fetch file
-                    dataFile = await fetchFileAsObject('data-files/pls/pls-sample-data.csv');
+                    dataFile = await fetchFileAsObject('pls/pls-sample-data.csv');
                     if (!dataFile) throw new Error("Sample data file failed to load.");
                     
                     dataText = await dataFile.text();
@@ -4319,7 +4394,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 case "sem-analysis":
     // 1. Fetch file
-    dataFile = await fetchFileAsObject('data-files/sem/sem-sample-data.csv');
+    dataFile = await fetchFileAsObject('sem/sem-sample-data.csv');
     if (!dataFile) throw new Error("Sample data file failed to load.");
 
     dataText = await dataFile.text();
@@ -4356,7 +4431,7 @@ Profit_USD ~ Sales_Performance + Customer_Metrics`;
 
                 case "dematel-analysis":
                     // 1. Fetch file and text
-                    contextFile = await fetchFileAsObject('data-files/dematel/dematel-sample-doc.txt');
+                    contextFile = await fetchFileAsObject('dematel/dematel-sample-doc.txt');
                     if (!contextFile) throw new Error("Sample context file failed to load.");
 
                     contextText = await contextFile.text();
@@ -4748,26 +4823,103 @@ Profit_USD ~ Sales_Performance + Customer_Metrics`;
 
 
     async function checkUserTierFromDB(userId) {
-        console.log(">>> Checking tier from DB.");
+        console.log(">>> Checking tier and usage from DB.");
         try {
+            // We now select 'tier' AND 'usage_count'
             const { data: userData, error: userError } = await supabase
                 .from('users') 
-                .select('tier')
+                .select('tier, usage_count') 
                 .eq('auth_user_id', userId)
                 .maybeSingle();
             
-            console.log(">>> DB Query result:", userData, userError);
-            
-            if (!userError && userData && (userData.tier === 'premium' || userData.tier === 'admin')) {
-                console.log(">>> Setting limit to 3");
-                currentSelectionLimit = 3;
-                updateNavBar(); // Update UI to reflect premium status
-            } else {
-                console.log(">>> Keeping limit at 1");
+            if (!userError && userData) {
+                // Store their current usage locally
+                currentUserUsage = userData.usage_count || 0;
+                console.log(">>> Usage Count from DB:", currentUserUsage);
+
+                if (userData.tier === 'premium' || userData.tier === 'admin') {
+                    currentSelectionLimit = 3;
+                    updateNavBar();
+                } else {
+                    // Free users are limited to 1 selection, but we enforce the 3-try limit elsewhere
+                    currentSelectionLimit = 1;
+                }
             }
         } catch (err) {
             console.error(">>> DB check error:", err);
         }
+    }
+
+    /**
+     * Gatekeeper Function:
+     * 1. Checks if user has tries left.
+     * 2. If yes -> Updates Database IMMEDIATELY -> Returns True.
+     * 3. If no -> Opens Payment Modal -> Returns False.
+     */
+    async function checkAndIncrementUsage() {
+        // 1. Ensure we have the latest session data (Refreshes metadata)
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (!session || !session.user) {
+            navigateTo("login");
+            return false;
+        }
+
+        const user = session.user;
+
+        // 2. CHECK METADATA (The "Premium" Check)
+        // We check both app_metadata (where your JSON shows the tier) and user_metadata
+        const appMeta = user.app_metadata || {};
+        const userMeta = user.user_metadata || {};
+        
+        // Check if they are 'premium' or 'admin' in ANY of these fields
+        const isPremium = 
+            appMeta.tier === 'premium' || 
+            appMeta.role === 'premium' ||
+            appMeta.role === 'admin' ||
+            userMeta.tier === 'premium';
+
+        if (isPremium) {
+            console.log(">>> User is Premium/Admin. Bypass check.");
+            return true; // ALLOW ACCESS
+        }
+
+        // 3. CHECK DATABASE COUNT (For Free Users)
+        // We fetch the real count from the database to prevent frontend tampering
+        const { data: dbUser, error: dbError } = await supabase
+            .from('users')
+            .select('usage_count')
+            .eq('auth_user_id', user.id)
+            .single();
+
+        // Default to 0 if there's an error fetching (don't block valid users on network glitches)
+        const currentCount = dbUser ? dbUser.usage_count : 0;
+
+        if (currentCount >= 3) {
+            console.log(">>> Limit reached (3/3). Blocking.");
+            
+            // Show alert and modal
+            alert("You have used your 3 free analysis tries. Please upgrade to continue.");
+            openStripePlanModal();
+            
+            // CRITICAL: Return FALSE to stop the calling function
+            return false; 
+        }
+
+        // 4. INCREMENT USAGE
+        // We update the DB. We don't await this because we want the UI to be snappy.
+        // The count will be accurate the *next* time they click.
+        const newCount = currentCount + 1;
+        console.log(`>>> Incrementing usage to ${newCount}`);
+
+        supabase.from('users')
+            .update({ usage_count: newCount })
+            .eq('auth_user_id', user.id)
+            .then(({ error }) => {
+                if (error) console.error("Background update failed:", error);
+            });
+
+        return true; // ALLOW ACCESS
     }
 
     // --- AUTH STATE CHANGE LISTENER ---
@@ -8065,6 +8217,23 @@ async function handleContactSubmit() {
                 return;
             }
 
+            // --- NEW: PREMIUM BYPASS LOGIC ---
+            // Check if user is Admin or Premium based on metadata
+            const isPrivileged = 
+                (currentUser?.app_metadata?.role === 'admin') || 
+                (currentUser?.app_metadata?.tier === 'admin') ||
+                (currentUser?.app_metadata?.tier === 'premium') ||
+                (currentUser?.user_metadata?.tier === 'premium');
+
+            if (isPrivileged) {
+                console.log("User is Admin/Premium. Bypassing version modal.");
+                currentSelectionLimit = 3; // Grant full access (3 selections for frameworks)
+                selectedTemplateForModal = templateId; // Ensure ID is set just in case
+                showTemplateDetail(templateId); // Go straight to the tool
+                return; // Stop here, don't show the modal
+            }
+            // ----------------------------------
+
             // 3. Store selected template
             selectedTemplateForModal = templateId;                    
 
@@ -8890,8 +9059,9 @@ if (closeStripeBtn) {
                                 <h3 class="text-xl font-bold text-white">Analysis Setup</h3>
                                 <div class="flex items-center space-x-2">
                                     <button type="button" id="regressionExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
-                                    <a href="data-files/regression/regression-sample-doc.txt" download="Regression_Sample_Doc.txt" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .txt</a>
-                                    <a href="data-files/regression/regression-sample.csv" download="Regression_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>
+                                    
+                                    <button type="button" onclick="triggerBackendDownload(\'regression\', \'regression-sample-doc.txt\')" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem;">Download Sample .txt</button>
+                                    <button type="button" onclick="triggerBackendDownload(\'regression\', \'regression-sample.csv\')" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem;">Download Sample .csv</button>
                                     <button type="button" id="useRegressionSampleBtn" class="btn-sample btn-use-sample" data-template-id="regression-analysis">▶ Use Sample</button>
                                 </div>
                             </div>
@@ -9343,7 +9513,7 @@ Feb 1, "$52,000", "$5.2k", "15,500 visitors"
                     <h3 class="text-xl font-bold text-white">Analysis Configuration</h3>
                     <div class="flex items-center space-x-2">
                         <button type="button" id="plsConfigExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
-                        <a href="data-files/pls/pls-sample-data.csv" download="PLS_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>
+                        <button type="button" onclick="triggerBackendDownload(\'pls\', \'pls-sample-data.csv\')" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem;">Download Sample .csv</button>
                         <button type="button" id="usePlsSampleBtn" class="btn-sample btn-use-sample" data-template-id="pls-analysis">▶ Use Sample</button>
                     </div>
                 </div>
@@ -9931,8 +10101,8 @@ Loyalty ~ Quality + Satisfaction`;
                                 <h3 class="text-xl font-bold text-white">Upload Your Dataset & Context</h3>
                                 <div class="flex items-center space-x-2">
                                     <button type="button" id="descConfigExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
-                                    <a href="data-files/descriptive/descriptive-sample-doc.txt" download="Descriptive_Sample_Doc.txt" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .txt</a>
-                                    <a href="data-files/descriptive/descriptive-sample-data.csv" download="Descriptive_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>
+                                    <button type="button" onclick="triggerBackendDownload(\'descriptive\', \'descriptive-sample-doc.txt\')" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem;">Download Sample .txt</button>
+                                    <button type="button" onclick="triggerBackendDownload(\'descriptive\', \'descriptive-sample-data.csv\')" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem;">Download Sample .csv</button>
                                     <button type="button" id="useDescSampleBtn" class="btn-sample btn-use-sample" data-template-id="descriptive-analysis">▶ Use Sample</button>
                                 </div>
                             </div>
@@ -10232,8 +10402,8 @@ Q4_2023,16.9,325,4.8,145,West</div>
                             <h3 class="text-xl font-bold text-white">Prescriptive Setup</h3>
                             <div class="flex items-center space-x-2">
                                 <button type="button" id="prescriptiveExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
-                                <a href="data-files/prescriptive/prescriptive-sample-doc.txt" download="Prescriptive_Sample_Context.txt" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .txt</a>
-                                <a href="data-files/prescriptive/prescriptive-sample-data.csv" download="Prescriptive_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>
+                                <button type="button" onclick="triggerBackendDownload(\'prescriptive\', \'prescriptive-sample-doc.txt\')" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem;">Download Sample .txt</button>
+                                <button type="button" onclick="triggerBackendDownload(\'prescriptive\', \'prescriptive-sample-data.csv\')" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem;">Download Sample .csv</button>
                                 <button type="button" id="usePrescriptiveSampleBtn" class="btn-sample btn-use-sample" data-template-id="prescriptive-analysis">▶ Use Sample</button>
                             </div>
                         </div>
@@ -10586,8 +10756,8 @@ CustomerID,Tenure_Months,Support_Tickets,Used_Feature_X,Churned<br>
         '<div class="flex items-center space-x-2">', 
             '<button type="button" id="vizConfigExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>',
             // Added the new .txt link
-            '<a href="data-files/visualization/visualization-sample-doc.txt" download="Visualization_Sample_Doc.txt" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .txt</a>',
-            '<a href="data-files/visualization/visualization-sample.csv" download="Visualization_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>',
+            '<button type="button" onclick="triggerBackendDownload(\'visualization\', \'visualization-sample-doc.txt\')" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem;">Download Sample .txt</button>',
+            '<button type="button" onclick="triggerBackendDownload(\'visualization\', \'visualization-sample.csv\')" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem;">Download Sample .csv</button>',
             '<button type="button" id="useVizSampleBtn" class="btn-sample btn-use-sample" data-template-id="visualization">▶ Use Sample</button>',
         '</div>',
         '</div>',
@@ -11577,15 +11747,15 @@ CustomerID,Tenure_Months,Support_Tickets,Used_Feature_X,Churned<br>
         analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div></div><div></div><div></div> </div><h3 class="text-xl font-semibold text-white mb-4">Performing Visualization Analysis...</h3><p class="text-white/80 mb-2">Loading data, performing calculations, and generating insights...</p></div>`;
         setLoading("generate", true);
         $("analysisActions").classList.add("hidden");
-        const API_URL = "https://analysis.data2int.com/api/visualization";
+        const API_URL = "https://analysis.sageaios.com/api/visualization";
         
         try {
             const formData = new FormData();
 
             if (window.isSampleModeActive === true) {
                 // --- SAMPLE MODE ---
-                const dataFile = await fetchFileAsObject('data-files/visualization/visualization-sample.csv');
-                const contextFile = await fetchFileAsObject('data-files/visualization/visualization-sample-doc.txt');
+                const dataFile = await fetchFileAsObject('visualization/visualization-sample.csv');
+                const contextFile = await fetchFileAsObject('visualization/visualization-sample-doc.txt');
                 if (!dataFile || !contextFile) throw new Error("Sample file(s) failed to load.");
 
                 formData.append("data_file", dataFile, dataFile.name);
@@ -15160,7 +15330,7 @@ function createSystemObjectivesLayout_ST(template) {
                         <h3 class="text-xl font-bold text-white">Analysis Configuration</h3>
                         <div class="flex items-center space-x-2">
                             <button type="button" id="configExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
-                            <a href="data-files/sem/sem-sample-data.csv" download="SEM_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>
+                            <button type="button" onclick="triggerBackendDownload(\'sem\', \'sem-sample-data.csv\')" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem;">Download Sample .csv</button>
                             <button type="button" id="useSemSampleBtn" class="btn-sample btn-use-sample" data-template-id="sem-analysis">▶ Use Sample</button>
                         </div>
                     </div>
@@ -15673,7 +15843,7 @@ function createPredictiveAnalysisLayout(template) {
                         <h3 class="text-xl font-bold text-white">Forecasting Configuration</h3>
                         <div class="flex items-center space-x-2">
                             <button type="button" id="predictiveExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
-                            <a href="data-files/predictive/predictive-sample-data.csv" download="Predictive_Sample_Data.csv" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .csv</a>
+                            <button type="button" onclick="triggerBackendDownload(\'predictive\', \'predictive-sample-data.csv\')" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem;">Download Sample .csv</button>
                             <button type="button" id="usePredSampleBtn" class="btn-sample btn-use-sample" data-template-id="predictive-analysis">▶ Use Sample</button>
                         </div>
                     </div>
@@ -16187,7 +16357,7 @@ contentContainer.innerHTML = `
                     <h3 class="text-xl font-bold text-white">Analysis Configuration</h3>
                     <div class="flex items-center space-x-2">
                         <button type="button" id="configExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
-                        <a href="data-files/dematel/dematel-sample-doc.txt" download="DEMATEL_Sample_Context.txt" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Download Sample .txt</a>
+                        <button type="button" onclick="triggerBackendDownload(\'dematel\', \'dematel-sample-doc.txt\')" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem;">Download Sample .txt</button>
                         <button type="button" id="useDematelSampleBtn" class="btn-sample btn-use-sample" data-template-id="dematel-analysis">▶ Use Sample</button>
                     </div>
                 </div>
@@ -17543,6 +17713,15 @@ The AI will read this and build the matrix for you."></textarea>
     async function handleGenerate() {
     if (!currentTemplateId) return;
 
+    // --- NEW: CHECK USAGE LIMITS BEFORE PROCEEDING ---
+    const isAllowed = await checkAndIncrementUsage();
+    if (isAllowed === false) {
+        // Stop the spinner if it was somehow triggered
+        setLoading("generate", false);
+        return; 
+    }
+    // -------------------------------------------------
+
     const analysisResultContainer = $("analysisResult");
     setLoading("generate", true);
     const analysisActionsEl = $("analysisActions");
@@ -17740,8 +17919,8 @@ The AI will read this and build the matrix for you."></textarea>
             
             if (window.isSampleModeActive === true) {
                 // --- SAMPLE MODE ---
-                const dataFile = await fetchFileAsObject('data-files/descriptive/descriptive-sample-data.csv');
-                const contextFile = await fetchFileAsObject('data-files/descriptive/descriptive-sample-doc.txt');
+                const dataFile = await fetchFileAsObject('descriptive/descriptive-sample-data.csv');
+                const contextFile = await fetchFileAsObject('descriptive/descriptive-sample-doc.txt');
                 if (!dataFile || !contextFile) throw new Error("Sample files not found.");
                 
                 formData.append("data_file", dataFile, dataFile.name);
@@ -17773,7 +17952,7 @@ The AI will read this and build the matrix for you."></textarea>
             }
             
             // 3. Call your FastAPI Backend
-            const API_URL = "https://analysis.data2int.com/api/descriptive";
+            const API_URL = "https://analysis.sageaios.com/api/descriptive";
             const response = await fetch(API_URL, {
                 method: "POST",
                 body: formData,
@@ -19276,7 +19455,7 @@ Profit_USD ~ Sales_Performance + Customer_Metrics`;
             
             // Fetch the sample data file
             try {
-                const dataFile = await fetchFileAsObject('data-files/sem/sem-sample-data.csv');
+                const dataFile = await fetchFileAsObject('sem/sem-sample-data.csv');
                 if (!dataFile) throw new Error("Sample file not found.");
                 
                 console.log("✅ Sample SEM file loaded:", dataFile.name);
@@ -19335,7 +19514,7 @@ Profit_USD ~ Sales_Performance + Customer_Metrics`;
         formData.append("structural_syntax", structuralSyntax);
         
         // --- 4. Send Request to Backend API ---
-        const API_URL = "https://analysis.data2int.com/api/sem"; 
+        const API_URL = "https://analysis.sageaios.com/api/sem"; 
         console.log("🚀 Sending SEM request to backend...");
         
         const response = await fetch(API_URL, {
@@ -19394,7 +19573,7 @@ async function handlePredictiveAnalysis() {
 
             if (window.isSampleModeActive === true) {
                 // --- SAMPLE MODE ---
-                const dataFile = await fetchFileAsObject('data-files/predictive/predictive-sample-data.csv');
+                const dataFile = await fetchFileAsObject('predictive/predictive-sample-data.csv');
                 if (!dataFile) throw new Error("Sample file not found.");
                 formData.append("data_file", dataFile, dataFile.name);
             } else {
@@ -19431,7 +19610,7 @@ async function handlePredictiveAnalysis() {
             formData.append("modelType", modelType);
 
             // --- 4. Send Request to Backend API ---
-            const API_URL = "https://analysis.data2int.com/api/predictive";
+            const API_URL = "https://analysis.sageaios.com/api/predictive";
             const response = await fetch(API_URL, {
                 method: "POST",
                 body: formData,
@@ -21147,8 +21326,8 @@ function renderPredictiveLearnPanel(learnPanel, data) {
  * Step 3: Renders the final result from the Python backend.
  */
 async function handleDematelAnalysis() {
-    const OLLAMA_URL = "https://ollama.data2int.com/api/generate";
-    const PYTHON_BACKEND_URL = "https://analysis.data2int.com/api/dematel";
+    const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
+    const PYTHON_BACKEND_URL = "https://analysis.sageaios.com/api/dematel";
     const MODEL_NAME = "llama3.1:latest"; 
 
     const analysisResultContainer = $("analysisResult");
@@ -21173,7 +21352,7 @@ async function handleDematelAnalysis() {
             console.log("🔍 DEMATEL Sample mode active");
             
             try {
-                const file = await fetchFileAsObject('data-files/dematel/dematel-sample-doc.txt');
+                const file = await fetchFileAsObject('dematel/dematel-sample-doc.txt');
                 if (!file) throw new Error("Sample file not found.");
                 
                 console.log("✅ Sample DEMATEL file loaded:", file.name);
@@ -27261,7 +27440,7 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
     setLoading("generate", true);
     $("analysisActions").classList.add("hidden");
 
-    const API_URL = "https://analysis.data2int.com/api/regression"; 
+    const API_URL = "https://analysis.sageaios.com/api/regression"; 
     
     const warningEl = $("regressionDataWarning");
     if (warningEl) warningEl.textContent = ""; 
@@ -27281,8 +27460,8 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
             
             // Fetch the files
             try {
-                dataFile = await fetchFileAsObject('data-files/regression/regression-sample.csv');
-                contextFile = await fetchFileAsObject('data-files/regression/regression-sample-doc.txt');
+                dataFile = await fetchFileAsObject('regression/regression-sample.csv');
+                contextFile = await fetchFileAsObject('regression/regression-sample-doc.txt');
                 
                 if (!dataFile) {
                     throw new Error("Failed to fetch sample data file");
@@ -28818,7 +28997,7 @@ async function handlePlsAnalysis_DA() {
                 measurementSyntax = "Quality =~ qual1 + qual2 + qual3\nSatisfaction =~ sat1 + sat2 + sat3\nLoyalty =~ loy1 + loy2 + loy3";
                 structuralSyntax = "Satisfaction ~ Quality\nLoyalty ~ Satisfaction + Quality";
                 
-                const dataFile = await fetchFileAsObject('data-files/pls/pls-sample-data.csv');
+                const dataFile = await fetchFileAsObject('pls/pls-sample-data.csv');
                 if (!dataFile) throw new Error("Sample file not found.");
                 formData.append("data_file", dataFile, dataFile.name);
             } else {
@@ -28852,7 +29031,7 @@ async function handlePlsAnalysis_DA() {
             formData.append("structural_syntax", structuralSyntax);
 
             // --- 4. Send Request to Backend API ---
-            const API_URL = "https://analysis.data2int.com/api/pls"; 
+            const API_URL = "https://analysis.sageaios.com/api/pls"; 
             const response = await fetch(API_URL, {
                 method: "POST",
                 body: formData,
@@ -30129,15 +30308,15 @@ function renderPlsDiagnosticsTab(data_summary, model_evaluation, reliability_val
         setLoading("generate", true);
         $("analysisActions").classList.add("hidden");
         
-        const API_URL = "https://analysis.data2int.com/api/prescriptive";
+        const API_URL = "https://analysis.sageaios.com/api/prescriptive";
 
         try {
             const formData = new FormData();
 
             if (window.isSampleModeActive === true) {
                 // --- SAMPLE MODE ---
-                const dataFile = await fetchFileAsObject('data-files/prescriptive/prescriptive-sample-data.csv');
-                const contextFile = await fetchFileAsObject('data-files/prescriptive/prescriptive-sample-doc.txt');
+                const dataFile = await fetchFileAsObject('prescriptive/prescriptive-sample-data.csv');
+                const contextFile = await fetchFileAsObject('prescriptive/prescriptive-sample-doc.txt');
                 if (!dataFile || !contextFile) throw new Error("Sample file(s) failed to load.");
 
                 formData.append("data_file", dataFile, dataFile.name);

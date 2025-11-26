@@ -17,12 +17,20 @@ from analysis_modules import descriptive_analysis
 from analysis_modules import visualization_analysis
 from analysis_modules import pls_analysis
 from analysis_modules import prescriptive_analysis
+
 # --- Import save functions ---
 # Assuming these exist and work as intended
 # from save_modules import save_pdf, save_docx
 
 # --- Import regression analysis function ---
 from analysis_modules import regression_analysis
+
+# --- File System ---
+import os
+from fastapi.responses import FileResponse
+
+# Absolute path to where your data-files folder lives on the server
+DATA_FILES_DIR = "/app/analysis_modules/data-files"
 
 app = FastAPI(docs_url="/")
 
@@ -673,6 +681,31 @@ async def run_regression_analysis(
         # Ensure uploaded file streams are closed
         await safe_close_file(data_file)
         await safe_close_file(context_file)
+
+@app.get("/api/samples/{category}/{filename}")
+async def download_sample_file(category: str, filename: str):
+    """
+    Serves sample data files from the backend file system.
+    Example URL: /api/samples/predictive/predictive-sample-data.csv
+    """
+    # Security check: prevent directory traversal
+    if ".." in category or ".." in filename or "/" in category or "/" in filename:
+        raise HTTPException(status_code=400, detail="Invalid file path.")
+
+    # Construct the full path
+    file_path = os.path.join(DATA_FILES_DIR, category, filename)
+
+    # Check if file exists
+    if not os.path.exists(file_path):
+        print(f"File not found: {file_path}") # Log for debugging
+        raise HTTPException(status_code=404, detail=f"Sample file '{filename}' not found in '{category}'.")
+
+    # Return the file
+    return FileResponse(
+        path=file_path, 
+        filename=filename,
+        media_type='application/octet-stream'
+    )
 
 # Currently being worked on.
 # --- Save Document Endpoint ---
