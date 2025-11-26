@@ -2846,6 +2846,19 @@
                 <div class="mt-8 text-center">
                     <p class="text-xs text-white/40 mb-2">Secure payment processing by</p>
                     <img src="https://images.ctfassets.net/fzn2n1nzq965/2WOM2d46aE6u8i6e6O6k46/e0e94e548552818112573a179aa986d3/stripe-badge-white.png" alt="Powered by Stripe" class="h-6 mx-auto opacity-50 hover:opacity-100 transition-opacity">
+                    <div class="mt-8 max-w-sm mx-auto animate-fadeIn">
+                    <label class="block text-center text-xs text-white/50 mb-2 uppercase tracking-wider font-semibold">Have a book code?</label>
+                    <div class="relative group">
+                        <input type="text" id="promoCodeInput" 
+                               class="w-full bg-black/30 border border-white/20 rounded-full py-3 pl-5 pr-24 text-sm text-white placeholder-white/30 focus:outline-none focus:border-indigo-500 focus:bg-black/50 transition-all duration-300" 
+                               placeholder="Enter code here...">
+                        <button id="applyPromoBtn" 
+                                class="absolute right-1 top-1 bottom-1 bg-white/10 hover:bg-indigo-600 text-white text-xs font-bold px-5 rounded-full transition-all duration-300 border border-white/10 hover:border-indigo-500">
+                            APPLY
+                        </button>
+                    </div>
+                    <p id="promoMessage" class="text-center text-xs mt-3 font-medium hidden"></p>
+                </div>
                 </div>
             </div>
         </div>
@@ -8091,7 +8104,7 @@ async function handleContactSubmit() {
 
         // 4. Call the Supabase Edge Function via HTTP POST
         // Note: The function name here must match the deployed function endpoint
-        const FUNCTION_ENDPOINT = "https://supabase.sageaios.com/functions/v1/insert-contact"; 
+        const FUNCTION_ENDPOINT = "https://supabase.data2int.com/functions/v1/insert-contact"; 
         
         const response = await fetch(FUNCTION_ENDPOINT, {
             method: 'POST',
@@ -33410,6 +33423,72 @@ async function handlePasswordUpdate() {
         versionModal.classList.remove('modal-open'); // Start fade-out
         setTimeout(() => versionModal.style.display = 'none', 300); // Hide after animation
     });
+
+    // --- PROMO CODE LOGIC ---
+    const applyPromoBtn = document.getElementById("applyPromoBtn");
+    if (applyPromoBtn) {
+        applyPromoBtn.addEventListener("click", async () => {
+            const input = document.getElementById("promoCodeInput");
+            const msg = document.getElementById("promoMessage");
+            const code = input.value.trim();
+            const originalText = applyPromoBtn.innerText;
+
+            if (!code) {
+                msg.textContent = "Please enter a code.";
+                msg.className = "text-center text-xs mt-2 text-red-400 block";
+                return;
+            }
+
+            // UI Loading State
+            applyPromoBtn.disabled = true;
+            applyPromoBtn.innerText = "Checking...";
+            msg.className = "hidden";
+
+            try {
+                // 1. Get Session
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session) throw new Error("Please log in first.");
+
+                // 2. Call Edge Function
+                const { data, error } = await supabase.functions.invoke('redeem-promo', {
+                    body: { code: code }
+                });
+
+                if (error) throw new Error("Network error connecting to server.");
+                if (data.error) throw new Error(data.error);
+
+                // 3. Success!
+                msg.textContent = "🎉 Success! Premium Unlocked.";
+                msg.className = "text-center text-xs mt-2 text-green-400 block";
+                
+                // 4. Update Local State Immediately
+                currentSelectionLimit = 3; 
+                
+                // 5. Refresh Nav to show new status
+                updateNavBar();
+
+                // 6. Close Modal after delay
+                setTimeout(() => {
+                    document.getElementById("stripePaymentModal").classList.remove("modal-open");
+                    setTimeout(() => {
+                        document.getElementById("stripePaymentModal").style.display = "none";
+                    }, 500);
+                    
+                    // If user was trying to use a specific template, open it now
+                    if (selectedTemplateForModal) {
+                        showTemplateDetail(selectedTemplateForModal);
+                    }
+                }, 1500);
+
+            } catch (err) {
+                console.error("Promo Error:", err);
+                msg.textContent = err.message;
+                msg.className = "text-center text-xs mt-2 text-red-400 block";
+                applyPromoBtn.disabled = false;
+                applyPromoBtn.innerText = originalText;
+            }
+        });
+    }
 
     // --- NEW FEEDBACK PAGE LOGIC (CALLING EDGE FUNCTION) ---
 
