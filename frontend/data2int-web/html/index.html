@@ -2710,43 +2710,74 @@
         <div id="adminModeIndicator" class="fixed top-40 right-5 p-2 px-3 bg-yellow-500 text-white text-xs font-bold rounded-full shadow-lg z-50" style="display: none;">ADMIN MODE</div>
 
        <nav class="bg-black/10 backdrop-blur-md border-b border-white/10 sticky top-0 z-50 transition-all duration-300">
-            <div class="container mx-auto px-4">
-                <div class="flex justify-between items-center h-16">
-                    <a href="#" class="text-2xl font-bold text-white tracking-wider nav-link transition-all duration-300 hover:scale-105 hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-indigo-400 hover:via-purple-400 hover:to-pink-400 drop-shadow-sm hover:drop-shadow-[0_0_15px_rgba(168,85,247,0.5)]" data-page="home">
-                        SAGE AI
-                    </a>
-                    
-                    <div class="hidden md:flex space-x-4 items-center">
-                        <a href="#" class="text-white/80 px-3 py-2 rounded-md text-sm font-medium nav-link transition-all duration-300 hover:text-white hover:bg-white/10 hover:shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:-translate-y-0.5" data-page="home">Home</a>
-                        <a href="#" class="text-white/80 px-3 py-2 rounded-md text-sm font-medium nav-link transition-all duration-300 hover:text-white hover:bg-white/10 hover:shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:-translate-y-0.5" data-page="blog">Blog</a>
-                        <a href="#" id="adminDashboardNav" class="text-white/80 px-3 py-2 rounded-md text-sm font-medium nav-link transition-all duration-300 hover:text-white hover:bg-white/10 hover:shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:-translate-y-0.5" data-page="adminDashboard" style="display: none;">Admin</a>
-                        <a href="#" class="text-white/80 px-3 py-2 rounded-md text-sm font-medium nav-link transition-all duration-300 hover:text-white hover:bg-white/10 hover:shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:-translate-y-0.5" data-page="feedback">Feedback</a>
-                        
-                        <a href="#" class="btn btn-primary px-4 py-2 text-sm nav-link transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-indigo-500/40" data-page="login">Login</a>
+    <div class="container mx-auto px-4">
+        <div class="flex justify-between items-center h-16">
+            <a href="#" class="text-2xl font-bold text-white tracking-wider nav-link transition-all duration-300 hover:scale-105 hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-indigo-400 hover:via-purple-400 hover:to-pink-400 drop-shadow-sm" data-page="home">
+                SAGE AI
+            </a>
+            
+            <div class="flex items-center gap-6">
+                <div class="hidden md:flex items-center space-x-1">
+                    <a href="#" class="text-white/80 px-3 py-2 rounded-md text-sm font-medium nav-link transition-all hover:text-white hover:bg-white/10" data-page="home">Home</a>
+                    <a href="#" class="text-white/80 px-3 py-2 rounded-md text-sm font-medium nav-link transition-all hover:text-white hover:bg-white/10" data-page="blog">Blog</a>
+                    <a href="#" class="text-white/80 px-3 py-2 rounded-md text-sm font-medium nav-link transition-all hover:text-white hover:bg-white/10" data-page="feedback">Feedback</a>
+                </div>
+
+                <div id="authSection">
+                    <div id="loggedOutState">
+                        <a href="#" class="btn btn-primary px-4 py-2 text-sm nav-link transition-all hover:shadow-lg hover:shadow-indigo-500/40" data-page="login">Sign In</a>
                     </div>
 
-                    <div class="md:hidden flex items-center">
-                        <button id="mobileMenuBtn" class="text-white hover:text-indigo-300 focus:outline-none transition-transform duration-300 hover:scale-110 active:scale-95">
-                            <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-                            </svg>
+                    <div id="loggedInState" class="relative hidden">
+                        <button id="profileMenuBtn" class="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold shadow-lg border border-white/20 transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-gray-900">
+                            <span id="userInitials">U</span>
                         </button>
-                    </div>
-                </div>
-            </div>
 
-            <div id="mobileMenu" class="md:hidden hidden bg-black/90 backdrop-blur-xl border-b border-white/10">
-                <div class="px-4 pt-2 pb-6 space-y-2 flex flex-col">
-                    <a href="#" class="text-white/90 block px-3 py-3 rounded-md text-base font-medium nav-link transition-all duration-300 hover:bg-white/10 hover:pl-6 hover:text-indigo-300" data-page="home">Home</a>
-                    <a href="#" class="text-white/90 block px-3 py-3 rounded-md text-base font-medium nav-link transition-all duration-300 hover:bg-white/10 hover:pl-6 hover:text-indigo-300" data-page="blog">Blog</a>
-                    <a href="#" id="adminDashboardNavMobile" class="text-white/90 block px-3 py-3 rounded-md text-base font-medium nav-link transition-all duration-300 hover:bg-white/10 hover:pl-6 hover:text-indigo-300" data-page="adminDashboard" style="display: none;">Admin Dashboard</a>
-                    <a href="#" class="text-white/90 block px-3 py-3 rounded-md text-base font-medium nav-link transition-all duration-300 hover:bg-white/10 hover:pl-6 hover:text-indigo-300" data-page="feedback">Feedback</a>
-                    <div class="pt-4">
-                        <a href="#" class="btn btn-primary w-full text-center nav-link transition-all duration-300 hover:scale-[1.02] hover:shadow-indigo-500/50" data-page="login">Login</a>
+                        <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-64 origin-top-right rounded-xl bg-[#1a1b26] border border-white/10 shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none backdrop-blur-xl z-50" role="menu">
+                            
+                            <div class="px-4 py-4 border-b border-white/10">
+                                <p class="text-sm text-white font-bold" id="dropdownName">User Name</p>
+                                <p class="text-xs text-white/60 truncate" id="dropdownEmail">email@example.com</p>
+                            </div>
+
+                            <div class="py-1">
+                                <a href="#" id="dropdownAdminLink" class="text-yellow-400 hover:bg-white/10 hover:text-yellow-300 hidden px-4 py-2 text-sm nav-link" data-page="adminDashboard">
+                                    📊 Admin Dashboard
+                                </a>
+
+                                <a href="#" id="manageSubscriptionLink" class="text-gray-300 hover:bg-white/10 hover:text-white block px-4 py-2 text-sm transition-colors">
+                                    💳 Manage Subscription
+                                </a>
+                            </div>
+
+                            <div class="py-1 border-t border-white/10">
+                                <a href="#" class="text-red-400 hover:bg-red-500/10 block px-4 py-2 text-sm nav-link" data-page="logout">
+                                    🚪 Sign out
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
+                
+                <div class="md:hidden flex items-center">
+                    <button id="mobileMenuBtn" class="text-white hover:text-indigo-300 focus:outline-none">
+                        <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
-        </nav>
+        </div>
+    </div>
+    
+    <div id="mobileMenu" class="md:hidden hidden bg-black/90 backdrop-blur-xl border-b border-white/10">
+        <div class="px-4 pt-2 pb-6 space-y-2 flex flex-col">
+            <a href="#" class="text-white/90 block px-3 py-3 rounded-md text-base font-medium nav-link" data-page="home">Home</a>
+            <a href="#" class="text-white/90 block px-3 py-3 rounded-md text-base font-medium nav-link" data-page="blog">Blog</a>
+            <a href="#" class="text-white/90 block px-3 py-3 rounded-md text-base font-medium nav-link" data-page="feedback">Feedback</a>
+        </div>
+    </div>
+</nav>
 
         <div id="versionChoiceModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm items-center justify-center z-[100] feedback-modal">
             <div class="glass-container w-full max-w-lg text-center feedback-modal-container">
@@ -4188,7 +4219,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const templateId = button.dataset.templateId;
         if (!templateId) return;
 
-        const originalText = button.innerHTML;
+        // Store original text to restore it later
+        const originalText = "▶ Use Sample"; 
+        
         button.disabled = true;
         button.innerHTML = `<span class="loading-spinner" style="width: 12px; height: 12px; margin-right: 5px;"></span> Loading...`;
         
@@ -4208,7 +4241,7 @@ document.addEventListener("DOMContentLoaded", () => {
             input.files = dataTransfer.files;
 
             // Trigger visual update on the label
-            const labelId = inputId + "Label"; // e.g., "descriptiveFileLabel"
+            const labelId = inputId + "Label"; 
             const label = $(labelId);
             if (label) {
                 const nameSpan = label.querySelector(".file-name");
@@ -4237,21 +4270,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
             switch (templateId) {
                 case "descriptive-analysis":
-                    // 1. Fetch Files
                     dataFile = await fetchFileAsObject('descriptive/descriptive-sample-data.csv');
                     contextFile = await fetchFileAsObject('descriptive/descriptive-sample-doc.txt');
-                    
-                    // 2. Force into Inputs (The Trick)
                     forceInputFile("descriptiveFile", dataFile);
                     forceInputFile("descriptiveContextFile", contextFile);
-                    
-                    // 3. Populate Globals & Text Areas
                     window.tempSampleDataFile = dataFile;
                     window.tempSampleContextFile = contextFile;
-                    
                     dataText = await dataFile.text();
                     contextText = await contextFile.text();
-                    
                     $("descriptivePreviewTable").innerHTML = buildPreview(dataText);
                     $("descriptiveDataPreview").classList.remove("hidden");
                     $("descriptiveContextText").value = contextText;
@@ -4260,16 +4286,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 case "visualization":
                     dataFile = await fetchFileAsObject('visualization/visualization-sample.csv');
                     contextFile = await fetchFileAsObject('visualization/visualization-sample-doc.txt');
-                    
                     forceInputFile("vizFile", dataFile);
                     forceInputFile("vizContextFile", contextFile);
-                    
                     window.tempSampleDataFile = dataFile;
                     window.tempSampleContextFile = contextFile;
-                    
                     dataText = await dataFile.text();
                     contextText = await contextFile.text();
-
                     $("vizPreviewTable").innerHTML = buildPreview(dataText);
                     $("vizDataPreview").classList.remove("hidden");
                     $("vizRequestText").value = contextText;
@@ -4278,16 +4300,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 case "prescriptive-analysis":
                     dataFile = await fetchFileAsObject('prescriptive/prescriptive-sample-data.csv');
                     contextFile = await fetchFileAsObject('prescriptive/prescriptive-sample-doc.txt');
-                    
                     forceInputFile("prescriptiveFile", dataFile);
                     forceInputFile("prescriptiveContextFile", contextFile);
-                    
                     window.tempSampleDataFile = dataFile;
                     window.tempSampleContextFile = contextFile;
-                    
                     dataText = await dataFile.text();
                     contextText = await contextFile.text();
-
                     $("prescriptivePreviewTable").innerHTML = buildPreview(dataText);
                     $("prescriptiveDataPreview").classList.remove("hidden");
                     $("prescriptiveGoalText").value = contextText;
@@ -4295,12 +4313,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 case "predictive-analysis":
                     dataFile = await fetchFileAsObject('predictive/predictive-sample-data.csv');
-                    forceInputFile("predictiveFile", dataFile);
                     
+                    // 1. Set Global (Critical for backend if file mode is used)
                     window.tempSampleDataFile = dataFile;
                     
+                    // 2. Get Text content
                     dataText = await dataFile.text();
                     
+                    // 3. Populate UI - TEXT AREA (Visual Feedback)
+                    $("predictiveDataText").value = dataText;
+
+                    // 4. Populate UI - FILE INPUT (So it is ready if they switch tabs)
+                    forceInputFile("predictiveFile", dataFile);
+                    
+                    // 5. Force UI to Text Mode initially (Ensure it's visible)
+                    $("predictiveInputTextToggle").checked = true;
+                    $("predictiveInputFileToggle").checked = false;
+                    $("predictiveTextInputArea").classList.remove("hidden");
+                    $("predictiveFileUploadArea").classList.add("hidden");
+
+                    // 6. Previews & Dropdowns
                     $("predictivePreviewTable").innerHTML = buildPreview(dataText);
                     $("predictiveDataPreview").classList.remove("hidden");
                     
@@ -4318,29 +4350,70 @@ document.addEventListener("DOMContentLoaded", () => {
                     dataFile = await fetchFileAsObject('regression/regression-sample.csv');
                     contextFile = await fetchFileAsObject('regression/regression-sample-doc.txt');
 
+                    // 1. Set Globals
+                    window.tempSampleDataFile = dataFile;
+                    window.tempSampleContextFile = contextFile;
+
+                    // 2. Get Text Content
+                    dataText = await dataFile.text();
+                    contextText = await contextFile.text();
+
+                    // 3. Populate UI - Text Areas
+                    $("regressionContextText").value = contextText;
+                    const regDataTextArea = document.getElementById("regressionDataText");
+                    if(regDataTextArea) regDataTextArea.value = dataText;
+
+                    // 4. Populate File Inputs (background)
                     forceInputFile("regressionFile", dataFile);
                     forceInputFile("regressionContextFile", contextFile);
 
-                    window.tempSampleDataFile = dataFile;
-                    window.tempSampleContextFile = contextFile;
+                    // 5. Force UI to Text Mode
+                    const regTextToggle = $("textInput");
+                    const regFileToggle = $("docUpload");
+                    const regTextArea = $("regressionContextTextArea");
+                    const regFileArea = $("regressionContextFileArea");
                     
-                    dataText = await dataFile.text();
-                    contextText = await contextFile.text();
-                    
+                    if(regTextToggle && regTextArea) {
+                        regTextToggle.checked = true;
+                        regTextArea.classList.remove("hidden");
+                        if(regFileArea) regFileArea.classList.add("hidden");
+                    }
+
+                    // 6. Generate Preview
                     $("regressionPreviewTable").innerHTML = buildPreview(dataText);
                     $("regressionDataPreview").classList.remove("hidden");
-                    $("regressionContextText").value = contextText;
-                    
-                    const regHeaders = dataText.split('\n')[0].split(',');
+
+                    // 7. POPULATE & SELECT VARIABLES
+                    const regHeaders = dataText.split('\n')[0].split(',').map(h => h.trim());
                     const regDepSelect = $("dependentVar");
                     const regIndepContainer = $("independentVarsContainer");
+                    
+                    // Clear previous
                     regDepSelect.innerHTML = "";
                     regIndepContainer.innerHTML = "";
+                    
+                    // --- FIX: MATCHING THE SCREENSHOT EQUATION ---
+                    // Y (Target) is 'marketing_spend'
+                    // X (Predictors) includes 'sales_revenue'
+                    const sampleTarget = "marketing_spend";
+                    const samplePredictors = ["sales_revenue", "product_price", "customer_rating", "region"];
+
                     regHeaders.forEach(h => {
+                        // Add to Dependent Dropdown
                         regDepSelect.add(new Option(h, h));
-                        regIndepContainer.innerHTML += `<label class="flex items-center space-x-2"><input type="checkbox" class="method-checkbox independent-var-checkbox" value="${h}"><span>${h}</span></label>`;
+
+                        // Add to Independent Checkboxes
+                        const isChecked = samplePredictors.includes(h) ? "checked" : "";
+                        
+                        regIndepContainer.innerHTML += `
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" class="method-checkbox independent-var-checkbox" value="${h}" ${isChecked}>
+                                <span>${h}</span>
+                            </label>`;
                     });
-                    regDepSelect.value = "sales_revenue";
+
+                    // Set Dependent Value
+                    regDepSelect.value = sampleTarget;
                     regDepSelect.disabled = false;
                     break;
 
@@ -4349,19 +4422,34 @@ document.addEventListener("DOMContentLoaded", () => {
                     const isPls = templateId === "pls-analysis";
                     const path = isPls ? 'pls/pls-sample-data.csv' : 'sem/sem-sample-data.csv';
                     const prefix = isPls ? "pls" : "sem";
-
-                    dataFile = await fetchFileAsObject(path);
-                    forceInputFile(prefix + "File", dataFile);
-
-                    window.tempSampleDataFile = dataFile;
                     
+                    // 1. Fetch File
+                    dataFile = await fetchFileAsObject(path);
+                    window.tempSampleDataFile = dataFile;
+
+                    // 2. Get Text Content
                     dataText = await dataFile.text();
                     
+                    // 3. Populate UI - TEXT AREA (Visual Feedback)
+                    $(`${prefix}DataText`).value = dataText;
+
+                    // 4. Populate UI - FILE INPUT (Background)
+                    forceInputFile(prefix + "File", dataFile);
+
+                    // 5. Force UI to Text Mode (Ensure it's visible)
+                    $(`${prefix}InputTextToggle`).checked = true;
+                    $(`${prefix}InputFileToggle`).checked = false;
+                    $(`${prefix}TextInputArea`).classList.remove("hidden");
+                    $(`${prefix}FileUploadArea`).classList.add("hidden");
+
+                    // 6. Previews
                     $(`${prefix}PreviewTable`).innerHTML = buildPreview(dataText);
                     $(`${prefix}DataPreview`).classList.remove("hidden");
                     
+                    // 7. Set Model Template & Syntax
                     $(`${prefix}ModelTemplate`).innerHTML = `<option value="custom">Custom Syntax</option>`;
                     $(`${prefix}ModelTemplate`).value = "custom";
+                    
                     if (isPls) {
                          $(`${prefix}MeasurementSyntax`).value = "Quality =~ qual1 + qual2 + qual3\nSatisfaction =~ sat1 + sat2 + sat3\nLoyalty =~ loy1 + loy2 + loy3";
                     } else {
@@ -4372,21 +4460,47 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 case "dematel-analysis":
                     contextFile = await fetchFileAsObject('dematel/dematel-sample-doc.txt');
-                    forceInputFile("dematelFile", contextFile);
                     
+                    // 1. Set Globals
                     window.tempSampleContextFile = contextFile;
+                    
+                    // 2. Get Text Content
                     contextText = await contextFile.text();
 
+                    // 3. Populate Text Area (Visible View)
                     $("dematelContent").value = contextText;
-                    $("dematelInputTextToggle").checked = true;
-                    $("dematelInputFileToggle").checked = false;
-                    $("dematelTextInputArea").classList.remove("hidden");
-                    $("dematelFileUploadArea").classList.add("hidden");
+
+                    // 4. Populate File Input (Background View)
+                    forceInputFile("dematelFile", contextFile);
+
+                    // 5. FIX: Populate the File Preview Box (Background View)
+                    // This ensures that if you toggle to "Document Upload", the preview is valid and visible.
+                    const dematelPreview = $("dematelFilePreview");
+                    const dematelPreviewContainer = $("dematelFilePreviewContainer");
+                    
+                    if (dematelPreview && dematelPreviewContainer) {
+                        const first10Lines = contextText.split('\n').slice(0, 10).join('\n');
+                        dematelPreview.textContent = first10Lines;
+                        dematelPreviewContainer.classList.remove("hidden");
+                    }
+
+                    // 6. Force UI to TEXT INPUT Mode
+                    $("dematelInputTextToggle").checked = true;    // Check Text Input
+                    $("dematelInputFileToggle").checked = false;   // Uncheck File Upload
+                    $("dematelTextInputArea").classList.remove("hidden"); // Show Text Area
+                    $("dematelFileUploadArea").classList.add("hidden");   // Hide File Area
                     break;
             }
 
             window.isSampleModeActive = true;
             button.innerHTML = `✓ Sample Loaded!`;
+            
+            // --- FIX START: Re-enable the button after 2 seconds ---
+            setTimeout(() => {
+                button.disabled = false;
+                button.innerHTML = originalText;
+            }, 1000);
+            // --- FIX END ---
 
         } catch (error) {
             console.error("Error in handleUseSampleClick:", error);
@@ -4953,50 +5067,170 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // --- Update Navigation Bar Links to include admin check ---
+    // --- Navbar & Profile Logic ---
+
+    // Toggle Dropdown
+    const profileBtn = document.getElementById('profileMenuBtn');
+    const profileDropdown = document.getElementById('profileDropdown');
+
+    if(profileBtn) {
+        profileBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); 
+            profileDropdown.classList.toggle('hidden');
+        });
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (profileDropdown && !profileDropdown.classList.contains('hidden')) {
+            if (!profileBtn.contains(e.target) && !profileDropdown.contains(e.target)) {
+                profileDropdown.classList.add('hidden');
+            }
+        }
+    });
+
+    // Close dropdown when a link inside is clicked
+    if(profileDropdown) {
+        profileDropdown.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                profileDropdown.classList.add('hidden');
+            });
+        });
+    }
+
     function updateNavBar() {
-        // Select BOTH desktop and mobile login links
-        const loginLinks = document.querySelectorAll('a[data-page="login"], a[data-page="logout"]');
+        const loggedOutState = document.getElementById("loggedOutState");
+        const loggedInState = document.getElementById("loggedInState");
         
-        // Select BOTH desktop and mobile admin links
-        const adminLinks = document.querySelectorAll("#adminDashboardNav, #adminDashboardNavMobile"); 
+        const dropdownName = document.getElementById("dropdownName");
+        const dropdownEmail = document.getElementById("dropdownEmail");
+        const userInitials = document.getElementById("userInitials");
+        
+        // The Admin link is now inside the dropdown
+        const dropdownAdminLink = document.getElementById("dropdownAdminLink"); 
         const adminIndicator = document.getElementById("adminModeIndicator");
 
-        if (userLoggedIn) {
-            loginLinks.forEach(link => {
-                link.textContent = "Logout";
-                link.setAttribute("data-page", "logout");
-                // If it's a button style (desktop), keep style, otherwise keep mobile style
-                if(link.classList.contains('btn-primary')) {
-                     link.classList.replace('btn-primary', 'btn-secondary');
-                }
-            });
+        // Also handle mobile menu visibility if you want to hide "Sign In" on mobile when logged in
+        // (Optional based on your preference, but good for UX)
 
-            if (adminLinks.length > 0) { 
-                if (currentUser && currentUser.app_metadata.role === 'admin') {
-                    adminLinks.forEach(el => el.style.display = "block");
-                    if(adminIndicator) adminIndicator.style.display = "block";
-                } else {
-                    adminLinks.forEach(el => el.style.display = "none");
-                    if(adminIndicator) adminIndicator.style.display = "none";
-                }
+        if (userLoggedIn && currentUser) {
+            // 1. Show Profile Circle, Hide Login Button
+            if(loggedOutState) loggedOutState.classList.add('hidden');
+            if(loggedInState) loggedInState.classList.remove('hidden');
+
+            // 2. Populate User Details
+            const email = currentUser.email || "";
+            const meta = currentUser.user_metadata || {};
+            const firstName = meta.first_name || "";
+            const lastName = meta.last_name || "";
+            
+            if (firstName || lastName) {
+                if(dropdownName) dropdownName.textContent = `${firstName} ${lastName}`;
+            } else {
+                if(dropdownName) dropdownName.textContent = email.split('@')[0];
             }
 
-        } else { // Logged Out
-            loginLinks.forEach(link => {
-                link.textContent = "Login";
-                link.setAttribute("data-page", "login");
-                if(link.classList.contains('btn-secondary')) {
-                     link.classList.replace('btn-secondary', 'btn-primary');
-                }
-            });
+            if(dropdownEmail) dropdownEmail.textContent = email;
 
-            adminLinks.forEach(el => el.style.display = "none");
+            // Initials
+            let initials = "U";
+            if (firstName) {
+                initials = firstName.charAt(0).toUpperCase();
+                if (lastName) initials += lastName.charAt(0).toUpperCase();
+            } else if (email) {
+                initials = email.substring(0, 2).toUpperCase();
+            }
+            if(userInitials) userInitials.textContent = initials;
+
+            // 3. Admin Check (Toggle link in dropdown)
+            const isAdmin = currentUser.app_metadata?.role === 'admin' || currentUser.app_metadata?.tier === 'admin';
+            
+            if (dropdownAdminLink) {
+                if (isAdmin) {
+                    dropdownAdminLink.classList.remove('hidden');
+                    dropdownAdminLink.classList.add('block');
+                } else {
+                    dropdownAdminLink.classList.add('hidden');
+                    dropdownAdminLink.classList.remove('block');
+                }
+            }
+            
+            if (adminIndicator) {
+                adminIndicator.style.display = isAdmin ? "block" : "none";
+            }
+
+        } else { 
+            // LOGGED OUT
+            if(loggedOutState) loggedOutState.classList.remove('hidden');
+            if(loggedInState) loggedInState.classList.add('hidden');
+            
             if(adminIndicator) adminIndicator.style.display = "none";
         }
         
-        // Re-attach listeners to new elements
         attachNavLinkListeners();
+    }
+
+    // --- Listener for the "Manage Subscription" link ---
+    const manageSubBtn = document.getElementById("manageSubscriptionLink");
+    
+    if (manageSubBtn) {
+        manageSubBtn.addEventListener("click", async (e) => {
+            e.preventDefault();
+            
+            // 1. Close the profile dropdown
+            const dropdown = document.getElementById("profileDropdown");
+            if(dropdown) dropdown.classList.add("hidden");
+
+            // 2. Determine User Tier
+            // We check metadata or your local user object
+            const isPremium = 
+                currentUser?.app_metadata?.tier === 'premium' || 
+                currentUser?.user_metadata?.tier === 'premium' ||
+                currentUser?.app_metadata?.role === 'admin';
+
+            if (!isPremium) {
+                // --- CASE A: FREE USER ---
+                // They need to Subscribe, so show the Pricing Modal
+                if (typeof openStripePlanModal === "function") {
+                    openStripePlanModal();
+                }
+            } else {
+                // --- CASE B: PREMIUM USER ---
+                // They need to Cancel/Update, so go to Stripe Portal
+                
+                const originalText = manageSubBtn.innerText;
+                manageSubBtn.innerText = "Loading Portal...";
+                manageSubBtn.style.opacity = "0.7";
+
+                try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (!session) throw new Error("Please log in.");
+
+                    const response = await fetch('https://supabase.sageaios.com/functions/v1/create-portal-session', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${session.access_token}`
+                        }
+                    });
+
+                    const result = await response.json();
+
+                    if (result.url) {
+                        // Redirect user to Stripe
+                        window.location.href = result.url;
+                    } else {
+                        throw new Error(result.error || "Failed to load portal");
+                    }
+
+                } catch (error) {
+                    console.error("Portal Error:", error);
+                    alert("Could not access billing portal. " + error.message);
+                    manageSubBtn.innerText = originalText;
+                    manageSubBtn.style.opacity = "1";
+                }
+            }
+        });
     }
 
    /**
@@ -9429,7 +9663,7 @@ Feb 1, "$52,000", "$5.2k", "15,500 visitors"
     const contentContainer = $("templateDetailContent");
     contentContainer.className = "grid lg:grid-cols-1 gap-12"; // Single column layout
 
-    // --- HTML Structure (Unchanged) ---
+    // --- HTML Structure ---
     contentContainer.innerHTML = `
         <div class="lg:col-span-1">
             <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
@@ -9455,13 +9689,13 @@ Feb 1, "$52,000", "$5.2k", "15,500 visitors"
                 </div>
 
                     <div class="input-radio-group">
-                        <input type="radio" name="plsInputType" id="plsInputFileToggle" class="input-radio" checked>
-                        <label for="plsInputFileToggle" class="input-radio-label">File Upload</label>
-                        <input type="radio" name="plsInputType" id="plsInputTextToggle" class="input-radio">
-                        <label for="plsInputTextToggle" class="input-radio-label">Paste Text</label>
+                        <input type="radio" name="plsInputType" id="plsInputTextToggle" class="input-radio" checked>
+                        <label for="plsInputTextToggle" class="input-radio-label">Text Input</label>
+                        <input type="radio" name="plsInputType" id="plsInputFileToggle" class="input-radio">
+                        <label for="plsInputFileToggle" class="input-radio-label">Document Upload</label>
                     </div>
 
-                    <div id="plsFileUploadArea">
+                    <div id="plsFileUploadArea" class="hidden">
                         <label for="plsFile" class="block text-sm font-medium text-gray-200 mb-2">Data File (.csv, .xlsx)</label>
                         <div class="input-file-wrapper">
                             <label for="plsFile" id="plsFileLabel" class="input-file-btn">
@@ -9473,7 +9707,7 @@ Feb 1, "$52,000", "$5.2k", "15,500 visitors"
                         <div id="plsFileError" class="text-red-400 text-sm mt-2"></div>
                     </div>
 
-                    <div id="plsTextInputArea" class="hidden">
+                    <div id="plsTextInputArea">
                         <label for="plsDataText" class="block text-sm font-medium text-gray-200 mb-2">Paste CSV Data</label>
                         <textarea id="plsDataText" class="input-field h-48" placeholder="Date,Var1,Var2...\n2023-01-01,10,20..."></textarea>
                         <div id="plsTextError" class="text-red-400 text-sm mt-2"></div>
@@ -9579,7 +9813,6 @@ Feb 1, "$52,000", "$5.2k", "15,500 visitors"
         const isHidden = exampleDiv.classList.contains("hidden");
         
         if (isHidden) {
-            // Display hardcoded example content immediately
             const exampleContent = $("exampleContent");
             const exampleText = `qual1,qual2,qual3,sat1,sat2,loy1,loy2
 5,6,5,4,5,5,6
@@ -9644,7 +9877,7 @@ Feb 1, "$52,000", "$5.2k", "15,500 visitors"
         const modelTemplateSelect = $("plsModelTemplate");
         let fullHeaders = []; 
 
-        // --- PLS Helper Functions (Copied & Renamed from SEM) ---
+        // --- PLS Helper Functions ---
 
         const getHeadersFromText = (text) => {
             if (!text || typeof text !== 'string' || !text.trim()) throw new Error("Input text is empty.");
@@ -9687,18 +9920,14 @@ Feb 1, "$52,000", "$5.2k", "15,500 visitors"
                 });
                 tableHTML += '</tbody>';
                 previewTable.innerHTML = tableHTML;
-                dataPreviewContainer.classList.remove("hidden"); // Ensure it's visible
+                dataPreviewContainer.classList.remove("hidden"); 
             } catch (e) {
                 console.error("Error showing data preview:", e);
                 previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-red-400" colspan="100%">Error reading data preview.</td></tr></tbody>';
-                dataPreviewContainer.classList.remove("hidden"); // Ensure it's visible
+                dataPreviewContainer.classList.remove("hidden"); 
             }
         };
 
-    /**
-     * This function is no longer used by the "auto-suggest" but
-     * is kept in case you want to add a "Recommended for Sample" button back.
-     */
     const generateRecommendedSyntax = () => {
         const fullSyntax = `
 # Measurement Model (Sample)
@@ -9712,11 +9941,6 @@ Loyalty ~ Quality + Satisfaction`;
         populateSyntaxBoxes(fullSyntax);
     };
 
-    /**
-     * --- *** THIS IS THE NEW, SMARTER "Auto-Suggest" FUNCTION *** ---
-     * It groups variables by prefix (e.g., "qual1", "qual2" -> "qual")
-     * and builds a valid model.
-     */
     const generateSyntax = () => {
         if (fullHeaders.length === 0) { 
             alert("Data headers not found for auto-suggestion."); 
@@ -9729,13 +9953,12 @@ Loyalty ~ Quality + Satisfaction`;
         
         // --- NEW SMARTER LOGIC ---
         const groupedFactors = new Map();
-        // This regex finds the non-numeric prefix of a variable name.
-        const prefixRegex = /^([a-zA-Z_]+)/; // Matches leading letters/underscores
+        const prefixRegex = /^([a-zA-Z_]+)/; 
 
         analyticalHeaders.forEach(header => {
             const match = header.match(prefixRegex);
             if (match) {
-                const prefix = match[1]; // e.g., "qual"
+                const prefix = match[1]; 
                 if (!groupedFactors.has(prefix)) {
                     groupedFactors.set(prefix, []);
                 }
@@ -9743,12 +9966,9 @@ Loyalty ~ Quality + Satisfaction`;
             }
         });
 
-        // Filter out groups with fewer than 2 indicators (good practice)
         const validFactors = new Map();
         for (const [prefix, indicators] of groupedFactors.entries()) {
-            // Only create a factor if it has 2 or more indicators
             if (indicators.length > 1) { 
-                // Capitalize the prefix for the Factor name (e.g., "qual" -> "Quality")
                 const factorName = prefix.charAt(0).toUpperCase() + prefix.slice(1);
                 validFactors.set(factorName, indicators);
             }
@@ -9768,29 +9988,21 @@ Loyalty ~ Quality + Satisfaction`;
 
         let structuralPart = `# Auto-suggested structural paths (chain model)\n`;
         if (factorNames.length === 2) {
-            // Simple regression if only two factors
             structuralPart += `${factorNames[1]} ~ ${factorNames[0]}`;
         } else {
-            // Create a "chain" model: F2~F1, F3~F2, etc.
             for (let i = 1; i < factorNames.length; i++) {
                 structuralPart += `${factorNames[i]} ~ ${factorNames[i-1]}\n`;
             }
-            // Add a direct path from F1 to F-Last for a simple mediation check
             if (factorNames.length > 2) {
                  structuralPart += `${factorNames[factorNames.length-1]} ~ ${factorNames[0]}\n`;
             }
         }
-        
+       
         let fullSyntax = measurementPart.trim() + '\n\n' + structuralPart.trim();
         populateSyntaxBoxes(fullSyntax);
-        // --- END NEW SMARTER LOGIC ---
     };
 
-    /**
-     * This helper populates the syntax boxes. (Unchanged)
-     */
     const populateSyntaxBoxes = (fullSyntax) => {
-        // Find where the structural model starts (first line with ~ but not =~)
         const lines = fullSyntax.split('\n');
         let structuralStartIndex = -1;
         
@@ -9806,14 +10018,12 @@ Loyalty ~ Quality + Satisfaction`;
         let structural = [];
 
         if (structuralStartIndex === -1) {
-            // No structural model found, assume all is measurement
             measurement = lines;
         } else {
             measurement = lines.slice(0, structuralStartIndex);
             structural = lines.slice(structuralStartIndex);
         }
         
-        // Remove comments for the final text boxes
         const filterComments = (arr) => arr.filter(line => !line.trim().startsWith('#')).join('\n').trim();
 
         measurementSyntaxBox.value = filterComments(measurement);
@@ -9823,24 +10033,15 @@ Loyalty ~ Quality + Satisfaction`;
         structuralSyntaxBox.placeholder = structuralSyntaxBox.value ? structuralSyntaxBox.placeholder : "e.g., F1 ~ F2";
     };
 
-    /**
-     * --- *** THIS IS THE UPDATED FUNCTION *** ---
-     * Renamed "Auto-Suggest (2-Factor Model)" to "Auto-Suggest (Group by Prefix)"
-     */
     const updateModelTemplates = (headers) => {
         fullHeaders = headers;
         modelTemplateSelect.innerHTML = '';
         modelTemplateSelect.add(new Option("Select a model template...", ""));
         modelTemplateSelect.add(new Option("Custom Syntax (Type below)", "custom"));
-        modelTemplateSelect.add(new Option("Auto-Suggest (Group by Prefix)", "autosuggest")); // <-- Text Updated
-        // The "Recommended" option has been removed
+        modelTemplateSelect.add(new Option("Auto-Suggest (Group by Prefix)", "autosuggest")); 
         modelTemplateSelect.disabled = false;
     };
 
-        /**
-         * --- *** THIS IS THE UPDATED FUNCTION *** ---
-         * Now defaults to "autosuggest"
-         */
         const processDataInput = async (isFileInput) => {
             let textContent = null;
             let originalHeaders = [];
@@ -9853,7 +10054,7 @@ Loyalty ~ Quality + Satisfaction`;
             modelTemplateSelect.disabled = true;
             modelTemplateSelect.innerHTML = '<option value="">-- Processing data... --</option>';
             previewTable.innerHTML = '<tbody><tr><td class="p-4 text-center text-white/60" colspan="100%">Processing data...</td></tr></tbody>';
-            dataPreviewContainer.classList.remove("hidden"); // Make sure it's visible
+            dataPreviewContainer.classList.remove("hidden"); 
             
             measurementSyntaxBox.value = ""; 
             structuralSyntaxBox.value = "";
@@ -9897,7 +10098,6 @@ Loyalty ~ Quality + Satisfaction`;
             if (dataRows.length > 0) {
                  const firstRow = dataRows[0].split(/[,;\t]/);
                 firstRow.forEach((cell, index) => {
-                    // Check if cell is numeric.
                     if (!isNaN(parseFloat(cell)) && isFinite(cell)) {
                         numericColumnsCount++;
                     }
@@ -9910,13 +10110,10 @@ Loyalty ~ Quality + Satisfaction`;
             }
 
                 showDataPreview(textContent);
-                updateModelTemplates(originalHeaders); // This now only has 2 options
+                updateModelTemplates(originalHeaders);
 
             if (dataRows.length >= 10 && numericColumnsCount >= 3) {
-                // --- THIS IS THE CHANGE ---
-                // Always default to "autosuggest" now
                 modelTemplateSelect.value = "autosuggest";
-                // --- END CHANGE ---
                 modelTemplateSelect.dispatchEvent(new Event('change'));
             }
 
@@ -9932,7 +10129,7 @@ Loyalty ~ Quality + Satisfaction`;
             }
         };
 
-        // --- Attach Input Event Listeners (Copied & Renamed from SEM) ---
+        // --- Attach Input Event Listeners ---
 
         fileToggle.addEventListener("change", () => {
             fileArea.classList.remove("hidden");
@@ -9969,10 +10166,6 @@ Loyalty ~ Quality + Satisfaction`;
             });
         }
 
-       /**
-         * --- *** THIS IS THE UPDATED LISTENER *** ---
-         * This listener now only handles custom and autosuggest.
-         */
         if (modelTemplateSelect) {
             modelTemplateSelect.addEventListener("change", async () => { 
                 const selected = modelTemplateSelect.value;
@@ -9988,11 +10181,10 @@ Loyalty ~ Quality + Satisfaction`;
                     case "autosuggest":
                         measurementSyntaxBox.placeholder = "Auto-suggesting generic model...";
                         structuralSyntaxBox.placeholder = "Auto-suggesting generic model...";
-                        generateSyntax(); // Calls the DYNAMIC auto-suggest
+                        generateSyntax(); 
                         measurementSyntaxBox.placeholder = measurementSyntaxBox.value ? "Review auto-suggested syntax." : "Could not auto-suggest.";
                         structuralSyntaxBox.placeholder = structuralSyntaxBox.value ? "Review auto-suggested syntax." : "";
                         break;
-                    // --- "recommended" case has been removed ---
                     default:
                         measurementSyntaxBox.placeholder = "Select a model template or type syntax...";
                         structuralSyntaxBox.placeholder = "";
@@ -10000,7 +10192,6 @@ Loyalty ~ Quality + Satisfaction`;
             });
         }
 
-        // Attach listener for the feedback link
         const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
         if (feedbackLink) {
             feedbackLink.addEventListener("click", (e) => {
@@ -15287,13 +15478,13 @@ function createSystemObjectivesLayout_ST(template) {
                     </div>
 
                         <div class="input-radio-group">
-                            <input type="radio" name="semInputType" id="semInputFileToggle" class="input-radio" checked>
-                            <label for="semInputFileToggle" class="input-radio-label">File Upload</label>
-                            <input type="radio" name="semInputType" id="semInputTextToggle" class="input-radio">
-                            <label for="semInputTextToggle" class="input-radio-label">Paste Text</label>
+                            <input type="radio" name="semInputType" id="semInputTextToggle" class="input-radio" checked>
+                            <label for="semInputTextToggle" class="input-radio-label">Text Input</label>
+                            <input type="radio" name="semInputType" id="semInputFileToggle" class="input-radio">
+                            <label for="semInputFileToggle" class="input-radio-label">Document Upload</label>
                         </div>
 
-                        <div id="semFileUploadArea">
+                        <div id="semFileUploadArea" class="hidden">
                             <label for="semFile" class="block text-sm font-medium text-gray-200 mb-2">Data File (.csv, .xlsx)</label>
                             <div class="input-file-wrapper">
                                 <label for="semFile" id="semFileLabel" class="input-file-btn">
@@ -15305,7 +15496,7 @@ function createSystemObjectivesLayout_ST(template) {
                             <div id="semFileError" class="text-red-400 text-sm mt-2"></div>
                         </div>
 
-                        <div id="semTextInputArea" class="hidden">
+                        <div id="semTextInputArea">
                             <label for="semDataText" class="block text-sm font-medium text-gray-200 mb-2">Paste CSV Data</label>
                             <textarea id="semDataText" class="input-field h-48" placeholder="Date,Var1,Var2...\n2023-01-01,10,20..."></textarea>
                             <div id="semTextError" class="text-red-400 text-sm mt-2"></div>
@@ -15386,7 +15577,7 @@ function createSystemObjectivesLayout_ST(template) {
                             <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                         </button>
                         <div class="text-center mt-4">
-	                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                                    <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
                         </div>
                     </div>
                 </div>
@@ -15775,122 +15966,121 @@ function createPredictiveAnalysisLayout(template) {
     contentContainer.className = "grid lg:grid-cols-1 gap-12"; // Set layout class
 
     // --- 1. Build HTML Structure ---
-    contentContainer.innerHTML = `
-        <div class="lg:col-span-1">
-            <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
-            <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">${template.description}</p>
+        contentContainer.innerHTML = `
+            <div class="lg:col-span-1">
+                <h1 class="text-4xl font-bold text-center mb-2">${template.title}</h1>
+                <p class="text-lg text-white/80 text-center mb-12 max-w-3xl mx-auto">${template.description}</p>
 
-            <div class="max-w-2xl mx-auto w-full">
-                <div class="glass-container p-6 space-y-6">
-                    
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-xl font-bold text-white">Forecasting Configuration</h3>
-                        <div class="flex items-center space-x-2">
-                            <button type="button" id="predictiveExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
-                            <button type="button" onclick="triggerBackendDownload(\'predictive\', \'predictive-sample-data.csv\')" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem;">Download Sample .csv</button>
-                            <button type="button" id="usePredSampleBtn" class="btn-sample btn-use-sample" data-template-id="predictive-analysis">▶ Use Sample</button>
+                <div class="max-w-2xl mx-auto w-full">
+                    <div class="glass-container p-6 space-y-6">
+                        
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="text-xl font-bold text-white">Forecasting Configuration</h3>
+                            <div class="flex items-center space-x-2">
+                                <button type="button" id="predictiveExamplesBtn" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Examples</button>
+                                <button type="button" onclick="triggerBackendDownload(\'predictive\', \'predictive-sample-data.csv\')" class="btn btn-secondary text-xs" style="padding: 0.25rem 0.5rem;">Download Sample .csv</button>
+                                <button type="button" id="usePredSampleBtn" class="btn-sample btn-use-sample" data-template-id="predictive-analysis">▶ Use Sample</button>
+                            </div>
                         </div>
-                    </div>
 
-                    <div id="predictiveExamples" class="hidden mb-4 p-3 bg-black/20 border border-white/15 rounded-lg">
-                         <div id="predictiveExampleContent">Loading example...</div>
-                    </div>
-
-                    <div class="input-radio-group">
-                        <input type="radio" name="predictiveInputType" id="predictiveInputFileToggle" class="input-radio" checked>
-                        <label for="predictiveInputFileToggle" class="input-radio-label">File Upload</label>
-                        <input type="radio" name="predictiveInputType" id="predictiveInputTextToggle" class="input-radio">
-                        <label for="predictiveInputTextToggle" class="input-radio-label">Paste Data</label>
-                    </div>
-
-                    <div id="predictiveFileUploadArea">
-                        <label for="predictiveFile" class="block text-sm font-medium text-gray-200 mb-2">Time Series Data (.csv, .xlsx)</label>
-                        <div class="input-file-wrapper">
-                            <label for="predictiveFile" id="predictiveFileLabel" class="input-file-btn">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" 
- fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16">
-                                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
-                                    <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/>
-                                </svg>
-                                <span class="file-name">Select data 
- file...</span>
-                            </label>
-                            <input type="file" id="predictiveFile" class="input-file" accept=".csv,.xlsx">
+                        <div id="predictiveExamples" class="hidden mb-4 p-3 bg-black/20 border border-white/15 rounded-lg">
+                             <div id="predictiveExampleContent">Loading example...</div>
                         </div>
-                        <div id="predictiveFileError" class="text-red-400 text-sm mt-2"></div>
-                    </div>
 
-                    <div id="predictiveTextInputArea" class="hidden">
-                        <label for="predictiveDataText" class="block text-sm font-medium text-gray-200 mb-2">Paste CSV Data</label>
-                         <textarea id="predictiveDataText" class="input-field h-48" placeholder="Date,Revenue,Customers\n2023-01-01,150000,1250\n2023-02-01,162000,1340..."></textarea>
-                        <div id="predictiveTextError" class="text-red-400 text-sm mt-2"></div>
-                    </div>
+                        <div class="input-radio-group">
+                            <input type="radio" name="predictiveInputType" id="predictiveInputTextToggle" class="input-radio" checked>
+                            <label for="predictiveInputTextToggle" class="input-radio-label">Text Input</label>
+                            <input type="radio" name="predictiveInputType" id="predictiveInputFileToggle" class="input-radio">
+                            <label for="predictiveInputFileToggle" class="input-radio-label">Document Upload</label>
+                        </div>
 
-                    <div id="predictiveDataPreview" class="hidden space-y-2">
-                        <label class="block text-sm font-medium text-gray-200">Data Preview (First 5 Rows)</label>
-                        <div class="overflow-x-auto rounded-lg border border-white/20">
-                            <table class="min-w-full text-left text-sm text-white/90" id="predictivePreviewTable">
-                            </table>
+                        <div id="predictiveFileUploadArea" class="hidden">
+                            <label for="predictiveFile" class="block text-sm font-medium text-gray-200 mb-2">Time Series Data (.csv, .xlsx)</label>
+                            <div class="input-file-wrapper">
+                                <label for="predictiveFile" id="predictiveFileLabel" class="input-file-btn">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" 
+     fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16">
+                                        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+                                        <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/>
+                                    </svg>
+                                    <span class="file-name">Select data file...</span>
+                                </label>
+                                <input type="file" id="predictiveFile" class="input-file" accept=".csv,.xlsx">
+                            </div>
+                            <div id="predictiveFileError" class="text-red-400 text-sm mt-2"></div>
                         </div>
-                         <p class="text-xs text-white/70">Assuming first column ('<span id="assumedDateColName" class="font-medium">...</span>') is the Date/Time column.</p>
-                    </div>
 
-                    <div class="grid grid-cols-1 gap-4">
-                        <div>
-                            <label for="predictiveTargetColumn" class="block text-sm font-medium text-gray-200 mb-2">Target Variable (to Forecast)</label>
-                            <select id="predictiveTargetColumn" class="input-field" disabled>
-                                  <option value="">-- Upload data first --</option>
-                            </select>
+                        <div id="predictiveTextInputArea">
+                            <label for="predictiveDataText" class="block text-sm font-medium text-gray-200 mb-2">Paste CSV Data</label>
+                             <textarea id="predictiveDataText" class="input-field h-48" placeholder="Date,Revenue,Customers\n2023-01-01,150000,1250\n2023-02-01,162000,1340..."></textarea>
+                            <div id="predictiveTextError" class="text-red-400 text-sm mt-2"></div>
                         </div>
-                    </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label for="predictiveForecastPeriods" class="block text-sm font-medium text-gray-200 mb-2">Forecast Periods</label>
-                             <input type="number" id="predictiveForecastPeriods" class="input-field" value="12" min="1" max="48" placeholder="e.g., 12">
+                        <div id="predictiveDataPreview" class="hidden space-y-2">
+                            <label class="block text-sm font-medium text-gray-200">Data Preview (First 5 Rows)</label>
+                            <div class="overflow-x-auto rounded-lg border border-white/20">
+                                <table class="min-w-full text-left text-sm text-white/90" id="predictivePreviewTable">
+                                </table>
+                            </div>
+                             <p class="text-xs text-white/70">Assuming first column ('<span id="assumedDateColName" class="font-medium">...</span>') is the Date/Time column.</p>
                         </div>
-                        <div>
-                            <label for="predictiveConfidenceLevel" class="block text-sm font-medium text-gray-200 mb-2">Confidence Level</label>
-                            <select id="predictiveConfidenceLevel" class="input-field">
-                                <option value="0.80">80%</option>
-                                  <option value="0.90" selected>90%</option>
-                                <option value="0.95">95%</option>
-                                <option value="0.99">99%</option>
-                            </select>
+
+                        <div class="grid grid-cols-1 gap-4">
+                            <div>
+                                <label for="predictiveTargetColumn" class="block text-sm font-medium text-gray-200 mb-2">Target Variable (to Forecast)</label>
+                                <select id="predictiveTargetColumn" class="input-field" disabled>
+                                      <option value="">-- Upload data first --</option>
+                                </select>
+                            </div>
                         </div>
-                         <div>
-                            <label for="predictiveModelType" class="block text-sm font-medium text-gray-200 mb-2">Model Type</label>
-                             <select id="predictiveModelType" class="input-field">
-                                <option value="auto" selected>Auto-Select Best</option>
-                                <option value="trend">Simple Trend</option>
-                                <option value="seasonal">Seasonal Forecast</option>
-                                <option value="linear">Linear Regression</option>
-                            </select>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label for="predictiveForecastPeriods" class="block text-sm font-medium text-gray-200 mb-2">Forecast Periods</label>
+                                 <input type="number" id="predictiveForecastPeriods" class="input-field" value="12" min="1" max="48" placeholder="e.g., 12">
+                            </div>
+                            <div>
+                                <label for="predictiveConfidenceLevel" class="block text-sm font-medium text-gray-200 mb-2">Confidence Level</label>
+                                <select id="predictiveConfidenceLevel" class="input-field">
+                                    <option value="0.80">80%</option>
+                                      <option value="0.90" selected>90%</option>
+                                    <option value="0.95">95%</option>
+                                    <option value="0.99">99%</option>
+                                </select>
+                            </div>
+                             <div>
+                                <label for="predictiveModelType" class="block text-sm font-medium text-gray-200 mb-2">Model Type</label>
+                                 <select id="predictiveModelType" class="input-field">
+                                    <option value="auto" selected>Auto-Select Best</option>
+                                    <option value="trend">Simple Trend</option>
+                                    <option value="seasonal">Seasonal Forecast</option>
+                                    <option value="linear">Linear Regression</option>
+                                </select>
+                            </div>
+                         </div>
+
+                        <button id="generateBtn" class="btn btn-primary w-full text-lg py-3">
+                            <span id="generateBtnText">📈 Generate Forecast</span>
+                            <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
+                        </button>
+                        <div class="text-center mt-4">
+                            <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
                         </div>
                      </div>
-
-                    <button id="generateBtn" class="btn btn-primary w-full text-lg py-3">
-                        <span id="generateBtnText">📈 Generate Forecast</span>
-                        <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
-                    </button>
-                    <div class="text-center mt-4">
-	                    <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
-                    </div>
-                 </div>
-            </div>
-
-            <div class="mt-12">
-                <h2 class="text-3xl font-bold mb-4 text-center">Forecast Results</h2>
-                <div id="analysisResult" class="glass-container min-h-[400px]">
-                    <div class="text-white/60 p-8 text-center">Upload your data and configure options to generate a forecast.</div>
                 </div>
-                <div id="analysisActions" class="text-center mt-4 space-x-2 hidden">
-                    <button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>
-                    <button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
-                 </div>
+
+                <div class="mt-12">
+                    <h2 class="text-3xl font-bold mb-4 text-center">Forecast Results</h2>
+                    <div id="analysisResult" class="glass-container min-h-[400px]">
+                        <div class="text-white/60 p-8 text-center">Upload your data and configure options to generate a forecast.</div>
+                    </div>
+                    <div id="analysisActions" class="text-center mt-4 space-x-2 hidden">
+                        <button id="savePdfBtn" class="btn btn-secondary">Save as PDF</button>
+                        <button id="saveDocxBtn" class="btn btn-secondary">Save as DOCX</button>
+                     </div>
+                </div>
             </div>
-        </div>
-    `;
+        `;
 
     // --- 2. Setup Event Listeners ---
     const fileToggle = $("predictiveInputFileToggle");
