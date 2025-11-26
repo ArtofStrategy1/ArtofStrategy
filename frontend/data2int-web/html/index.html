@@ -2710,43 +2710,74 @@
         <div id="adminModeIndicator" class="fixed top-40 right-5 p-2 px-3 bg-yellow-500 text-white text-xs font-bold rounded-full shadow-lg z-50" style="display: none;">ADMIN MODE</div>
 
        <nav class="bg-black/10 backdrop-blur-md border-b border-white/10 sticky top-0 z-50 transition-all duration-300">
-            <div class="container mx-auto px-4">
-                <div class="flex justify-between items-center h-16">
-                    <a href="#" class="text-2xl font-bold text-white tracking-wider nav-link transition-all duration-300 hover:scale-105 hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-indigo-400 hover:via-purple-400 hover:to-pink-400 drop-shadow-sm hover:drop-shadow-[0_0_15px_rgba(168,85,247,0.5)]" data-page="home">
-                        SAGE AI
-                    </a>
-                    
-                    <div class="hidden md:flex space-x-4 items-center">
-                        <a href="#" class="text-white/80 px-3 py-2 rounded-md text-sm font-medium nav-link transition-all duration-300 hover:text-white hover:bg-white/10 hover:shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:-translate-y-0.5" data-page="home">Home</a>
-                        <a href="#" class="text-white/80 px-3 py-2 rounded-md text-sm font-medium nav-link transition-all duration-300 hover:text-white hover:bg-white/10 hover:shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:-translate-y-0.5" data-page="blog">Blog</a>
-                        <a href="#" id="adminDashboardNav" class="text-white/80 px-3 py-2 rounded-md text-sm font-medium nav-link transition-all duration-300 hover:text-white hover:bg-white/10 hover:shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:-translate-y-0.5" data-page="adminDashboard" style="display: none;">Admin</a>
-                        <a href="#" class="text-white/80 px-3 py-2 rounded-md text-sm font-medium nav-link transition-all duration-300 hover:text-white hover:bg-white/10 hover:shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:-translate-y-0.5" data-page="feedback">Feedback</a>
-                        
-                        <a href="#" class="btn btn-primary px-4 py-2 text-sm nav-link transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-indigo-500/40" data-page="login">Login</a>
+    <div class="container mx-auto px-4">
+        <div class="flex justify-between items-center h-16">
+            <a href="#" class="text-2xl font-bold text-white tracking-wider nav-link transition-all duration-300 hover:scale-105 hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-indigo-400 hover:via-purple-400 hover:to-pink-400 drop-shadow-sm" data-page="home">
+                SAGE AI
+            </a>
+            
+            <div class="flex items-center gap-6">
+                <div class="hidden md:flex items-center space-x-1">
+                    <a href="#" class="text-white/80 px-3 py-2 rounded-md text-sm font-medium nav-link transition-all hover:text-white hover:bg-white/10" data-page="home">Home</a>
+                    <a href="#" class="text-white/80 px-3 py-2 rounded-md text-sm font-medium nav-link transition-all hover:text-white hover:bg-white/10" data-page="blog">Blog</a>
+                    <a href="#" class="text-white/80 px-3 py-2 rounded-md text-sm font-medium nav-link transition-all hover:text-white hover:bg-white/10" data-page="feedback">Feedback</a>
+                </div>
+
+                <div id="authSection">
+                    <div id="loggedOutState">
+                        <a href="#" class="btn btn-primary px-4 py-2 text-sm nav-link transition-all hover:shadow-lg hover:shadow-indigo-500/40" data-page="login">Sign In</a>
                     </div>
 
-                    <div class="md:hidden flex items-center">
-                        <button id="mobileMenuBtn" class="text-white hover:text-indigo-300 focus:outline-none transition-transform duration-300 hover:scale-110 active:scale-95">
-                            <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-                            </svg>
+                    <div id="loggedInState" class="relative hidden">
+                        <button id="profileMenuBtn" class="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold shadow-lg border border-white/20 transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-gray-900">
+                            <span id="userInitials">U</span>
                         </button>
-                    </div>
-                </div>
-            </div>
 
-            <div id="mobileMenu" class="md:hidden hidden bg-black/90 backdrop-blur-xl border-b border-white/10">
-                <div class="px-4 pt-2 pb-6 space-y-2 flex flex-col">
-                    <a href="#" class="text-white/90 block px-3 py-3 rounded-md text-base font-medium nav-link transition-all duration-300 hover:bg-white/10 hover:pl-6 hover:text-indigo-300" data-page="home">Home</a>
-                    <a href="#" class="text-white/90 block px-3 py-3 rounded-md text-base font-medium nav-link transition-all duration-300 hover:bg-white/10 hover:pl-6 hover:text-indigo-300" data-page="blog">Blog</a>
-                    <a href="#" id="adminDashboardNavMobile" class="text-white/90 block px-3 py-3 rounded-md text-base font-medium nav-link transition-all duration-300 hover:bg-white/10 hover:pl-6 hover:text-indigo-300" data-page="adminDashboard" style="display: none;">Admin Dashboard</a>
-                    <a href="#" class="text-white/90 block px-3 py-3 rounded-md text-base font-medium nav-link transition-all duration-300 hover:bg-white/10 hover:pl-6 hover:text-indigo-300" data-page="feedback">Feedback</a>
-                    <div class="pt-4">
-                        <a href="#" class="btn btn-primary w-full text-center nav-link transition-all duration-300 hover:scale-[1.02] hover:shadow-indigo-500/50" data-page="login">Login</a>
+                        <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-64 origin-top-right rounded-xl bg-[#1a1b26] border border-white/10 shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none backdrop-blur-xl z-50" role="menu">
+                            
+                            <div class="px-4 py-4 border-b border-white/10">
+                                <p class="text-sm text-white font-bold" id="dropdownName">User Name</p>
+                                <p class="text-xs text-white/60 truncate" id="dropdownEmail">email@example.com</p>
+                            </div>
+
+                            <div class="py-1">
+                                <a href="#" id="dropdownAdminLink" class="text-yellow-400 hover:bg-white/10 hover:text-yellow-300 hidden px-4 py-2 text-sm nav-link" data-page="adminDashboard">
+                                    📊 Admin Dashboard
+                                </a>
+
+                                <a href="#" id="manageSubscriptionLink" class="text-gray-300 hover:bg-white/10 hover:text-white block px-4 py-2 text-sm transition-colors">
+                                    💳 Manage Subscription
+                                </a>
+                            </div>
+
+                            <div class="py-1 border-t border-white/10">
+                                <a href="#" class="text-red-400 hover:bg-red-500/10 block px-4 py-2 text-sm nav-link" data-page="logout">
+                                    🚪 Sign out
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
+                
+                <div class="md:hidden flex items-center">
+                    <button id="mobileMenuBtn" class="text-white hover:text-indigo-300 focus:outline-none">
+                        <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
-        </nav>
+        </div>
+    </div>
+    
+    <div id="mobileMenu" class="md:hidden hidden bg-black/90 backdrop-blur-xl border-b border-white/10">
+        <div class="px-4 pt-2 pb-6 space-y-2 flex flex-col">
+            <a href="#" class="text-white/90 block px-3 py-3 rounded-md text-base font-medium nav-link" data-page="home">Home</a>
+            <a href="#" class="text-white/90 block px-3 py-3 rounded-md text-base font-medium nav-link" data-page="blog">Blog</a>
+            <a href="#" class="text-white/90 block px-3 py-3 rounded-md text-base font-medium nav-link" data-page="feedback">Feedback</a>
+        </div>
+    </div>
+</nav>
 
         <div id="versionChoiceModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm items-center justify-center z-[100] feedback-modal">
             <div class="glass-container w-full max-w-lg text-center feedback-modal-container">
@@ -5036,50 +5067,127 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // --- Update Navigation Bar Links to include admin check ---
+    // --- Navbar & Profile Logic ---
+
+    // Toggle Dropdown
+    const profileBtn = document.getElementById('profileMenuBtn');
+    const profileDropdown = document.getElementById('profileDropdown');
+
+    if(profileBtn) {
+        profileBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); 
+            profileDropdown.classList.toggle('hidden');
+        });
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (profileDropdown && !profileDropdown.classList.contains('hidden')) {
+            if (!profileBtn.contains(e.target) && !profileDropdown.contains(e.target)) {
+                profileDropdown.classList.add('hidden');
+            }
+        }
+    });
+
+    // Close dropdown when a link inside is clicked
+    if(profileDropdown) {
+        profileDropdown.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                profileDropdown.classList.add('hidden');
+            });
+        });
+    }
+
     function updateNavBar() {
-        // Select BOTH desktop and mobile login links
-        const loginLinks = document.querySelectorAll('a[data-page="login"], a[data-page="logout"]');
+        const loggedOutState = document.getElementById("loggedOutState");
+        const loggedInState = document.getElementById("loggedInState");
         
-        // Select BOTH desktop and mobile admin links
-        const adminLinks = document.querySelectorAll("#adminDashboardNav, #adminDashboardNavMobile"); 
+        const dropdownName = document.getElementById("dropdownName");
+        const dropdownEmail = document.getElementById("dropdownEmail");
+        const userInitials = document.getElementById("userInitials");
+        
+        // The Admin link is now inside the dropdown
+        const dropdownAdminLink = document.getElementById("dropdownAdminLink"); 
         const adminIndicator = document.getElementById("adminModeIndicator");
 
-        if (userLoggedIn) {
-            loginLinks.forEach(link => {
-                link.textContent = "Logout";
-                link.setAttribute("data-page", "logout");
-                // If it's a button style (desktop), keep style, otherwise keep mobile style
-                if(link.classList.contains('btn-primary')) {
-                     link.classList.replace('btn-primary', 'btn-secondary');
-                }
-            });
+        // Also handle mobile menu visibility if you want to hide "Sign In" on mobile when logged in
+        // (Optional based on your preference, but good for UX)
 
-            if (adminLinks.length > 0) { 
-                if (currentUser && currentUser.app_metadata.role === 'admin') {
-                    adminLinks.forEach(el => el.style.display = "block");
-                    if(adminIndicator) adminIndicator.style.display = "block";
-                } else {
-                    adminLinks.forEach(el => el.style.display = "none");
-                    if(adminIndicator) adminIndicator.style.display = "none";
-                }
+        if (userLoggedIn && currentUser) {
+            // 1. Show Profile Circle, Hide Login Button
+            if(loggedOutState) loggedOutState.classList.add('hidden');
+            if(loggedInState) loggedInState.classList.remove('hidden');
+
+            // 2. Populate User Details
+            const email = currentUser.email || "";
+            const meta = currentUser.user_metadata || {};
+            const firstName = meta.first_name || "";
+            const lastName = meta.last_name || "";
+            
+            if (firstName || lastName) {
+                if(dropdownName) dropdownName.textContent = `${firstName} ${lastName}`;
+            } else {
+                if(dropdownName) dropdownName.textContent = email.split('@')[0];
             }
 
-        } else { // Logged Out
-            loginLinks.forEach(link => {
-                link.textContent = "Login";
-                link.setAttribute("data-page", "login");
-                if(link.classList.contains('btn-secondary')) {
-                     link.classList.replace('btn-secondary', 'btn-primary');
-                }
-            });
+            if(dropdownEmail) dropdownEmail.textContent = email;
 
-            adminLinks.forEach(el => el.style.display = "none");
+            // Initials
+            let initials = "U";
+            if (firstName) {
+                initials = firstName.charAt(0).toUpperCase();
+                if (lastName) initials += lastName.charAt(0).toUpperCase();
+            } else if (email) {
+                initials = email.substring(0, 2).toUpperCase();
+            }
+            if(userInitials) userInitials.textContent = initials;
+
+            // 3. Admin Check (Toggle link in dropdown)
+            const isAdmin = currentUser.app_metadata?.role === 'admin' || currentUser.app_metadata?.tier === 'admin';
+            
+            if (dropdownAdminLink) {
+                if (isAdmin) {
+                    dropdownAdminLink.classList.remove('hidden');
+                    dropdownAdminLink.classList.add('block');
+                } else {
+                    dropdownAdminLink.classList.add('hidden');
+                    dropdownAdminLink.classList.remove('block');
+                }
+            }
+            
+            if (adminIndicator) {
+                adminIndicator.style.display = isAdmin ? "block" : "none";
+            }
+
+        } else { 
+            // LOGGED OUT
+            if(loggedOutState) loggedOutState.classList.remove('hidden');
+            if(loggedInState) loggedInState.classList.add('hidden');
+            
             if(adminIndicator) adminIndicator.style.display = "none";
         }
         
-        // Re-attach listeners to new elements
         attachNavLinkListeners();
+    }
+
+    // --- Listener for the new "Manage Subscription" link ---
+    const manageSubBtn = document.getElementById("manageSubscriptionLink");
+    if (manageSubBtn) {
+        manageSubBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            
+            // 1. Close the profile dropdown
+            const dropdown = document.getElementById("profileDropdown");
+            if(dropdown) dropdown.classList.add("hidden");
+
+            // 2. Open the Stripe Plan Modal
+            // (This reuses your existing function to open the payment modal)
+            if (typeof openStripePlanModal === "function") {
+                openStripePlanModal();
+            } else {
+                console.error("openStripePlanModal function not found");
+            }
+        });
     }
 
    /**
