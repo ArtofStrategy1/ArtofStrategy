@@ -3103,6 +3103,32 @@
                 <!-- END OF LEADERSHIP / SYSTEM SECTION -->
             </div>
 
+            <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="feature-card p-6 bg-white/5 border-2 border-dashed border-white/10 hover:border-white/30 transition-all duration-300 group cursor-default">
+                    <div class="text-3xl mb-3 opacity-50 group-hover:opacity-100 transition-opacity">🔭</div>
+                    <h3 class="text-xl font-bold mb-2 text-white/60 group-hover:text-white transition-colors">Future Module</h3>
+                    <p class="text-white/40 text-sm group-hover:text-white/70 transition-colors">
+                        Advanced simulation and wargaming tools are currently in development.
+                    </p>
+                </div>
+
+                <div class="feature-card p-6 bg-white/5 border-2 border-dashed border-white/10 hover:border-white/30 transition-all duration-300 group cursor-default">
+                    <div class="text-3xl mb-3 opacity-50 group-hover:opacity-100 transition-opacity">🧬</div>
+                    <h3 class="text-xl font-bold mb-2 text-white/60 group-hover:text-white transition-colors">Future Module</h3>
+                    <p class="text-white/40 text-sm group-hover:text-white/70 transition-colors">
+                        Deep-dive organizational DNA mapping and cultural analysis tools coming soon.
+                    </p>
+                </div>
+
+                <div class="feature-card p-6 bg-white/5 border-2 border-dashed border-white/10 hover:border-white/30 transition-all duration-300 group cursor-default">
+                    <div class="text-3xl mb-3 opacity-50 group-hover:opacity-100 transition-opacity">🤖</div>
+                    <h3 class="text-xl font-bold mb-2 text-white/60 group-hover:text-white transition-colors">Future Module</h3>
+                    <p class="text-white/40 text-sm group-hover:text-white/70 transition-colors">
+                        Autonomous strategic agent integration for real-time decision support.
+                    </p>
+                </div>
+            </div>
+
             <div class="max-w-3xl mx-auto mt-24 mb-16 relative animate-fadeIn">
                 <div class="absolute -inset-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl blur opacity-30 animate-pulse"></div>
                 
@@ -3699,6 +3725,10 @@
                 <div class="feature-card p-6 blog-article-link cursor-pointer" data-article-id="operational-art">
                     <h3 class="text-xl font-bold mb-2">Operational Art in the Malayan Campaign</h3>
                     <p class="text-white/70 text-sm">A historical analysis of the Malayan Campaign through the lens of Operational Art by LTC Gurbachan Singh.</p>
+                </div>
+                <div class="feature-card p-6 blog-article-link cursor-pointer" data-article-id="strategic-leadership">
+                    <h3 class="text-xl font-bold mb-2">Strategic Leadership</h3>
+                    <p class="text-white/70 text-sm">Examining the critical role of leadership in formulating and executing effective strategy.</p>
                 </div>
                 <div class="feature-card p-6 blog-article-link cursor-pointer" data-article-id="innovation-nexus">
                     <h3 class="text-xl font-bold mb-2">The Strategy, Innovation & Entrepreneurship Nexus</h3>
@@ -25664,7 +25694,7 @@ function renderKpiPage_KE(container, data) {
                                 <input type="radio" name="analysisEngine" id="useOllama" class="custom-checkbox-input" value="ollama" checked>
                                 <span class="custom-checkbox-checkmark"></span>
                                 <span class="custom-checkbox-label">
-                                    <span class="font-semibold text-white">🧠 Ollama AI</span>
+                                    <span class="font-semibold text-white">🧠 Llama 3.1 </span>
                                     <span class="text-sm text-gray-300 block mt-1">Deep component analysis with breakdowns, values, and goals</span>
                                 </span>
                             </label>
@@ -26057,88 +26087,156 @@ function renderKpiPage_KE(container, data) {
     }
 
 
-// =========================================================================
-// ===== UPDATED HANDLERS (CASCADE CONTROLLER)                          =====
-// =========================================================================
+    // =========================================================================
+    // ===== UPDATED HANDLERS (CASCADE CONTROLLER)                         =====
+    // =========================================================================
 
     /**
-     * HANDLER: Mission Vision (DUAL STEP CASCADE)
-     * - Step 1: Triggers n8n to fetch RAG data (MISSION/VISION/RAG SUMMARY).
-     * - Step 2: Waits for WS message, then triggers OllamaCascadeGoals to generate goals.
+     * HANDLER: Mission Vision Analysis
+     * Controls the flow based on the selected engine (Ollama Only vs. RAG-Enhanced).
      */
     async function handleMissionVisionAnalysis() {
         const analysisResultContainer = document.getElementById("analysisResult");
-        analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8">
-                                                <div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div>
-                                                <h3 class="text-xl font-semibold text-white mb-4">Step 1/2: Gathering External Context (RAG)...</h3>
-                                                <p id="analysisStatus" class="text-white/80 mb-2">Initializing n8n request...</p>
-                                             </div>`;
+        const statusEl = document.getElementById("analysisStatus"); // Note: Might not exist yet in DOM until innerHTML is set, handled below.
+        
+        // 1. Set Initial Loading State & UI
         setLoading("generate", true);
-
-        // --- 1. Reset state and create a unique ID for this analysis ---
+        
+        // We set the initial HTML immediately so we have a place to show status updates
+        analysisResultContainer.innerHTML = `
+            <div class="text-center text-white/70 p-8">
+                <div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div>
+                <h3 class="text-xl font-semibold text-white mb-4">Initializing Analysis...</h3>
+                <p id="analysisStatus" class="text-white/80 mb-2">Reading inputs...</p>
+            </div>`;
+            
+        // 2. Reset Global State
         pendingOllamaResult = null; 
         pendingN8nResult = null; 
-        currentAnalysisMessageId = `analysis_${Date.now()}`;
-        console.log(`Starting cascade analysis with ID: ${currentAnalysisMessageId}`);
-
-        let text = ""; 
-        const n8nFormData = new FormData(); 
+        currentAnalysisMessageId = `analysis_${Date.now()}`; // Unique ID for WebSocket matching
+        let textContext = ""; 
 
         try {
-            // 2. Gather Inputs
+            // 3. Gather & Validate Inputs
             const useDoc = document.getElementById("docUpload").checked;
             const companyName = document.getElementById("companyName").value.trim() || "The organization";
             const location = document.getElementById("location").value.trim() || "unspecified location";
+            
+            // Determine which Analysis Engine is selected
+            const engineOption = document.querySelector('input[name="analysisEngine"]:checked')?.value || 'ollama';
+            console.log(`Mission/Vision Analysis Mode: ${engineOption}`);
 
+            // Prepare Data for N8N (FormData) and Ollama (String Context)
+            const n8nFormData = new FormData(); 
+            
             if (useDoc) {
-                // --- OPTION A: Actual File Upload ---
-                const file = document.getElementById("companyDocumentsFile").files[0];
-                if (!file) throw new Error("Please select a document.");
+                // --- OPTION A: File Upload ---
+                const fileInput = document.getElementById("companyDocumentsFile");
+                if (!fileInput.files || fileInput.files.length === 0) {
+                    throw new Error("Please select a document to upload.");
+                }
+                const file = fileInput.files[0];
                 
-                // Extract text for client-side context (Ollama)
-                text = await extractTextFromFile(file); 
+                // Extract text for local Ollama context
+                textContext = await extractTextFromFile(file); 
                 
-                // Send actual file to n8n (RAG)
+                // Append file for N8N
                 n8nFormData.append("file", file, file.name); 
             } else {
-                // --- OPTION B: Text Input (Converted to Virtual File) ---
-                text = document.getElementById("missionVisionContent").value.trim();
-                if (!text.trim()) throw new Error("Please provide your company context.");
+                // --- OPTION B: Text Input ---
+                const rawText = document.getElementById("missionVisionContent").value.trim();
+                if (!rawText) {
+                    throw new Error("Please provide your company context in the text area.");
+                }
+                textContext = rawText;
 
-                // Create a Virtual File (Blob) so n8n treats it exactly like a document upload
-                const textBlob = new Blob([text], { type: 'text/plain' });
+                // Create a Virtual Blob for N8N so it treats it as a file
+                const textBlob = new Blob([rawText], { type: 'text/plain' });
                 n8nFormData.append("file", textBlob, "context_input.txt");
             }
-            
-            // Send other fields
-            n8nFormData.append("customerName", companyName);
-            n8nFormData.append("location", location);
-            n8nFormData.append("messageId", currentAnalysisMessageId); 
-            
-            // Create full context for Ollama (Step 2)
-            currentAnalysisContext = `Company Name: ${companyName}\nLocation: ${location}\n\nCompany Context/Document Content:\n${text}`; 
 
+            // Set the Global Context (Crucial for the WebSocket callback to use later)
+            currentAnalysisContext = `Company Name: ${companyName}\nLocation: ${location}\n\nCompany Context:\n${textContext}`; 
+
+            // Check Authentication
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) throw new Error("Please log in to generate analysis.");
 
-            // 3. Trigger N8N Workflow (Asynchronous RAG fetch)
-            const N8N_MISSION_URL = "https://n8n.data2int.com/webhook/mission-vision-v11";
-            console.log(`Sending data to n8n RAG workflow at ${N8N_MISSION_URL}...`);
-            
-            const response = await fetch(N8N_MISSION_URL, {
-                method: "POST",
-                headers: { 'Authorization': `Bearer ${session.access_token}` },
-                body: n8nFormData
-            });
+            // 4. Branch Logic based on Engine Selection
 
-            if (!response.ok) {
-                throw new Error(`n8n Trigger Error: ${response.status} - ${await response.text()}`);
+            // =========================================================
+            // BRANCH 1: OLLAMA ONLY (Direct)
+            // =========================================================
+            if (engineOption === 'ollama') {
+                // Update UI
+                const status = document.getElementById("analysisStatus");
+                if (status) status.textContent = "Analyzing directly with Ollama AI...";
+                
+                // Create a "dummy" N8N result because we skipped the RAG step
+                const dummyN8nResult = {
+                    external_data: {
+                        book_summary: "N/A (Ollama-Only Mode Selected)",
+                        web_summary: "N/A (Ollama-Only Mode Selected)",
+                        reference_links: [],
+                        processing_time: "0s"
+                    }
+                };
+
+                // Call the synthesis function directly
+                // (This is the function that contains the gibberish check)
+                const result = await ollamaCascadeGoals(dummyN8nResult, currentAnalysisContext);
+
+                // Render Results Immediately
+                renderMissionVisionPage(analysisResultContainer, {
+                    mission: result.mission,
+                    vision: result.vision,
+                    values: result.core_values || [],
+                    goals: result.goals || [], 
+                    external_data: dummyN8nResult.external_data
+                });
+                
+                setLoading("generate", false);
+                return; // Done
             }
-            
-            // The process now pauses here, waiting for the WebSocket message
+
+            // =========================================================
+            // BRANCH 2: RAG-ENHANCED (N8N + Ollama)
+            // =========================================================
+            else {
+                // Update UI
+                const status = document.getElementById("analysisStatus");
+                if (status) status.textContent = "Connecting to Knowledge Base (RAG)...";
+
+                // Add metadata for N8N
+                n8nFormData.append("customerName", companyName);
+                n8nFormData.append("location", location);
+                n8nFormData.append("messageId", currentAnalysisMessageId); 
+
+                // Trigger N8N Webhook
+                const N8N_MISSION_URL = "https://n8n.data2int.com/webhook/mission-vision-v11";
+                console.log(`Sending data to n8n RAG workflow at ${N8N_MISSION_URL}...`);
+                
+                const response = await fetch(N8N_MISSION_URL, {
+                    method: "POST",
+                    headers: { 'Authorization': `Bearer ${session.access_token}` },
+                    body: n8nFormData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`n8n Trigger Error: ${response.status} - ${await response.text()}`);
+                }
+                
+                // UI Update after successful send
+                if (status) status.textContent = "RAG processing started. Waiting for external insights...";
+
+                // STOP HERE.
+                // The flow pauses. The browser waits for the WebSocket message.
+                // When handleWebSocketMessage() receives the N8N result, 
+                // IT will trigger ollamaCascadeGoals automatically using 'currentAnalysisContext'.
+            }
 
         } catch (error) {
-            console.error(`Error in handleMissionVisionAnalysis (Setup):`, error);
+            console.error(`Error in handleMissionVisionAnalysis:`, error);
             analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
             setLoading("generate", false);
             currentAnalysisContext = null; 
