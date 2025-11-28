@@ -218,30 +218,35 @@
 
         /* --- Base & Animated Background --- */
         html, body {
-            min-height: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
         }
+        
         body {
             font-family: 'Inter', sans-serif;
             background: linear-gradient(-45deg, var(--grad-1), var(--grad-2));
             background-size: 400% 400%;
             animation: gradientBG 18s ease infinite;
             color: #f9fafb;
-            overflow-x: hidden;
-            display: flex;
-            flex-direction: column;
-            zoom: 85%;
+            width: 100vw;
         }
 
+        /* Firefox Fix (Keeps logic consistent) */
         @supports (-moz-appearance:none) {
-            body {
-                transform: scale(0.85);
-                transform-origin: top center;
+            .site-scaler {
+                width: 100%;
+                /* CALCULATION: 100vh divided by 0.85 (zoom) = ~117.65vh.
+                This forces the container to be exactly the height of the 
+                viewport even when zoomed out.
+                */
+                min-height: 117.65vh; 
                 
+                display: flex;
+                flex-direction: column;
+                zoom: 85%;
             }
-        }
-
-        .main-content {
-            flex-grow: 1;
         }
 
         @keyframes gradientBG {
@@ -284,9 +289,11 @@
         #emailVerifiedSuccess.active,
         #emailVerifiedAlready.active,
         #passwordResetRequest.active,
-        #passwordResetUpdate.active {
+        #passwordResetUpdate.active,
+        #about.active,
+        #privacyPolicy.active,
+        #termsOfService.active {
             display: flex;
-            /* Centered pages */
         }
 
         @keyframes fadeIn {
@@ -548,8 +555,47 @@
             height: 100%;
             z-index: -2;
             display: block;
-            transition: opacity 0.5s ease-in-out;
+            pointer-events: none;
         }
+
+        /* --- SCALER: Applies Zoom & Sticky Footer Logic --- */
+        .site-scaler {
+            display: flex;
+            flex-direction: column;
+            
+            /* DEFAULT (Chrome/Edge/Safari) */
+            width: 100%;
+            min-height: 117.65vh; /* Compensates for zoom */
+            zoom: 85%;
+        }
+
+        /* --- FIREFOX SPECIFIC FIX --- */
+        @supports (-moz-appearance:none) {
+            .site-scaler {
+                /* 1. Disable standard zoom */
+                zoom: 1;
+
+                /* 2. Scale using transform */
+                transform: scale(0.85);
+                transform-origin: top center;
+
+                /* 3. Compensate Width & Height 
+                (100% / 0.85 = 117.647%) 
+                This ensures the content fills the screen edge-to-edge 
+                after being scaled down. */
+                width: 117.647%;
+                min-height: 117.647vh;
+
+                /* 4. Prevent horizontal scrollbar caused by the wide container */
+                margin-bottom: -17.647vh; /* Pull bottom up to remove dead space */
+            }
+            
+            /* Ensure body clips the "wide" container so no scrollbar appears */
+            body {
+                overflow-x: hidden;
+            }
+        }
+
 
         /* Carousel specific styles */
         .carousel-button {
@@ -746,20 +792,16 @@
             -webkit-backdrop-filter: blur(10px);
         }
 
-        /* --- Sticky Footer Override --- */
-        html, body {
-            min-height: 100vh !important;
-        }
-        body {
-            display: flex !important;
-            flex-direction: column !important;
-        }
         .main-content {
-            flex: 1 0 auto !important;
+            /* flex-grow: 1 pushes the footer down to the bottom */
+            flex: 1 0 auto; 
+            display: flex;
+            flex-direction: column;
         }
         footer {
-            flex-shrink: 0 !important;
-            position: relative !important;
+            flex-shrink: 0;
+            width: 100%;
+            margin-top: auto; /* Extra safety to push it down */
         }
 
         /* --- Analysis Results Tab Styling --- */
@@ -2905,14 +2947,14 @@
             background-size: 400% 400%;
             background-attachment: fixed; /* Ensures it covers full scroll */
         }
-
-        
     </style>
 </head>
 
 <body>
+    <canvas id="threeJsCanvas"></canvas>
+
+    <div class="site-scaler">
     <div class="main-content">
-        <canvas id="threeJsCanvas"></canvas>
         <div id="wsStatus" class="ws-status disconnected">Disconnected</div>
         <div id="adminModeIndicator" class="fixed top-40 right-5 p-2 px-3 bg-yellow-500 text-white text-xs font-bold rounded-full shadow-lg z-50" style="display: none;">ADMIN MODE</div>
 
@@ -3216,7 +3258,7 @@
                 <div class="relative p-1 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 border border-white/20 shadow-2xl backdrop-blur-xl">
                     <div class="p-8 md:p-10 text-center">
                         <h1 class="text-4xl md:text-6xl font-extrabold text-white leading-tight mb-4 tracking-tight drop-shadow-lg">
-                            AI-Powered Strategic Business Tools
+                            AI-Powered Strategic Business and Policy Development Tools
                         </h1>
                         <p class="text-lg md:text-xl text-white/80 max-w-3xl mx-auto leading-relaxed">
                             Select a category to explore our comprehensive suite of strategic planning tools and methodologies.
@@ -3241,7 +3283,7 @@
                         <h3 class="text-xl font-bold mb-2">AI Factor Analysis</h3><p class="text-white/70 text-sm">Assess internal strengths and weaknesses & external opportunities and threats.</p>
                     </div>
                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="swot-tows">
-                        <h3 class="text-xl font-bold mb-2">AI Swot/Tows Analysis</h3><p class="text-white/70 text-sm">Develop strategies by matching internal factors to external factors.</p>
+                        <h3 class="text-xl font-bold mb-2">AI SWOT/TOWS Analysis</h3><p class="text-white/70 text-sm">Develop strategies by matching internal factors to external factors.</p>
                     </div>
                     <div class="feature-card p-6 home-template-link cursor-pointer" data-template-id="goals-initiatives">
                         <h3 class="text-xl font-bold mb-2">AI Goals & Strategic Initiatives</h3><p class="text-white/70 text-sm">Set high-level goals and the key initiatives to achieve them.</p>
@@ -3477,7 +3519,6 @@
                     </div>
                 </div>
             </div>
-            ```
         </div>
         
         <div id="about" class="page container mx-auto px-4 py-10 flex-col items-center justify-center min-h-[80vh]">
@@ -3555,6 +3596,165 @@
                             </div>
                         </div>
 
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Privacy Policy Page (Enhanced) -->
+        <div id="privacyPolicy" class="page container mx-auto px-4 py-10 flex-col items-center justify-center min-h-[80vh]">
+            <div class="w-full max-w-5xl relative animate-fadeIn my-auto">
+                <!-- Glow Effect -->
+                <div class="absolute -inset-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl blur opacity-30 animate-pulse"></div>
+                
+                <div class="relative p-1 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 border border-white/20 shadow-2xl backdrop-blur-xl">
+                    <div class="p-8 md:p-12 space-y-10">
+                        
+                        <!-- Header -->
+                        <div class="text-center space-y-4">
+                            <h1 class="text-4xl md:text-5xl font-extrabold text-white tracking-tight">Privacy Policy</h1>
+                            <p class="text-xl text-indigo-300 font-medium tracking-wide">Your Data, Protected.</p>
+                            <p class="text-white/60 text-sm">Last Updated: October 2024</p>
+                        </div>
+
+                        <!-- Info Collection Grid -->
+                        <div>
+                            <h3 class="text-2xl font-bold text-white mb-6 text-center">1. Information We Collect</h3>
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div class="bg-black/20 p-6 rounded-xl border border-white/10 hover:bg-white/5 transition-colors">
+                                    <div class="text-3xl mb-3">👤</div>
+                                    <h4 class="text-lg font-bold text-white mb-2">Identity & Contact</h4>
+                                    <p class="text-white/60 text-sm">First name, last name, email address, and login credentials used to manage your account.</p>
+                                </div>
+                                <div class="bg-black/20 p-6 rounded-xl border border-white/10 hover:bg-white/5 transition-colors">
+                                    <div class="text-3xl mb-3">📄</div>
+                                    <h4 class="text-lg font-bold text-white mb-2">Strategic Input</h4>
+                                    <p class="text-white/60 text-sm">Business context, uploaded documents (.txt, .docx, .pdf), and strategic goals provided for analysis.</p>
+                                </div>
+                                <div class="bg-black/20 p-6 rounded-xl border border-white/10 hover:bg-white/5 transition-colors">
+                                    <div class="text-3xl mb-3">📊</div>
+                                    <h4 class="text-lg font-bold text-white mb-2">Usage Data</h4>
+                                    <p class="text-white/60 text-sm">Interaction logs, feature usage statistics, and session durations to improve system performance.</p>
+                                </div>
+                                <div class="bg-black/20 p-6 rounded-xl border border-white/10 hover:bg-white/5 transition-colors">
+                                    <div class="text-3xl mb-3">🍪</div>
+                                    <h4 class="text-lg font-bold text-white mb-2">Cookies</h4>
+                                    <p class="text-white/60 text-sm">Essential cookies for authentication and session management. We do not use tracking cookies for ads.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Usage Section -->
+                        <div class="bg-white/5 p-8 rounded-2xl border border-white/10">
+                            <h3 class="text-2xl font-bold text-white mb-4">2. How We Use Your Data</h3>
+                            <ul class="space-y-3 text-white/80">
+                                <li class="flex items-start gap-3">
+                                    <span class="text-green-400 mt-1">✓</span>
+                                    <span><strong>Service Delivery:</strong> To generate strategic insights, SWOT analyses, and frameworks based on your inputs.</span>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <span class="text-green-400 mt-1">✓</span>
+                                    <span><strong>Account Management:</strong> To manage subscriptions, payments (via Stripe), and authentication (via Supabase).</span>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <span class="text-green-400 mt-1">✓</span>
+                                    <span><strong>AI Improvement:</strong> Anonymized aggregation of query patterns to refine prompt engineering. We do not train models on your specific proprietary data.</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Security & Contact -->
+                        <div class="grid md:grid-cols-2 gap-8">
+                            <div>
+                                <h3 class="text-xl font-bold text-white mb-3">3. Data Security</h3>
+                                <p class="text-white/70 text-sm leading-relaxed">
+                                    We employ enterprise-grade encryption for data at rest and in transit. Your strategic documents are processed temporarily and are not permanently stored in our public datasets. Access controls ensure only you can view your generated reports.
+                                </p>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-white mb-3">4. Contact Us</h3>
+                                <p class="text-white/70 text-sm leading-relaxed mb-4">
+                                    Have questions about your privacy? Reach out to our data protection team directly.
+                                </p>
+                                <button class="btn btn-secondary text-xs nav-link" data-page="feedback">Contact Support</button>
+                            </div>
+                        </div>
+
+                        <div class="text-center pt-6 border-t border-white/10">
+                            <button class="btn btn-primary nav-link" data-page="home">Back to Workspace</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Terms of Service Page (Themed) -->
+        <div id="termsOfService" class="page container mx-auto px-4 py-10 flex-col items-center justify-center min-h-[80vh]">
+            <div class="w-full max-w-5xl relative animate-fadeIn my-auto">
+                <!-- Glow Effect (Updated to use Theme Hooks: indigo/purple/pink) -->
+                <div class="absolute -inset-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl blur opacity-30 animate-pulse"></div>
+        
+                <div class="relative p-1 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 border border-white/20 shadow-2xl backdrop-blur-xl">
+                    <div class="p-8 md:p-12 space-y-10">
+                        <!-- Header -->
+                        <div class="text-center space-y-4">
+                            <h1 class="text-4xl md:text-5xl font-extrabold text-white tracking-tight">Terms of Service</h1>
+                            <!-- Updated color class to text-indigo-300 to catch the theme variable -->
+                            <p class="text-xl text-indigo-300 font-medium tracking-wide">Usage Rules & Guidelines</p>
+                            <p class="text-white/60 text-sm">Last Updated: October 2024</p>
+                        </div>
+
+                        <!-- Critical AI Disclaimer (Themed) -->
+                        <!-- Updated bg, border, and text classes to match theme variables -->
+                        <div class="bg-indigo-500/10 p-6 rounded-xl border-l-4 border-indigo-500">
+                            <div class="flex items-start gap-4">
+                                <div class="text-3xl">⚠️</div>
+                                <div>
+                                    <h3 class="text-xl font-bold text-indigo-300 mb-2">1. Artificial Intelligence Disclaimer</h3>
+                                    <p class="text-white/80 text-sm leading-relaxed">
+                                        S.A.G.E. utilizes advanced Large Language Models to generate strategic content. AI can occasionally produce incorrect, biased, or "hallucinated" information. 
+                                        <strong>You acknowledge that S.A.G.E. is a decision-support tool, not a replacement for professional human judgment.</strong> 
+                                        You verify all outputs independently before making financial or strategic business decisions. We accept no liability for losses resulting from reliance on this tool.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Terms Grid -->
+                        <div class="grid md:grid-cols-3 gap-6">
+                            <div class="bg-black/20 p-6 rounded-xl border border-white/10">
+                                <h4 class="text-lg font-bold text-white mb-2">2. Access & Accounts</h4>
+                                <p class="text-white/60 text-sm">You must provide accurate registration information. You are responsible for maintaining the security of your account credentials and for all activities that occur under your account.</p>
+                            </div>
+                            <div class="bg-black/20 p-6 rounded-xl border border-white/10">
+                                <h4 class="text-lg font-bold text-white mb-2">3. Intellectual Property</h4>
+                                <p class="text-white/60 text-sm">The S.A.G.E. platform, code, and branding are our property. However, the <strong>strategic reports generated specifically for you</strong> based on your unique inputs belong to you.</p>
+                            </div>
+                            <div class="bg-black/20 p-6 rounded-xl border border-white/10">
+                                <h4 class="text-lg font-bold text-white mb-2">4. Prohibited Use</h4>
+                                <p class="text-white/60 text-sm">You may not use the service for unlawful purposes, to generate hate speech, or to attempt to reverse-engineer the underlying AI prompts and systems.</p>
+                            </div>
+                        </div>
+
+                        <!-- Subscription & Termination -->
+                        <div class="space-y-6">
+                            <div>
+                                <h3 class="text-xl font-bold text-white mb-2">5. Subscription & Payments</h3>
+                                <p class="text-white/70 text-sm">
+                                    Premium features require a paid subscription via Stripe. Subscriptions auto-renew unless cancelled. Refunds are handled on a case-by-case basis within 14 days of purchase for technical failures only.
+                                </p>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-white mb-2">6. Termination</h3>
+                                <p class="text-white/70 text-sm">
+                                    We reserve the right to suspend or terminate accounts that violate these terms, abuse the API rate limits, or engage in suspicious activity, without prior notice.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="text-center pt-6 border-t border-white/10">
+                            <button class="btn btn-primary nav-link" data-page="home">Accept & Return Home</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -4223,6 +4423,8 @@
         <div class="container mx-auto text-center text-white/70">
             <div class="flex justify-center space-x-6 mb-4">
                 <a href="#" class="hover:text-white nav-link" data-page="about">About</a>
+                <a href="#" class="hover:text-white nav-link" data-page="privacyPolicy">Privacy Policy</a>
+                <a href="#" class="hover:text-white nav-link" data-page="termsOfService">Terms of Service</a>
             </div>
             <p>&copy; 2025 S.A.G.E. All rights reserved.</p>
         </div>
@@ -5522,10 +5724,10 @@ document.addEventListener("DOMContentLoaded", () => {
             
             // FIX: Removed 'feedback' AND 'about' from this list.
             // This allows them to use the Flexbox centering classes defined in their HTML.
-            if (["home", "templates", "templateDetail", "examplesPage", "adminDashboard", "blog", "blogDetail"].includes(pageId)) { 
+            if (["home", "templates", "templateDetail", "examplesPage", "adminDashboard", 
+                    "blog", "blogDetail"].includes(pageId)) { 
                 targetPage.style.display = "block";
             } else {
-                // Login, Signup, Feedback, and About now use Flex for centering
                 targetPage.style.display = "flex";
             }
 
