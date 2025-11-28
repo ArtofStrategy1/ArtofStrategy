@@ -28,15 +28,182 @@
     <script src="https://cdn.plot.ly/plotly-3.3.0.min.js"></script>
 
     <style>
-                /* --- THEME COLORS (CSS VARIABLES) --- */
+        /* --- THEME COLORS (CSS VARIABLES) --- */
         :root {
+            /* Default (Purple/Pink) */
             --grad-1: #C33764;
             --grad-2: #1D2671;
             --primary: #8E2DE2;
             --primary-hover: #4A00E0;
             --accent: #C33764;
-            --edge-color: #4A00E0;
-            --node-color: #C33764;
+            --text-highlight: #a5b4fc; /* Matches indigo-300 */
+        }
+
+        /* 1. Ocean */
+        body.theme-ocean {
+            --grad-1: #2E3192; --grad-2: #1BFFFF;
+            --primary: #00D2FF; --primary-hover: #009ec3; --accent: #2E3192; --text-highlight: #7dd3fc;
+        }
+        /* 2. Sunset */
+        body.theme-sunset {
+            --grad-1: #FF512F; --grad-2: #DD2476;
+            --primary: #FF512F; --primary-hover: #dd2c00; --accent: #F09819; --text-highlight: #fdba74;
+        }
+        /* 3. Cyber */
+        body.theme-cyber {
+            --grad-1: #0F2027; --grad-2: #2C5364;
+            --primary: #00f260; --primary-hover: #0575e6; --accent: #00FFFF; --text-highlight: #00f260;
+        }
+        /* 4. Forest */
+        body.theme-forest {
+            --grad-1: #134E5E; --grad-2: #71B280;
+            --primary: #55efc4; --primary-hover: #00b894; --accent: #a3e635; --text-highlight: #86efac;
+        }
+        /* 5. Royal */
+        body.theme-royal {
+            --grad-1: #141E30; --grad-2: #243B55;
+            --primary: #F7B733; --primary-hover: #d49b20; --accent: #FFD700; --text-highlight: #FDE68A;
+        }
+        /* 6. Crimson */
+        body.theme-crimson {
+            --grad-1: #870000; --grad-2: #190A05;
+            --primary: #FF4D4D; --primary-hover: #cc0000; --accent: #ff9f9f; --text-highlight: #fca5a5;
+        }
+        /* 7. Coffee */
+        body.theme-coffee {
+            --grad-1: #3c2f2f; --grad-2: #755c47;
+            --primary: #d4a373; --primary-hover: #b0875d; --accent: #faedcd; --text-highlight: #e2c09f;
+        }
+        /* 8. Aurora */
+        body.theme-aurora {
+            --grad-1: #000000; --grad-2: #0f9b0f;
+            --primary: #00ff00; --primary-hover: #00cc00; --accent: #00dbde; --text-highlight: #69ff97;
+        }
+        /* 9. Midnight */
+        body.theme-midnight {
+            --grad-1: #0f0c29; --grad-2: #302b63;
+            --primary: #764ba2; --primary-hover: #667eea; --accent: #24243e; --text-highlight: #c084fc;
+        }
+        /* 10. Candy */
+        body.theme-candy {
+            --grad-1: #A18CD1; --grad-2: #FBC2EB;
+            --primary: #ff9a9e; --primary-hover: #ff6a88; --accent: #fad0c4; --text-highlight: #fecaca;
+        }
+        /* 11. Slate */
+        body.theme-slate {
+            --grad-1: #232526; --grad-2: #414345;
+            --primary: #9ca3af; --primary-hover: #6b7280; --accent: #d1d5db; --text-highlight: #f3f4f6;
+        }
+
+       /* --- GLOBAL THEME OVERRIDES (Comprehensive) --- */
+
+        /* 1. TEXT & LOGO OVERRIDES */
+        /* Forces the "SAGE AI" logo and any gradient text to use the theme colors */
+        .text-transparent.bg-clip-text,
+        a.text-transparent.bg-clip-text {
+            background-image: linear-gradient(to right, var(--primary), var(--accent), var(--primary)) !important;
+        }
+
+        /* Replaces all "Indigo-300" text (used heavily in headers/subtitles) */
+        .text-indigo-300, .text-purple-400, .text-pink-400, .text-blue-300, .text-green-300, .text-yellow-300 {
+            color: var(--text-highlight) !important;
+            transition: color 0.5s ease;
+        }
+        
+        /* Hover states for links */
+        .hover\:text-indigo-300:hover {
+            color: var(--primary) !important;
+        }
+
+        /* 2. BACKGROUND GLOWS & GRADIENTS */
+        /* This targets the glowing blur effect behind the Hero Title, Contact Card, and About Card */
+        .from-indigo-500, .via-purple-500, .to-pink-500 {
+            --tw-gradient-from: var(--primary) !important;
+            --tw-gradient-to: var(--accent) !important;
+            --tw-gradient-stops: var(--primary), var(--accent), var(--primary) !important;
+        }
+        
+        /* Overrides specific background colors used in "How it Works" circles (About Us) */
+        .bg-indigo-600, .bg-purple-600, .bg-pink-600, .bg-blue-600 {
+            background-color: var(--primary) !important;
+        }
+        
+        /* 3. INPUT FIELDS & FORMS (Contact Us / Feedback) */
+        /* Changes the border color when you click an input */
+        .focus\:border-indigo-500:focus {
+            border-color: var(--primary) !important;
+        }
+        
+        /* Changes the background color on focus/hover for inputs */
+        .focus\:bg-indigo-500:focus, .hover\:bg-indigo-600:hover {
+            background-color: var(--primary-hover) !important;
+        }
+
+        /* 4. BUTTON SHADOWS */
+        /* Updates the colored shadow behind primary buttons */
+        .shadow-indigo-500\/40, .shadow-indigo-500\/30, .shadow-indigo-500\/50 {
+            --tw-shadow-color: color-mix(in srgb, var(--primary) 40%, transparent) !important;
+            box-shadow: 0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -2px var(--tw-shadow-color) !important;
+        }
+
+        /* 5. BORDERS & DIVIDERS */
+        .border-indigo-500, .border-white\/20, .border-white\/10 {
+            /* Subtle tinting of borders to match theme */
+            border-color: color-mix(in srgb, var(--primary) 30%, rgba(255,255,255,0.1)) !important;
+        }
+
+        /* 6. MODAL BACKGROUNDS */
+        /* Ensures the Feedback/Settings/Contact modals use the main gradient */
+        .feedback-modal-container {
+            background: linear-gradient(-45deg, var(--grad-1), var(--grad-2)) !important;
+            background-size: 400% 400%;
+            animation: gradientBG 18s ease infinite;
+            border-color: rgba(255,255,255,0.2) !important;
+        }
+        
+        /* 7. NAVIGATION HOVER */
+        .nav-link:hover {
+            background: linear-gradient(90deg, var(--primary), var(--accent)) !important;
+            -webkit-background-clip: text !important;
+            background-clip: text !important;
+            color: transparent !important;
+        }
+        
+        /* 8. GENERIC UTILITY OVERRIDES */
+        /* Any text-indigo-X needs to shift to the theme highlight */
+        [class*="text-indigo-"] {
+            color: var(--text-highlight) !important;
+        }
+        
+        /* Any bg-indigo-X needs to shift to the primary color */
+        [class*="bg-indigo-"] {
+             background-color: var(--primary) !important;
+        }
+
+
+        /* --- PREVIEW SQUARES FOR SETTINGS --- */
+        .theme-preview {
+            height: 60px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 2px solid rgba(255,255,255,0.1);
+            position: relative;
+        }
+        .theme-preview:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255,255,255,0.2);
+        }
+        .theme-preview.active-theme {
+            border-color: #fff;
+            box-shadow: 0 0 0 2px #fff;
+        }
+
+        /* --- THEME FIX: FORCE BACKGROUND REFRESH --- */
+        /* This selector matches any body tag with a class starting with "theme-" */
+        body[class*="theme-"] {
+            background-image: linear-gradient(-45deg, var(--grad-1), var(--grad-2)) !important;
+            background-size: 400% 400%; /* Ensure size stays correct */
         }
 
         /* --- Base & Animated Background --- */
@@ -52,6 +219,15 @@
             overflow-x: hidden;
             display: flex;
             flex-direction: column;
+            zoom: 85%;
+        }
+
+        @supports (-moz-appearance:none) {
+            body {
+                transform: scale(0.85);
+                transform-origin: top center;
+                
+            }
         }
 
         .main-content {
@@ -120,7 +296,7 @@
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 1rem;
-            padding: 2.5rem;
+            padding: 1.75rem;
             box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
         }
 
@@ -2748,6 +2924,8 @@
                                 <a href="#" id="manageSubscriptionLink" class="text-gray-300 hover:bg-white/10 hover:text-white block px-4 py-2 text-sm transition-colors">
                                     💳 Manage Subscription
                                 </a>
+
+                                <a href="#" id="openSettingsBtn" class="block px-4 py-2 text-sm text-white hover:bg-white/10" role="menuitem"> ⚙️ Settings</a>
                             </div>
 
                             <div class="py-1 border-t border-white/10">
@@ -2778,6 +2956,87 @@
         </div>
     </div>
 </nav>
+
+    <div id="settingsModal" class="feedback-modal">
+        <div class="feedback-modal-container" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Settings</h3>
+                <button class="modal-close-btn" id="closeSettingsBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h4 class="text-lg font-bold mb-4 text-white">Appearance</h4>
+                <p class="text-sm text-white/70 mb-6">Choose a gradient theme for your workspace.</p>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    
+                    <div class="theme-option" data-theme="default">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #C33764, #1D2671);"></div>
+                        <p class="text-xs text-center mt-2 text-white/80">Default</p>
+                    </div>
+                    
+                    <div class="theme-option" data-theme="ocean">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #2E3192, #1BFFFF);"></div>
+                        <p class="text-xs text-center mt-2 text-white/80">Ocean</p>
+                    </div>
+                    
+                    <div class="theme-option" data-theme="sunset">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #FF512F, #DD2476);"></div>
+                        <p class="text-xs text-center mt-2 text-white/80">Sunset</p>
+                    </div>
+                    
+                    <div class="theme-option" data-theme="cyber">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #0F2027, #2C5364); border: 1px solid #00f260;"></div>
+                        <p class="text-xs text-center mt-2 text-white/80">Cyber</p>
+                    </div>
+
+                    <div class="theme-option" data-theme="forest">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #134E5E, #71B280);"></div>
+                        <p class="text-xs text-center mt-2 text-white/80">Forest</p>
+                    </div>
+
+                    <div class="theme-option" data-theme="royal">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #141E30, #243B55); border: 1px solid #F7B733;"></div>
+                        <p class="text-xs text-center mt-2 text-white/80">Royal</p>
+                    </div>
+
+                    <div class="theme-option" data-theme="crimson">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #870000, #190A05);"></div>
+                        <p class="text-xs text-center mt-2 text-white/80">Crimson</p>
+                    </div>
+
+                    <div class="theme-option" data-theme="coffee">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #3c2f2f, #755c47);"></div>
+                        <p class="text-xs text-center mt-2 text-white/80">Coffee</p>
+                    </div>
+
+                    <div class="theme-option" data-theme="aurora">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #000000, #0f9b0f); border: 1px solid #00ff00;"></div>
+                        <p class="text-xs text-center mt-2 text-white/80">Aurora</p>
+                    </div>
+
+                    <div class="theme-option" data-theme="midnight">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #0f0c29, #302b63);"></div>
+                        <p class="text-xs text-center mt-2 text-white/80">Midnight</p>
+                    </div>
+
+                    <div class="theme-option" data-theme="candy">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #A18CD1, #FBC2EB);"></div>
+                        <p class="text-xs text-center mt-2 text-white/80">Candy</p>
+                    </div>
+
+                    <div class="theme-option" data-theme="slate">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #232526, #414345);"></div>
+                        <p class="text-xs text-center mt-2 text-white/80">Slate</p>
+                    </div>
+
+                </div>
+
+                <div class="mt-8 pt-4 border-t border-white/10">
+                    <p class="text-xs text-white/40 text-center">Select a theme to apply it immediately.</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
         <div id="versionChoiceModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm items-center justify-center z-[100] feedback-modal">
             <div class="glass-container w-full max-w-lg text-center feedback-modal-container">
@@ -3504,6 +3763,81 @@
             </div>
         </div>
 
+        <div id="subscriptionInfo" class="page container mx-auto px-6 py-16">
+            <div class="max-w-6xl mx-auto">
+                
+                <div class="text-center mb-12">
+                    <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-4 bg-clip-text text-transparent bg-gradient-to-r from-indigo-300 to-purple-300">
+                        Strategic Capacity & Billing
+                    </h1>
+                    <p class="text-lg text-white/70 max-w-2xl mx-auto">
+                        Manage your plan, track usage limits, and upgrade your strategic capabilities.
+                    </p>
+                </div>
+
+                <div id="subInfoLoading" class="text-center p-10">
+                    <div class="loading-spinner mb-4"></div>
+                    <p class="text-white/60">Retrieving subscription profile...</p>
+                </div>
+
+                <div id="subInfoContent" class="hidden space-y-8">
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        
+                        <div class="glass-container p-6 relative overflow-hidden group border-t-4 border-indigo-500">
+                            <h3 class="text-indigo-300 text-xs font-bold uppercase tracking-wider mb-2">Current Plan</h3>
+                            <div id="subPlanName" class="text-3xl font-bold text-white mb-1">--</div>
+                            <div id="subStatusBadge" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-700 text-gray-300">
+                                Loading...
+                            </div>
+                            <p id="subRenewalDate" class="text-xs text-white/50 mt-3">--</p>
+                        </div>
+
+                        <div class="glass-container p-6 relative overflow-hidden md:col-span-2 border-t-4 border-green-500">
+                            <div class="flex justify-between items-end mb-2">
+                                <div>
+                                    <h3 class="text-green-300 text-xs font-bold uppercase tracking-wider mb-1">Monthly Analysis Credits</h3>
+                                    <div class="text-3xl font-bold text-white">
+                                        <span id="subUsageCount">0</span>
+                                        <span class="text-lg text-white/40 font-normal">/ <span id="subUsageLimit">--</span></span>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xs text-white/50">Resets on the 1st</p>
+                                </div>
+                            </div>
+                            
+                            <div class="w-full bg-white/10 rounded-full h-4 mb-4 overflow-hidden border border-white/5">
+                                <div id="usageProgressBar" class="bg-gradient-to-r from-green-400 to-emerald-500 h-4 rounded-full transition-all duration-1000 ease-out" style="width: 0%"></div>
+                            </div>
+                            
+                            <p class="text-xs text-white/70">
+                                <span class="font-semibold text-white">1 Credit</span> = 1 Full Strategic Analysis Generation (e.g., SWOT, OGSM, Predictive Model).
+                            </p>
+                        </div>
+                    </div>
+
+                    <div id="premiumActions" class="hidden">
+                        <div class="glass-container p-8 border-l-4 border-purple-500 flex flex-col md:flex-row justify-between items-center gap-6">
+                            <div>
+                                <h3 class="text-xl font-bold text-white mb-2">Manage Your Subscription</h3>
+                                <p class="text-white/70 text-sm">
+                                    Update payment methods, download invoices, or cancel your plan via the secure Stripe Portal.
+                                </p>
+                            </div>
+                            <button id="openStripePortalBtn" class="btn btn-secondary border-white/20 hover:bg-white/10 px-6 py-3">
+                                ⚙️ Open Billing Portal
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="upgradeSection" class="hidden">
+                        </div>
+
+                </div>
+            </div>
+        </div>
+
         <div id="examplesPage" class="page container mx-auto px-6 py-16">
             <h1 class="text-4xl font-bold text-center mb-2">AI Analysis Examples</h1>
             <p class="text-lg text-white/80 text-center mb-12 max-w-2xl mx-auto">See how S.A.G.E. can transform complex data
@@ -3989,6 +4323,76 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- GLOBAL STATE FOR SAMPLES ---
     window.tempSampleDataFile = null;    // Holds the CSV File object
     window.tempSampleContextFile = null; // Holds the Text/Context File object
+
+    // --- SETTINGS & THEME LOGIC ---
+    
+    const settingsModal = document.getElementById("settingsModal");
+    const openSettingsBtn = document.getElementById("openSettingsBtn");
+    const closeSettingsBtn = document.getElementById("closeSettingsBtn");
+    const themeOptions = document.querySelectorAll(".theme-option");
+
+    // 1. Open Settings Modal
+    if (openSettingsBtn && settingsModal) {
+        openSettingsBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            // Close profile dropdown if open
+            const dropdown = document.getElementById("profileDropdownContainer")?.querySelectorAll("div")[1];
+            if(dropdown) dropdown.classList.add("hidden");
+            const userMenuBtn = document.getElementById("user-menu-button");
+            if(userMenuBtn) userMenuBtn.setAttribute("aria-expanded", "false");
+
+            // Open Modal
+            settingsModal.style.display = 'flex';
+            setTimeout(() => settingsModal.classList.add('modal-open'), 10);
+        });
+    }
+
+    // 2. Close Settings Modal
+    if (closeSettingsBtn && settingsModal) {
+        closeSettingsBtn.addEventListener("click", () => {
+            settingsModal.classList.remove('modal-open');
+            setTimeout(() => settingsModal.style.display = 'none', 300);
+        });
+    }
+
+    // 3. Apply Theme Function (Final)
+    function applyTheme(themeName) {
+        const allThemes = [
+            "theme-ocean", "theme-sunset", "theme-cyber", 
+            "theme-forest", "theme-royal", "theme-crimson", "theme-coffee",
+            "theme-aurora", "theme-midnight", "theme-candy", "theme-slate"
+        ];
+
+        // 1. Remove ALL theme classes
+        document.body.classList.remove(...allThemes);
+        
+        // 2. Add new class (if not default)
+        if (themeName && themeName !== 'default') {
+            document.body.classList.add(`theme-${themeName}`);
+        }
+
+        // 3. Update UI indicators in modal
+        document.querySelectorAll(".theme-preview").forEach(el => el.classList.remove("active-theme"));
+        const activeOption = document.querySelector(`.theme-option[data-theme="${themeName}"] .theme-preview`);
+        if (activeOption) activeOption.classList.add("active-theme");
+
+        // 4. Save
+        localStorage.setItem("sage_theme", themeName);
+    }
+
+    // 4. Attach Click Listeners to Theme Options
+    if (themeOptions) {
+        themeOptions.forEach(option => {
+            option.addEventListener("click", () => {
+                const theme = option.dataset.theme;
+                applyTheme(theme);
+            });
+        });
+    }
+
+    // 5. Load Saved Theme on Page Load
+    const savedTheme = localStorage.getItem("sage_theme") || "default";
+    applyTheme(savedTheme);
 
     // --- Template Data ---
     const templates = {
@@ -5128,6 +5532,260 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // =========================================================
+    // =====       SUBSCRIPTION & PLANS LOGIC              =====
+    // =========================================================
+
+    /**
+     * 1. Main Function: Fetch User Data & Toggle Views
+     */
+    async function fetchAndRenderSubscriptionPage() {
+        const loadingEl = document.getElementById("subInfoLoading");
+        const contentEl = document.getElementById("subInfoContent");
+        const upgradeSection = document.getElementById("upgradeSection");
+        const premiumActions = document.getElementById("premiumActions");
+        
+        if(loadingEl) loadingEl.classList.remove("hidden");
+        if(contentEl) contentEl.classList.add("hidden");
+
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) throw new Error("Not logged in");
+
+            // A. Fetch User Data
+            const { data: userData, error: userError } = await supabase
+                .from('users')
+                .select('usage_count, tier, status, stripe_customer_id')
+                .eq('auth_user_id', session.user.id)
+                .single();
+
+            if(userError) throw userError;
+
+            // B. Fetch Subscription Data (for dates)
+            const { data: subData } = await supabase
+                .from('subscriptions') 
+                .select('current_period_end, cancel_at_period_end')
+                .eq('user_id', session.user.id) 
+                .in('status', ['active', 'trialing', 'past_due'])
+                .maybeSingle();
+
+            // --- UI UPDATE LOGIC ---
+            const tier = (userData?.tier || 'basic').toLowerCase();
+            const isPremium = tier === 'premium' || tier === 'admin';
+
+            // 1. Plan Name
+            const planNameEl = document.getElementById("subPlanName");
+            if(planNameEl) planNameEl.textContent = tier === 'admin' ? 'Admin Access' : (isPremium ? 'Premium Plan' : 'Basic Plan');
+
+            // 2. Status Badge
+            const statusBadge = document.getElementById("subStatusBadge");
+            if(statusBadge) {
+                if (isPremium) {
+                    statusBadge.textContent = "ACTIVE";
+                    statusBadge.className = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-300 border border-green-500/30";
+                    if (subData?.cancel_at_period_end) {
+                        statusBadge.textContent = "CANCELING";
+                        statusBadge.className = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-500/20 text-yellow-300 border border-yellow-500/30";
+                    }
+                } else {
+                    statusBadge.textContent = "FREE TIER";
+                    statusBadge.className = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-500/20 text-gray-300 border border-gray-500/30";
+                }
+            }
+
+            // 3. Dates
+            const dateEl = document.getElementById("subRenewalDate");
+            if(dateEl) {
+                if (subData && subData.current_period_end) {
+                    const rawDate = subData.current_period_end;
+                    // Handle Stripe Unix timestamp (seconds) vs ISO string
+                    const dateVal = new Date(typeof rawDate === 'number' && rawDate < 10000000000 ? rawDate * 1000 : rawDate);
+                    dateEl.textContent = subData.cancel_at_period_end ? `Access ends: ${dateVal.toLocaleDateString()}` : `Renews: ${dateVal.toLocaleDateString()}`;
+                } else {
+                    dateEl.textContent = "No active billing cycle";
+                }
+            }
+
+            // 4. Usage Bar
+            const usageCount = userData?.usage_count || 0;
+            const usageLimit = isPremium ? 9999 : 3; 
+            const usageDisplayLimit = isPremium ? "∞" : "3";
+
+            const usageEl = document.getElementById("subUsageCount");
+            const limitEl = document.getElementById("subUsageLimit");
+            const progressBar = document.getElementById("usageProgressBar");
+
+            if(usageEl) usageEl.textContent = usageCount;
+            if(limitEl) limitEl.textContent = usageDisplayLimit;
+
+            if(progressBar) {
+                let percentage = isPremium ? 5 : Math.min((usageCount / 3) * 100, 100);
+                
+                progressBar.className = "h-4 rounded-full transition-all duration-1000 ease-out"; // Reset
+                if (isPremium) {
+                    progressBar.classList.add('bg-gradient-to-r', 'from-purple-500', 'to-indigo-500');
+                } else {
+                    if (percentage >= 100) progressBar.classList.add('bg-gradient-to-r', 'from-red-500', 'to-red-600');
+                    else if (percentage > 60) progressBar.classList.add('bg-gradient-to-r', 'from-yellow-400', 'to-orange-500');
+                    else progressBar.classList.add('bg-gradient-to-r', 'from-green-400', 'to-emerald-500');
+                }
+                setTimeout(() => { progressBar.style.width = `${percentage}%`; }, 100);
+            }
+
+            // 5. Show/Hide Sections
+            if (isPremium) {
+                if(upgradeSection) upgradeSection.classList.add("hidden");
+                if(premiumActions) premiumActions.classList.remove("hidden");
+            } else {
+                if(upgradeSection) {
+                    upgradeSection.classList.remove("hidden");
+                    // Render the Dynamic Pricing Table
+                    fetchAndRenderUpgradeSection(); 
+                }
+                if(premiumActions) premiumActions.classList.add("hidden");
+            }
+
+            if(loadingEl) loadingEl.classList.add("hidden");
+            if(contentEl) contentEl.classList.remove("hidden");
+
+        } catch (err) {
+            console.error("Sub Info Error:", err);
+            if(loadingEl) loadingEl.innerHTML = `<p class="text-red-400">Error loading subscription: ${err.message}</p>`;
+        }
+    }
+
+    /**
+     * 2. Helper: Render Dynamic Plans from Database
+     */
+    async function fetchAndRenderUpgradeSection() {
+        const container = document.getElementById("upgradeSection");
+        if (!container) return;
+        container.innerHTML = `<div class="text-center text-white/50"><div class="loading-spinner"></div> Loading plans...</div>`;
+
+        try {
+            // Fetch Active Plans
+            const { data: plans, error } = await supabase
+                .from('stripe_plans')
+                .select('*')
+                .eq('active', true)
+                .order('price', { ascending: true });
+
+            if (error) throw error;
+            if (!plans || plans.length === 0) {
+                container.innerHTML = `<div class="text-center text-white/60">No plans available at this time.</div>`;
+                return;
+            }
+
+            // Helper to check feature presence
+            const getFeat = (plan, keyword) => {
+                if(!plan.features) return '<span class="text-white/20">✕</span>';
+                // Enterprise fallback logic
+                if (plan.name.toLowerCase().includes('enterprise') && (keyword === 'export' || keyword === 'framework')) return "✓";
+                
+                const match = plan.features.find(f => f.toLowerCase().includes(keyword));
+                if(match) return match.replace(/Access |Up to /gi, "").trim();
+                return '<span class="text-white/20">✕</span>';
+            };
+
+            // 1. Cards HTML
+            const cardsHtml = plans.map(plan => {
+                const isPopular = plan.is_popular;
+                const priceDisplay = `$${plan.price / 100}`;
+                const cardBorder = isPopular ? 'border-indigo-500 shadow-[0_0_30px_rgba(99,102,241,0.2)]' : 'border-white/10';
+                const bgClass = isPopular ? 'bg-gradient-to-b from-indigo-900/40 to-gray-900/40' : 'bg-white/5';
+                
+                // Attach User ID to Stripe Link
+                let paymentLink = plan.payment_link || '#';
+                if (currentUser && currentUser.id && paymentLink !== '#') {
+                    const url = new URL(paymentLink);
+                    url.searchParams.set('client_reference_id', currentUser.id);
+                    if (currentUser.email) url.searchParams.set('prefilled_email', currentUser.email);
+                    paymentLink = url.toString();
+                }
+
+                return `
+                <div class="relative flex flex-col p-6 rounded-2xl border ${cardBorder} ${bgClass} transition-all hover:-translate-y-1">
+                    ${isPopular ? '<div class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-indigo-500 text-white text-xs font-bold shadow-lg">MOST POPULAR</div>' : ''}
+                    <h3 class="text-xl font-bold text-white mb-2">${plan.name}</h3>
+                    <div class="mb-6"><span class="text-3xl font-bold text-white">${priceDisplay}</span><span class="text-white/40">/mo</span></div>
+                    <ul class="space-y-3 mb-8 flex-grow">
+                        ${(plan.features || []).slice(0,4).map(f => `<li class="flex items-start text-sm text-white/80"><span class="text-green-400 mr-2">✓</span> ${f}</li>`).join('')}
+                    </ul>
+                    <a href="${paymentLink}" target="_blank" class="btn ${isPopular ? 'btn-primary' : 'btn-secondary'} w-full text-center justify-center">Choose ${plan.name}</a>
+                </div>`;
+            }).join('');
+
+            // 2. Comparison Table HTML
+            const compRows = [
+                { label: "Users", key: "user" },
+                { label: "Frameworks", key: "framework" },
+                { label: "Support", key: "support" },
+                { label: "Export PDF/DOCX", key: "export" }
+            ];
+
+            const tableHtml = `
+            <div class="mt-12 pt-8 border-t border-white/10">
+                <h3 class="text-xl font-bold text-center mb-6">Plan Comparison</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr>
+                                <th class="p-3 text-sm text-white/50 w-1/4">Feature</th>
+                                ${plans.map(p => `<th class="p-3 text-center text-sm font-bold text-white ${p.is_popular ? 'text-indigo-300' : ''}">${p.name}</th>`).join('')}
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm divide-y divide-white/5">
+                            ${compRows.map(row => `
+                                <tr class="hover:bg-white/5">
+                                    <td class="p-3 text-white/80">${row.label}</td>
+                                    ${plans.map(p => `<td class="p-3 text-center text-white/70">${getFeat(p, row.key)}</td>`).join('')}
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>`;
+
+            container.innerHTML = `<div class="glass-container border-0 p-8 bg-black/20"><div class="grid grid-cols-1 md:grid-cols-3 gap-6">${cardsHtml}</div>${tableHtml}</div>`;
+
+        } catch (err) {
+            console.error("Plan Fetch Error:", err);
+            container.innerHTML = `<div class="text-red-400 text-center">Error loading plans.</div>`;
+        }
+    }
+
+    /**
+     * 3. Helper: Portal Redirection
+     */
+    const portalBtn = document.getElementById("openStripePortalBtn");
+    if (portalBtn) {
+        portalBtn.addEventListener("click", async () => {
+            const originalText = portalBtn.textContent;
+            portalBtn.disabled = true;
+            portalBtn.textContent = "Loading...";
+            
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session) throw new Error("Please log in.");
+
+                const response = await fetch('https://supabase.sageaios.com/functions/v1/create-portal-session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}`
+                    }
+                });
+                const result = await response.json();
+                if (result.url) window.location.href = result.url;
+                else throw new Error(result.error || "Failed to get URL");
+            } catch (err) {
+                alert("Error: " + err.message);
+                portalBtn.disabled = false;
+                portalBtn.textContent = originalText;
+            }
+        });
+    }
+
     function updateNavBar() {
         const loggedOutState = document.getElementById("loggedOutState");
         const loggedInState = document.getElementById("loggedInState");
@@ -5204,62 +5862,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const manageSubBtn = document.getElementById("manageSubscriptionLink");
     
     if (manageSubBtn) {
-        manageSubBtn.addEventListener("click", async (e) => {
+        manageSubBtn.addEventListener("click", (e) => {
             e.preventDefault();
             
             // 1. Close the profile dropdown
             const dropdown = document.getElementById("profileDropdown");
             if(dropdown) dropdown.classList.add("hidden");
 
-            // 2. Determine User Tier
-            // We check metadata or your local user object
-            const isPremium = 
-                currentUser?.app_metadata?.tier === 'premium' || 
-                currentUser?.user_metadata?.tier === 'premium' ||
-                currentUser?.app_metadata?.role === 'admin';
+            // 2. Navigate to the new local Subscription Page
+            navigateTo("subscriptionInfo");
 
-            if (!isPremium) {
-                // --- CASE A: FREE USER ---
-                // They need to Subscribe, so show the Pricing Modal
-                if (typeof openStripePlanModal === "function") {
-                    openStripePlanModal();
-                }
-            } else {
-                // --- CASE B: PREMIUM USER ---
-                // They need to Cancel/Update, so go to Stripe Portal
-                
-                const originalText = manageSubBtn.innerText;
-                manageSubBtn.innerText = "Loading Portal...";
-                manageSubBtn.style.opacity = "0.7";
-
-                try {
-                    const { data: { session } } = await supabase.auth.getSession();
-                    if (!session) throw new Error("Please log in.");
-
-                    const response = await fetch('https://supabase.sageaios.com/functions/v1/create-portal-session', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${session.access_token}`
-                        }
-                    });
-
-                    const result = await response.json();
-
-                    if (result.url) {
-                        // Redirect user to Stripe
-                        window.location.href = result.url;
-                    } else {
-                        throw new Error(result.error || "Failed to load portal");
-                    }
-
-                } catch (error) {
-                    console.error("Portal Error:", error);
-                    alert("Could not access billing portal. " + error.message);
-                    manageSubBtn.innerText = originalText;
-                    manageSubBtn.style.opacity = "1";
-                }
-            }
+            // 3. Trigger the data fetch
+            fetchAndRenderSubscriptionPage();
         });
     }
 
@@ -33034,7 +33648,7 @@ function renderSystemGoalsPage(container, data) {
             return ollamaJson; // Return the full, detailed object
         } catch (err) {
             console.error(`Failed to enrich goal "${goalString}":`, err);
-            // Return a fallback object with the user-requested text
+            // Return a fallback object with the user-requested text.
             return {
                 goal_name: goalString,
                 description: "Rationale: Extracted from base n8n analysis.",
