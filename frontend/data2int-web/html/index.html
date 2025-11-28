@@ -28,15 +28,182 @@
     <script src="https://cdn.plot.ly/plotly-3.3.0.min.js"></script>
 
     <style>
-                /* --- THEME COLORS (CSS VARIABLES) --- */
+        /* --- THEME COLORS (CSS VARIABLES) --- */
         :root {
+            /* Default (Purple/Pink) */
             --grad-1: #C33764;
             --grad-2: #1D2671;
             --primary: #8E2DE2;
             --primary-hover: #4A00E0;
             --accent: #C33764;
-            --edge-color: #4A00E0;
-            --node-color: #C33764;
+            --text-highlight: #a5b4fc; /* Matches indigo-300 */
+        }
+
+        /* 1. Ocean */
+        body.theme-ocean {
+            --grad-1: #2E3192; --grad-2: #1BFFFF;
+            --primary: #00D2FF; --primary-hover: #009ec3; --accent: #2E3192; --text-highlight: #7dd3fc;
+        }
+        /* 2. Sunset */
+        body.theme-sunset {
+            --grad-1: #FF512F; --grad-2: #DD2476;
+            --primary: #FF512F; --primary-hover: #dd2c00; --accent: #F09819; --text-highlight: #fdba74;
+        }
+        /* 3. Cyber */
+        body.theme-cyber {
+            --grad-1: #0F2027; --grad-2: #2C5364;
+            --primary: #00f260; --primary-hover: #0575e6; --accent: #00FFFF; --text-highlight: #00f260;
+        }
+        /* 4. Forest */
+        body.theme-forest {
+            --grad-1: #134E5E; --grad-2: #71B280;
+            --primary: #55efc4; --primary-hover: #00b894; --accent: #a3e635; --text-highlight: #86efac;
+        }
+        /* 5. Royal */
+        body.theme-royal {
+            --grad-1: #141E30; --grad-2: #243B55;
+            --primary: #F7B733; --primary-hover: #d49b20; --accent: #FFD700; --text-highlight: #FDE68A;
+        }
+        /* 6. Crimson */
+        body.theme-crimson {
+            --grad-1: #870000; --grad-2: #190A05;
+            --primary: #FF4D4D; --primary-hover: #cc0000; --accent: #ff9f9f; --text-highlight: #fca5a5;
+        }
+        /* 7. Coffee */
+        body.theme-coffee {
+            --grad-1: #3c2f2f; --grad-2: #755c47;
+            --primary: #d4a373; --primary-hover: #b0875d; --accent: #faedcd; --text-highlight: #e2c09f;
+        }
+        /* 8. Aurora */
+        body.theme-aurora {
+            --grad-1: #000000; --grad-2: #0f9b0f;
+            --primary: #00ff00; --primary-hover: #00cc00; --accent: #00dbde; --text-highlight: #69ff97;
+        }
+        /* 9. Midnight */
+        body.theme-midnight {
+            --grad-1: #0f0c29; --grad-2: #302b63;
+            --primary: #764ba2; --primary-hover: #667eea; --accent: #24243e; --text-highlight: #c084fc;
+        }
+        /* 10. Candy */
+        body.theme-candy {
+            --grad-1: #A18CD1; --grad-2: #FBC2EB;
+            --primary: #ff9a9e; --primary-hover: #ff6a88; --accent: #fad0c4; --text-highlight: #fecaca;
+        }
+        /* 11. Slate */
+        body.theme-slate {
+            --grad-1: #232526; --grad-2: #414345;
+            --primary: #9ca3af; --primary-hover: #6b7280; --accent: #d1d5db; --text-highlight: #f3f4f6;
+        }
+
+       /* --- GLOBAL THEME OVERRIDES (Comprehensive) --- */
+
+        /* 1. TEXT & LOGO OVERRIDES */
+        /* Forces the "SAGE AI" logo and any gradient text to use the theme colors */
+        .text-transparent.bg-clip-text,
+        a.text-transparent.bg-clip-text {
+            background-image: linear-gradient(to right, var(--primary), var(--accent), var(--primary)) !important;
+        }
+
+        /* Replaces all "Indigo-300" text (used heavily in headers/subtitles) */
+        .text-indigo-300, .text-purple-400, .text-pink-400, .text-blue-300, .text-green-300, .text-yellow-300 {
+            color: var(--text-highlight) !important;
+            transition: color 0.5s ease;
+        }
+        
+        /* Hover states for links */
+        .hover\:text-indigo-300:hover {
+            color: var(--primary) !important;
+        }
+
+        /* 2. BACKGROUND GLOWS & GRADIENTS */
+        /* This targets the glowing blur effect behind the Hero Title, Contact Card, and About Card */
+        .from-indigo-500, .via-purple-500, .to-pink-500 {
+            --tw-gradient-from: var(--primary) !important;
+            --tw-gradient-to: var(--accent) !important;
+            --tw-gradient-stops: var(--primary), var(--accent), var(--primary) !important;
+        }
+        
+        /* Overrides specific background colors used in "How it Works" circles (About Us) */
+        .bg-indigo-600, .bg-purple-600, .bg-pink-600, .bg-blue-600 {
+            background-color: var(--primary) !important;
+        }
+        
+        /* 3. INPUT FIELDS & FORMS (Contact Us / Feedback) */
+        /* Changes the border color when you click an input */
+        .focus\:border-indigo-500:focus {
+            border-color: var(--primary) !important;
+        }
+        
+        /* Changes the background color on focus/hover for inputs */
+        .focus\:bg-indigo-500:focus, .hover\:bg-indigo-600:hover {
+            background-color: var(--primary-hover) !important;
+        }
+
+        /* 4. BUTTON SHADOWS */
+        /* Updates the colored shadow behind primary buttons */
+        .shadow-indigo-500\/40, .shadow-indigo-500\/30, .shadow-indigo-500\/50 {
+            --tw-shadow-color: color-mix(in srgb, var(--primary) 40%, transparent) !important;
+            box-shadow: 0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -2px var(--tw-shadow-color) !important;
+        }
+
+        /* 5. BORDERS & DIVIDERS */
+        .border-indigo-500, .border-white\/20, .border-white\/10 {
+            /* Subtle tinting of borders to match theme */
+            border-color: color-mix(in srgb, var(--primary) 30%, rgba(255,255,255,0.1)) !important;
+        }
+
+        /* 6. MODAL BACKGROUNDS */
+        /* Ensures the Feedback/Settings/Contact modals use the main gradient */
+        .feedback-modal-container {
+            background: linear-gradient(-45deg, var(--grad-1), var(--grad-2)) !important;
+            background-size: 400% 400%;
+            animation: gradientBG 18s ease infinite;
+            border-color: rgba(255,255,255,0.2) !important;
+        }
+        
+        /* 7. NAVIGATION HOVER */
+        .nav-link:hover {
+            background: linear-gradient(90deg, var(--primary), var(--accent)) !important;
+            -webkit-background-clip: text !important;
+            background-clip: text !important;
+            color: transparent !important;
+        }
+        
+        /* 8. GENERIC UTILITY OVERRIDES */
+        /* Any text-indigo-X needs to shift to the theme highlight */
+        [class*="text-indigo-"] {
+            color: var(--text-highlight) !important;
+        }
+        
+        /* Any bg-indigo-X needs to shift to the primary color */
+        [class*="bg-indigo-"] {
+             background-color: var(--primary) !important;
+        }
+
+
+        /* --- PREVIEW SQUARES FOR SETTINGS --- */
+        .theme-preview {
+            height: 60px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 2px solid rgba(255,255,255,0.1);
+            position: relative;
+        }
+        .theme-preview:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255,255,255,0.2);
+        }
+        .theme-preview.active-theme {
+            border-color: #fff;
+            box-shadow: 0 0 0 2px #fff;
+        }
+
+        /* --- THEME FIX: FORCE BACKGROUND REFRESH --- */
+        /* This selector matches any body tag with a class starting with "theme-" */
+        body[class*="theme-"] {
+            background-image: linear-gradient(-45deg, var(--grad-1), var(--grad-2)) !important;
+            background-size: 400% 400%; /* Ensure size stays correct */
         }
 
         /* --- Base & Animated Background --- */
@@ -52,6 +219,15 @@
             overflow-x: hidden;
             display: flex;
             flex-direction: column;
+            zoom: 85%;
+        }
+
+        @supports (-moz-appearance:none) {
+            body {
+                transform: scale(0.85);
+                transform-origin: top center;
+                
+            }
         }
 
         .main-content {
@@ -120,7 +296,7 @@
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 1rem;
-            padding: 2.5rem;
+            padding: 1.75rem;
             box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
         }
 
@@ -2748,6 +2924,8 @@
                                 <a href="#" id="manageSubscriptionLink" class="text-gray-300 hover:bg-white/10 hover:text-white block px-4 py-2 text-sm transition-colors">
                                     💳 Manage Subscription
                                 </a>
+
+                                <a href="#" id="openSettingsBtn" class="block px-4 py-2 text-sm text-white hover:bg-white/10" role="menuitem"> ⚙️ Settings</a>
                             </div>
 
                             <div class="py-1 border-t border-white/10">
@@ -2778,6 +2956,87 @@
         </div>
     </div>
 </nav>
+
+    <div id="settingsModal" class="feedback-modal">
+        <div class="feedback-modal-container" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Settings</h3>
+                <button class="modal-close-btn" id="closeSettingsBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h4 class="text-lg font-bold mb-4 text-white">Appearance</h4>
+                <p class="text-sm text-white/70 mb-6">Choose a gradient theme for your workspace.</p>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    
+                    <div class="theme-option" data-theme="default">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #C33764, #1D2671);"></div>
+                        <p class="text-xs text-center mt-2 text-white/80">Default</p>
+                    </div>
+                    
+                    <div class="theme-option" data-theme="ocean">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #2E3192, #1BFFFF);"></div>
+                        <p class="text-xs text-center mt-2 text-white/80">Ocean</p>
+                    </div>
+                    
+                    <div class="theme-option" data-theme="sunset">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #FF512F, #DD2476);"></div>
+                        <p class="text-xs text-center mt-2 text-white/80">Sunset</p>
+                    </div>
+                    
+                    <div class="theme-option" data-theme="cyber">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #0F2027, #2C5364); border: 1px solid #00f260;"></div>
+                        <p class="text-xs text-center mt-2 text-white/80">Cyber</p>
+                    </div>
+
+                    <div class="theme-option" data-theme="forest">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #134E5E, #71B280);"></div>
+                        <p class="text-xs text-center mt-2 text-white/80">Forest</p>
+                    </div>
+
+                    <div class="theme-option" data-theme="royal">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #141E30, #243B55); border: 1px solid #F7B733;"></div>
+                        <p class="text-xs text-center mt-2 text-white/80">Royal</p>
+                    </div>
+
+                    <div class="theme-option" data-theme="crimson">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #870000, #190A05);"></div>
+                        <p class="text-xs text-center mt-2 text-white/80">Crimson</p>
+                    </div>
+
+                    <div class="theme-option" data-theme="coffee">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #3c2f2f, #755c47);"></div>
+                        <p class="text-xs text-center mt-2 text-white/80">Coffee</p>
+                    </div>
+
+                    <div class="theme-option" data-theme="aurora">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #000000, #0f9b0f); border: 1px solid #00ff00;"></div>
+                        <p class="text-xs text-center mt-2 text-white/80">Aurora</p>
+                    </div>
+
+                    <div class="theme-option" data-theme="midnight">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #0f0c29, #302b63);"></div>
+                        <p class="text-xs text-center mt-2 text-white/80">Midnight</p>
+                    </div>
+
+                    <div class="theme-option" data-theme="candy">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #A18CD1, #FBC2EB);"></div>
+                        <p class="text-xs text-center mt-2 text-white/80">Candy</p>
+                    </div>
+
+                    <div class="theme-option" data-theme="slate">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #232526, #414345);"></div>
+                        <p class="text-xs text-center mt-2 text-white/80">Slate</p>
+                    </div>
+
+                </div>
+
+                <div class="mt-8 pt-4 border-t border-white/10">
+                    <p class="text-xs text-white/40 text-center">Select a theme to apply it immediately.</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
         <div id="versionChoiceModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm items-center justify-center z-[100] feedback-modal">
             <div class="glass-container w-full max-w-lg text-center feedback-modal-container">
@@ -4064,6 +4323,76 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- GLOBAL STATE FOR SAMPLES ---
     window.tempSampleDataFile = null;    // Holds the CSV File object
     window.tempSampleContextFile = null; // Holds the Text/Context File object
+
+    // --- SETTINGS & THEME LOGIC ---
+    
+    const settingsModal = document.getElementById("settingsModal");
+    const openSettingsBtn = document.getElementById("openSettingsBtn");
+    const closeSettingsBtn = document.getElementById("closeSettingsBtn");
+    const themeOptions = document.querySelectorAll(".theme-option");
+
+    // 1. Open Settings Modal
+    if (openSettingsBtn && settingsModal) {
+        openSettingsBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            // Close profile dropdown if open
+            const dropdown = document.getElementById("profileDropdownContainer")?.querySelectorAll("div")[1];
+            if(dropdown) dropdown.classList.add("hidden");
+            const userMenuBtn = document.getElementById("user-menu-button");
+            if(userMenuBtn) userMenuBtn.setAttribute("aria-expanded", "false");
+
+            // Open Modal
+            settingsModal.style.display = 'flex';
+            setTimeout(() => settingsModal.classList.add('modal-open'), 10);
+        });
+    }
+
+    // 2. Close Settings Modal
+    if (closeSettingsBtn && settingsModal) {
+        closeSettingsBtn.addEventListener("click", () => {
+            settingsModal.classList.remove('modal-open');
+            setTimeout(() => settingsModal.style.display = 'none', 300);
+        });
+    }
+
+    // 3. Apply Theme Function (Final)
+    function applyTheme(themeName) {
+        const allThemes = [
+            "theme-ocean", "theme-sunset", "theme-cyber", 
+            "theme-forest", "theme-royal", "theme-crimson", "theme-coffee",
+            "theme-aurora", "theme-midnight", "theme-candy", "theme-slate"
+        ];
+
+        // 1. Remove ALL theme classes
+        document.body.classList.remove(...allThemes);
+        
+        // 2. Add new class (if not default)
+        if (themeName && themeName !== 'default') {
+            document.body.classList.add(`theme-${themeName}`);
+        }
+
+        // 3. Update UI indicators in modal
+        document.querySelectorAll(".theme-preview").forEach(el => el.classList.remove("active-theme"));
+        const activeOption = document.querySelector(`.theme-option[data-theme="${themeName}"] .theme-preview`);
+        if (activeOption) activeOption.classList.add("active-theme");
+
+        // 4. Save
+        localStorage.setItem("sage_theme", themeName);
+    }
+
+    // 4. Attach Click Listeners to Theme Options
+    if (themeOptions) {
+        themeOptions.forEach(option => {
+            option.addEventListener("click", () => {
+                const theme = option.dataset.theme;
+                applyTheme(theme);
+            });
+        });
+    }
+
+    // 5. Load Saved Theme on Page Load
+    const savedTheme = localStorage.getItem("sage_theme") || "default";
+    applyTheme(savedTheme);
 
     // --- Template Data ---
     const templates = {
@@ -33319,7 +33648,7 @@ function renderSystemGoalsPage(container, data) {
             return ollamaJson; // Return the full, detailed object
         } catch (err) {
             console.error(`Failed to enrich goal "${goalString}":`, err);
-            // Return a fallback object with the user-requested text
+            // Return a fallback object with the user-requested text.
             return {
                 goal_name: goalString,
                 description: "Rationale: Extracted from base n8n analysis.",
