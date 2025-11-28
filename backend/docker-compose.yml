@@ -61,20 +61,6 @@ services:
       - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
       # Install community nodes
       - N8N_COMMUNITY_PACKAGES=n8n-nodes-searxng,n8n-nodes-bcrypt
-    depends_on:
-      - mongodb
-
-  # MongoDB Service
-  mongodb:
-    image: mongo:7.0
-    container_name: mongodb
-    restart: unless-stopped
-    ports:
-      - "27017:27017"
-    networks:
-      - data2int-net
-    volumes:
-      - ./mongodb/mongodb-data:/data/db
 
   # SearXNG service.
   searxng:
