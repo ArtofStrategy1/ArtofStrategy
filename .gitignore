@@ -23,8 +23,7 @@ script-new-n.js
 style-new.css
 diagrams.html
 diagrams-new.css
-strategy-diagrams.js
-strategy-diagrams.html
+*strategy-diagrams*
 process-mapping-cyto.html
 process-mapping-cyto.js
 knowledge-graph-vis.html
