@@ -2990,6 +2990,9 @@
                             </div>
 
                             <div class="py-1">
+                                <a href="#" id="openEditProfileBtn" class="text-white hover:bg-white/10 block px-4 py-2 text-sm transition-colors">
+                                    ✏️ Edit Profile
+                                </a>
                                 <a href="#" id="dropdownAdminLink" class="text-yellow-400 hover:bg-white/10 hover:text-yellow-300 hidden px-4 py-2 text-sm nav-link" data-page="adminDashboard">
                                     📊 Admin Dashboard
                                 </a>
@@ -2997,8 +3000,9 @@
                                 <a href="#" id="manageSubscriptionLink" class="text-gray-300 hover:bg-white/10 hover:text-white block px-4 py-2 text-sm transition-colors">
                                     💳 Manage Subscription
                                 </a>
-
-                                <a href="#" id="openSettingsBtn" class="block px-4 py-2 text-sm text-white hover:bg-white/10" role="menuitem"> ⚙️ Settings</a>
+                                <a href="#" id="openSettingsBtn" class="block px-4 py-2 text-sm text-white hover:bg-white/10" role="menuitem"> 
+                                    ⚙️ Settings
+                                </a>
                             </div>
 
                             <div class="py-1 border-t border-white/10">
@@ -3755,6 +3759,32 @@
                         <div class="text-center pt-6 border-t border-white/10">
                             <button class="btn btn-primary nav-link" data-page="home">Accept & Return Home</button>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Profile Modal -->
+        <div id="editProfileModal" class="feedback-modal">
+            <div class="feedback-modal-container" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h3 class="modal-title">Edit Profile</h3>
+                    <button class="modal-close-btn" id="closeEditProfileBtn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="space-y-4">
+                        <div class="flex flex-col items-center mb-6">
+                            <div id="modalAvatarPreview" class="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-3xl font-bold text-white shadow-lg border-2 border-white/20 overflow-hidden mb-3">
+                                <span id="modalAvatarInitials">U</span>
+                                <img id="modalAvatarImg" src="" alt="Profile" class="w-full h-full object-cover hidden">
+                            </div>
+                            <p class="text-xs text-white/50">Profile Preview</p>
+                        </div>
+                        <div><label class="block text-sm font-medium text-gray-200 mb-2">First Name</label><input type="text" id="editProfileFirstName" class="input-field bg-black/20 border-white/20 focus:border-indigo-400"></div>
+                        <div><label class="block text-sm font-medium text-gray-200 mb-2">Last Name</label><input type="text" id="editProfileLastName" class="input-field bg-black/20 border-white/20 focus:border-indigo-400"></div>
+                        <div><label class="block text-sm font-medium text-gray-200 mb-2">Avatar Image URL</label><input type="url" id="editProfileAvatarUrl" class="input-field bg-black/20 border-white/20 focus:border-indigo-400" placeholder="https://..."></div>
+                        <div id="editProfileMessage" class="hidden text-center text-sm font-bold p-2 rounded"></div>
+                        <button id="saveProfileBtn" class="btn btn-primary w-full mt-4 shadow-lg"><span id="saveProfileBtnText">Save Changes</span><span id="saveProfileSpinner" class="loading-spinner hidden ml-2"></span></button>
                     </div>
                 </div>
             </div>
@@ -4553,6 +4583,122 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- Usage ---
     let currentUserUsage = 0;
     const maxUsage = 3;
+
+    // --- EDIT PROFILE LOGIC ---
+    const editProfileModal = document.getElementById("editProfileModal");
+    const openEditProfileBtn = document.getElementById("openEditProfileBtn");
+    const closeEditProfileBtn = document.getElementById("closeEditProfileBtn");
+    const saveProfileBtn = document.getElementById("saveProfileBtn");
+
+    if (openEditProfileBtn) {
+        openEditProfileBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            document.getElementById("profileDropdown").classList.add("hidden");
+            if (!currentUser) return;
+
+            const meta = currentUser.user_metadata || {};
+            document.getElementById("editProfileFirstName").value = meta.first_name || "";
+            document.getElementById("editProfileLastName").value = meta.last_name || "";
+            document.getElementById("editProfileAvatarUrl").value = meta.avatar_url || "";
+
+            updateModalPreview(meta.first_name, meta.last_name, meta.avatar_url);
+            editProfileModal.style.display = 'flex';
+            setTimeout(() => editProfileModal.classList.add('modal-open'), 10);
+        });
+    }
+
+    function updateModalPreview(first, last, url) {
+        const initialsEl = document.getElementById("modalAvatarInitials");
+        const imgEl = document.getElementById("modalAvatarImg");
+        if (url) {
+            imgEl.src = url;
+            imgEl.classList.remove("hidden");
+            initialsEl.classList.add("hidden");
+        } else {
+            let initials = "U";
+            if (first) {
+                initials = first.charAt(0).toUpperCase();
+                if (last) initials += last.charAt(0).toUpperCase();
+            }
+            initialsEl.textContent = initials;
+            initialsEl.classList.remove("hidden");
+            imgEl.classList.add("hidden");
+        }
+    }
+
+    ['editProfileFirstName', 'editProfileLastName', 'editProfileAvatarUrl'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.addEventListener('input', () => {
+            updateModalPreview(
+                document.getElementById("editProfileFirstName").value,
+                document.getElementById("editProfileLastName").value,
+                document.getElementById("editProfileAvatarUrl").value
+            );
+        });
+    });
+
+    if (saveProfileBtn) {
+        saveProfileBtn.addEventListener("click", async () => {
+            const firstName = document.getElementById("editProfileFirstName").value.trim();
+            const lastName = document.getElementById("editProfileLastName").value.trim();
+            const avatarUrl = document.getElementById("editProfileAvatarUrl").value.trim();
+            const msgEl = document.getElementById("editProfileMessage");
+            
+            saveProfileBtn.disabled = true;
+            document.getElementById("saveProfileBtnText").textContent = "Saving...";
+            document.getElementById("saveProfileSpinner").classList.remove("hidden");
+            msgEl.className = "hidden";
+
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session) throw new Error("Not logged in.");
+
+                // 1. Update Auth Metadata
+                const { data: authData, error: authError } = await supabase.auth.updateUser({
+                    data: { first_name: firstName, last_name: lastName, avatar_url: avatarUrl }
+                });
+                if (authError) throw authError;
+
+                // 2. Update Public Database
+                const { error: dbError } = await supabase
+                    .from('users')
+                    .update({ first_name: firstName, last_name: lastName }) // Add avatar_url here if column exists
+                    .eq('auth_user_id', session.user.id);
+                
+                if (dbError) console.warn("DB sync warning:", dbError);
+
+                currentUser = authData.user;
+                updateNavBar();
+                
+                msgEl.textContent = "Profile updated!";
+                msgEl.className = "text-green-400 bg-green-900/20 p-2 rounded block mb-2";
+                
+                setTimeout(() => {
+                    editProfileModal.classList.remove('modal-open');
+                    setTimeout(() => editProfileModal.style.display = 'none', 300);
+                    saveProfileBtn.disabled = false;
+                    document.getElementById("saveProfileBtnText").textContent = "Save Changes";
+                    document.getElementById("saveProfileSpinner").classList.add("hidden");
+                    msgEl.className = "hidden";
+                }, 1500);
+
+            } catch (err) {
+                console.error(err);
+                msgEl.textContent = err.message;
+                msgEl.className = "text-red-400 bg-red-900/20 p-2 rounded block mb-2";
+                saveProfileBtn.disabled = false;
+                document.getElementById("saveProfileBtnText").textContent = "Save Changes";
+                document.getElementById("saveProfileSpinner").classList.add("hidden");
+            }
+        });
+    }
+
+    if (closeEditProfileBtn) {
+        closeEditProfileBtn.addEventListener("click", () => {
+            editProfileModal.classList.remove('modal-open');
+            setTimeout(() => editProfileModal.style.display = 'none', 300);
+        });
+    }
 
     // --- GLOBAL STATE FOR SAMPLES ---
     window.tempSampleDataFile = null;    // Holds the CSV File object
