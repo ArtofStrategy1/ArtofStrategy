@@ -3140,94 +3140,100 @@
         </div>
 
         <div id="stripePaymentModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm items-center justify-center z-[110] feedback-modal hidden" style="display: none;">
-            <div class="glass-container w-full max-w-4xl p-8 feedback-modal-container relative">
-                <button id="closeStripeModalBtn" class="absolute top-4 right-4 text-white/60 hover:text-white text-2xl">&times;</button>
+            <div class="glass-container w-full max-w-5xl p-8 feedback-modal-container relative flex flex-col justify-between min-h-[80vh] max-h-[95vh] overflow-y-auto">
                 
-                <h2 class="text-3xl font-bold mb-4 text-center">Choose Your Plan</h2>
-                <p class="text-white/70 text-center mb-8 max-w-2xl mx-auto">Select the tier that best fits your strategic needs to unlock premium analysis features.</p>
+                <button id="closeStripeModalBtn" class="absolute top-4 right-4 text-white/60 hover:text-white text-2xl z-50 transition-colors">&times;</button>
                 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="text-center mt-2">
+                    <h2 class="text-3xl font-bold mb-2 text-white tracking-tight">Choose Your Plan</h2>
+                    <p class="text-white/70 text-sm max-w-xl mx-auto">Select the strategic tier that best fits your needs.</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 my-6 flex-grow items-center">
                     
-                    <div class="bg-white/5 p-6 rounded-xl border border-white/10 hover:border-purple-400 transition-all duration-300 hover:-translate-y-2 flex flex-col relative group">
-                        <div class="text-center mb-4">
-                            <div class="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-purple-500/40 transition-colors">
-                                <span class="text-2xl">👤</span>
+                    <div class="bg-white/5 p-6 rounded-xl border border-white/10 hover:border-purple-400 transition-all duration-300 hover:-translate-y-2 flex flex-col relative group h-full justify-between">
+                        <div>
+                            <div class="text-center mb-4">
+                                <div class="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-purple-500/40 transition-colors">
+                                    <span class="text-2xl">👤</span>
+                                </div>
+                                <h3 class="text-xl font-bold text-white">Individual</h3>
+                                <p class="text-white/60 text-xs mt-1">For solo strategists</p>
                             </div>
-                            <h3 class="text-xl font-bold text-white">Individual</h3>
-                            <p class="text-white/60 text-sm mt-1">For solo strategists</p>
+                            <ul class="text-xs text-white/70 space-y-3 mb-6 pl-2">
+                                <li class="flex items-center"><span class="text-green-400 mr-2 font-bold">✓</span> Basic Frameworks</li>
+                                <li class="flex items-center"><span class="text-green-400 mr-2 font-bold">✓</span> Single User</li>
+                                <li class="flex items-center"><span class="text-green-400 mr-2 font-bold">✓</span> Email Support</li>
+                            </ul>
                         </div>
-                        <ul class="text-sm text-white/70 space-y-2 mb-6 flex-grow">
-                            <li class="flex items-center"><span class="text-green-400 mr-2">✓</span> Basic Frameworks</li>
-                            <li class="flex items-center"><span class="text-green-400 mr-2">✓</span> Single User</li>
-                            <li class="flex items-center"><span class="text-green-400 mr-2">✓</span> Email Support</li>
-                        </ul>
-                        <!--<a href="https://buy.stripe.com/9B6aEXaJbbl16eZ8xKbsc02" target="_blank" class="btn btn-secondary w-full py-2 border-purple-500/50 hover:bg-purple-500/20">
+                        <a href="https://buy.stripe.com/test_cNi7sLaJbdt946R5lybsc00" target="_blank" class="btn btn-secondary w-full py-3 text-sm border-purple-500/50 hover:bg-purple-500/20 font-semibold tracking-wide">
                             Select Individual
-                        </a>-->
-                        <!-- Test Payment Link-->
-                        <a href="https://buy.stripe.com/test_cNi7sLaJbdt946R5lybsc00" target="_blank" class="btn btn-secondary w-full py-2 border-purple-500/50 hover:bg-purple-500/20">
-                            TEST LINK
                         </a>
                     </div>
 
-                    <div class="bg-gradient-to-b from-blue-900/40 to-white/5 p-6 rounded-xl border-2 border-blue-500/50 hover:border-blue-400 transition-all duration-300 hover:-translate-y-2 flex flex-col relative transform scale-105 shadow-xl z-10">
-                        <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg uppercase tracking-wide">
+                    <div class="bg-gradient-to-b from-blue-900/40 to-white/5 p-6 rounded-xl border-2 border-blue-500/50 hover:border-blue-400 transition-all duration-300 hover:-translate-y-2 flex flex-col relative transform scale-105 shadow-2xl z-10 h-full justify-between">
+                        <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg uppercase tracking-wide">
                             Most Popular
                         </div>
-                        <div class="text-center mb-4 mt-2">
-                            <div class="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                                <span class="text-2xl">🚀</span>
+                        <div>
+                            <div class="text-center mb-4 mt-2">
+                                <div class="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <span class="text-2xl">🚀</span>
+                                </div>
+                                <h3 class="text-xl font-bold text-white">Small Business</h3>
+                                <p class="text-white/60 text-xs mt-1">For growing teams</p>
                             </div>
-                            <h3 class="text-xl font-bold text-white">Small Business</h3>
-                            <p class="text-white/60 text-sm mt-1">For growing teams</p>
+                            <ul class="text-xs text-white/70 space-y-3 mb-6 pl-2">
+                                <li class="flex items-center"><span class="text-green-400 mr-2 font-bold">✓</span> All Frameworks</li>
+                                <li class="flex items-center"><span class="text-green-400 mr-2 font-bold">✓</span> Up to 5 Users</li>
+                                <li class="flex items-center"><span class="text-green-400 mr-2 font-bold">✓</span> Priority Support</li>
+                                <li class="flex items-center"><span class="text-green-400 mr-2 font-bold">✓</span> Export to PDF/DOCX</li>
+                            </ul>
                         </div>
-                        <ul class="text-sm text-white/70 space-y-2 mb-6 flex-grow">
-                            <li class="flex items-center"><span class="text-green-400 mr-2">✓</span> All Frameworks</li>
-                            <li class="flex items-center"><span class="text-green-400 mr-2">✓</span> Up to 5 Users</li>
-                            <li class="flex items-center"><span class="text-green-400 mr-2">✓</span> Priority Support</li>
-                            <li class="flex items-center"><span class="text-green-400 mr-2">✓</span> Export to PDF/DOCX</li>
-                        </ul>
-                        <a href="https://buy.stripe.com/7sY9ATg3v0Gnbzj4hubsc01" target="_blank" class="btn btn-primary w-full py-3 font-bold shadow-lg">
-                            Select Business
+                        <a href="https://buy.stripe.com/7sY9ATg3v0Gnbzj4hubsc01" target="_blank" class="btn btn-primary w-full py-3 text-sm font-bold shadow-lg tracking-wide">
+                            Select Small Business
                         </a>
                     </div>
 
-                    <div class="bg-white/5 p-6 rounded-xl border border-white/10 hover:border-yellow-400 transition-all duration-300 hover:-translate-y-2 flex flex-col group">
-                        <div class="text-center mb-4">
-                            <div class="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-yellow-500/40 transition-colors">
-                                <span class="text-2xl">🏢</span>
+                    <div class="bg-white/5 p-6 rounded-xl border border-white/10 hover:border-yellow-400 transition-all duration-300 hover:-translate-y-2 flex flex-col group h-full justify-between">
+                        <div>
+                            <div class="text-center mb-4">
+                                <div class="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-yellow-500/40 transition-colors">
+                                    <span class="text-2xl">🏢</span>
+                                </div>
+                                <h3 class="text-xl font-bold text-white">Enterprise</h3>
+                                <p class="text-white/60 text-xs mt-1">For organizations</p>
                             </div>
-                            <h3 class="text-xl font-bold text-white">Enterprise</h3>
-                            <p class="text-white/60 text-sm mt-1">For organizations</p>
+                            <ul class="text-xs text-white/70 space-y-3 mb-6 pl-2">
+                                <li class="flex items-center"><span class="text-green-400 mr-2 font-bold">✓</span> Custom Solutions</li>
+                                <li class="flex items-center"><span class="text-green-400 mr-2 font-bold">✓</span> Unlimited Users</li>
+                                <li class="flex items-center"><span class="text-green-400 mr-2 font-bold">✓</span> Dedicated Account Mgr</li>
+                            </ul>
                         </div>
-                        <ul class="text-sm text-white/70 space-y-2 mb-6 flex-grow">
-                            <li class="flex items-center"><span class="text-green-400 mr-2">✓</span> Custom Solutions</li>
-                            <li class="flex items-center"><span class="text-green-400 mr-2">✓</span> Unlimited Users</li>
-                            <li class="flex items-center"><span class="text-green-400 mr-2">✓</span> Dedicated Account Mgr</li>
-                        </ul>
-                        <a href="https://buy.stripe.com/6oUdR96sVfBhcDn3dqbsc01" target="_blank" class="btn btn-secondary w-full py-2 border-yellow-500/50 hover:bg-yellow-500/20">
+                        <a href="https://buy.stripe.com/6oUdR96sVfBhcDn3dqbsc01" target="_blank" class="btn btn-secondary w-full py-3 text-sm border-yellow-500/50 hover:bg-yellow-500/20 font-semibold tracking-wide">
                             Select Enterprise
                         </a>
                     </div>
 
                 </div>
                 
-                <div class="mt-8 text-center">
-                    <p class="text-xs text-white/40 mb-2">Secure payment processing by</p>
-                    <img src="https://images.ctfassets.net/fzn2n1nzq965/2WOM2d46aE6u8i6e6O6k46/e0e94e548552818112573a179aa986d3/stripe-badge-white.png" alt="Powered by Stripe" class="h-6 mx-auto opacity-50 hover:opacity-100 transition-opacity">
-                    <div class="mt-8 max-w-sm mx-auto animate-fadeIn">
-                    <label class="block text-center text-xs text-white/50 mb-2 uppercase tracking-wider font-semibold">Have a book code?</label>
-                    <div class="relative group">
+                <div class="flex flex-col items-center justify-center gap-4 pb-2">
+                    
+                    <div class="flex items-center gap-2 opacity-50 hover:opacity-100 transition-opacity">
+                        <span class="text-[10px] text-white/60 font-medium">Secure Payment by</span>
+                        <img src="https://images.ctfassets.net/fzn2n1nzq965/2WOM2d46aE6u8i6e6O6k46/e0e94e548552818112573a179aa986d3/stripe-badge-white.png" alt="Stripe" class="h-4 grayscale hover:grayscale-0 transition-all">
+                    </div>
+
+                    <div class="flex items-center gap-2 animate-fadeIn bg-black/30 p-1.5 rounded-full border border-white/10 hover:border-white/20 transition-colors">
                         <input type="text" id="promoCodeInput" 
-                               class="w-full bg-black/30 border border-white/20 rounded-full py-3 pl-5 pr-24 text-sm text-white placeholder-white/30 focus:outline-none focus:border-indigo-500 focus:bg-black/50 transition-all duration-300" 
-                               placeholder="Enter code here...">
+                                class="bg-transparent border-none text-xs text-white placeholder-white/30 focus:outline-none px-3 w-32 text-center" 
+                                placeholder="Have a code?">
                         <button id="applyPromoBtn" 
-                                class="absolute right-1 top-1 bottom-1 bg-white/10 hover:bg-indigo-600 text-white text-xs font-bold px-5 rounded-full transition-all duration-300 border border-white/10 hover:border-indigo-500">
+                                class="bg-white/10 hover:bg-indigo-600 text-white text-[10px] font-bold px-4 py-1.5 rounded-full transition-all hover:shadow-lg">
                             APPLY
                         </button>
                     </div>
-                    <p id="promoMessage" class="text-center text-xs mt-3 font-medium hidden"></p>
-                </div>
+                    <p id="promoMessage" class="text-center text-[10px] font-medium hidden h-4"></p>
                 </div>
             </div>
         </div>
@@ -4553,6 +4559,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let userLoggedIn = false;
     let currentUser = null;
     let activeObservers = [];
+    let currentUserTier = 'basic'; // <--- 1. ADD THIS VARIABLE
 
     // --- Admin Dashboard ---
     let statsInterval = null; // Admin Dashboard Stats Timer
@@ -5680,11 +5687,9 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-
     async function checkUserTierFromDB(userId) {
-        console.log(">>> Checking tier and usage from DB.");
+        console.log(">>> Checking real DB tier for:", userId);
         try {
-            // We now select 'tier' AND 'usage_count'
             const { data: userData, error: userError } = await supabase
                 .from('users') 
                 .select('tier, usage_count') 
@@ -5692,27 +5697,27 @@ document.addEventListener("DOMContentLoaded", () => {
                 .maybeSingle();
             
             if (!userError && userData) {
-                // Store their current usage locally
+                // Update the GLOBAL variables (no 'let' keyword here)
+                currentUserTier = (userData.tier || 'basic').toLowerCase();
                 currentUserUsage = userData.usage_count || 0;
-                console.log(">>> Usage Count from DB:", currentUserUsage);
 
-                if (userData.tier === 'premium' || userData.tier === 'admin') {
+                console.log(">>> Real Tier Loaded:", currentUserTier);
+
+                if (currentUserTier === 'premium' || currentUserTier === 'admin') {
                     currentSelectionLimit = 3;
-                    updateNavBar();
+                    updateNavBar(); 
                 } else {
-                    // Free users are limited to 1 selection, but we enforce the 3-try limit elsewhere
                     currentSelectionLimit = 1;
                 }
             }
         } catch (err) {
-            console.error(">>> DB check error:", err);
+            console.error(">>> DB Check Error:", err);
         }
     }
 
     /**
-     * Gatekeeper Function (UPDATED LIMITS):
-     * - Basic: 3 uses / day
-     * - Premium: 10 uses / day (Testing)
+     * Gatekeeper Function (DYNAMIC LIMITS FROM DB):
+     * - Fetches the specific usage_limit from the stripe_plans table.
      * - Admin: Unlimited
      */
     async function checkAndIncrementUsage() {
@@ -5726,41 +5731,43 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const user = session.user;
 
-        // 2. Fetch fresh usage & tier from DB (Source of Truth)
+        // 2. Fetch usage, tier, AND the linked plan's usage_limit
+        //    We use Supabase's relational query syntax: stripe_plans ( usage_limit )
         const { data: dbUser, error: dbError } = await supabase
             .from('users')
-            .select('usage_count, tier')
+            .select('usage_count, tier, stripe_plans ( usage_limit )')
             .eq('auth_user_id', user.id)
             .single();
 
         if (dbError || !dbUser) {
             console.error("Usage check failed:", dbError);
-            return false; // Fail safe to prevent abuse if DB is down
+            return false; // Fail safe
         }
 
         const tier = (dbUser.tier || 'basic').toLowerCase();
         const currentCount = dbUser.usage_count || 0;
 
-        // 3. Define Limits
-        let limit = 3; // Basic default
-        if (tier === 'premium') limit = 10; // Temporary testing limit
-        if (tier === 'admin') limit = 999999; // Unlimited
+        // 3. Determine Dynamic Limit
+        let limit = 3; // Default fallback for Basic/No Plan
 
-        // 4. Admin Bypass
         if (tier === 'admin') {
-             console.log(">>> Admin access. Bypassing usage check.");
-             return true;
+            limit = 999999; // Admin Override
+        } else if (dbUser.stripe_plans && dbUser.stripe_plans.usage_limit) {
+            // USE THE DB VALUE FROM THE JOINED TABLE
+            limit = dbUser.stripe_plans.usage_limit;
         }
 
-        // 5. Check Limit
+        console.log(`>>> Usage Check: ${currentCount} / ${limit} (Tier: ${tier})`);
+
+        // 4. Check Limit
         if (currentCount >= limit) {
-            console.log(`>>> Limit reached (${currentCount}/${limit}). Blocking.`);
+            console.log(`>>> Limit reached. Blocking.`);
             
-            let message = `You have reached your daily limit of ${limit} analyses.`;
+            let message = `You have reached your usage limit of ${limit} analyses.`;
             if (tier === 'basic') {
-                message += `\n\nUpgrade to Premium for more capacity, or wait for the daily reset (Midnight).`;
+                message += `\n\nUpgrade to Premium for more capacity.`;
             } else {
-                message += `\n\nYour limit will reset at Midnight.`;
+                message += `\n\nPlease contact support or wait for your next billing cycle.`;
             }
             
             alert(message);
@@ -5772,8 +5779,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return false; // STOP EXECUTION
         }
 
-        // 6. Increment Usage
-        // We update the DB optimistically.
+        // 5. Increment Usage
         supabase.from('users')
             .update({ usage_count: currentCount + 1 })
             .eq('auth_user_id', user.id)
@@ -9492,119 +9498,35 @@ async function handleContactSubmit() {
         });
     }
 
-    function attachHomeCardListeners() {
-    // 1. Select all tool cards
-    const cards = document.querySelectorAll(".home-template-link");
-
-    cards.forEach((card) => {
-        // Ensure we remove old listeners to prevent stacking
-        const newCard = card.cloneNode(true);
-        card.parentNode.replaceChild(newCard, card);
-        
-        newCard.addEventListener("click", () => {
-            const templateId = newCard.dataset.templateId;
-            preFillData = newCard.dataset.preFill || "";
-
-            // 2. Authentication Check
-                if (!userLoggedIn) {
-                    showMessage("loginMessage", "Please log in to use the analysis tools.", "error");
-                    navigateTo("login");
-                return;
-            }
-
-            // --- NEW: PREMIUM BYPASS LOGIC ---
-            // Check if user is Admin or Premium based on metadata
-            const isPrivileged = 
-                (currentUser?.app_metadata?.role === 'admin') || 
-                (currentUser?.app_metadata?.tier === 'admin') ||
-                (currentUser?.app_metadata?.tier === 'premium') ||
-                (currentUser?.user_metadata?.tier === 'premium');
-
-            if (isPrivileged) {
-                console.log("User is Admin/Premium. Bypassing version modal.");
-                currentSelectionLimit = 3; // Grant full access (3 selections for frameworks)
-                selectedTemplateForModal = templateId; // Ensure ID is set just in case
-                showTemplateDetail(templateId); // Go straight to the tool
-                return; // Stop here, don't show the modal
-            }
-            // ----------------------------------
-
-            // 3. Store selected template
-            selectedTemplateForModal = templateId;                    
-
-            // 4. Open the Version Choice Modal (Free vs Paid)
-            const modal = $("versionChoiceModal");
-            if (modal) {
-                modal.style.display = 'flex';
-                setTimeout(() => modal.classList.add('modal-open'), 10);
-                }
-            });
-        });
-
-    // --- Logic for the "Version Choice" Modal Buttons ---
-
-    const selectFreeBtn = $("selectFreeVersion");
-    if (selectFreeBtn) {
-        selectFreeBtn.onclick = () => {
-            currentSelectionLimit = 1; // Limit user
-            proceedFromModal();      // Go to tool
-        };
-    }
-
-    // NEW CODE (Paste this in)
-const selectPaidBtn = $("selectPaidVersion");
-if (selectPaidBtn) {
-    selectPaidBtn.onclick = () => {
-        // 1. Close the Choice Modal
-        const choiceModal = $("versionChoiceModal");
-        choiceModal.classList.remove('modal-open');
-        
-        // 2. Wait for fade out, then check Admin status
-        setTimeout(() => {
-            choiceModal.style.display = 'none';
-            
-            // --- ADMIN BYPASS LOGIC ---
-            // Check if user is Admin (via role or tier metadata) OR already Premium
-            const isPrivileged = 
-                (currentUser?.app_metadata?.role === 'admin') || 
-                (currentUser?.app_metadata?.tier === 'admin') ||
-                (currentUser?.user_metadata?.tier === 'admin') ||
-                (currentUser?.app_metadata?.tier === 'premium'); // Optional: Skip if already premium
-
-            if (isPrivileged) {
-                console.log("User is Admin/Premium. Bypassing payment modal.");
-                currentSelectionLimit = 3; // Grant full access limit
-                proceedFromModal();      // Go straight to the tool
-            } else {
-                // Normal User: Open Stripe Payment Modal
-                openStripePlanModal(); 
-            }
-            // ---------------------------
-            
-        }, 300);
-    };
-}
-}
-
-// Function to open the Plan Selection Modal & Inject Real DB Links
+    // ============================================================
+    // 1. PAYMENT MODAL LOGIC (Defines the modal behavior)
+    // ============================================================
     async function openStripePlanModal() {
+        console.log(">>> Opening Stripe Payment Modal...");
         const modal = document.getElementById("stripePaymentModal");
-        if (!modal) return;
+        if (!modal) {
+            console.error("❌ Error: stripePaymentModal element not found in DOM.");
+            return;
+        }
 
-        // 1. Show the modal immediately
+        // Show Modal Immediately
         modal.style.display = 'flex';
         modal.classList.remove('hidden');
         setTimeout(() => modal.classList.add('modal-open'), 10);
 
-        // 2. Find the grid container to populate
+        // Populate Plans
         const gridContainer = modal.querySelector('.grid');
-        if (!gridContainer) return;
+        
+        // Validation Check to prevent the syntax error
+        if (!gridContainer) {
+            console.error("❌ Error: Grid container not found in modal.");
+            return;
+        }
 
-        // Show loading state
+        // Reset Content
         gridContainer.innerHTML = `<div class="col-span-full text-center text-white/50 py-12"><div class="loading-spinner mb-2"></div><p>Loading latest plans...</p></div>`;
 
         try {
-            // 3. Fetch Active Plans from DB
             const { data: plans, error } = await supabase
                 .from('stripe_plans')
                 .select('*')
@@ -9618,19 +9540,14 @@ if (selectPaidBtn) {
                 return;
             }
 
-            // 4. Generate HTML for Cards
             const cardsHtml = plans.map(plan => {
-                const priceDisplay = (plan.price / 100).toFixed(0); // e.g. 25
-                
-                // Determine Style based on Plan Name or "is_popular" flag
-                // This preserves your specific styling (Blue Pop-out for Business, etc.)
+                const priceDisplay = (plan.price / 100).toFixed(0);
                 let cardClasses = "bg-white/5 border border-white/10 hover:border-purple-400 transition-all duration-300 hover:-translate-y-2";
                 let btnClass = "btn-secondary border-purple-500/50 hover:bg-purple-500/20";
                 let icon = "👤";
                 let popularBadge = "";
 
                 if (plan.name.toLowerCase().includes('business') || plan.is_popular) {
-                    // The "Pop-out" style
                     cardClasses = "bg-gradient-to-b from-blue-900/40 to-white/5 border-2 border-blue-500/50 hover:border-blue-400 transform scale-105 shadow-xl z-10 transition-all duration-300 hover:-translate-y-2";
                     btnClass = "btn-primary shadow-lg";
                     icon = "🚀";
@@ -9641,21 +9558,17 @@ if (selectPaidBtn) {
                     icon = "🏢";
                 }
 
-                // --- SMART LINK LOGIC ---
+                // Smart Link Logic
                 let targetUrl = '#';
                 if (plan.payment_link && currentUser && currentUser.id) {
                     try {
                         const url = new URL(plan.payment_link);
-                        // Attach User ID so Webhook works
                         url.searchParams.set('client_reference_id', currentUser.id);
                         if (currentUser.email) url.searchParams.set('prefilled_email', currentUser.email);
                         targetUrl = url.toString();
-                    } catch (e) {
-                        console.error("Invalid link in DB:", plan.payment_link);
-                    }
+                    } catch (e) { console.error("Invalid link:", plan.payment_link); }
                 }
 
-                // Feature List
                 const featuresHtml = (plan.features || []).map(f => 
                     `<li class="flex items-center"><span class="text-green-400 mr-2">✓</span> ${f.replace(/^"|"$/g, '')}</li>`
                 ).join('');
@@ -9670,18 +9583,15 @@ if (selectPaidBtn) {
                             <h3 class="text-xl font-bold text-white">${plan.name}</h3>
                             <p class="text-white/60 text-sm mt-1">${plan.description || 'Unlock features'}</p>
                         </div>
-                        
                         <div class="text-center mb-6">
                             <span class="text-3xl font-bold text-white">$${priceDisplay}</span>
                             <span class="text-white/50">/mo</span>
                         </div>
-
                         <ul class="text-sm text-white/70 space-y-2 mb-6 flex-grow text-left pl-2">
                             ${featuresHtml}
                         </ul>
-                        
                         <a href="${targetUrl}" target="_blank" class="btn ${btnClass} w-full py-2 text-center justify-center">
-                            Select ${plan.name}
+                             Select ${plan.name}
                         </a>
                     </div>
                 `;
@@ -9691,7 +9601,90 @@ if (selectPaidBtn) {
 
         } catch (err) {
             console.error("Error rendering modal plans:", err);
-            gridContainer.innerHTML = `<div class="col-span-full text-center text-red-400">Failed to load plans. Please try again.</div>`;
+            gridContainer.innerHTML = `<div class="col-span-full text-center text-red-400">Failed to load plans.</div>`;
+        }
+    }
+
+    // ============================================================
+    // 2. CLICK LISTENER LOGIC (Controls access to tools)
+    // ============================================================
+    function attachHomeCardListeners() {
+        const cards = document.querySelectorAll(".home-template-link");
+
+        cards.forEach((card) => {
+            // Clone to remove old listeners
+            const newCard = card.cloneNode(true);
+            card.parentNode.replaceChild(newCard, card);
+            
+            newCard.addEventListener("click", () => {
+                const templateId = newCard.dataset.templateId;
+                preFillData = newCard.dataset.preFill || "";
+
+                // Auth Check
+                if (!userLoggedIn) {
+                    showMessage("loginMessage", "Please log in to use the analysis tools.", "error");
+                    navigateTo("login");
+                    return;
+                }
+
+                // --- PREMIUM CHECK ---
+                // Uses the global 'currentUserTier' variable set by checkUserTierFromDB
+                const isPrivileged = 
+                    currentUserTier === 'premium' || 
+                    currentUserTier === 'admin';
+
+                if (isPrivileged) {
+                    console.log(`User is ${currentUserTier}. Bypassing version modal.`);
+                    currentSelectionLimit = 3; 
+                    selectedTemplateForModal = templateId; 
+                    showTemplateDetail(templateId); // Go straight to tool
+                    return; 
+                }
+
+                // --- BASIC USER FLOW ---
+                selectedTemplateForModal = templateId;                    
+                const modal = $("versionChoiceModal");
+                if (modal) {
+                    modal.style.display = 'flex';
+                    setTimeout(() => modal.classList.add('modal-open'), 10);
+                }
+            });
+        });
+
+        // --- Modal Button Listeners ---
+
+        const selectFreeBtn = $("selectFreeVersion");
+        if (selectFreeBtn) {
+            selectFreeBtn.onclick = () => {
+                currentSelectionLimit = 1; 
+                proceedFromModal();      
+            };
+        }
+
+        const selectPaidBtn = $("selectPaidVersion");
+        if (selectPaidBtn) {
+            selectPaidBtn.onclick = () => {
+                const choiceModal = $("versionChoiceModal");
+                choiceModal.classList.remove('modal-open');
+                
+                setTimeout(() => {
+                    choiceModal.style.display = 'none';
+                    
+                    // Double Check Logic
+                    const isPrivileged = 
+                        currentUserTier === 'premium' || 
+                        currentUserTier === 'admin';
+
+                    if (isPrivileged) {
+                        console.log("User is Premium. Bypassing payment.");
+                        currentSelectionLimit = 3; 
+                        proceedFromModal();      
+                    } else {
+                        console.log("User is Basic. Triggering Payment Modal.");
+                        openStripePlanModal(); // Calls the function defined above
+                    }
+                }, 300);
+            };
         }
     }
 
