@@ -27,6 +27,7 @@
     <script src="https://js.stripe.com/v3/"></script>
     <script src="https://cdn.plot.ly/plotly-3.3.0.min.js"></script>
 
+
     <style>
         /* --- THEME COLORS (CSS VARIABLES) --- */
         :root {
@@ -2978,8 +2979,9 @@
                     </div>
 
                     <div id="loggedInState" class="relative hidden">
-                        <button id="profileMenuBtn" class="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold shadow-lg border border-white/20 transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-gray-900">
+                        <button id="profileMenuBtn" class="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold shadow-lg border border-white/20 transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-gray-900 overflow-hidden">
                             <span id="userInitials">U</span>
+                            <img id="userAvatarImg" src="" alt="Profile" class="w-full h-full object-cover hidden">
                         </button>
 
                         <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-64 origin-top-right rounded-xl bg-[#1a1b26] border border-white/10 shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none backdrop-blur-xl z-50" role="menu">
@@ -3624,7 +3626,7 @@
                         <div class="text-center space-y-4">
                             <h1 class="text-4xl md:text-5xl font-extrabold text-white tracking-tight">Privacy Policy</h1>
                             <p class="text-xl text-indigo-300 font-medium tracking-wide">Your Data, Protected.</p>
-                            <p class="text-white/60 text-sm">Last Updated: October 2024</p>
+                            <p class="text-white/60 text-sm">Last Updated: November 2025</p>
                         </div>
 
                         <!-- Info Collection Grid -->
@@ -3711,21 +3713,26 @@
                             <h1 class="text-4xl md:text-5xl font-extrabold text-white tracking-tight">Terms of Service</h1>
                             <!-- Updated color class to text-indigo-300 to catch the theme variable -->
                             <p class="text-xl text-indigo-300 font-medium tracking-wide">Usage Rules & Guidelines</p>
-                            <p class="text-white/60 text-sm">Last Updated: October 2024</p>
+                            <p class="text-white/60 text-sm">Last Updated: November 2025</p>
                         </div>
 
                         <!-- Critical AI Disclaimer (Themed) -->
                         <!-- Updated bg, border, and text classes to match theme variables -->
-                        <div class="bg-indigo-500/10 p-6 rounded-xl border-l-4 border-indigo-500">
+                        <div class="bg-red-600/20 p-6 rounded-xl border-l-4 border-red-500 shadow-[0_0_25px_rgba(220,38,38,0.3)] transform transition-all hover:scale-[1.01]">
                             <div class="flex items-start gap-4">
-                                <div class="text-3xl">⚠️</div>
+                                <div class="text-4xl animate-pulse">⚠️</div>
                                 <div>
-                                    <h3 class="text-xl font-bold text-indigo-300 mb-2">1. Artificial Intelligence Disclaimer</h3>
-                                    <p class="text-white/80 text-sm leading-relaxed">
-                                        S.A.G.E. utilizes advanced Large Language Models to generate strategic content. AI can occasionally produce incorrect, biased, or "hallucinated" information. 
-                                        <strong>You acknowledge that S.A.G.E. is a decision-support tool, not a replacement for professional human judgment.</strong> 
-                                        You verify all outputs independently before making financial or strategic business decisions. We accept no liability for losses resulting from reliance on this tool.
-                                    </p>
+                                    <h3 class="text-xl font-bold text-red-300 mb-2 uppercase tracking-wider">1. Artificial Intelligence Disclaimer</h3>
+                                    <div class="text-white/90 text-sm leading-relaxed space-y-2">
+                                        <p>S.A.G.E. utilizes advanced Large Language Models to generate strategic content. AI can occasionally produce incorrect, biased, or "hallucinated" information.</p>
+                                        
+                                        <div class="bg-black/40 p-3 rounded border border-red-500/30">
+                                            <strong class="text-red-200 block">CRITICAL ACKNOWLEDGMENT:</strong>
+                                            You acknowledge that S.A.G.E. is a decision-support tool, <u>not</u> a replacement for professional human judgment.
+                                        </div>
+
+                                        <p>You verify all outputs independently before making financial or strategic business decisions. We accept no liability for losses resulting from reliance on this tool.</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -3788,7 +3795,19 @@
                         </div>
                         <div><label class="block text-sm font-medium text-gray-200 mb-2">First Name</label><input type="text" id="editProfileFirstName" class="input-field bg-black/20 border-white/20 focus:border-indigo-400"></div>
                         <div><label class="block text-sm font-medium text-gray-200 mb-2">Last Name</label><input type="text" id="editProfileLastName" class="input-field bg-black/20 border-white/20 focus:border-indigo-400"></div>
-                        <div><label class="block text-sm font-medium text-gray-200 mb-2">Avatar Image URL</label><input type="url" id="editProfileAvatarUrl" class="input-field bg-black/20 border-white/20 focus:border-indigo-400" placeholder="https://..."></div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-200 mb-2">Profile Picture</label>
+                            <div class="input-file-wrapper">
+                                <label for="editProfileAvatarFile" id="editProfileFileLabel" class="input-file-btn">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload mr-2" viewBox="0 0 16 16">
+                                        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+                                        <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/>
+                                    </svg>
+                                    <span class="file-name">Choose image...</span>
+                                </label>
+                                <input type="file" id="editProfileAvatarFile" class="input-file" accept="image/*">
+                            </div>
+                        </div>
                         <div id="editProfileMessage" class="hidden text-center text-sm font-bold p-2 rounded"></div>
                         <button id="saveProfileBtn" class="btn btn-primary w-full mt-4 shadow-lg"><span id="saveProfileBtnText">Save Changes</span><span id="saveProfileSpinner" class="loading-spinner hidden ml-2"></span></button>
                     </div>
@@ -4483,6 +4502,32 @@ document.addEventListener("DOMContentLoaded", () => {
         db: { schema: 'publicv2' }
     });
 
+    // --- FIX: Manage Subscription Button Logic ---
+    const manageSubBtn = document.getElementById("manageSubscriptionLink");
+    
+    if (manageSubBtn) {
+        manageSubBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            
+            // 1. Close the profile dropdown so it doesn't stay open
+            const dropdown = document.getElementById("profileDropdown");
+            if (dropdown) dropdown.classList.add("hidden");
+            
+            // 2. Navigate to the "subscriptionInfo" div
+            navigateTo("subscriptionInfo");
+            
+            // 3. Trigger the data fetch function (defined around line 2276)
+            // This ensures the spinner is replaced by actual Stripe data
+            if (typeof fetchAndRenderSubscriptionPage === 'function') {
+                fetchAndRenderSubscriptionPage();
+            } else {
+                console.error("fetchAndRenderSubscriptionPage function not found");
+            }
+        });
+    }
+
+    
+
     // --- GLOBAL DOWNLOAD HELPER (Uses Python Backend) ---
     window.triggerBackendDownload = async function(category, filename) {
         // Construct the backend URL
@@ -4591,6 +4636,31 @@ document.addEventListener("DOMContentLoaded", () => {
     let currentUserUsage = 0;
     const maxUsage = 3;
 
+    // --- NEW: File Input Listener for Profile Picture ---
+    const avatarInput = document.getElementById("editProfileAvatarFile");
+    if (avatarInput) {
+        avatarInput.addEventListener("change", (e) => {
+            const label = document.getElementById("editProfileFileLabel");
+            const fileNameSpan = label.querySelector(".file-name");
+            
+            if (e.target.files.length > 0) {
+                fileNameSpan.textContent = e.target.files[0].name;
+                label.classList.add("has-file");
+
+                // Instant preview in the modal circle
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    // Uses your existing helper function to update the circle
+                    updateModalPreview(null, null, evt.target.result);
+                }
+                reader.readAsDataURL(e.target.files[0]);
+            } else {
+                fileNameSpan.textContent = "Choose image...";
+                label.classList.remove("has-file");
+            }
+        });
+    }
+
     // --- EDIT PROFILE LOGIC ---
     const editProfileModal = document.getElementById("editProfileModal");
     const openEditProfileBtn = document.getElementById("openEditProfileBtn");
@@ -4600,15 +4670,36 @@ document.addEventListener("DOMContentLoaded", () => {
     if (openEditProfileBtn) {
         openEditProfileBtn.addEventListener("click", (e) => {
             e.preventDefault();
-            document.getElementById("profileDropdown").classList.add("hidden");
+            const dropdown = document.getElementById("profileDropdown");
+            if (dropdown) dropdown.classList.add("hidden");
+            
             if (!currentUser) return;
 
             const meta = currentUser.user_metadata || {};
-            document.getElementById("editProfileFirstName").value = meta.first_name || "";
-            document.getElementById("editProfileLastName").value = meta.last_name || "";
-            document.getElementById("editProfileAvatarUrl").value = meta.avatar_url || "";
+            
+            // 1. Populate Text Fields
+            const firstNameInput = document.getElementById("editProfileFirstName");
+            const lastNameInput = document.getElementById("editProfileLastName");
+            
+            if(firstNameInput) firstNameInput.value = meta.first_name || "";
+            if(lastNameInput) lastNameInput.value = meta.last_name || "";
 
+            // 2. REMOVED: The line causing the error (editProfileAvatarUrl.value = ...)
+            
+            // 3. Reset the File Input Visuals (New Logic)
+            const fileInput = document.getElementById("editProfileAvatarFile");
+            const fileLabel = document.getElementById("editProfileFileLabel");
+            if (fileInput) fileInput.value = ""; // Clear previous selection
+            if (fileLabel) {
+                const span = fileLabel.querySelector(".file-name");
+                if (span) span.textContent = "Choose image...";
+                fileLabel.classList.remove("has-file");
+            }
+
+            // 4. Show Current Avatar in Preview
             updateModalPreview(meta.first_name, meta.last_name, meta.avatar_url);
+            
+            // 5. Open Modal
             editProfileModal.style.display = 'flex';
             setTimeout(() => editProfileModal.classList.add('modal-open'), 10);
         });
@@ -4644,15 +4735,16 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+    // --- REPLACEMENT: Save Profile with Image Upload ---
     if (saveProfileBtn) {
         saveProfileBtn.addEventListener("click", async () => {
             const firstName = document.getElementById("editProfileFirstName").value.trim();
             const lastName = document.getElementById("editProfileLastName").value.trim();
-            const avatarUrl = document.getElementById("editProfileAvatarUrl").value.trim();
+            const avatarFile = document.getElementById("editProfileAvatarFile").files[0]; // Get the file
             const msgEl = document.getElementById("editProfileMessage");
             
             saveProfileBtn.disabled = true;
-            document.getElementById("saveProfileBtnText").textContent = "Saving...";
+            document.getElementById("saveProfileBtnText").textContent = "Uploading...";
             document.getElementById("saveProfileSpinner").classList.remove("hidden");
             msgEl.className = "hidden";
 
@@ -4660,29 +4752,57 @@ document.addEventListener("DOMContentLoaded", () => {
                 const { data: { session } } = await supabase.auth.getSession();
                 if (!session) throw new Error("Not logged in.");
 
-                // 1. Update Auth Metadata
-                const { data: authData, error: authError } = await supabase.auth.updateUser({
-                    data: { first_name: firstName, last_name: lastName, avatar_url: avatarUrl }
-                });
+                let publicAvatarUrl = null;
+
+                // 1. Upload Image to Supabase Storage (if file exists)
+                if (avatarFile) {
+                    const fileExt = avatarFile.name.split('.').pop();
+                    const fileName = `profile-${Date.now()}.${fileExt}`;
+                    // Path format: user_id/filename (Best practice for RLS)
+                    const filePath = `${session.user.id}/${fileName}`;
+
+                    const { error: uploadError } = await supabase.storage
+                        .from('avatars') // Ensure you created this bucket in Supabase
+                        .upload(filePath, avatarFile, { upsert: true });
+
+                    if (uploadError) throw uploadError;
+
+                    // Get public URL
+                    const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(filePath);
+                    publicAvatarUrl = urlData.publicUrl;
+                }
+
+                // 2. Prepare Updates
+                const updates = { first_name: firstName, last_name: lastName };
+                if (publicAvatarUrl) {
+                    updates.avatar_url = publicAvatarUrl;
+                }
+
+                // 3. Update Auth Metadata
+                const { data: authData, error: authError } = await supabase.auth.updateUser({ data: updates });
                 if (authError) throw authError;
 
-                // 2. Update Public Database
+                // 4. Update Public Users Table
                 const { error: dbError } = await supabase
                     .from('users')
-                    .update({ first_name: firstName, last_name: lastName }) // Add avatar_url here if column exists
+                    .update(updates)
                     .eq('auth_user_id', session.user.id);
                 
                 if (dbError) console.warn("DB sync warning:", dbError);
 
+                // 5. Update UI
                 currentUser = authData.user;
-                updateNavBar();
+                updateNavBar(); // Will now use the new image logic
                 
-                msgEl.textContent = "Profile updated!";
+                msgEl.textContent = "Profile updated successfully!";
                 msgEl.className = "text-green-400 bg-green-900/20 p-2 rounded block mb-2";
                 
                 setTimeout(() => {
-                    editProfileModal.classList.remove('modal-open');
-                    setTimeout(() => editProfileModal.style.display = 'none', 300);
+                    const modal = document.getElementById("editProfileModal");
+                    modal.classList.remove('modal-open');
+                    setTimeout(() => modal.style.display = 'none', 300);
+                    
+                    // Reset Button State
                     saveProfileBtn.disabled = false;
                     document.getElementById("saveProfileBtnText").textContent = "Save Changes";
                     document.getElementById("saveProfileSpinner").classList.add("hidden");
@@ -6286,21 +6406,19 @@ document.addEventListener("DOMContentLoaded", () => {
         
         const dropdownName = document.getElementById("dropdownName");
         const dropdownEmail = document.getElementById("dropdownEmail");
+    
+    // NEW: References for Avatar logic
         const userInitials = document.getElementById("userInitials");
+    const userAvatarImg = document.getElementById("userAvatarImg");
         
-        // The Admin link is now inside the dropdown
         const dropdownAdminLink = document.getElementById("dropdownAdminLink"); 
         const adminIndicator = document.getElementById("adminModeIndicator");
 
-        // Also handle mobile menu visibility if you want to hide "Sign In" on mobile when logged in
-        // (Optional based on your preference, but good for UX)
-
         if (userLoggedIn && currentUser) {
-            // 1. Show Profile Circle, Hide Login Button
             if(loggedOutState) loggedOutState.classList.add('hidden');
             if(loggedInState) loggedInState.classList.remove('hidden');
 
-            // 2. Populate User Details
+            // Populate User Details
             const email = currentUser.email || "";
             const meta = currentUser.user_metadata || {};
             const firstName = meta.first_name || "";
@@ -6311,10 +6429,18 @@ document.addEventListener("DOMContentLoaded", () => {
             } else {
                 if(dropdownName) dropdownName.textContent = email.split('@')[0];
             }
-
             if(dropdownEmail) dropdownEmail.textContent = email;
 
-            // Initials
+        // --- NEW: AVATAR LOGIC ---
+        const avatarUrl = meta.avatar_url;
+
+        if (avatarUrl && userAvatarImg) {
+            // Show Image, Hide Initials
+            userAvatarImg.src = avatarUrl;
+            userAvatarImg.classList.remove("hidden");
+            if(userInitials) userInitials.classList.add("hidden");
+        } else {
+            // Show Initials, Hide Image
             let initials = "U";
             if (firstName) {
                 initials = firstName.charAt(0).toUpperCase();
@@ -6322,9 +6448,14 @@ document.addEventListener("DOMContentLoaded", () => {
             } else if (email) {
                 initials = email.substring(0, 2).toUpperCase();
             }
-            if(userInitials) userInitials.textContent = initials;
+            if(userInitials) {
+                userInitials.textContent = initials;
+                userInitials.classList.remove("hidden");
+            }
+            if(userAvatarImg) userAvatarImg.classList.add("hidden");
+        }
 
-            // 3. Admin Check (Toggle link in dropdown)
+        // Admin Check
             const isAdmin = currentUser.app_metadata?.role === 'admin' || currentUser.app_metadata?.tier === 'admin';
             
             if (dropdownAdminLink) {
@@ -6336,39 +6467,17 @@ document.addEventListener("DOMContentLoaded", () => {
                     dropdownAdminLink.classList.remove('block');
                 }
             }
-            
             if (adminIndicator) {
                 adminIndicator.style.display = isAdmin ? "block" : "none";
             }
 
         } else { 
-            // LOGGED OUT
             if(loggedOutState) loggedOutState.classList.remove('hidden');
             if(loggedInState) loggedInState.classList.add('hidden');
-            
             if(adminIndicator) adminIndicator.style.display = "none";
         }
         
         attachNavLinkListeners();
-    }
-
-    // --- Listener for the "Manage Subscription" link (UPDATED) ---
-    const manageSubBtn = document.getElementById("manageSubscriptionLink");
-    
-    if (manageSubBtn) {
-        manageSubBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            
-            // 1. Close the profile dropdown
-            const dropdown = document.getElementById("profileDropdown");
-            if(dropdown) dropdown.classList.add("hidden");
-
-            // 2. Navigate to the new local Subscription Page
-            navigateTo("subscriptionInfo");
-
-            // 3. Trigger the data fetch
-            fetchAndRenderSubscriptionPage();
-        });
     }
 
    /**
@@ -25607,8 +25716,8 @@ function createFactorAnalysisLayout(template) {
                         </div>
                     </div>`;
 
-        // Attach event listeners
-        $("generateBtn").addEventListener("click", handleFactorAnalysis);
+        // --- Changed from handleFactorAnalysis to handleGenerate ---
+        $("generateBtn").addEventListener("click", handleGenerate); 
         reattachActionListeners();
 
         // Restore from cache or set default
@@ -25668,8 +25777,6 @@ function createFactorAnalysisLayout(template) {
                             console.error("navigateTo function is not defined.");
                         }
                     });
-                } else {
-                    console.warn("Feedback link not found inside createFactorAnalysisLayout");
                 }
 }
 
