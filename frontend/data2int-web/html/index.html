@@ -6529,6 +6529,20 @@ function createAdminDashboardTabs() {
     const dashboardContainer = document.getElementById("adminDashboard");
     if (!dashboardContainer) return;
 
+    // --- ADDED: Rate Fetcher (Invisible, does not affect layout) ---
+    if (!window.exchangeRates) {
+        window.exchangeRates = null; 
+        fetch('https://open.er-api.com/v6/latest/USD')
+            .then(res => res.json())
+            .then(data => {
+                console.log("💱 Rates Fetched");
+                window.exchangeRates = data.rates;
+                if (window.lastOverviewData) renderOverviewTab(window.lastOverviewData);
+            })
+            .catch(console.error);
+    }
+    // ---------------------------------------------------------------
+
     dashboardContainer.innerHTML = '';
 
     const dashboardHTML = `
@@ -6665,7 +6679,6 @@ function createAdminDashboardTabs() {
 
     dashboardContainer.innerHTML = dashboardHTML;
 
-    // Re-attach listeners
     const refreshBtn = document.getElementById("refreshStatsBtn");
     if (refreshBtn) {
         refreshBtn.addEventListener("click", () => {
@@ -6697,7 +6710,6 @@ function createAdminDashboardTabs() {
     setupSidebarLogic();
     if(typeof fetchAndDisplayStatistics === 'function') fetchAndDisplayStatistics();
 
-    // Force visibility of default tab
     setTimeout(() => {
         const defaultPanel = document.getElementById("dbStatsPanel");
         if (defaultPanel) {
@@ -8276,6 +8288,10 @@ function renderSubscriptionsTab() {
     const panel = document.getElementById("subscriptionsPanel");
     if (!panel) return;
 
+    // Get persisted currency (Default CAD)
+    const storedCurrency = window.currentSelectedCurrency || 'CAD';
+    const isSel = (cur) => cur === storedCurrency ? 'selected' : '';
+
     // 1. Build the UI
     panel.innerHTML = `
         <div class="glass-container p-6">
@@ -8295,13 +8311,25 @@ function renderSubscriptionsTab() {
 
             <div id="sub-overview" class="sub-panel block animate-fadeIn">
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                    <div class="bg-white/5 p-4 rounded-lg border border-white/10">
+                    
+                    <div class="bg-white/5 p-4 rounded-lg border border-white/10 relative group hover:border-indigo-500/50 transition-colors">
                         <div class="flex justify-between items-start mb-2">
                             <div class="p-2 bg-indigo-500/20 rounded text-indigo-300 text-xl">$</div>
+                            
+                            <select id="adminCurrencySelect" class="bg-black/40 text-xs text-white/90 border border-white/10 rounded px-2 py-1 focus:outline-none focus:border-indigo-500 cursor-pointer hover:bg-black/60 transition-colors z-20">
+                                <option value="CAD" ${isSel('CAD')}>🇨🇦 CAD</option>
+                                <option value="USD" ${isSel('USD')}>🇺🇸 USD</option>
+                                <option value="SGD" ${isSel('SGD')}>🇸🇬 SGD</option>
+                                <option value="EUR" ${isSel('EUR')}>🇪🇺 EUR</option>
+                                <option value="GBP" ${isSel('GBP')}>🇬🇧 GBP</option>
+                                <option value="AUD" ${isSel('AUD')}>🇦🇺 AUD</option>
+                                <option value="JPY" ${isSel('JPY')}>🇯🇵 JPY</option>
+                            </select>
                         </div>
                         <p class="text-sm text-white/60">Monthly Revenue (MRR)</p>
                         <h3 id="overviewMRR" class="text-2xl font-bold mt-1">--</h3>
                     </div>
+
                     <div class="bg-white/5 p-4 rounded-lg border border-white/10">
                         <div class="flex justify-between items-start mb-2">
                             <div class="p-2 bg-blue-500/20 rounded text-blue-300 text-xl">💳</div>
@@ -8362,7 +8390,7 @@ function renderSubscriptionsTab() {
                             </tr>
                         </thead>
                         <tbody id="fullTransactionsTable">
-                            <tr><td colspan="6" class="p-10 text-center text-white/40">Loading transactions...</td></tr>
+                             <tr><td colspan="6" class="p-10 text-center text-white/40">Loading transactions...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -8421,12 +8449,17 @@ function renderSubscriptionsTab() {
         </div>
     `;
 
-    // 2. Setup Sub-Tab Switching Logic
     setupSubscriptionSubTabLogic();
 
-    // 3. Attach Listeners
-    
-    // Attach Search/Refresh Listeners for Subscriptions
+    // Attach Listener for new dropdown
+    const currencySelect = document.getElementById("adminCurrencySelect");
+    if (currencySelect) {
+        currencySelect.addEventListener("change", () => {
+            window.currentSelectedCurrency = currencySelect.value;
+            if (window.lastOverviewData) renderOverviewTab(window.lastOverviewData);
+        });
+    }
+
     const subSearch = document.getElementById("subscriptionSearch");
     const subFilter = document.getElementById("subscriptionStatusFilter");
     const subRefresh = document.getElementById("refreshSubsBtn");
@@ -8435,17 +8468,14 @@ function renderSubscriptionsTab() {
     if (subFilter) subFilter.addEventListener("change", () => fetchAndRenderSubscriptions('subscriptions'));
     if (subRefresh) subRefresh.addEventListener("click", () => fetchAndRenderSubscriptions('subscriptions'));
 
-    // Attach Listeners for Transactions
     const transRefresh = document.getElementById("refreshTransBtn");
     if (transRefresh) transRefresh.addEventListener("click", () => fetchAndRenderSubscriptions('transactions'));
 
-    // Attach Listeners for Customers
     const custSearch = document.getElementById("customerSearch");
     const custRefresh = document.getElementById("refreshCustBtn");
     if (custSearch) custSearch.addEventListener("input", debounce(() => fetchAndRenderSubscriptions('customers'), 500));
     if (custRefresh) custRefresh.addEventListener("click", () => fetchAndRenderSubscriptions('customers'));
 
-    // 4. Load Default Tab (Overview)
     fetchAndRenderSubscriptions('overview');
 }
 
@@ -8510,8 +8540,17 @@ async function fetchAndRenderSubscriptions(tabName = 'overview', page = 1) {
             if (search) params.append('search', search);
         }
 
+        // --- DYNAMIC ENDPOINT SELECTION ---
+        let endpointUrl = `https://supabase.sageaios.com/functions/v1/admin-subscriptions-secure?${params.toString()}`;
+
+        // If we are on the overview tab, use our new analytics function for the 12-month data
+        if (tabName === 'overview') {
+            endpointUrl = `https://supabase.sageaios.com/functions/v1/stripe-analytics`;
+        }
+        // ----------------------------------
+
         // Call Edge Function
-        const response = await fetch(`https://supabase.sageaios.com/functions/v1/admin-subscriptions-secure?${params.toString()}`, {
+        const response = await fetch(endpointUrl, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -8542,170 +8581,355 @@ async function fetchAndRenderSubscriptions(tabName = 'overview', page = 1) {
 
     } catch (error) {
         console.error("Dashboard Fetch Error:", error);
+        
+        // Optional: Reset button state on error so it doesn't stay stuck on "..."
+        const refreshBtnId = tabName === 'transactions' ? 'refreshTransBtn' : 
+                             tabName === 'customers' ? 'refreshCustBtn' : 'refreshSubsBtn';
+        const refreshBtn = document.getElementById(refreshBtnId);
+        if (refreshBtn) {
+             refreshBtn.textContent = "Error";
+             setTimeout(() => {
+                 refreshBtn.disabled = false; 
+                 refreshBtn.textContent = "🔄 Refresh";
+             }, 2000);
+        }
     }
 }
 
 /**
  * Renders the specific Subscriptions List table
  */
-function renderSubscriptionsTable(container, subs, pagination) {
-    if (!container) return;
+function renderSubscriptionsTab() {
+    const panel = document.getElementById("subscriptionsPanel");
+    if (!panel) return;
 
-    // 1. Better Empty State
-    if (!subs || subs.length === 0) {
-        container.innerHTML = `
-            <div class="flex flex-col items-center justify-center p-10 text-white/60">
-                <div class="text-4xl mb-3 opacity-50">📭</div>
-                <h4 class="text-lg font-medium">No Subscriptions Found</h4>
-                <p class="text-sm">Try adjusting your filters or syncing data.</p>
-            </div>`;
-        return;
-    }
+    // 1. Get persisted currency or default to CAD
+    const storedCurrency = window.currentSelectedCurrency || 'CAD';
+    const isSel = (cur) => cur === storedCurrency ? 'selected' : '';
 
-    // 2. Render Table
-    let tableHtml = `
-        <table class="w-full text-left styled-table text-xs">
-            <thead>
-                <tr>
-                    <th class="p-3">Status</th>
-                    <th class="p-3">Customer</th>
-                    <th class="p-3">Product Detail</th>
-                    <th class="p-3">Price</th>
-                    <th class="p-3">Dates (Start / End)</th>
-                    <th class="p-3">Renewal</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
-
-    subs.forEach(sub => {
-        const badgeStyle = sub.status === 'active' ? 'bg-green-500/20 text-green-400 border-green-500/30' : 
-                           sub.status === 'canceled' ? 'bg-gray-500/20 text-gray-400 border-gray-500/30' :
-                           'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
-
-        // --- FIX: Multiply timestamps by 1000 ---
-        // Handle cases where date might be null or undefined
-        const startDate = sub.current_period_start ? new Date(sub.current_period_start * 1000).toLocaleDateString() : 'N/A';
-        const endDate = sub.current_period_end ? new Date(sub.current_period_end * 1000).toLocaleDateString() : 'N/A';
-
-        tableHtml += `
-            <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
-                <td class="p-3"><span class="px-2 py-1 rounded text-xs border ${badgeStyle}">${sub.status}</span></td>
-                <td class="p-3">
-                    <div class="font-bold text-white">${sub.customer_email || "Unknown Email"}</div>
-                    <div class="text-xs text-white/50 font-mono">${sub.stripe_subscription_id ? sub.stripe_subscription_id.slice(0, 14) + '...' : 'N/A'}</div>
-                </td>
-                <td class="p-3">
-                    <div class="font-medium text-indigo-300">${sub.product_name || "Standard Plan"}</div>
-                    <div class="text-xs text-white/60 truncate max-w-[150px]">${sub.product_desc || ""}</div>
-                </td>
-                <td class="p-3 text-white font-bold">
-                    $${((sub.plan_amount || 0) / 100).toFixed(2)} <span class="text-xs font-normal text-white/60">/${sub.plan_interval}</span>
-                </td>
-                <td class="p-3 text-white/80">
-                    <div><span class="text-white/50">Start:</span> ${startDate}</div>
-                    <div><span class="text-white/50">End:</span> ${endDate}</div>
-                </td>
-                <td class="p-3 text-xs">
-                    ${sub.cancel_at_period_end ? '<span class="text-yellow-400">Cancels at end</span>' : '<span class="text-green-400">Auto-renews</span>'}
-                </td>
-            </tr>
-        `;
-    });
-    tableHtml += `</tbody></table>`;
-
-    // 3. Add Pagination Controls (Keep existing logic)
-    if (pagination && pagination.totalPages > 1) {
-        tableHtml += `
-            <div class="flex justify-between items-center mt-4 px-2">
-                <span class="text-xs text-white/50">Page ${pagination.page} of ${pagination.totalPages}</span>
-                <div class="flex gap-2">
-                    <button class="btn btn-secondary text-xs py-1 px-3" 
-                        ${pagination.page <= 1 ? 'disabled' : ''} 
-                        onclick="fetchAndRenderSubscriptions('subscriptions', ${pagination.page - 1})">
-                        Previous
-                    </button>
-                    <button class="btn btn-secondary text-xs py-1 px-3" 
-                        ${pagination.page >= pagination.totalPages ? 'disabled' : ''} 
-                        onclick="fetchAndRenderSubscriptions('subscriptions', ${pagination.page + 1})">
-                        Next
-                    </button>
+    panel.innerHTML = `
+        <div class="glass-container p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold">Payments Dashboard</h2>
+                <div class="text-sm text-white/60 italic">
+                    Read-only view (Mirroring Stripe)
                 </div>
             </div>
-        `;
+
+            <div class="flex space-x-6 border-b border-white/10 mb-6" id="subTabsNav">
+                <button class="sub-tab-btn active pb-2 border-b-2 border-indigo-400 font-medium text-white" data-target="overview">Overview</button>
+                <button class="sub-tab-btn pb-2 border-b-2 border-transparent text-white/60 hover:text-white transition-all" data-target="transactions">Transactions</button>
+                <button class="sub-tab-btn pb-2 border-b-2 border-transparent text-white/60 hover:text-white transition-all" data-target="subscriptions">Subscriptions</button>
+                <button class="sub-tab-btn pb-2 border-b-2 border-transparent text-white/60 hover:text-white transition-all" data-target="customers">Customers</button>
+            </div>
+
+            <div id="sub-overview" class="sub-panel block animate-fadeIn">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                    
+                    <div class="bg-white/5 p-4 rounded-lg border border-white/10 relative group hover:border-indigo-500/50 transition-colors">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="p-2 bg-indigo-500/20 rounded text-indigo-300 text-xl">$</div>
+                            
+                            <select id="adminCurrencySelect" class="bg-black/40 text-xs text-white/90 border border-white/10 rounded px-2 py-1 focus:outline-none focus:border-indigo-500 cursor-pointer hover:bg-black/60 transition-colors z-20">
+                                <option value="CAD" ${isSel('CAD')}>🇨🇦 CAD</option>
+                                <option value="USD" ${isSel('USD')}>🇺🇸 USD</option>
+                                <option value="SGD" ${isSel('SGD')}>🇸🇬 SGD</option>
+                                <option value="EUR" ${isSel('EUR')}>🇪🇺 EUR</option>
+                                <option value="GBP" ${isSel('GBP')}>🇬🇧 GBP</option>
+                                <option value="AUD" ${isSel('AUD')}>🇦🇺 AUD</option>
+                                <option value="JPY" ${isSel('JPY')}>🇯🇵 JPY</option>
+                            </select>
+                        </div>
+                        <p class="text-sm text-white/60">Monthly Revenue (MRR)</p>
+                        <h3 id="overviewMRR" class="text-2xl font-bold mt-1">--</h3>
+                    </div>
+
+                    <div class="bg-white/5 p-4 rounded-lg border border-white/10">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="p-2 bg-blue-500/20 rounded text-blue-300 text-xl">💳</div>
+                        </div>
+                        <p class="text-sm text-white/60">Active Subscriptions</p>
+                        <h3 id="overviewActiveSubs" class="text-2xl font-bold mt-1">--</h3>
+                    </div>
+                    <div class="bg-white/5 p-4 rounded-lg border border-white/10">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="p-2 bg-purple-500/20 rounded text-purple-300 text-xl">👥</div>
+                        </div>
+                        <p class="text-sm text-white/60">Total Customers</p>
+                        <h3 id="overviewCustomers" class="text-2xl font-bold mt-1">--</h3>
+                    </div>
+                    <div class="bg-white/5 p-4 rounded-lg border border-white/10">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="p-2 bg-pink-500/20 rounded text-pink-300 text-xl">📈</div>
+                        </div>
+                        <p class="text-sm text-white/60">Avg. Order Value</p>
+                        <h3 id="overviewAOV" class="text-2xl font-bold mt-1">--</h3>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                    <div class="lg:col-span-2 bg-white/5 p-4 rounded-lg border border-white/10">
+                        <h3 class="text-lg font-bold mb-4">Revenue Growth (12 Months)</h3>
+                        <div id="mrrTrendChart" class="w-full h-[300px]"></div>
+                    </div>
+                    
+                    <div class="lg:col-span-1 bg-white/5 p-4 rounded-lg border border-white/10 flex flex-col">
+                        <h3 class="text-lg font-bold mb-4">Recent Activity</h3>
+                        <div class="overflow-y-auto flex-grow max-h-[300px]">
+                            <table class="w-full text-left text-sm">
+                                <tbody id="overviewTransactionsTable">
+                                    <tr><td class="p-4 text-center text-white/40 italic">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="sub-transactions" class="sub-panel hidden animate-fadeIn">
+                 <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold">Transaction History</h3>
+                    <button id="refreshTransBtn" class="btn btn-secondary text-xs">🔄 Refresh</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left styled-table text-sm">
+                        <thead>
+                            <tr>
+                                <th class="p-3">Status</th>
+                                <th class="p-3">Amount</th>
+                                <th class="p-3">Method</th>
+                                <th class="p-3">Customer Email</th>
+                                <th class="p-3">Date</th>
+                                <th class="p-3">ID</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fullTransactionsTable">
+                             <tr><td colspan="6" class="p-10 text-center text-white/40">Loading transactions...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="sub-subscriptions" class="sub-panel hidden animate-fadeIn">
+                <div class="flex flex-col md:flex-row gap-4 mb-6">
+                    <div class="flex-grow">
+                        <input type="text" id="subscriptionSearch" class="input-field" placeholder="Search email, ID, or product...">
+                    </div>
+                    <div class="flex-shrink-0">
+                        <select id="subscriptionStatusFilter" class="input-field">
+                            <option value="">All Statuses</option>
+                            <option value="active">Active</option>
+                            <option value="past_due">Past Due</option>
+                            <option value="canceled">Canceled</option>
+                            <option value="trialing">Trialing</option>
+                        </select>
+                    </div>
+                    <div class="flex-shrink-0">
+                         <button id="refreshSubsBtn" class="btn btn-secondary h-full">🔄 Refresh</button>
+                    </div>
+                </div>
+                <div id="subscriptionTableContainer" class="overflow-x-auto min-h-[300px]">
+                    <div class="flex items-center justify-center p-10">
+                        <div class="loading-spinner mr-3"></div>
+                        <span class="text-white/80">Loading subscription data...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="sub-customers" class="sub-panel hidden animate-fadeIn">
+                <div class="flex flex-col md:flex-row gap-4 mb-6">
+                    <div class="flex-grow">
+                        <input type="text" id="customerSearch" class="input-field" placeholder="Search customer email...">
+                    </div>
+                    <div class="flex-shrink-0">
+                         <button id="refreshCustBtn" class="btn btn-secondary h-full">🔄 Refresh</button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left styled-table text-sm">
+                        <thead>
+                            <tr>
+                                <th class="p-3">Email</th>
+                                <th class="p-3">Customer ID</th>
+                                <th class="p-3">Created At</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customersTable">
+                            <tr><td colspan="3" class="p-10 text-center text-white/40">Loading customers...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    `;
+
+    setupSubscriptionSubTabLogic();
+
+    // Add Listener for the new dropdown
+    const currencySelect = document.getElementById("adminCurrencySelect");
+    if (currencySelect) {
+        currencySelect.addEventListener("change", () => {
+            window.currentSelectedCurrency = currencySelect.value;
+            if (window.lastOverviewData) {
+                renderOverviewTab(window.lastOverviewData);
+            }
+        });
     }
 
-    container.innerHTML = tableHtml;
+    // Re-attach other listeners (search, filter, refresh)
+    const subSearch = document.getElementById("subscriptionSearch");
+    const subFilter = document.getElementById("subscriptionStatusFilter");
+    const subRefresh = document.getElementById("refreshSubsBtn");
+    if (subSearch) subSearch.addEventListener("input", debounce(() => fetchAndRenderSubscriptions('subscriptions'), 500));
+    if (subFilter) subFilter.addEventListener("change", () => fetchAndRenderSubscriptions('subscriptions'));
+    if (subRefresh) subRefresh.addEventListener("click", () => fetchAndRenderSubscriptions('subscriptions'));
+
+    const transRefresh = document.getElementById("refreshTransBtn");
+    if (transRefresh) transRefresh.addEventListener("click", () => fetchAndRenderSubscriptions('transactions'));
+
+    const custSearch = document.getElementById("customerSearch");
+    const custRefresh = document.getElementById("refreshCustBtn");
+    if (custSearch) custSearch.addEventListener("input", debounce(() => fetchAndRenderSubscriptions('customers'), 500));
+    if (custRefresh) custRefresh.addEventListener("click", () => fetchAndRenderSubscriptions('customers'));
+
+    // Load data
+    fetchAndRenderSubscriptions('overview');
 }
 
 function renderOverviewTab(data) {
-    // 1. Update Cards
+    window.lastOverviewData = data;
+
+    const currencySelect = document.getElementById("adminCurrencySelect");
+    const targetCurrency = currencySelect ? currencySelect.value : (window.currentSelectedCurrency || 'CAD');
+
+    const getRate = (currencyCode) => {
+        if (window.exchangeRates && window.exchangeRates[currencyCode]) {
+            return window.exchangeRates[currencyCode];
+        }
+        const FALLBACKS = { 'USD': 1.0, 'CAD': 1.40, 'SGD': 1.35, 'EUR': 0.92, 'GBP': 0.79, 'AUD': 1.55, 'JPY': 150.0 };
+        return FALLBACKS[currencyCode] || 1.0;
+    };
+
+    const convert = (amount, sourceCurrency) => {
+        if (!amount) return 0;
+        if (sourceCurrency === targetCurrency) return amount;
+        
+        const sourceRate = getRate(sourceCurrency); 
+        const targetRate = getRate(targetCurrency); 
+        
+        const amountInUSD = amount / sourceRate;
+        return amountInUSD * targetRate;
+    };
+
     if (data.stats) {
-        const { mrr, active_count, total_customers, avg_order_value } = data.stats;
-        document.getElementById("overviewMRR").textContent = `$${(mrr / 100).toFixed(2)}`;
-        document.getElementById("overviewActiveSubs").textContent = active_count;
-        document.getElementById("overviewCustomers").textContent = total_customers;
-        document.getElementById("overviewAOV").textContent = `$${avg_order_value}`;
+        const { mrr, active_count, total_customers, avg_order_value, currency } = data.stats;
+        const sourceCurrency = currency || 'USD'; 
+
+        const convertedMRR = convert(mrr / 100, sourceCurrency);
+        const convertedAOV = convert(parseFloat(avg_order_value), sourceCurrency);
+
+        const mrrEl = document.getElementById("overviewMRR");
+        if (mrrEl) mrrEl.textContent = convertedMRR.toLocaleString('en-US', { style: 'currency', currency: targetCurrency });
+        
+        const aovEl = document.getElementById("overviewAOV");
+        if (aovEl) aovEl.textContent = convertedAOV.toLocaleString('en-US', { style: 'currency', currency: targetCurrency });
+
+        const activeEl = document.getElementById("overviewActiveSubs");
+        if (activeEl) activeEl.textContent = active_count;
+
+        const custEl = document.getElementById("overviewCustomers");
+        if (custEl) custEl.textContent = total_customers;
     }
 
-    // 2. Render Revenue Trend Chart (New)
     if (data.trend && document.getElementById("mrrTrendChart")) {
-        const xValues = data.trend.map(t => t.month);
-        const yValues = data.trend.map(t => t.mrr);
+        const sourceCurrency = data.stats.currency || 'USD';
+
+        let xValues = data.trend.map(t => t.month);
+        let yValues = data.trend.map(t => convert(t.mrr, sourceCurrency));
+
+        // --- DYNAMIC JPY/CURRENCY SCALING ---
+        const maxRevenue = Math.max(...yValues, 0);
+        
+        // 1. Determine Scale: "High Value" currencies (JPY) need bigger steps
+        const isHighValue = ['JPY', 'KRW', 'VND'].includes(targetCurrency);
+        
+        // 2. Set Milestone Step: 100,000 for JPY, 1,000 for others
+        const milestoneStep = isHighValue ? 100000 : 1000;
+
+        // 3. Calculate Ceiling (Round up to next milestone)
+        const yAxisMax = (Math.floor(maxRevenue / milestoneStep) + 1) * milestoneStep;
+        // ------------------------------------
+
+        const monthsNeeded = 12 - xValues.length;
+        if (monthsNeeded > 0) {
+            const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            let currentFirstMonthIndex = monthNames.indexOf(xValues[0]);
+            if (currentFirstMonthIndex === -1) currentFirstMonthIndex = 0;
+
+            for (let i = 1; i <= monthsNeeded; i++) {
+                let prevIndex = (currentFirstMonthIndex - i + 12) % 12;
+                xValues.unshift(monthNames[prevIndex]);
+                yValues.unshift(0);
+            }
+        }
 
         const trace = {
             x: xValues,
             y: yValues,
             type: 'scatter',
-            mode: 'lines+markers',
-            fill: 'tozeroy', // Creates the area chart effect
-            line: { color: '#8E2DE2', width: 3, shape: 'spline' }, // Smooth purple line
-            marker: { color: '#ffffff', size: 6, line: { color: '#8E2DE2', width: 2 } }
+            mode: 'lines', 
+            fill: 'tozeroy', 
+            fillcolor: 'rgba(167, 139, 250, 0.1)', 
+            line: { color: '#A78BFA', width: 3, shape: 'spline', smoothing: 1.3 },
+            hovertemplate: `<b>%{x}</b><br>Revenue: %{y:$.2f} ${targetCurrency}<extra></extra>` 
         };
 
         const layout = {
             paper_bgcolor: 'rgba(0,0,0,0)',
             plot_bgcolor: 'rgba(0,0,0,0)',
-            font: { color: 'rgba(255,255,255,0.8)', family: 'Inter, sans-serif' },
-            margin: { t: 10, r: 10, b: 40, l: 40 },
-            xaxis: { 
-                showgrid: false, 
-                zeroline: false 
-            },
+            font: { color: 'rgba(255,255,255,0.6)', family: 'Inter, sans-serif', size: 11 },
+            margin: { t: 20, r: 20, b: 40, l: 60 }, 
+            xaxis: { showgrid: true, gridcolor: 'rgba(255,255,255,0.05)', zeroline: false, showline: false, fixedrange: true, range: [-0.5, 11.5] },
             yaxis: { 
-                gridcolor: 'rgba(255,255,255,0.1)', 
-                zeroline: false,
-                tickprefix: '$' 
+                gridcolor: 'rgba(255,255,255,0.05)', 
+                zeroline: false, 
+                fixedrange: true,
+                // Force correct range based on currency type
+                range: [0, yAxisMax], 
+                autorange: false 
             },
             showlegend: false,
-            hovermode: 'x unified'
+            hovermode: 'x unified', 
+            hoverlabel: { bgcolor: '#111827', bordercolor: 'rgba(255,255,255,0.1)', font: { color: '#ffffff' } }
         };
         
-        // Responsive config
         const config = { responsive: true, displayModeBar: false };
-
         Plotly.newPlot('mrrTrendChart', [trace], layout, config);
     }
 
-    // 3. Update Recent Transactions Table (Simplified for side view)
+    // 5. Update Recent Transactions
     const txnTable = document.getElementById("overviewTransactionsTable");
     if (txnTable && data.transactions) {
         let html = '';
         if (data.transactions.length === 0) {
             html = `<tr><td class="p-4 text-center text-white/40 italic">No recent transactions.</td></tr>`;
         } else {
+            const sourceCurrency = data.stats.currency || 'USD';
+
             data.transactions.forEach(tx => {
-                // Simplified row for the compact view
-                const isSuccess = tx.status === 'succeeded';
+                const isSuccess = tx.status === 'paid' || tx.status === 'succeeded';
+                const convertedAmount = convert(tx.amount / 100, sourceCurrency);
+                const displayAmount = convertedAmount.toLocaleString('en-US', { style: 'currency', currency: targetCurrency });
+
                 html += `
                     <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
                         <td class="p-3">
                             <div class="flex justify-between items-center">
-                                <span class="font-bold text-white">$${(tx.amount / 100).toFixed(2)}</span>
+                                <span class="font-bold text-white">${displayAmount}</span>
                                 <span class="text-xs text-white/50">${new Date(tx.created).toLocaleDateString()}</span>
                             </div>
                             <div class="flex justify-between items-center mt-1">
-                                <span class="text-xs text-white/70 truncate max-w-[120px]">${tx.customer_email}</span>
+                                <span class="text-xs text-white/70 truncate max-w-[120px]" title="${tx.customer_email}">${tx.customer_email}</span>
                                 <span class="text-[10px] px-1.5 py-0.5 rounded ${isSuccess ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}">${tx.status}</span>
                             </div>
                         </td>
