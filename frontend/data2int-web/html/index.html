@@ -9730,7 +9730,7 @@ async function handleContactSubmit() {
 
         // 4. Call the Supabase Edge Function via HTTP POST
         // Note: The function name here must match the deployed function endpoint
-        const FUNCTION_ENDPOINT = "https://supabase.data2int.com/functions/v1/insert-contact"; 
+        const FUNCTION_ENDPOINT = "https://supabase.sageaios.com/functions/v1/insert-contact"; 
         
         const response = await fetch(FUNCTION_ENDPOINT, {
             method: 'POST',
