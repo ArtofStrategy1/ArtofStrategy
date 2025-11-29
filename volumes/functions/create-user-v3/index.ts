@@ -1,3 +1,33 @@
+/**
+ * -----------------------------------------------------------------------------
+ * @name        create-user-v3
+ * @description Handles custom user registration by performing a multi-step, 
+ * atomic signup process using the Supabase Service Role Key:
+ * 1. Creates user in 'auth.users' without auto-confirming email.
+ * 2. Creates linked user profile in 'publicv2.users' (Rollback if fails).
+ * 3. Generates a custom confirmation token and sends a verification email via Resend.
+ * -----------------------------------------------------------------------------
+ * @method      POST
+ * @base_url    /functions/v1/create-user-v3
+ * -----------------------------------------------------------------------------
+ * @security    Service Role Key is required. Client must NOT provide a JWT.
+ * @payload     { 
+ * email: string, 
+ * password: string, 
+ * metadata: { 
+ * first_name?: string, 
+ * last_name?: string, 
+ * tier?: 'basic' | 'premium' 
+ * } 
+ * }
+ * @returns     { success: true, message: string, user: { ... } }
+ * @errors      409 Conflict (User exists), 400 Bad Request, 500 Server Error
+ * -----------------------------------------------------------------------------
+ * @env         SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, RESEND_API_KEY
+ * @author      Elijah Furlonge
+ * -----------------------------------------------------------------------------
+ */
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {

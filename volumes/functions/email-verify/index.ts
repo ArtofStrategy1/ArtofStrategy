@@ -1,6 +1,25 @@
 /**
- * Email verification handler for custom Resend emails
- * Handles the confirmation link and marks user as verified in Supabase Auth
+ * -----------------------------------------------------------------------------
+ * @name        email-verify
+ * @description Serves as the landing page for the custom verification link sent 
+ * by the 'custom-signup' function. It uses the Service Role Key to bypass RLS 
+ * and perform the following critical operations:
+ * 1. Validates the provided token against the token stored in Auth metadata.
+ * 2. Checks token expiration time.
+ * 3. Marks the user's email as confirmed in Supabase Auth.
+ * 4. Updates the 'publicv2.users' profile (email_verified=true).
+ * 5. Redirects the user to the success or failure landing page.
+ * -----------------------------------------------------------------------------
+ * @method      GET (Expected method via confirmation link)
+ * @base_url    /functions/v1/email-verify
+ * -----------------------------------------------------------------------------
+ * @security    Service Role Key is required for admin-level user updates.
+ * @params      ?token={UUID}&type=signup&user_id={UUID}
+ * @redirects   302 Found (To 'https://sageaios.com/auth/verified?...')
+ * -----------------------------------------------------------------------------
+ * @env         SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+ * @author      Elijah Furlonge
+ * -----------------------------------------------------------------------------
  */
 
 import { serve } from 'https://deno.land/std@0.131.0/http/server.ts'

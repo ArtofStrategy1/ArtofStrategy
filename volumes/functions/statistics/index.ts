@@ -1,4 +1,31 @@
-// supabase/functions/statistics/index.ts
+/**
+ * -----------------------------------------------------------------------------
+ * @name        statistics
+ * @description Serves as a secured admin dashboard endpoint to aggregate 
+ * system statistics from multiple services (Supabase/Postgres and Pinecone).
+ * It optionally triggers a database function (update_statistics) to refresh 
+ * the data before reading the latest metrics.
+ * -----------------------------------------------------------------------------
+ * @method      POST
+ * @base_url    /functions/v1/statistics
+ * -----------------------------------------------------------------------------
+ * @security    Delegated Authentication: Relies on an internal call to the 
+ * 'validate-jwt-v2' function to handle JWT, email, and admin tier checks.
+ * @payload     { update: boolean } or { refresh: boolean }
+ * @logic       1. Calls 'validate-jwt-v2' for user authentication/authorization.
+ * 2. If payload includes `update: true`, calls the Postgres function 
+ * `update_statistics()` to refresh DB metrics.
+ * 3. Fetches the latest DB stats (from 'statistics' table) and Pinecone 
+ * index status/vector counts in parallel.
+ * @returns     { success: true, database_status: object, pinecone_status: object }
+ * -----------------------------------------------------------------------------
+ * @env         SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ANON_KEY,
+ * @env         PINECONE_API_KEY
+ * @notes       This function requires the existence of a separate 
+ * 'validate-jwt-v2' Edge Function.
+ * @author      Elijah Furlonge
+ * -----------------------------------------------------------------------------
+ */
 
 import { serve } from 'https://deno.land/std@0.131.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'

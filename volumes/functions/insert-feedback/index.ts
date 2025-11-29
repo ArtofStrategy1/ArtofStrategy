@@ -1,3 +1,31 @@
+/**
+ * -----------------------------------------------------------------------------
+ * @name        insert-feedback
+ * @description Securely handles feedback submission from an authenticated user.
+ * It maps the incoming 'reason' field to a prioritized severity ('High', 
+ * 'Medium', 'Low') before inserting the record into the 'feedback' table.
+ * -----------------------------------------------------------------------------
+ * @method      POST
+ * @base_url    /functions/v1/insert-feedback
+ * -----------------------------------------------------------------------------
+ * @security    Dual-Layer Authentication Required:
+ * 1. Valid JWT Token (checks auth.users)
+ * 2. Database Profile Lookup (matches auth_user_id to fetch integer user_profile_id)
+ * -----------------------------------------------------------------------------
+ * @payload     { 
+ * reason: "Bug / Error" | "Suggestion / Improvement" | "Not Satisfied" | "Other",
+ * content: string, // min 10 chars
+ * tool_name?: string, 
+ * rating?: number 
+ * }
+ * @logic       Maps 'reason' to a 'priority' field for database storage.
+ * @returns     { success: true, message: "Feedback submitted successfully." }
+ * -----------------------------------------------------------------------------
+ * @env         SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+ * @author      Elijah Furlonge
+ * -----------------------------------------------------------------------------
+ */
+
 import { serve } from 'https://deno.land/std@0.131.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 

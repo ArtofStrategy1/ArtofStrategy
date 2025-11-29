@@ -1,3 +1,30 @@
+/**
+ * -----------------------------------------------------------------------------
+ * @name        admin-users-secure
+ * @description Comprehensive CRUD API for full user management. Synchronizes 
+ * data between 'auth.users' and 'publicv2.users'. Includes statistics, 
+ * bulk operations, and individual user actions (disable/delete).
+ * * @routes
+ * 1. GET /users             - List/Search users (with pagination).
+ * 2. GET /users/stats       - Retrieve usage statistics (premium %, new users).
+ * 3. GET /users/:id         - Read specific user profile.
+ * 4. POST /users            - Create new user (Atomic Auth/DB write with rollback).
+ * 5. PUT /users/:id         - Update user metadata (syncs to Auth metadata).
+ * 6. PUT /users/:id/disable - Soft disable user account.
+ * 7. PUT /users/bulk-update - Perform bulk tier changes, disable, or delete.
+ * 8. DELETE /users/:id      - Permanently delete user account (Auth/DB cascade).
+ * -----------------------------------------------------------------------------
+ * @method      GET | POST | PUT | DELETE
+ * @base_url    /functions/v1/admin-users-secure
+ * -----------------------------------------------------------------------------
+ * @security    3-Layer Admin Check: JWT, Email Whitelist, and DB Tier Check.
+ * @note        Admin users are protected and cannot be disabled or deleted.
+ * -----------------------------------------------------------------------------
+ * @env         SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ADMIN_EMAILS
+ * @author      Elijah Furlonge
+ * -----------------------------------------------------------------------------
+ */
+
 import { serve } from 'https://deno.land/std@0.131.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 

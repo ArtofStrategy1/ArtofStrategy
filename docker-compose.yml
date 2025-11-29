@@ -516,23 +516,5 @@ services:
         "/app/bin/migrate && /app/bin/supavisor eval \"$$(cat /etc/pooler/pooler.exs)\" && /app/bin/server"
       ]
 
-## 09/17 Added this to try and create custom email template server ##
-## Enhanced Templates Server with Flask ##
-  #templates-server:
-    #image: python:3.11-alpine
-    #container_name: supabase-templates-server
-    #volumes:
-   #   - ./templates:/templates:ro
-    #environment:
-    #  - SUPABASE_URL=http://kong:8000
-    #entrypoint: >
-    #  sh -c "pip install flask requests &&
-    #         cd /templates && 
-     #        python3 app.py"
-   # ports:
-    #  - "8081:8000"
-   # restart: unless-stopped
-   # depends_on:
-   #   - auth
 volumes:
   db-config:

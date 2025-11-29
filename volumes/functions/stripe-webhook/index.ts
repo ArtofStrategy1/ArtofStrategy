@@ -1,3 +1,30 @@
+/**
+ * -----------------------------------------------------------------------------
+ * @name        stripe-webhook
+ * @description CRITICAL SYNC FUNCTION. Securely processes Stripe events to keep 
+ * the user profile ('publicv2.users') and Auth metadata ('auth.users') 
+ * synchronized with the user's billing status. Includes robust failsafe logic.
+ * -----------------------------------------------------------------------------
+ * @method      POST
+ * @base_url    /functions/v1/stripe-webhook
+ * -----------------------------------------------------------------------------
+ * @security    Strict Signature Verification (Stripe-Signature) is MANDATORY. 
+ * Requires Service Role Key for admin-level database and Auth updates.
+ * @events_handled
+ * 1. checkout.session.completed: Links 'stripe_customer_id' via 'client_reference_id' (auth_user_id).
+ * 2. customer.subscription.created/updated: Syncs 'tier', 'status', 'plan_id', 
+ * and cancellation dates. Attempts to map Stripe Product ID to local Plan ID.
+ * 3. customer.subscription.deleted: Downgrades user to 'basic' tier.
+ * @logic       Includes a **Race Condition Failsafe** (using Stripe API lookup 
+ * and email fallback) if the user record isn't immediately found by Customer ID.
+ * All updates are mirrored to Auth App/User Metadata via the `syncAuthMetadata` helper.
+ * -----------------------------------------------------------------------------
+ * @env         STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, 
+ * SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+ * @author      Elijah Furlonge
+ * -----------------------------------------------------------------------------
+ */
+
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import Stripe from "https://esm.sh/stripe@13.11.0?target=deno"
 

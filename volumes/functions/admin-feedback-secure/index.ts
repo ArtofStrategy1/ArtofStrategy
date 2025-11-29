@@ -1,3 +1,29 @@
+/**
+ * -----------------------------------------------------------------------------
+ * @name        admin-feedback-secure
+ * @description Admin-only endpoint to manage user feedback/support tickets.
+ * Performs a relational join with the 'users' table to fetch reporter details.
+ * Enforces 3 layers of security (JWT, Email Allowlist, DB Admin Tier).
+ * * @routes
+ * 1. GET /feedback      - List feedback with joins, search, & advanced filtering.
+ * 2. PUT /feedback/:id  - Update status, priority, or admin notes.
+ * -----------------------------------------------------------------------------
+ * @method      GET | PUT
+ * @base_url    /functions/v1/admin-feedback-secure
+ * -----------------------------------------------------------------------------
+ * @params      (GET) ?page=1&limit=50&search=...&status=...&reason=...
+ * &sortBy=priority|created_at&sortOrder=asc|desc
+ * @payload     (PUT) { 
+ * status?: string, 
+ * priority?: string, 
+ * admin_notes?: string 
+ * }
+ * -----------------------------------------------------------------------------
+ * @env         SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ADMIN_EMAILS
+ * @author      Elijah Furlonge
+ * -----------------------------------------------------------------------------
+ */
+
 import { serve } from 'https://deno.land/std@0.131.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 

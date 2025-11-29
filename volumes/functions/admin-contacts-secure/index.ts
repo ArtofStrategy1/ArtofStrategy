@@ -1,3 +1,24 @@
+/**
+ * -----------------------------------------------------------------------------
+ * @name        admin-contacts-secure
+ * @description Admin-only endpoint to manage contact form submissions. 
+ * Supports retrieving paginated/searchable lists and updating message status.
+ * Enforces 3 layers of security (JWT, Email Allowlist, DB Admin Tier).
+ * * @routes
+ * 1. GET /contacts      - List messages with pagination, search, & filtering.
+ * 2. PUT /contacts/:id  - Update the status of a specific message.
+ * -----------------------------------------------------------------------------
+ * @method      GET | PUT
+ * @base_url    /functions/v1/admin-contacts-secure
+ * -----------------------------------------------------------------------------
+ * @params      (GET) ?page=1&limit=50&search=...&status=...&sortBy=...&sortOrder=...
+ * @payload     (PUT) { status: 'New' | 'Replied' | 'Archived' }
+ * -----------------------------------------------------------------------------
+ * @env         SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ADMIN_EMAILS
+ * @author      Elijah Furlonge
+ * -----------------------------------------------------------------------------
+ */
+
 import { serve } from 'https://deno.land/std@0.131.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 

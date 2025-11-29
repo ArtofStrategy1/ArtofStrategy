@@ -1,3 +1,26 @@
+/**
+ * -----------------------------------------------------------------------------
+ * @name        redeem-promo
+ * @description Allows an authenticated user to redeem a promotional code to 
+ * receive a discount, trial period, or tier upgrade.
+ * -----------------------------------------------------------------------------
+ * @method      POST
+ * @base_url    /functions/v1/redeem-promo
+ * -----------------------------------------------------------------------------
+ * @security    JWT Authentication is required. Uses the user's Auth token to 
+ * verify identity and identify the user profile to be updated.
+ * @payload     { code: string }
+ * @logic       1. Validates the provided code (e.g., against a 'promo_codes' table).
+ * 2. Checks if the code is expired or already used by the user.
+ * 3. Updates the user's profile (e.g., changes 'tier' and sets 'promo_used_at').
+ * 4. Logs the successful redemption.
+ * @returns     { success: true, message: string, new_tier?: string }
+ * -----------------------------------------------------------------------------
+ * @env         SUPABASE_URL, SUPABASE_ANON_KEY (or Service Role Key if used)
+ * @author      Elijah Furlonge
+ * -----------------------------------------------------------------------------
+ */
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import Stripe from "https://esm.sh/stripe@13.11.0?target=deno"

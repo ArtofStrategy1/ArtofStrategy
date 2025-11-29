@@ -1,3 +1,30 @@
+/**
+ * -----------------------------------------------------------------------------
+ * @name        text-parser
+ * @description Securely receives multipart/form-data containing a document 
+ * file, verifies the user's identity, and extracts clean, raw text content 
+ * for subsequent AI/database processing (e.g., embedding generation).
+ * -----------------------------------------------------------------------------
+ * @method      POST
+ * @base_url    /functions/v1/text-parser
+ * -----------------------------------------------------------------------------
+ * @security    JWT Authentication is required. Uses the Anon Key pattern, 
+ * leveraging the user's JWT to verify access before starting resource-intensive 
+ * file processing. Includes detailed logging for performance tracking.
+ * @file_formats_supported
+ * - **DOCX (.docx):** Uses the 'mammoth' NPM library.
+ * - **PDF (.pdf):** Uses the 'pdf-parse' NPM library.
+ * - **Structured Data (.csv, .json, .xml):** Extracts raw text/string content.
+ * - **Various Text (.txt, .md, .rtf, .html):** Strips formatting for raw text content.
+ * @payload     multipart/form-data (Must include 'file' field)
+ * @returns     { success: true, text: string, documentType: string, ... }
+ * -----------------------------------------------------------------------------
+ * @env         SUPABASE_URL, SUPABASE_ANON_KEY
+ * @npm_deps    mammoth, pdf-parse
+ * @author      Elijah Furlonge
+ * -----------------------------------------------------------------------------
+ */
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import mammoth from "npm:mammoth@1.6.0"

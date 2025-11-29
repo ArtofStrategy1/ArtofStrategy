@@ -1,4 +1,33 @@
-// supabase/functions/password-reset-verify/index.ts
+/**
+ * -----------------------------------------------------------------------------
+ * @name        password-reset-verify
+ * @description Confirms and executes the password reset initiated by the 
+ * 'password-reset-request' function. This function uses the Service Role Key 
+ * to perform critical security operations:
+ * 1. Finds the user's Auth ID via the profile table using the provided email.
+ * 2. Verifies the custom reset token and its expiration against Auth metadata.
+ * 3. Updates the user's password in 'auth.users'.
+ * 4. Clears the used reset token from metadata.
+ * 5. Invalidates all existing user sessions globally for security.
+ * -----------------------------------------------------------------------------
+ * @method      POST
+ * @base_url    /functions/v1/password-reset-verify
+ * -----------------------------------------------------------------------------
+ * @security    Service Role Key is required. Ensures a secure, server-side 
+ * password update process.
+ * @payload     { 
+ * token: string, // Custom UUID token from the email link
+ * email: string, 
+ * newPassword: string // Min 6 characters
+ * }
+ * @returns     { success: true, message: "Password updated successfully." }
+ * @notes       Invalidates all user sessions upon successful reset.
+ * -----------------------------------------------------------------------------
+ * @env         SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+ * @author      Elijah Furlonge
+ * -----------------------------------------------------------------------------
+ */
+
 import { serve } from 'https://deno.land/std@0.131.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 

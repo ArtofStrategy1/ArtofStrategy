@@ -1,3 +1,25 @@
+/**
+ * -----------------------------------------------------------------------------
+ * @name        create-portal-session
+ * @description Creates a secure, temporary URL for the Stripe Customer Billing 
+ * Portal. This allows authenticated users to manage their subscriptions, 
+ * payment methods, and billing history without exposing any sensitive keys.
+ * -----------------------------------------------------------------------------
+ * @method      POST
+ * @base_url    /functions/v1/create-portal-session
+ * -----------------------------------------------------------------------------
+ * @security    JWT Authentication is required. Uses the Anon Key pattern, relying 
+ * on the user's JWT to enforce access control (RLS-Friendly pattern).
+ * @flow        1. Authenticate user via JWT.
+ * 2. Look up 'stripe_customer_id' in publicv2.users.
+ * 3. Create Stripe Billing Portal session.
+ * -----------------------------------------------------------------------------
+ * @returns     { url: string } - The redirect URL for the Stripe Portal.
+ * @env         SUPABASE_URL, SUPABASE_ANON_KEY, STRIPE_SECRET_KEY
+ * @author      Elijah Furlonge
+ * -----------------------------------------------------------------------------
+ */
+
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import Stripe from 'https://esm.sh/stripe@13.11.0'

@@ -1,3 +1,30 @@
+/**
+ * -----------------------------------------------------------------------------
+ * @name        admin-stripe-analytics
+ * @description Centralizes financial data for the Admin Dashboard. 
+ * Aggregates data from Stripe (MRR, Charges, Subs) and Supabase (User Counts).
+ * Enforces 2 layers of security (JWT & Email Allowlist).
+ * -----------------------------------------------------------------------------
+ * @method      GET
+ * @base_url    /functions/v1/admin-stripe-analytics
+ * -----------------------------------------------------------------------------
+ * @params      ?tab=[TAB_NAME]
+ * * 1. tab=overview
+ * - Fetches MRR, Active Subs count, Total Users, & Recent Transactions.
+ * - Calculates 6-month trend data.
+ * * 2. tab=transactions
+ * - Lists recent Stripe charges (limit 20) with payment method details.
+ * * 3. tab=subscriptions
+ * - Lists Stripe subscriptions with EXPANDED customer & product data.
+ * * 4. tab=customers
+ * - Lists raw user data from Supabase 'users' table.
+ * - Maps DB 'tier' to frontend 'subscription_status'.
+ * -----------------------------------------------------------------------------
+ * @env         STRIPE_SECRET_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ADMIN_EMAILS
+ * @author      Elijah Furlonge
+ * -----------------------------------------------------------------------------
+ */
+
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import Stripe from 'https://esm.sh/stripe@13.11.0'

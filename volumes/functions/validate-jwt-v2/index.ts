@@ -1,4 +1,28 @@
-// volumes/functions/validate-jwt/index.ts
+/**
+ * -----------------------------------------------------------------------------
+ * @name        validate-jwt-v2
+ * @description CORE SECURITY HELPER. This function is designed to be called 
+ * internally by other Edge Functions (e.g., /statistics) that require a high 
+ * degree of security and user context verification.
+ * -----------------------------------------------------------------------------
+ * @method      POST
+ * @base_url    /functions/v1/validate-jwt-v2
+ * -----------------------------------------------------------------------------
+ * @security    Service Role Key is required. It performs **explicit, self-contained** * validation checks on a forwarded JWT:
+ * 1. Checks JWT format, extracts payload (Base64 decode).
+ * 2. Checks token expiration time (`exp` claim).
+ * 3. Verifies user exists in the local **'users' profile table** using the JWT's `sub` (UUID).
+ * -----------------------------------------------------------------------------
+ * @payload     { headers: { authorization: 'Bearer ...' }, body?: object, method?: string }
+ * @returns     { success: true, authenticated_user: object, shouldStop: false, ... } 
+ * @error_model Returns a structured JSON response with `shouldStop: true` on failure 
+ * (401 or 404), instructing the calling function to immediately halt.
+ * -----------------------------------------------------------------------------
+ * @env         SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+ * @author      Elijah Furlonge
+ * -----------------------------------------------------------------------------
+ */
+
 import { serve } from 'https://deno.land/std@0.131.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 

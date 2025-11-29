@@ -1,3 +1,30 @@
+/**
+ * -----------------------------------------------------------------------------
+ * @name        stripe-analytics
+ * @description Centralized admin dashboard endpoint for viewing financial and 
+ * user statistics. Aggregates data from Stripe (MRR, Invoices, Subscriptions) 
+ * and the Supabase 'users' table across four distinct data views (tabs).
+ * -----------------------------------------------------------------------------
+ * @method      GET
+ * @base_url    /functions/v1/stripe-analytics
+ * -----------------------------------------------------------------------------
+ * @security    2-Layer Admin Check: **JWT Verification** + **Email Allowlist** (ADMIN_EMAILS).
+ * @params      ?tab=[TAB_NAME]
+ * * 1. tab=overview
+ * - Fetches 12 months of paid invoice data for **real MRR trend calculation**.
+ * - Calculates current MRR from active subscriptions (annual converted to monthly).
+ * * 2. tab=transactions
+ * - Lists recent Stripe charges (limit 20).
+ * * 3. tab=subscriptions
+ * - Lists all Stripe subscriptions, **expanding customer and product details**.
+ * * 4. tab=customers
+ * - Lists users from the 'publicv2.users' table.
+ * -----------------------------------------------------------------------------
+ * @env         STRIPE_SECRET_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ADMIN_EMAILS
+ * @author      Elijah Furlonge
+ * -----------------------------------------------------------------------------
+ */
+
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import Stripe from 'https://esm.sh/stripe@13.11.0'

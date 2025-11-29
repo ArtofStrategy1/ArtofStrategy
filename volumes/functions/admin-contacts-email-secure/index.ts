@@ -1,3 +1,27 @@
+/**
+ * -----------------------------------------------------------------------------
+ * @name        admin-send-email
+ * @description Securely sends HTML emails via Resend API. 
+ * Enforces 3 layers of security before sending:
+ * 1. Valid Supabase JWT (Auth Header)
+ * 2. Email Allowlist (Check vs ADMIN_EMAILS env var)
+ * 3. DB Role Check (Must be 'admin' in 'publicv2.users')
+ * @method      POST
+ * @route       /functions/v1/send-email
+ * -----------------------------------------------------------------------------
+ * @payload     { 
+ * to: string, 
+ * message: string, 
+ * subject?: string,          // Optional override
+ * original_subject?: string  // For "Re: ..." subject lines
+ * }
+ * @returns     { success: true, data: ResendResponse } or 401/403/500 Error
+ * -----------------------------------------------------------------------------
+ * @env         RESEND_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ADMIN_EMAILS
+ * @author      Elijah Furlonge
+ * -----------------------------------------------------------------------------
+ */
+
 import { serve } from 'https://deno.land/std@0.131.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 

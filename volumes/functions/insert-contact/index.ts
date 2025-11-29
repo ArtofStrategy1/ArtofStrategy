@@ -1,4 +1,32 @@
-// root/Supabase/supabase-project/volumes/functions/insert-contact
+/**
+ * -----------------------------------------------------------------------------
+ * @name        insert-contact
+ * @description Handles anonymous submissions from the public contact form.
+ * Performs rigorous validation on all required fields (name, email, subject, 
+ * message) before inserting the record into the 'contacts' table (publicv2).
+ * -----------------------------------------------------------------------------
+ * @method      POST
+ * @base_url    /functions/v1/insert-contact
+ * -----------------------------------------------------------------------------
+ * @security    Service Role Key is required to perform the insert operation, 
+ * allowing submissions from unauthenticated users.
+ * @payload     { 
+ * first_name: string, 
+ * last_name: string, 
+ * email: string, 
+ * subject: string, 
+ * message: string, 
+ * company_name?: string, 
+ * phone?: string 
+ * }
+ * @returns     { success: true, message: string, contact: { ... } }
+ * @errors      400 Validation Error, 405 Method Not Allowed, 500 Server Error
+ * -----------------------------------------------------------------------------
+ * @env         SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+ * @author      Elijah Furlonge
+ * -----------------------------------------------------------------------------
+ */
+
 import { serve } from 'https://deno.land/std@0.131.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 

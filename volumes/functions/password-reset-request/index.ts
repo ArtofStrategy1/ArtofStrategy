@@ -1,4 +1,31 @@
-// supabase/functions/password-reset-request/index.ts
+/**
+ * -----------------------------------------------------------------------------
+ * @name        password-reset-request
+ * @description Initiates the custom password reset flow. This function is 
+ * publicly accessible but maintains security by:
+ * 1. Checking the 'users' profile table for the email.
+ * 2. **Security Measure:** Always returns success, even if the user is not found, 
+ * to prevent account enumeration attacks.
+ * 3. Generates a custom UUID token and stores it (with a 1-hour expiration) 
+ * in the user's 'auth.app_metadata'.
+ * 4. Sends a richly-formatted password reset email via Resend containing the 
+ * custom reset link (to sageaios.com/auth/reset-password).
+ * -----------------------------------------------------------------------------
+ * @method      POST
+ * @base_url    /functions/v1/password-reset-request
+ * -----------------------------------------------------------------------------
+ * @security    Service Role Key is required to bypass RLS and read/update 
+ * the user's metadata without a current session.
+ * @payload     { email: string }
+ * @returns     { success: true, message: "If an account exists, a link has been sent." }
+ * @notes       The custom link is designed to work with a corresponding 
+ * /password-reset-confirm function (not shown).
+ * -----------------------------------------------------------------------------
+ * @env         SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, RESEND_API_KEY
+ * @author      Elijah Furlonge
+ * -----------------------------------------------------------------------------
+ */
+
 import { serve } from 'https://deno.land/std@0.131.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 
