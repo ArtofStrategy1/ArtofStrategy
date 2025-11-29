@@ -3473,10 +3473,9 @@
                 </div>
             </div>
 
-            <div class="max-w-3xl mx-auto mt-24 mb-16 relative animate-fadeIn">
-                <div class="absolute -inset-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl blur opacity-30 animate-pulse"></div>
-                
-                <div class="relative p-1 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 border border-white/20 shadow-2xl backdrop-blur-xl">
+            <!-- Contact Us block (Start) -->
+            <div class="mx-auto mt-24 mb-16 relative animate-fadeIn">
+                <div class="glass-container feature-card overflow-hidden w-full"> 
                     <div class="p-8 md:p-10">
                         <h2 class="text-4xl font-bold mb-4 text-white text-center">Contact Us</h2>
                         <p class="text-white/70 mb-8 text-center max-w-2xl mx-auto">
@@ -3485,6 +3484,7 @@
                         
                         <div class="space-y-4">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                               
                                 <div>
                                     <label for="contactFirstName" class="block text-sm font-medium text-gray-200 mb-2">First Name</label>
                                     <input type="text" id="contactFirstName" class="input-field bg-black/20 border-white/20 focus:border-indigo-400 placeholder-white/30" placeholder="Enter your first name" required>
@@ -3493,6 +3493,7 @@
                                     <label for="contactLastName" class="block text-sm font-medium text-gray-200 mb-2">Last Name</label>
                                     <input type="text" id="contactLastName" class="input-field bg-black/20 border-white/20 focus:border-indigo-400 placeholder-white/30" placeholder="Enter your last name" required>
                                 </div>
+                        
                             </div>
 
                             <div>
@@ -3504,6 +3505,7 @@
                                 <div>
                                     <label for="contactEmail" class="block text-sm font-medium text-gray-200 mb-2">Contact Email Address</label>
                                     <input type="email" id="contactEmail" class="input-field bg-black/20 border-white/20 focus:border-indigo-400 placeholder-white/30" placeholder="Enter your email" required>
+      
                                 </div>
                                 <div>
                                     <label for="contactPhone" class="block text-sm font-medium text-gray-200 mb-2">Phone Number (Optional)</label>
@@ -3513,6 +3515,7 @@
 
                             <div>
                                 <label for="contactSubject" class="block text-sm font-medium text-gray-200 mb-2">Subject</label>
+                              
                                 <input type="text" id="contactSubject" class="input-field bg-black/20 border-white/20 focus:border-indigo-400 placeholder-white/30" placeholder="What is this regarding?" required>
                             </div>
 
@@ -3524,6 +3527,7 @@
                             <div id="contactMessageResult" class="hidden"></div>
 
                             <button id="contactSubmitBtn" class="btn btn-primary w-full shadow-lg hover:shadow-indigo-500/30 transition-all duration-300 mt-4">
+                            
                                 <span id="contactSubmitBtnText">Send Message</span>
                                 <span id="contactSubmitSpinner" class="loading-spinner hidden ml-2"></span>
                             </button>
@@ -3531,7 +3535,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+            <!-- Contact Us block (End) -->
         
         <div id="about" class="page container mx-auto px-4 py-10 flex-col items-center justify-center min-h-[80vh]">
             <div class="w-full max-w-5xl relative animate-fadeIn my-auto">
@@ -12881,6 +12885,9 @@ CustomerID,Tenure_Months,Support_Tickets,Used_Feature_X,Churned<br>
                                 <span id="generateBtnText">🎯 Formulate S.M.A.R.T. Objectives</span>
                                 <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                             </button>
+                            <div class="text-center mt-4">
+                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                            </div>
                         </div>
                         <div class="mt-12">
                              <h2 class="text-3xl font-bold mb-4 text-center">Generated Objectives Framework</h2>
@@ -12948,7 +12955,15 @@ CustomerID,Tenure_Months,Support_Tickets,Used_Feature_X,Churned<br>
                 '<div class="text-white/60 p-8 text-center">Your generated objectives framework will appear here.</div>';
             $("analysisActions").classList.add("hidden");
         }
+
+        // Attach listener for the feedback link manually (Safeguard)
+        const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+        if (feedbackLink) {
+            feedbackLink.removeEventListener("click", handleNavLinkClick); // Avoid duplicates
+            feedbackLink.addEventListener("click", handleNavLinkClick);
+        }
     }
+
     /**
      * HANDLER: Objectives (DEEP ANALYSIS v4 - True Async)
      * - Triggers both the deep Ollama call and the n8n workflow.
@@ -18333,6 +18348,10 @@ The AI will read this and build the matrix for you."></textarea>
                                     <span class="px-2 py-1 bg-white/5 rounded text-xs text-orange-200 border border-orange-500/20" title="Thinking Process">🪜 Ladder of Inference</span>
                                     <span class="px-2 py-1 bg-white/5 rounded text-xs text-yellow-200 border border-yellow-500/20" title="Assumption Busting">🖼️ Reframing</span>
                                 </div>
+                            </div>
+
+                            <div class="text-center mt-4">
+                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
                             </div>
 
                         </div>
@@ -27217,6 +27236,9 @@ function renderKpiPage_KE(container, data) {
                         <span id="generateBtnText">Generate Mission & Vision</span>
                         <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                     </button>
+                    <div class="text-center mt-4">
+                        <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                    </div>
                 </div>
                 
                 <div class="mt-12">
@@ -27357,6 +27379,13 @@ function renderKpiPage_KE(container, data) {
             $("analysisResult").innerHTML =
                 '<div class="text-white/60 p-8 text-center">Your generated mission and goals will appear here.</div>';
             $("analysisActions").classList.add("hidden");
+        }
+
+        // Attach listener for the feedback link manually (Safeguard)
+        const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+        if (feedbackLink) {
+            feedbackLink.removeEventListener("click", handleNavLinkClick); // Avoid duplicates
+            feedbackLink.addEventListener("click", handleNavLinkClick);
         }
     }
 
