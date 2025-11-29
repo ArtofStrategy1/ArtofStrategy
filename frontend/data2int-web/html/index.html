@@ -12772,6 +12772,9 @@ CustomerID,Tenure_Months,Support_Tickets,Used_Feature_X,Churned<br>
                                 <span id="generateBtnText">🎯 Formulate S.M.A.R.T. Objectives</span>
                                 <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                             </button>
+                            <div class="text-center mt-4">
+                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                            </div>
                         </div>
                         <div class="mt-12">
                              <h2 class="text-3xl font-bold mb-4 text-center">Generated Objectives Framework</h2>
@@ -12839,7 +12842,15 @@ CustomerID,Tenure_Months,Support_Tickets,Used_Feature_X,Churned<br>
                 '<div class="text-white/60 p-8 text-center">Your generated objectives framework will appear here.</div>';
             $("analysisActions").classList.add("hidden");
         }
+
+        // Attach listener for the feedback link manually (Safeguard)
+        const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+        if (feedbackLink) {
+            feedbackLink.removeEventListener("click", handleNavLinkClick); // Avoid duplicates
+            feedbackLink.addEventListener("click", handleNavLinkClick);
+        }
     }
+
     /**
      * HANDLER: Objectives (DEEP ANALYSIS v4 - True Async)
      * - Triggers both the deep Ollama call and the n8n workflow.
@@ -18224,6 +18235,10 @@ The AI will read this and build the matrix for you."></textarea>
                                     <span class="px-2 py-1 bg-white/5 rounded text-xs text-orange-200 border border-orange-500/20" title="Thinking Process">🪜 Ladder of Inference</span>
                                     <span class="px-2 py-1 bg-white/5 rounded text-xs text-yellow-200 border border-yellow-500/20" title="Assumption Busting">🖼️ Reframing</span>
                                 </div>
+                            </div>
+
+                            <div class="text-center mt-4">
+                                <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
                             </div>
 
                         </div>
@@ -27110,6 +27125,9 @@ function renderKpiPage_KE(container, data) {
                         <span id="generateBtnText">Generate Mission & Vision</span>
                         <span id="generateSpinner" class="loading-spinner hidden ml-2"></span>
                     </button>
+                    <div class="text-center mt-4">
+                        <a href="#" class="btn-tertiary nav-link text-sm" data-page="feedback">Have feedback on this tool?</a>
+                    </div>
                 </div>
                 
                 <div class="mt-12">
@@ -27250,6 +27268,13 @@ function renderKpiPage_KE(container, data) {
             $("analysisResult").innerHTML =
                 '<div class="text-white/60 p-8 text-center">Your generated mission and goals will appear here.</div>';
             $("analysisActions").classList.add("hidden");
+        }
+
+        // Attach listener for the feedback link manually (Safeguard)
+        const feedbackLink = contentContainer.querySelector('a[data-page="feedback"]');
+        if (feedbackLink) {
+            feedbackLink.removeEventListener("click", handleNavLinkClick); // Avoid duplicates
+            feedbackLink.addEventListener("click", handleNavLinkClick);
         }
     }
 
