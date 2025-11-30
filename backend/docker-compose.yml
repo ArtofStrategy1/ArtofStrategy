@@ -165,6 +165,25 @@ services:
       - PYTHONUNBUFFERED=1   # Ensures Python output is unbuffered
     volumes:
       - ./analysis-libraries/analysis-libraries-app:/app
+
+  llm-proxy:
+    build:
+      context: ./llm-proxy/
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    container_name: llm-proxy
+    ports:
+      - "8110:8000" # Map host port 8110 to container port 8000
+    networks:
+      - data2int-net
+      - npm_default   # Connect to Nginx Proxy Manager network
+    environment:
+      - PYTHONUNBUFFERED=1
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - OPRT_API_KEY=${OPRT_API_KEY}
+    volumes:
+      - ./llm-proxy/llm-proxy-app:/app/llm-proxy-app
+
 networks:
   default:
   data2int-net:
