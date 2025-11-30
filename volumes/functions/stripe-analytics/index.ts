@@ -5,24 +5,6 @@
  * user statistics. Aggregates data from Stripe (MRR, Invoices, Subscriptions) 
  * and the Supabase 'users' table across four distinct data views (tabs).
  * -----------------------------------------------------------------------------
- * @method      GET
- * @base_url    /functions/v1/stripe-analytics
- * -----------------------------------------------------------------------------
- * @security    2-Layer Admin Check: **JWT Verification** + **Email Allowlist** (ADMIN_EMAILS).
- * @params      ?tab=[TAB_NAME]
- * * 1. tab=overview
- * - Fetches 12 months of paid invoice data for **real MRR trend calculation**.
- * - Calculates current MRR from active subscriptions (annual converted to monthly).
- * * 2. tab=transactions
- * - Lists recent Stripe charges (limit 20).
- * * 3. tab=subscriptions
- * - Lists all Stripe subscriptions, **expanding customer and product details**.
- * * 4. tab=customers
- * - Lists users from the 'publicv2.users' table.
- * -----------------------------------------------------------------------------
- * @env         STRIPE_SECRET_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ADMIN_EMAILS
- * @author      Elijah Furlonge
- * -----------------------------------------------------------------------------
  */
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
@@ -45,6 +27,8 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers })
 
   try {
+    console.log("--- [DEBUG] START: stripe-analytics function called ---");
+
     // 1. Setup Supabase (Targeting publicv2 schema)
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -54,21 +38,30 @@ serve(async (req) => {
 
     // 2. Auth Check (Security)
     const authHeader = req.headers.get('authorization')?.replace('Bearer ', '')
+    if (!authHeader) console.warn("--- [DEBUG] WARN: Missing Auth Header ---");
+
     const { data: { user }, error } = await supabase.auth.getUser(authHeader)
     
+    if (error) console.error("--- [DEBUG] Auth Error:", error);
+    if (user) console.log(`--- [DEBUG] Authenticated User: ${user.email} ---`);
+
     // Allowed Admin Emails
     const ALLOWED_EMAILS = Deno.env.get('ADMIN_EMAILS')?.split(',').map(email => email.trim()) || [];
     
     if (!user || !ALLOWED_EMAILS.includes(user.email || '')) {
+      console.error(`--- [DEBUG] Unauthorized Access Attempt: ${user?.email} ---`);
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers })
     }
 
     // 3. Handle Tabs
     const url = new URL(req.url)
     const tab = url.searchParams.get('tab') || 'overview'
+    console.log(`--- [DEBUG] Processing Tab: "${tab}" ---`);
 
     // --- TAB 1: OVERVIEW (UPDATED FOR REAL 12-MONTH DATA) ---
     if (tab === 'overview') {
+      console.log("--- [DEBUG] Overview: Starting parallel fetch... ---");
+      
       // Calculate date range (1 year ago from 1st of month to fix date bugs)
       const d = new Date();
       d.setDate(1); 
@@ -85,6 +78,10 @@ serve(async (req) => {
           stripe.subscriptions.list({ limit: 100, status: 'active' }),
           supabase.from('users').select('*', { count: 'exact', head: true })
       ]);
+
+      console.log(`--- [DEBUG] Overview: Fetched ${invoices.data.length} paid invoices. ---`);
+      console.log(`--- [DEBUG] Overview: Fetched ${subs.data.length} active subscriptions. ---`);
+      console.log(`--- [DEBUG] Overview: Fetched ${userCount.count} total users. ---`);
 
       // A. Build 12-Month Trend from Invoices
       const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -123,6 +120,7 @@ serve(async (req) => {
           }
           currentMrrCents += amount * (item.quantity || 1);
       }
+      console.log(`--- [DEBUG] Overview: Calculated MRR: ${currentMrrCents} cents ---`);
 
       return new Response(JSON.stringify({
         success: true,
@@ -146,7 +144,10 @@ serve(async (req) => {
 
     // --- TAB 2: TRANSACTIONS ---
     if (tab === 'transactions') {
+      console.log("--- [DEBUG] Transactions: Fetching recent charges... ---");
       const charges = await stripe.charges.list({ limit: 20 })
+      console.log(`--- [DEBUG] Transactions: Found ${charges.data.length} charges. ---`);
+      
       return new Response(JSON.stringify({
         success: true,
         data: charges.data.map((c: any) => ({
@@ -164,12 +165,25 @@ serve(async (req) => {
 
     // --- TAB 3: SUBSCRIPTIONS ---
     if (tab === 'subscriptions') {
+      console.log("--- [DEBUG] Subscriptions: Fetching list with expansion... ---");
+      
       // 1. Fetch subscriptions from Stripe AND expand 'customer' and 'data.plan.product'
       const subs = await stripe.subscriptions.list({ 
           limit: 20, 
           status: 'all',
-          expand: ['data.customer', 'data.plan.product'] 
+          expand: ['data.customer', 'data.plan.product'] // <--- THIS IS THE KEY FIX
       });
+      
+      console.log(`--- [DEBUG] Subscriptions: Found ${subs.data.length} records. ---`);
+      if (subs.data.length > 0) {
+          // Debug the first item to ensure expansion worked
+          const first = subs.data[0];
+          console.log(`--- [DEBUG] First Sub ID: ${first.id} ---`);
+          console.log(`--- [DEBUG] First Sub Customer Email: ${first.customer?.email} ---`);
+          console.log(`--- [DEBUG] First Sub Product Name: ${first.plan?.product?.name} ---`);
+      } else {
+          console.warn("--- [DEBUG] WARNING: Stripe returned 0 subscriptions. ---");
+      }
 
       return new Response(JSON.stringify({
         success: true,
@@ -179,10 +193,12 @@ serve(async (req) => {
             total: subs.data.length
         },
         data: subs.data.map((s: any) => {
+            // 2. Safely extract product info (it handles if product is missing or deleted)
             const productObj = s.plan?.product; 
             const productName = (typeof productObj === 'object') ? productObj.name : 'Unknown Product';
             const productDesc = (typeof productObj === 'object') ? (productObj.description || '') : '';
 
+            // 3. Safely extract customer info
             const customerObj = s.customer;
             const customerEmail = (typeof customerObj === 'object') ? customerObj.email : 'Unknown Email';
 
@@ -190,11 +206,12 @@ serve(async (req) => {
                 id: s.id,
                 stripe_subscription_id: s.id,
                 status: s.status,
-                customer_email: customerEmail, 
-                product_name: productName,     
-                product_desc: productDesc,     
+                customer_email: customerEmail, // Now populated!
+                product_name: productName,     // Now populated!
+                product_desc: productDesc,     // Now populated!
                 plan_amount: s.plan?.amount || 0,
                 plan_interval: s.plan?.interval || 'month',
+                // 4. Fix Dates: Stripe uses Seconds, JS uses Milliseconds. Multiply by 1000.
                 current_period_start: s.current_period_start * 1000, 
                 current_period_end: s.current_period_end * 1000,
                 cancel_at_period_end: s.cancel_at_period_end
@@ -205,13 +222,19 @@ serve(async (req) => {
 
     // --- TAB 4: CUSTOMERS ---
     if (tab === 'customers') {
+        console.log("--- [DEBUG] Customers: Fetching from Supabase (publicv2.users)... ---");
+        
         const { data: profiles, error } = await supabase
             .from('users')
             .select('*')
             .order('id', { ascending: false })
             .limit(20)
         
-        if (error) throw error
+        if (error) {
+            console.error("--- [DEBUG] Customers DB Error:", error);
+            throw error
+        }
+        console.log(`--- [DEBUG] Customers: Found ${profiles?.length} users. ---`);
 
         return new Response(JSON.stringify({
             success: true,
@@ -219,6 +242,9 @@ serve(async (req) => {
                 id: p.id,
                 email: p.email,
                 stripe_customer_id: p.stripe_customer_id,
+                // MAPPING FIX:
+                // Frontend expects 'subscription_status', but DB has 'tier'.
+                // Frontend expects 'plan_name', DB has 'tier'.
                 subscription_status: p.tier === 'premium' ? 'active' : 'free', 
                 plan_name: p.tier ? p.tier.toUpperCase() : 'BASIC',
                 created_at: p.created_at
@@ -226,9 +252,11 @@ serve(async (req) => {
         }), { headers })
     }
 
+    console.warn(`--- [DEBUG] Unknown Tab requested: ${tab} ---`);
     return new Response(JSON.stringify({ error: 'Tab not found' }), { headers })
 
   } catch (err) {
+    console.error("--- [DEBUG] CRITICAL ERROR ---", err);
     return new Response(JSON.stringify({ error: err.message }), { status: 500, headers })
   }
 })

@@ -1,27 +1,8 @@
 /**
  * -----------------------------------------------------------------------------
- * @name        admin-stripe-analytics
+ * @name        admin-subscriptions-secure
  * @description Centralizes financial data for the Admin Dashboard. 
  * Aggregates data from Stripe (MRR, Charges, Subs) and Supabase (User Counts).
- * Enforces 2 layers of security (JWT & Email Allowlist).
- * -----------------------------------------------------------------------------
- * @method      GET
- * @base_url    /functions/v1/admin-stripe-analytics
- * -----------------------------------------------------------------------------
- * @params      ?tab=[TAB_NAME]
- * * 1. tab=overview
- * - Fetches MRR, Active Subs count, Total Users, & Recent Transactions.
- * - Calculates 6-month trend data.
- * * 2. tab=transactions
- * - Lists recent Stripe charges (limit 20) with payment method details.
- * * 3. tab=subscriptions
- * - Lists Stripe subscriptions with EXPANDED customer & product data.
- * * 4. tab=customers
- * - Lists raw user data from Supabase 'users' table.
- * - Maps DB 'tier' to frontend 'subscription_status'.
- * -----------------------------------------------------------------------------
- * @env         STRIPE_SECRET_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ADMIN_EMAILS
- * @author      Elijah Furlonge
  * -----------------------------------------------------------------------------
  */
 
@@ -45,41 +26,63 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers })
 
   try {
-    // 1. Setup Supabase (Targeting publicv2 schema)
+    console.log("--- [DEBUG] START: admin-stripe-analytics function called ---");
+
+    // 1. Setup Supabase
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
       { db: { schema: 'publicv2' } }
     )
 
-    // 2. Auth Check (Security)
+    // 2. Auth Check
     const authHeader = req.headers.get('authorization')?.replace('Bearer ', '')
+    if (!authHeader) {
+        console.error("--- [DEBUG] ERROR: Missing Authorization header ---");
+        return new Response(JSON.stringify({ error: 'Missing Authorization header' }), { status: 401, headers })
+    }
+
     const { data: { user }, error } = await supabase.auth.getUser(authHeader)
     
+    if (error || !user) {
+        console.error("--- [DEBUG] ERROR: Invalid user token:", error);
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers })
+    }
+
     // Allowed Admin Emails
     const ALLOWED_EMAILS = Deno.env.get('ADMIN_EMAILS')?.split(',').map(email => email.trim()) || [];
+    console.log(`--- [DEBUG] User identified: ${user.email}. Checking allowlist... ---`);
     
-    if (!user || !ALLOWED_EMAILS.includes(user.email || '')) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers })
+    if (!ALLOWED_EMAILS.includes(user.email || '')) {
+      console.error(`--- [DEBUG] ERROR: User ${user.email} is NOT in admin allowlist ---`);
+      return new Response(JSON.stringify({ error: 'Unauthorized: Admin Access Only' }), { status: 403, headers })
     }
+    console.log("--- [DEBUG] Admin authorization successful ---");
 
     // 3. Handle Tabs
     const url = new URL(req.url)
     const tab = url.searchParams.get('tab') || 'overview'
+    console.log(`--- [DEBUG] Processing Tab: ${tab} ---`);
 
     // --- TAB 1: OVERVIEW ---
     if (tab === 'overview') {
-      // Fetch Stripe Data and DB counts in parallel
+      console.log("--- [DEBUG] Fetching Overview Data (Stripe + DB)... ---");
+      
       const [charges, subs, userCount] = await Promise.all([
           stripe.charges.list({ limit: 5 }),
           stripe.subscriptions.list({ limit: 100, status: 'active' }),
           supabase.from('users').select('*', { count: 'exact', head: true })
       ]);
 
-      // Calculate MRR from Stripe data
-      const mrr = subs.data.reduce((acc, sub) => acc + (sub.items.data[0].price.unit_amount || 0), 0)
+      console.log(`--- [DEBUG] Stripe Charges Fetched: ${charges.data.length} ---`);
+      console.log(`--- [DEBUG] Stripe Active Subs Fetched: ${subs.data.length} ---`);
+      console.log(`--- [DEBUG] DB User Count: ${userCount.count} ---`);
 
-      // Calculate Trend (Simplified for demo)
+      // Calculate MRR
+      const mrr = subs.data.reduce((acc, sub) => acc + (sub.items.data[0].price.unit_amount || 0), 0)
+      console.log(`--- [DEBUG] Calculated MRR: ${mrr} ---`);
+
+      // Calculate Trend
       const trendData = []
       const now = new Date()
       for (let i = 5; i >= 0; i--) {
@@ -95,7 +98,7 @@ serve(async (req) => {
           total_customers: userCount.count || 0,
           avg_order_value: (mrr / (subs.data.length || 1) / 100).toFixed(2)
         },
-        trend: trendData, // Returns chart data
+        trend: trendData,
         transactions: charges.data.map((c: any) => ({
           id: c.id,
           amount: c.amount,
@@ -108,7 +111,10 @@ serve(async (req) => {
 
     // --- TAB 2: TRANSACTIONS ---
     if (tab === 'transactions') {
+      console.log("--- [DEBUG] Fetching Stripe Transactions... ---");
       const charges = await stripe.charges.list({ limit: 20 })
+      console.log(`--- [DEBUG] Transactions Fetched: ${charges.data.length} ---`);
+
       return new Response(JSON.stringify({
         success: true,
         data: charges.data.map((c: any) => ({
@@ -126,27 +132,34 @@ serve(async (req) => {
 
     // --- TAB 3: SUBSCRIPTIONS ---
     if (tab === 'subscriptions') {
-      // 1. Fetch subscriptions from Stripe AND expand 'customer' and 'data.plan.product'
+      console.log("--- [DEBUG] Fetching Stripe Subscriptions (Expanded)... ---");
+      
       const subs = await stripe.subscriptions.list({ 
           limit: 20, 
           status: 'all',
-          expand: ['data.customer', 'data.plan.product'] // <--- THIS IS THE KEY FIX
+          expand: ['data.customer', 'data.plan.product'] 
       });
+      console.log(`--- [DEBUG] Subscriptions Fetched: ${subs.data.length} ---`);
+      
+      // Debug first subscription to verify expansion
+      if (subs.data.length > 0) {
+          const firstSub = subs.data[0];
+          console.log("--- [DEBUG] First Subscription Customer Data:", JSON.stringify(firstSub.customer));
+          console.log("--- [DEBUG] First Subscription Product Data:", JSON.stringify(firstSub.plan?.product));
+      }
 
       return new Response(JSON.stringify({
         success: true,
-        pagination: { // Adding pagination structure to match frontend expectations
+        pagination: {
             page: 1,
-            totalPages: 1, // Simplified for now
+            totalPages: 1,
             total: subs.data.length
         },
         data: subs.data.map((s: any) => {
-            // 2. Safely extract product info (it handles if product is missing or deleted)
             const productObj = s.plan?.product; 
             const productName = (typeof productObj === 'object') ? productObj.name : 'Unknown Product';
             const productDesc = (typeof productObj === 'object') ? (productObj.description || '') : '';
 
-            // 3. Safely extract customer info
             const customerObj = s.customer;
             const customerEmail = (typeof customerObj === 'object') ? customerObj.email : 'Unknown Email';
 
@@ -154,12 +167,11 @@ serve(async (req) => {
                 id: s.id,
                 stripe_subscription_id: s.id,
                 status: s.status,
-                customer_email: customerEmail, // Now populated!
-                product_name: productName,     // Now populated!
-                product_desc: productDesc,     // Now populated!
+                customer_email: customerEmail,
+                product_name: productName,
+                product_desc: productDesc,
                 plan_amount: s.plan?.amount || 0,
                 plan_interval: s.plan?.interval || 'month',
-                // 4. Fix Dates: Stripe uses Seconds, JS uses Milliseconds. Multiply by 1000.
                 current_period_start: s.current_period_start * 1000, 
                 current_period_end: s.current_period_end * 1000,
                 cancel_at_period_end: s.cancel_at_period_end
@@ -168,16 +180,25 @@ serve(async (req) => {
       }), { headers })
     }
 
-    // --- TAB 4: CUSTOMERS (The Critical Fix) ---
+    // --- TAB 4: CUSTOMERS ---
     if (tab === 'customers') {
-        // Query your 'users' table
+        console.log("--- [DEBUG] Fetching Database Customers (users table)... ---");
+        
         const { data: profiles, error } = await supabase
             .from('users')
             .select('*')
             .order('id', { ascending: false })
             .limit(20)
         
-        if (error) throw error
+        if (error) {
+            console.error("--- [DEBUG] DB Query Error:", error);
+            throw error
+        }
+
+        console.log(`--- [DEBUG] Customers Fetched: ${profiles ? profiles.length : 0} ---`);
+        if (profiles && profiles.length > 0) {
+             console.log("--- [DEBUG] First Customer Data:", JSON.stringify(profiles[0]));
+        }
 
         return new Response(JSON.stringify({
             success: true,
@@ -185,9 +206,6 @@ serve(async (req) => {
                 id: p.id,
                 email: p.email,
                 stripe_customer_id: p.stripe_customer_id,
-                // MAPPING FIX:
-                // Frontend expects 'subscription_status', but DB has 'tier'.
-                // Frontend expects 'plan_name', DB has 'tier'.
                 subscription_status: p.tier === 'premium' ? 'active' : 'free', 
                 plan_name: p.tier ? p.tier.toUpperCase() : 'BASIC',
                 created_at: p.created_at
@@ -195,9 +213,12 @@ serve(async (req) => {
         }), { headers })
     }
 
+    console.error(`--- [DEBUG] ERROR: Unknown Tab Requested (${tab}) ---`);
     return new Response(JSON.stringify({ error: 'Tab not found' }), { headers })
 
   } catch (err) {
+    console.error("--- [DEBUG] CRITICAL UNHANDLED EXCEPTION ---");
+    console.error(err);
     return new Response(JSON.stringify({ error: err.message }), { status: 500, headers })
   }
 })
