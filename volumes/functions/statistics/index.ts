@@ -1,32 +1,7 @@
 /**
- * -----------------------------------------------------------------------------
  * @name        statistics
- * @description Serves as a secured admin dashboard endpoint to aggregate 
- * system statistics from multiple services (Supabase/Postgres and Pinecone).
- * It optionally triggers a database function (update_statistics) to refresh 
- * the data before reading the latest metrics.
- * -----------------------------------------------------------------------------
- * @method      POST
- * @base_url    /functions/v1/statistics
- * -----------------------------------------------------------------------------
- * @security    Delegated Authentication: Relies on an internal call to the 
- * 'validate-jwt-v2' function to handle JWT, email, and admin tier checks.
- * @payload     { update: boolean } or { refresh: boolean }
- * @logic       1. Calls 'validate-jwt-v2' for user authentication/authorization.
- * 2. If payload includes `update: true`, calls the Postgres function 
- * `update_statistics()` to refresh DB metrics.
- * 3. Fetches the latest DB stats (from 'statistics' table) and Pinecone 
- * index status/vector counts in parallel.
- * @returns     { success: true, database_status: object, pinecone_status: object }
- * -----------------------------------------------------------------------------
- * @env         SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ANON_KEY,
- * @env         PINECONE_API_KEY
- * @notes       This function requires the existence of a separate 
- * 'validate-jwt-v2' Edge Function.
- * @author      Elijah Furlonge
- * -----------------------------------------------------------------------------
+ * @description Admin dashboard endpoint to aggregate system statistics.
  */
-
 import { serve } from 'https://deno.land/std@0.131.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 
@@ -37,16 +12,8 @@ serve(async (req) => {
     'Content-Type': 'application/json',
   })
 
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers })
-  }
-
-  if (req.method !== 'POST') {
-    return new Response(
-      JSON.stringify({ error: 'Method not allowed' }),
-      { status: 405, headers }
-    )
-  }
+  if (req.method === 'OPTIONS') return new Response('ok', { headers })
+  if (req.method !== 'POST') return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers })
 
   try {
     // 1. Validate JWT using your existing validate-jwt function
@@ -62,9 +29,7 @@ serve(async (req) => {
           'apikey': Deno.env.get('SUPABASE_ANON_KEY') || ''
         },
         body: JSON.stringify({
-          headers: {
-            authorization: authHeader
-          },
+          headers: { authorization: authHeader },
           body: requestBody,
           method: 'POST'
         })
@@ -75,24 +40,12 @@ serve(async (req) => {
 
     if (validationData.shouldStop || !validationData.success) {
       return new Response(
-        JSON.stringify({
-          error: validationData.error || 'Authentication failed',
-          status: validationData.status || 401
-        }),
+        JSON.stringify(validationData),
         { status: validationData.status || 401, headers }
       )
     }
 
     console.log('User authenticated:', validationData.authenticated_user.email)
-
-    // Optional: Check if user is admin
-    // const userRole = validationData.authenticated_user.role
-    // if (userRole !== 'admin') {
-    //   return new Response(
-    //     JSON.stringify({ error: 'Admin access required' }),
-    //     { status: 403, headers }
-    //   )
-    // }
 
     // 2. Initialize Supabase client with publicv2 schema
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
@@ -107,25 +60,21 @@ serve(async (req) => {
     // 4. If update requested, call the database function first
     if (shouldUpdate) {
       console.log('Updating statistics via database function...')
-      
-      const { data: updateResult, error: updateError } = await supabase
-        .rpc('update_statistics')
+      const { data: updateResult, error: updateError } = await supabase.rpc('update_statistics')
       
       if (updateError) {
         console.error('Database function error:', updateError)
         throw updateError
       }
-
-      // Check if the function returned an error
       if (updateResult && updateResult.error) {
         throw new Error(updateResult.error)
       }
-
       console.log('Statistics updated successfully')
     }
 
-    // 5. Parallel data collection (read current state)
-    // Try publicv2 schema first, fallback to public if needed
+    // 5. Parallel data collection
+    console.log("--- [DEBUG] Starting Parallel Fetch (DB + Pinecone) ---");
+    
     let dbStats
     try {
       const result = await supabase
@@ -136,7 +85,8 @@ serve(async (req) => {
         .single()
       
       if (result.error) {
-        // If not found in publicv2, try without schema specification
+        console.warn("--- [DEBUG] publicv2 fetch failed, trying fallback schema ---", result.error);
+        // Fallback: try without schema specification if publicv2 fails
         const supabaseAlt = createClient(supabaseUrl, supabaseKey)
         const altResult = await supabaseAlt
           .from('statistics')
@@ -148,48 +98,53 @@ serve(async (req) => {
       } else {
         dbStats = result
       }
+
+      // --- ADDED DEBUGGING HERE ---
+      console.log("--- [DEBUG] Raw DB Stats Result: ", JSON.stringify(dbStats));
+      if (dbStats.data) {
+          console.log("--- [DEBUG] Extracted avg_p_time: ", dbStats.data.avg_p_time);
+          console.log("--- [DEBUG] Type of avg_p_time: ", typeof dbStats.data.avg_p_time);
+      }
+      // ----------------------------
+
     } catch (err) {
       console.error('Error fetching statistics:', err)
       dbStats = { data: null, error: err }
     }
 
+    // Original Pinecone Logic (Hardcoded URLs and 3 calls as requested)
     const [indexInfo, indexStats, namespaceInfo] = await Promise.all([
       // Pinecone Describe Index
       fetch('https://api.pinecone.io/indexes/strategy-book', {
-        headers: {
-          'Api-Key': Deno.env.get('PINECONE_API_KEY')!
-        }
+        headers: { 'Api-Key': Deno.env.get('PINECONE_API_KEY')! }
       }).then(res => res.json()),
       
       // Pinecone Describe Index Stats
       fetch('https://strategy-book-pbq333f.svc.aped-4627-b74a.pinecone.io/describe_index_stats', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Api-Key': Deno.env.get('PINECONE_API_KEY')!
-        }
+        headers: { 'Content-Type': 'application/json', 'Api-Key': Deno.env.get('PINECONE_API_KEY')! }
       }).then(res => res.json()),
       
       // Pinecone Namespace Stats
       fetch('https://strategy-book-pbq333f.svc.aped-4627-b74a.pinecone.io/namespaces/book', {
-        headers: {
-          'Api-Key': Deno.env.get('PINECONE_API_KEY')!,
-          'X-Pinecone-API-Version': '2025-04'
-        }
+        headers: { 'Api-Key': Deno.env.get('PINECONE_API_KEY')!, 'X-Pinecone-API-Version': '2025-04' }
       }).then(res => res.json())
     ])
 
     // 6. Process data
     const database_status = {
       stat_id: dbStats.data?.id || null,
-      database_name: 'postgres', // Update if different
+      database_name: 'postgres',
       database_size: dbStats.data?.database_size || 'unknown',
       total_users: dbStats.data?.total_users || 0,
       total_queries: dbStats.data?.total_queries || 0,
       log_in_users: dbStats.data?.log_in_users || 0,
+      
+      // --- CRITICAL: Passing raw value (String or Interval Object) to frontend ---
       avg_p_time: dbStats.data?.avg_p_time || null,
+      
       recorded_at: dbStats.data?.recorded_at || null,
-      updated: shouldUpdate // Indicates if this was a fresh update
+      updated: shouldUpdate
     }
 
     const pinecone_status = {
@@ -219,7 +174,7 @@ serve(async (req) => {
     console.error('Statistics endpoint error:', error)
     return new Response(
       JSON.stringify({ 
-        success: false,
+        success: false, 
         error: 'Server error', 
         details: error.message 
       }),
