@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 # Load Groq API Key environment variable.
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+# Load Open Router API Key environment variable.
 OPRT_API_KEY = os.getenv("OPRT_API_KEY")
 
 if not GROQ_API_KEY:
@@ -23,8 +24,8 @@ if not OPRT_API_KEY:
     raise ValueError("OPRT_API_KEY environment variable not set.")
 
 app = FastAPI(
-    title="Groq API request handler.",
-    description="Receives API request for Groq from frontend and processes the request.",
+    title="LLM Proxy request handler.",
+    description="Receives requests for LLM inference from frontend and processes the request.",
     version="1.0.0"
 )
 
@@ -85,8 +86,8 @@ class ChatRequest(BaseModel):
     # response_format: dict = {"type": "json_object"} # Optional: Set to ensure JSON response
 
 
-# Secure Proxy Endpoint
-@app.post("/api/groq/chat")
+# Secure Groq API Proxy Endpoint
+@app.post("/groq/chat")
 async def groq_chat_proxy(request_body: ChatRequest):
     # Use httpx.AsyncClient for asynchronous requests.
     async with httpx.AsyncClient() as client:
@@ -115,8 +116,8 @@ async def groq_chat_proxy(request_body: ChatRequest):
             raise HTTPException(status_code=500, detail=f"Proxy internal error: {e}")
         
 
-# Secure Proxy Endpoint
-@app.post("/api/oprt/chat")
+# Secure Open Router API Proxy Endpoint
+@app.post("/oprt/chat")
 async def oprt_chat_proxy(request_body: ChatRequest):
     # Use httpx.AsyncClient for asynchronous requests.
     async with httpx.AsyncClient() as client:
@@ -148,4 +149,4 @@ async def oprt_chat_proxy(request_body: ChatRequest):
 # Health Check / Root Endpoint.
 @app.get("/")
 async def root():
-    return {"message": "FastAPI Listener is running!"}
+    return {"message": "LLM Proxy is running!"}
