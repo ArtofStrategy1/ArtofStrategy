@@ -2,9 +2,9 @@ digraph G {
 	overlap=scale splines=true
 	edge [fontsize=12]
 	node [fillcolor="#cae6df" shape=circle style=filled]
-	Marketing_Performance [label=Marketing_Performance]
-	Customer_Metrics [label=Customer_Metrics]
 	Sales_Performance [label=Sales_Performance]
+	Customer_Metrics [label=Customer_Metrics]
+	Marketing_Performance [label=Marketing_Performance]
 	node [shape=box style=""]
 	Ad_Spend_USD [label=Ad_Spend_USD]
 	Brand_Awareness_Pct [label=Brand_Awareness_Pct]
