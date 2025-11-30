@@ -38,7 +38,7 @@ app = FastAPI(docs_url="/")
 origins = [
     "https://data2int.com",       # Main domain
     "https://elijah.data2int.com",   # Dev domain
-    "https://matthew.data2int.com", # Dev domain
+    "https://matt.data2int.com", # Dev domain
     "http://localhost:8080",       # For local testing
     "http://127.0.0.1:8080",      # For local testing
     "http://localhost:8000",       # For python -m http.server
@@ -46,7 +46,7 @@ origins = [
     ## New sageaios.com ##
     "https://sageaios.com",       # Main domain
     "https://elijah.sageaios.com",   # Dev domain
-    "https://matthew.sageaios.com", # Dev domain
+    "https://matt.sageaios.com", # Dev domain
     "https://khaled.sageaios.com"   
 ]
 

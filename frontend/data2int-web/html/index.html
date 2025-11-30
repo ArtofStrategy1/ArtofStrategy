@@ -26,6 +26,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs" type="module"></script>
     <script src="https://js.stripe.com/v3/"></script>
     <script src="https://cdn.plot.ly/plotly-3.3.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 
     <style>
@@ -5612,117 +5613,255 @@ document.addEventListener("DOMContentLoaded", () => {
     // ===== REVISED EXPORT FUNCTIONS (Using html2canvas) =====
     // =========================================================
 
+    /**
+ * SMART CLIENT-SIDE PDF GENERATOR
+ * Handles tool-specific layouts by defining 'print configurations' for each analysis type.
+ */
+async function handleClientSidePdf() {
+    const originalContainer = document.getElementById("analysisResult");
+    const btn = document.getElementById("savePdfBtn");
+    
+    if (!originalContainer || originalContainer.innerText.trim().length < 50) {
+        alert("No analysis content to print.");
+        return;
+    }
+
+    const originalText = btn.innerText;
+    btn.innerText = "Preparing Layout...";
+    btn.disabled = true;
+    document.body.style.cursor = "wait";
+
+    try {
+        // 1. DEFINE TOOL-SPECIFIC CONFIGURATIONS
+        // This is where we "send the divs" as you suggested.
+        let printConfig = {
+            title: "Analysis Report",
+            containers: [], // If empty, defaults to all tabs
+            customCss: ""   // Tool-specific tweaks
+        };
+
+        switch (currentTemplateId) {
+            case 'action-plans':
+                printConfig.title = "Strategic Action Plan";
+                // Action Plans usually have specific panels. We list them in order.
+                // (Adjust these IDs if your specific render function uses different names)
+                printConfig.containers = ["dashboardPanel", "detailsPanel", "timelinePanel", "risksPanel"];
+                printConfig.customCss = `
+                    /* Force Timeline to look good on paper */
+                    .timeline-item { page-break-inside: avoid; margin-bottom: 20px; }
+                    .timeline-content { border: 1px solid #ccc; padding: 10px; }
+                    .action-card { border: 1px solid #999; background: #f9f9f9; page-break-inside: avoid; }
+                `;
+                break;
+
+            case 'mission-vision':
+                printConfig.title = "Strategic Foundation";
+                // Mission Vision might not use tabs, or might use 'dashboardPanel'
+                printConfig.containers = ["dashboardPanel", "detailsPanel"]; 
+                break;
+            
+            // Add other cases here later...
+            default:
+                // Fallback: Try to find ALL tab panels
+                const panels = originalContainer.querySelectorAll('.analysis-tab-panel');
+                if (panels.length > 0) {
+                    printConfig.containers = Array.from(panels).map(p => p.id);
+                }
+                break;
+        }
+
+        // 2. SNAPSHOT CHARTS (Plotly)
+        const originalCharts = originalContainer.querySelectorAll('.plotly-chart');
+        const chartImages = [];
+        for (let i = 0; i < originalCharts.length; i++) {
+            if (originalCharts[i].layout) {
+                try {
+                    const img = await Plotly.toImage(originalCharts[i], {
+                        format: 'png', width: 1000, height: 600, scale: 2, setBackground: 'white'
+                    });
+                    chartImages.push(img);
+                } catch (e) { chartImages.push(null); }
+            } else { chartImages.push(null); }
+        }
+
+        // 3. CLONE & FLATTEN
+        const clone = originalContainer.cloneNode(true);
+        const printWrapper = document.createElement('div');
+
+        // If specific containers are defined, only grab those
+        if (printConfig.containers.length > 0) {
+            printConfig.containers.forEach(id => {
+                const el = clone.querySelector(`#${id}`);
+                if (el) {
+                    // Unhide and style
+                    el.style.display = 'block';
+                    el.classList.remove('hidden');
+                    
+                    // Add a Section Header
+                    const header = document.createElement('h2');
+                    header.className = 'section-header';
+                    header.innerText = id.replace('Panel', '').replace(/([A-Z])/g, ' $1').toUpperCase();
+                    
+                    printWrapper.appendChild(header);
+                    printWrapper.appendChild(el);
+                }
+            });
+        } else {
+            // If no config, just dump the whole thing (fallback)
+            printWrapper.innerHTML = clone.innerHTML;
+        }
+
+        // 4. INJECT STATIC CHARTS
+        // We search the *new* printWrapper for charts and replace them with the captured images
+        const cloneCharts = printWrapper.querySelectorAll('.plotly-chart');
+        cloneCharts.forEach((div, index) => {
+            div.innerHTML = ""; 
+            div.style.cssText = ""; 
+            div.className = "print-chart-container";
+            if (chartImages[index]) {
+                const img = document.createElement('img');
+                img.src = chartImages[index];
+                div.appendChild(img);
+            }
+        });
+
+        // 5. CLEANUP (Remove buttons, inputs)
+        const unwanted = printWrapper.querySelectorAll('button, input, select, .nav-link, .btn');
+        unwanted.forEach(el => el.remove());
+
+        // 6. GENERATE PRINT WINDOW
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) { alert("Please allow popups."); return; }
+
+        const htmlContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>${printConfig.title}</title>
+                <style>
+                    @page { size: A4; margin: 15mm; }
+                    body { font-family: 'Helvetica', sans-serif; color: #000; background: #fff; padding: 20px; }
+                    h1 { text-align: center; border-bottom: 3px solid #000; padding-bottom: 10px; }
+                    h2.section-header { 
+                        margin-top: 30px; border-bottom: 2px solid #333; 
+                        font-size: 18px; color: #1a237e; page-break-after: avoid; 
+                    }
+                    
+                    /* Standard Card Reset */
+                    .glass-container, .feature-card, .kpi-card, .summary-stat-card {
+                        border: 1px solid #ccc; background: #f8f9fa !important;
+                        color: #000 !important; padding: 15px; margin-bottom: 15px;
+                        box-shadow: none !important; page-break-inside: avoid;
+                    }
+                    
+                    /* Grid System for Print */
+                    .grid { display: grid; gap: 15px; }
+                    .grid-cols-1 { grid-template-columns: 1fr; }
+                    .grid-cols-2 { grid-template-columns: 1fr 1fr; }
+                    .grid-cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+                    
+                    /* Custom Tool CSS */
+                    ${printConfig.customCss}
+                    
+                    /* Utility */
+                    .text-white { color: #000 !important; }
+                    .text-indigo-300, .text-blue-300 { color: #000080 !important; font-weight: bold; }
+                    .text-green-300 { color: #006400 !important; }
+                    .text-red-300 { color: #8b0000 !important; }
+                </style>
+            </head>
+            <body>
+                <h1>${printConfig.title}</h1>
+                <p style="text-align:center; color:#666; font-size:12px;">Generated on ${new Date().toLocaleString()}</p>
+                ${printWrapper.innerHTML}
+                <script>
+                    window.onload = function() { setTimeout(() => window.print(), 800); };
+                <\/script>
+            </body>
+            </html>
+        `;
+
+        printWindow.document.open();
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
+
+    } catch (error) {
+        console.error("Print Error:", error);
+        alert("Print failed: " + error.message);
+    } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
+        document.body.style.cursor = "default";
+    }
+}
+
     // --- REVISED PDF Export Logic (Image-based) ---
-    async function handleSaveAsPdf(filename = "SAGE_Analysis.pdf") {
-        // 1. Check Libraries
-        if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
-            alert("Error: jsPDF library not loaded."); return;
-        }
-        if (typeof window.html2canvas === 'undefined') {
-            alert("Error: html2canvas library not loaded."); return;
-        }
+    // --- REVISED: Backend PDF Export Handler ---
+    async function handleSaveAsPdf() {
+        const btn = document.getElementById("savePdfBtn");
+        const originalText = btn.innerText;
 
-        const { jsPDF } = window.jspdf;
-        const analysisResultElement = $("analysisResult");
-
-        if (!analysisResultElement || !analysisResultElement.hasChildNodes() || analysisResultElement.innerText.includes("Your generated analysis will appear here.")) {
-            alert("No analysis content found to save.");
+        // 1. Validation
+        if (!window.currentAnalysisData) {
+            alert("No analysis data found to export. Please run the analysis first.");
             return;
         }
 
-        alert("Preparing PDF screenshot... Please wait.");
-        console.log("Starting PDF generation via html2canvas...");
+        // 2. UI Loading State
+        btn.innerText = "Generating PDF...";
+        btn.disabled = true;
+        btn.style.opacity = "0.7";
+        btn.style.cursor = "wait";
 
         try {
-            // 2. Use html2canvas to capture the element
-            const canvas = await html2canvas(analysisResultElement, {
-                scale: 2, // Increase scale for better resolution
-                useCORS: true, // If you ever load images from other domains
-                logging: true // Enable logging for debugging
+            console.log("Preparing SEM data for backend export...");
+
+            // 3. Translate Data using the helper we just added
+            const pdfPayload = formatDataForBackendPDF(currentTemplateId, window.currentAnalysisData);
+            
+            // 4. Prepare Upload
+            const formData = new FormData();
+            formData.append("format", "pdf");
+            formData.append("analysis_data_json", JSON.stringify(pdfPayload));
+
+            // 5. Call Backend
+            // Ensure this URL matches your FastAPI server location
+            const response = await fetch("https://analysis.sageaios.com/api/export", {
+                method: "POST",
+                body: formData
             });
 
-            console.log("Canvas generated from HTML content.");
-
-            // 3. Convert canvas to image data
-            const imgData = canvas.toDataURL('image/png');
-            const imgWidth = canvas.width;
-            const imgHeight = canvas.height;
-
-            // 4. Create PDF and add image (potentially sliced)
-            const doc = new jsPDF({
-                orientation: imgWidth > imgHeight ? 'l' : 'p', // Use landscape if wider
-                unit: 'pt',
-                format: 'a4'
-            });
-
-            const pdfPageWidth = doc.internal.pageSize.getWidth();
-            const pdfPageHeight = doc.internal.pageSize.getHeight();
-            const margin = 20; // Small margin for image
-
-            // Calculate image dimensions to fit page width
-            const availableWidth = pdfPageWidth - margin * 2;
-            const availableHeight = pdfPageHeight - margin * 2;
-
-            const aspectRatio = imgHeight / imgWidth;
-            let pdfImgWidth = availableWidth;
-            let pdfImgHeight = pdfImgWidth * aspectRatio;
-
-            // If scaled image is taller than available page height, scale based on height instead
-            if (pdfImgHeight > availableHeight) {
-                pdfImgHeight = availableHeight;
-                pdfImgWidth = pdfImgHeight / aspectRatio;
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(`Server Error (${response.status}): ${errText}`);
             }
 
-            // Calculate how many pages are needed based on the *original* canvas height
-            // relative to the scaled height that fits *within* one PDF page.
-            const totalPdfHeight = (imgHeight / imgWidth) * pdfImgWidth; // Total height the image would occupy in PDF units if not sliced
-            const pageHeightToFitOneSlice = pdfImgHeight; // The height of one slice as it appears on the PDF page
-            const numPages = Math.ceil(totalPdfHeight / pageHeightToFitOneSlice);
-
-
-             console.log(`Original Canvas: ${imgWidth}x${imgHeight} | PDF Image Size per page: ${pdfImgWidth.toFixed(0)}x${pageHeightToFitOneSlice.toFixed(0)} | Total PDF Height: ${totalPdfHeight.toFixed(0)} | Pages: ${numPages}`);
-
-            // Add image slices page by page
-            let currentCanvasY = 0; // Position on the source canvas
-            for (let i = 1; i <= numPages; i++) {
-                if (i > 1) {
-                    doc.addPage();
-                }
-                // Calculate the portion of the canvas to draw for this page
-                const sourceHeight = Math.min(imgHeight - currentCanvasY, (pageHeightToFitOneSlice / pdfImgWidth) * imgWidth); // Height on original canvas for this slice
-
-                // Create a temporary canvas for the slice
-                const sliceCanvas = document.createElement('canvas');
-                sliceCanvas.width = imgWidth;
-                sliceCanvas.height = sourceHeight;
-                const sliceCtx = sliceCanvas.getContext('2d');
-
-                // Draw the slice from the main canvas
-                sliceCtx.drawImage(canvas, 0, currentCanvasY, imgWidth, sourceHeight, 0, 0, imgWidth, sourceHeight);
-
-                const sliceDataUrl = sliceCanvas.toDataURL('image/png');
-
-                 // Add the slice image to the PDF page
-                 const slicePdfHeight = (sourceHeight / imgWidth) * pdfImgWidth; // Calculate height of this slice in PDF units
-                 doc.addImage(sliceDataUrl, 'PNG', margin, margin, pdfImgWidth, slicePdfHeight);
-
-                currentCanvasY += sourceHeight; // Move to the next slice position
-                 console.log(`Added page ${i}/${numPages}. Slice height (canvas): ${sourceHeight.toFixed(0)}, Slice height (pdf): ${slicePdfHeight.toFixed(0)}`);
-            }
-
-
-            console.log("Adding image(s) to PDF complete.");
-
-            // 5. Save the PDF
-            doc.save(filename);
-            console.log("PDF saved successfully.");
+            // 6. Download the Result
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `SAGE_${currentTemplateId}_Report.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            
+            // Cleanup
+            window.URL.revokeObjectURL(url);
+            a.remove();
+            console.log("PDF download triggered successfully.");
 
         } catch (error) {
-            console.error("!!! Error generating PDF with html2canvas:", error);
-            alert("Failed to generate PDF. Check console for details. Ensure content is visible.");
+            console.error("PDF Generation Error:", error);
+            alert("Failed to generate PDF: " + error.message);
+        } finally {
+            // 7. Reset UI
+            btn.innerText = originalText;
+            btn.disabled = false;
+            btn.style.opacity = "1";
+            btn.style.cursor = "pointer";
         }
     }
-
 
     // --- REVISED DOCX Export Logic (Image-based) ---
     async function handleSaveAsDocx(filename = "SAGE_Analysis.docx") {
@@ -5962,6 +6101,15 @@ document.addEventListener("DOMContentLoaded", () => {
             if (tier === 'premium' || tier === 'admin' || role === 'admin') {
                 console.log(">>> TAKING METADATA PATH - skipping DB query");
                 console.log(`User has privileged metadata (${tier || role}). Unlocking Premium.`);
+                
+                // --- FIX: Explicitly set the global tier variable ---
+                if (role === 'admin' || tier === 'admin') {
+                    currentUserTier = 'admin';
+                } else {
+                    currentUserTier = 'premium';
+                }
+                // ---------------------------------------------------
+
                 currentSelectionLimit = maxUsage;
             } 
             // 3. Check Database Subscription (Robust check)
@@ -5991,6 +6139,7 @@ document.addEventListener("DOMContentLoaded", () => {
             userLoggedIn = false;
             currentUser = null;
             currentSelectionLimit = 1; 
+            currentUserTier = 'basic'; // Reset tier on logout
             console.log("User signed out. Limits reset to Basic.");
         }
         
@@ -6100,7 +6249,13 @@ document.addEventListener("DOMContentLoaded", () => {
             if (userError) throw userError;
 
             // B. Determine Status
-            const tier = (userData?.tier || 'basic').toLowerCase();
+            // --- FIX: Trust Auth Metadata for Admin status if DB lags ---
+            let tier = (userData?.tier || 'basic').toLowerCase();
+            if (session.user.app_metadata?.role === 'admin' || session.user.app_metadata?.tier === 'admin') {
+                tier = 'admin';
+            }
+            // ------------------------------------------------------------
+
             const planData = userData?.stripe_plans;
             const isPaidPremium = tier !== 'basic' && tier !== 'free'; 
 
@@ -10139,24 +10294,29 @@ if (closeStripeBtn) {
 
     // --- Template Detail Page Logic ---
 
-    // Helper function to reattach action listeners (you may already have this)
+    // --- HELPER: Re-attach Save Button Listeners ---
     function reattachActionListeners() {
-        // Add your existing save PDF/DOCX functionality here
         const savePdfBtn = document.getElementById("savePdfBtn");
         const saveDocxBtn = document.getElementById("saveDocxBtn");
         
         if (savePdfBtn) {
-            savePdfBtn.addEventListener("click", () => {
-                // Your existing PDF save functionality
-                console.log("Saving as PDF...");
-            });
+            // 1. Remove old listeners (to prevent duplicates/stacking)
+            // Note: This only works if the function reference is exact, 
+            // but cloning the node is a safer brute-force way to clear listeners.
+            const newPdfBtn = savePdfBtn.cloneNode(true);
+            savePdfBtn.parentNode.replaceChild(newPdfBtn, savePdfBtn);
+            
+            // 2. Attach the NEW backend handler
+            //newPdfBtn.addEventListener("click", handleSaveAsPdf);
+            newPdfBtn.addEventListener("click", handleClientSidePdf);
         }
         
         if (saveDocxBtn) {
-            saveDocxBtn.addEventListener("click", () => {
-                // Your existing DOCX save functionality
-                console.log("Saving as DOCX...");
-            });
+            const newDocxBtn = saveDocxBtn.cloneNode(true);
+            saveDocxBtn.parentNode.replaceChild(newDocxBtn, saveDocxBtn);
+            
+            // Keep existing DOCX logic or add placeholder
+            newDocxBtn.addEventListener("click", handleSaveAsDocx);
         }
     }
 
