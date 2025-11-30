@@ -4,6 +4,39 @@
  * @description Centralized admin dashboard endpoint for viewing financial and 
  * user statistics. Aggregates data from Stripe (MRR, Invoices, Subscriptions) 
  * and the Supabase 'users' table across four distinct data views (tabs).
+ * Enforces email allowlist security for admin-only access.
+ * 
+ * @routes
+ * 1. GET /?tab=overview      - Financial KPIs, 12-month revenue trend, recent transactions
+ * 2. GET /?tab=transactions  - Detailed payment history with customer info
+ * 3. GET /?tab=subscriptions - Active/inactive subscriptions with expanded customer/product data
+ * 4. GET /?tab=customers     - User profiles from database with subscription mapping
+ * -----------------------------------------------------------------------------
+ * @method      GET
+ * @base_url    /functions/v1/stripe-analytics
+ * -----------------------------------------------------------------------------
+ * @params      ?tab=overview|transactions|subscriptions|customers
+ * @headers     Authorization: Bearer <jwt_token>
+ * -----------------------------------------------------------------------------
+ * @responses   
+ * overview: { stats: {mrr, active_count, total_customers, avg_order_value}, trend: [12_months], transactions: [recent_5] }
+ * transactions: { data: [{id, amount, currency, status, created, customer_email, payment_method, last4}] }
+ * subscriptions: { data: [{id, status, customer_email, product_name, plan_amount, current_period_*}], pagination }
+ * customers: { data: [{id, email, stripe_customer_id, subscription_status, plan_name, created_at}] }
+ * -----------------------------------------------------------------------------
+ * @features
+ * - Real 12-month revenue trend from paid Stripe invoices
+ * - MRR calculation from active subscriptions (yearly plans converted to monthly)
+ * - Expanded Stripe objects for full customer/product details
+ * - Database tier mapping to subscription status (premium->active, other->free)
+ * -----------------------------------------------------------------------------
+ * @security
+ * - JWT token validation via Supabase auth
+ * - Email allowlist check (ADMIN_EMAILS environment variable)
+ * - Service role database access (publicv2 schema)
+ * -----------------------------------------------------------------------------
+ * @env         STRIPE_SECRET_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ADMIN_EMAILS
+ * @author      Elijah Furlonge
  * -----------------------------------------------------------------------------
  */
 

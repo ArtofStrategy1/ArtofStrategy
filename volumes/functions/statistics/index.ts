@@ -1,7 +1,51 @@
 /**
+ * -----------------------------------------------------------------------------
  * @name        statistics
  * @description Admin dashboard endpoint to aggregate system statistics.
+ * Combines database metrics (users, queries, performance) with Pinecone vector
+ * database stats. Uses validate-jwt-v2 for authentication and supports
+ * real-time refresh via database function calls.
+ * 
+ * @routes
+ * 1. POST /statistics - Fetch cached system statistics from DB + Pinecone
+ * 2. POST /statistics { "update": true } - Refresh stats via DB function, then return
+ * -----------------------------------------------------------------------------
+ * @method      POST
+ * @base_url    /functions/v1/statistics
+ * -----------------------------------------------------------------------------
+ * @headers     Authorization: Bearer <jwt_token>
+ *              Content-Type: application/json
+ * @payload     { "update"?: boolean, "refresh"?: boolean }
+ * -----------------------------------------------------------------------------
+ * @responses   
+ * Success: {
+ *   success: true,
+ *   database_status: {
+ *     stat_id, database_name, database_size, total_users, total_queries,
+ *     log_in_users, avg_p_time, recorded_at, updated
+ *   },
+ *   pinecone_status: {
+ *     name, metric, dimension, status, ready, total_vectors, 
+ *     book_namespace_vectors, cloud_provider, region, generated_at
+ *   }
+ * }
+ * Error: { success: false, error: "Server error", details: "..." }
+ * -----------------------------------------------------------------------------
+ * @external_apis
+ * - Pinecone Index API (strategy-book index)
+ * - Pinecone Stats API (describe_index_stats)
+ * - Pinecone Namespace API (book namespace)
+ * - Internal validate-jwt-v2 function
+ * -----------------------------------------------------------------------------
+ * @side_effects
+ * - If update=true: Calls update_statistics() DB function to refresh cached data
+ * - Fallback schema switching (publicv2 -> default) for DB queries
+ * -----------------------------------------------------------------------------
+ * @env         SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ANON_KEY, PINECONE_API_KEY
+ * @author      Elijah Furlonge
+ * -----------------------------------------------------------------------------
  */
+
 import { serve } from 'https://deno.land/std@0.131.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 

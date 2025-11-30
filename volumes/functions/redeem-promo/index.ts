@@ -1,3 +1,40 @@
+/**
+ * -----------------------------------------------------------------------------
+ * @name        redeem-promo
+ * @description User endpoint to redeem promotional codes for premium access.
+ * Validates promo codes, checks usage limits/expiration, and upgrades user tier.
+ * Updates both public users table and auth metadata for seamless access control.
+ * 
+ * @routes
+ * 1. POST /redeem-promo - Validate and redeem promo code for premium unlock
+ * -----------------------------------------------------------------------------
+ * @method      POST
+ * @base_url    /functions/v1/redeem-promo
+ * -----------------------------------------------------------------------------
+ * @headers     Authorization: Bearer <jwt_token>
+ *              Content-Type: application/json
+ * @payload     { "code": "PROMO2024" }
+ * -----------------------------------------------------------------------------
+ * @responses   
+ * Success: { success: true, message: "Premium unlocked for 30 days!" }
+ * Errors: { error: "Invalid or inactive promo code" | "Promo code has expired" | "Promo code limit reached" }
+ * -----------------------------------------------------------------------------
+ * @validation
+ * - Code exists and is_active = true
+ * - Current date between starts_at and expires_at
+ * - times_used < max_uses (if max_uses is set)
+ * - User has valid JWT token
+ * -----------------------------------------------------------------------------
+ * @side_effects
+ * - Updates users table: tier='premium', premium_until=+duration_days, plan_id, status='active'
+ * - Updates auth metadata: app_metadata.tier = 'premium'
+ * - Increments promo_codes.times_used counter
+ * -----------------------------------------------------------------------------
+ * @env         SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+ * @author      Elijah Furlonge
+ * -----------------------------------------------------------------------------
+ */
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 

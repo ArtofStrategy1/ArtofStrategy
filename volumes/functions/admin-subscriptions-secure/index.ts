@@ -3,6 +3,28 @@
  * @name        admin-subscriptions-secure
  * @description Centralizes financial data for the Admin Dashboard. 
  * Aggregates data from Stripe (MRR, Charges, Subs) and Supabase (User Counts).
+ * Enforces 2 layers of security (JWT Auth + Email Allowlist).
+ * 
+ * @routes
+ * 1. GET /?tab=overview      - Financial KPIs, MRR trends, recent transactions
+ * 2. GET /?tab=transactions  - Detailed payment history (20 most recent)
+ * 3. GET /?tab=subscriptions - Active/inactive subscription details with customers
+ * 4. GET /?tab=customers     - User profiles from database with subscription status
+ * -----------------------------------------------------------------------------
+ * @method      GET
+ * @base_url    /functions/v1/admin-subscriptions-secure
+ * -----------------------------------------------------------------------------
+ * @params      ?tab=overview|transactions|subscriptions|customers
+ * @headers     Authorization: Bearer <jwt_token>
+ * -----------------------------------------------------------------------------
+ * @responses   
+ * overview: { stats: {mrr, active_count, total_customers, avg_order_value}, trend: [], transactions: [] }
+ * transactions: { data: [{id, amount, currency, status, created, customer_email, payment_method, last4}] }
+ * subscriptions: { data: [{id, status, customer_email, product_name, plan_amount, current_period_*}] }
+ * customers: { data: [{id, email, stripe_customer_id, subscription_status, plan_name, created_at}] }
+ * -----------------------------------------------------------------------------
+ * @env         STRIPE_SECRET_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ADMIN_EMAILS
+ * @author      Elijah Furlonge
  * -----------------------------------------------------------------------------
  */
 
