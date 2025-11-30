@@ -10,6 +10,8 @@ services:
       - "8002:80"
     networks:
       - npm_default
+    environment:
+      - SERVER_NAME=${SERVER_NAME}
 
 networks:
   npm_default:

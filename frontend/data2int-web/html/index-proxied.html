@@ -4468,8 +4468,9 @@ import { renderMermaidDiagram, renderFishboneDiagram } from '../js/diagrams/diag
 
 document.addEventListener("DOMContentLoaded", () => {
 
+    const DOMAIN = window.location.hostname;
     // --- Supabase Configuration ---
-    const SUPABASE_URL = "https://sageaios.com/api/supabase/";
+    const SUPABASE_URL = `https://${DOMAIN}/api/supabase/`;
     const SUPABASE_ANON_KEY =
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNjQwOTk1MjAwLCJleHAiOjE5NTYzNTUyMDB9.KHXKQpsN6MNB08H_IPxP4Gh0gjcsvXG9IeJuK3XpnAU";
 
@@ -4480,7 +4481,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- GLOBAL DOWNLOAD HELPER (Uses Python Backend) ---
     window.triggerBackendDownload = async function(category, filename) {
         // Construct the backend URL
-        const url = `https://sageaios.com/api/analysis/samples/${category}/${filename}`;
+        const url = `https://${DOMAIN}/api/analysis/samples/${category}/${filename}`;
         
         // Get the button element to show status
         const btn = event.currentTarget;
@@ -4952,7 +4953,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const wsStatus = document.getElementById("wsStatus");
 
         try {
-            websocket = new WebSocket("wss://n8n-api.sageaios.com/ws");
+            let wsUrl = `wss://${DOMAIN}/api/n8n-proxy/ws`;
+            websocket = new WebSocket(wsUrl);
 
             wsStatus.textContent = "Connecting...";
             wsStatus.className = "ws-status connecting";
@@ -5006,7 +5008,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // relativePath example: "predictive/predictive-sample-data.csv"
         
         // 1. Construct the Backend URL
-        const API_BASE = "https://sageaios.com/api/analysis/samples";
+        const API_BASE = `https://${DOMAIN}/api/analysis/samples`;
         const url = `${API_BASE}/${relativePath}`;
 
         console.log(`Attempting to fetch sample from: ${url}`);
@@ -5328,8 +5330,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     async function fetchOllama(systemPrompt, userContext, analysisType) {
-        const OLLAMA_URL = "https://sageaios.com/api/ollama/generate";
-        const OLLAMA_MODEL = "llama3.1:latest";
+        const OLLAMA_URL = `https://${DOMAIN}/api/ollama/chat`;
+        // const OLLAMA_MODEL = "llama3.1:latest";
+        const OLLAMA_MODEL = "gpt-oss:20b";
         const MAX_CONTEXT_LENGTH = 100000;
         let userPrompt = userContext;
         let truncatedNote = "";
@@ -5339,13 +5342,17 @@ document.addEventListener("DOMContentLoaded", () => {
             truncatedNote = `(Note: Analysis based on the first ${MAX_CONTEXT_LENGTH} characters.)`;
         }
 
-        const fullPrompt = `${systemPrompt}\n\n${userPrompt}\n\n${truncatedNote}`;
+        const messages = [
+                {"role": "system", "content": `${systemPrompt}`},
+                {"role": "user", "content": `${userContext}\n\n${truncatedNote}`}
+        ]
+
         const response = await fetch(OLLAMA_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 model: OLLAMA_MODEL,
-                prompt: fullPrompt,
+                messages: messages, 
                 stream: false,
                 format: "json",
                 options: { num_ctx: 32768 }
@@ -5357,13 +5364,13 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         
         const data = await response.json();
-        console.log(`Raw AI Response ${analysisType}:`, data.response); // Log raw response
-        return JSON.parse(data.response);
+        console.log(`Raw AI Response ${analysisType}:`, data.message.content); // Log raw response
+        return JSON.parse(data.message.content);
     }
 
 
     async function fetchGroq(systemPrompt, userContext, analysisType) {
-        const GROQ_URL = "http://sageaios/api/inference/api/groq/chat";
+        const GROQ_URL = `https://${DOMAIN}/api/llm-proxy/groq/chat`;
         const GROQ_MODEL = "llama-3.1-8b-instant";
         const messages = [
                 {"role": "system", "content": `${systemPrompt}`},
@@ -5394,7 +5401,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     async function fetchOpenRouter(systemPrompt, userContext, jsonSchema, analysisType) {
-        const OPRT_URL = "https://sageaios.com/api/inference/api/oprt/chat";
+        const OPRT_URL = `https://${DOMAIN}/api/llm-proxy/oprt/chat`;
         const OPRT_MODEL = "openai/gpt-oss-20b:free";
         const messages = [
                 {"role": "user", "content": `${systemPrompt}\n\n${userContext}`}
@@ -6256,7 +6263,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const { data: { session } } = await supabase.auth.getSession();
                 if (!session) throw new Error("Please log in.");
 
-                const response = await fetch('https://sageaios.com/api/supabase/functions/v1/create-portal-session', {
+                const response = await fetch(`https://${DOMAIN}/api/supabase/functions/v1/create-portal-session`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -7119,7 +7126,7 @@ async function openUserManagementModal(userId) {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) throw new Error("Not logged in");
 
-        const url = `https://sageaios.com/api/supabase/functions/v1/admin-users-secure/users/${userId}`;
+        const url = `https://${DOMAIN}/api/supabase/functions/v1/admin-users-secure/users/${userId}`;
         const response = await fetch(url, {
             method: 'GET',
             headers: {
@@ -8505,7 +8512,7 @@ async function fetchAndRenderSubscriptions(tabName = 'overview', page = 1) {
         }
 
         // Call Edge Function
-        const response = await fetch(`https://sageaios.com/api/supabase/functions/v1/admin-subscriptions-secure?${params.toString()}`, {
+        const response = await fetch(`https://${DOMAIN}/api/supabase/functions/v1/admin-subscriptions-secure?${params.toString()}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -9138,7 +9145,7 @@ function openContactModal(contactId) {
                     if (!session) throw new Error("Not logged in");
 
                     // Call the new Edge Function
-                    const response = await fetch('https://sageaios.com/api/supabase/functions/v1/admin-contacts-email-secure', {
+                    const response = await fetch(`https://${DOMAIN}/api/supabase/functions/v1/admin-contacts-email-secure`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -9386,7 +9393,7 @@ async function handleContactSubmit() {
 
         // 4. Call the Supabase Edge Function via HTTP POST
         // Note: The function name here must match the deployed function endpoint
-        const FUNCTION_ENDPOINT = "https://sageaios.com/api/supabase/functions/v1/insert-contact"; 
+        const FUNCTION_ENDPOINT = `https://${DOMAIN}/api/supabase/functions/v1/insert-contact`; 
         
         const response = await fetch(FUNCTION_ENDPOINT, {
             method: 'POST',
@@ -12698,7 +12705,7 @@ CustomerID,Tenure_Months,Support_Tickets,Used_Feature_X,Churned<br>
 
             // --- Function A: Trigger n8n Workflow ---
             async function triggerN8N_Objectives() {
-                const N8N_OBJECTIVES_URL = "https://sageaios.com/api/n8n/webhook/objectives-v1";
+                const N8N_OBJECTIVES_URL = `https://${DOMAIN}/api/n8n/webhook/objectives-v1`;
                 console.log(`Sending data to n8n workflow at ${N8N_OBJECTIVES_URL}...`);
                 
                 const response = await fetch(N8N_OBJECTIVES_URL, {
@@ -12720,7 +12727,7 @@ CustomerID,Tenure_Months,Support_Tickets,Used_Feature_X,Churned<br>
 
             // --- Function B: Call Ollama Directly (Deep Analysis) ---
             async function fetchOllama_Objectives() {
-                const OLLAMA_URL = "https://sageaios.com/api/ollama/generate";
+                const OLLAMA_URL = `https://${DOMAIN}/api/ollama/generate`;
                 const MODEL_NAME = "llama3.1:latest";
                 
                 let ollamaText = fullContext;
@@ -13077,7 +13084,7 @@ CustomerID,Tenure_Months,Support_Tickets,Used_Feature_X,Churned<br>
         analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div></div><div></div><div></div> </div><h3 class="text-xl font-semibold text-white mb-4">Performing Visualization Analysis...</h3><p class="text-white/80 mb-2">Loading data, performing calculations, and generating insights...</p></div>`;
         setLoading("generate", true);
         $("analysisActions").classList.add("hidden");
-        const API_URL = "https://sageaios.com/api/analysis/visualization";
+        const API_URL = `https://${DOMAIN}/api/analysis/visualization`;
         
         try {
             const formData = new FormData();
@@ -13778,7 +13785,7 @@ CustomerID,Tenure_Months,Support_Tickets,Used_Feature_X,Churned<br>
         setLoading("generate", true);
 
         // Define URL and Model
-        const OLLAMA_URL = "https://sageaios.com/api/ollama/generate";
+        const OLLAMA_URL = `https://${DOMAIN}/api/ollama/generate`;
         const MODEL_NAME = "llama3.1:latest"; // Consistent model
 
         try {
@@ -14296,7 +14303,7 @@ function createSystemObjectivesLayout_ST(template) {
         setLoading("generate", true);
 
         // Define URL and Model
-        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
+        const OLLAMA_URL = `https://${DOMAIN}/api/ollama/generate`;
         const MODEL_NAME = "llama3.1:latest";
 
         try {
@@ -14763,7 +14770,7 @@ function createSystemObjectivesLayout_ST(template) {
         analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white mb-4">Analyzing Creative Gap (Prioritizing Files)...</h3><p class="text-white/80 mb-2">Generating initiatives based primarily on document and data context...</p></div>`;
         setLoading("generate", true); // Set loading state
 
-        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
+        const OLLAMA_URL = `https://${DOMAIN}/api/ollama/generate`;
         const MODEL_NAME = "llama3.1:latest"; // Using Llama 3.1 as requested
 
         try {
@@ -15238,7 +15245,7 @@ function createSystemObjectivesLayout_ST(template) {
         analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white mb-4">Diagnosing System Health...</h3><p class="text-white/80 mb-2">Analyzing metabolism, nervous system, and immune response using enhanced, context-aware prompting...</p></div>`;
         setLoading("generate", true); // Set loading state
 
-        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
+        const OLLAMA_URL = `https://${DOMAIN}/api/ollama/generate`;
         const MODEL_NAME = "llama3.1:latest"; // Using Llama 3.1 as requested
 
         try {
@@ -15708,7 +15715,7 @@ function createSystemObjectivesLayout_ST(template) {
         analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white mb-4">Deconstructing Mental Models...</h3><p class="text-white/80 mb-2">Analyzing your thought process with enhanced prompting to uncover new paths...</p></div>`;
         setLoading("generate", true); // Set loading state
 
-        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
+        const OLLAMA_URL = `https://${DOMAIN}/api/ollama/generate`;
         const MODEL_NAME = "llama3.1:latest"; // Using Llama 3.1 as requested
 
         try {
@@ -18046,7 +18053,7 @@ The AI will read this and build the matrix for you."></textarea>
         setLoading("generate", true);
 
         const statusEl = $("analysisStatus");
-        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
+        const OLLAMA_URL = `https://${DOMAIN}/api/ollama/generate`;
         const MODEL_NAME = "llama3.1:latest";
 
         try {
@@ -19291,7 +19298,7 @@ The AI will read this and build the matrix for you."></textarea>
             }
             
             // 3. Call your FastAPI Backend
-            const API_URL = "https://analysis.sageaios.com/api/descriptive";
+            const API_URL = `https://${DOMAIN}/api/analysis/descriptive`;
             const response = await fetch(API_URL, {
                 method: "POST",
                 body: formData,
@@ -19338,7 +19345,7 @@ The AI will read this and build the matrix for you."></textarea>
         setLoading("generate", true);
 
         // Define URL and Model
-        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
+        const OLLAMA_URL = `https://${DOMAIN}/api/ollama/generate`;
         const MODEL_NAME = "llama3.1:latest"; // Consistent model
 
         try {
@@ -20001,7 +20008,7 @@ The AI will read this and build the matrix for you."></textarea>
         analysisResultContainer.innerHTML = `<div class="text-center text-white/70 p-8"><div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div><h3 class="text-xl font-semibold text-white mb-4">Mapping Horizons of Growth...</h3><p class="text-white/80 mb-2">Analyzing your ambition using a refined, context-aware prompt...</p></div>`;
         setLoading("generate", true);
 
-        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
+        const OLLAMA_URL = `https://${DOMAIN}/api/ollama/generate`;
         const MODEL_NAME = "llama3.1:latest"; // Using Llama 3.1 as requested
 
         try {
@@ -20168,7 +20175,7 @@ The AI will read this and build the matrix for you."></textarea>
                     </div>`;
 
         const statusEl = $("analysisStatus");
-        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
+        const OLLAMA_URL = `https://${DOMAIN}/api/ollama/generate`;
         const MODEL_NAME = "llama3.1:latest";
 
         try {
@@ -20325,7 +20332,7 @@ The AI will read this and build the matrix for you."></textarea>
         setLoading("generate", true);
 
         // Define URL and Model
-        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
+        const OLLAMA_URL = `https://${DOMAIN}/api/ollama/generate`;
         const MODEL_NAME = "llama3.1:latest"; // Consistent model
 
         try {
@@ -20987,7 +20994,7 @@ async function handleSemAnalysis() {
         formData.append("structural_syntax", structuralSyntax);
 
         // --- 4. Send Request to Backend API ---
-        const API_URL = "https://analysis.sageaios.com/api/sem";
+        const API_URL = `https://${DOMAIN}/api/analysis/sem`;
         console.log("🚀 Sending SEM request to backend...");
 
         const response = await fetch(API_URL, {
@@ -21080,7 +21087,7 @@ async function handlePredictiveAnalysis() {
             formData.append("modelType", modelType);
 
             // --- 4. Send Request to Backend API ---
-            const API_URL = "https://analysis.sageaios.com/api/predictive";
+            const API_URL = `https://${DOMAIN}/api/analysis/predictive`;
             const response = await fetch(API_URL, {
                 method: "POST",
                 body: formData,
@@ -22796,8 +22803,8 @@ function renderPredictiveLearnPanel(learnPanel, data) {
  * Step 3: Renders the final result from the Python backend.
  */
 async function handleDematelAnalysis() {
-    const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
-    const PYTHON_BACKEND_URL = "https://analysis.sageaios.com/api/dematel";
+    const OLLAMA_URL = `https://${DOMAIN}/api/ollama/generate`;
+    const PYTHON_BACKEND_URL = `https://${DOMAIN}/api/analysis/dematel`;
     const MODEL_NAME = "llama3.1:latest"; 
 
     const analysisResultContainer = $("analysisResult");
@@ -25466,7 +25473,7 @@ async function handleFactorAnalysis() {
         </div>`;
     setLoading("generate", true);
 
-    const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
+    const OLLAMA_URL = `https://${DOMAIN}/api/ollama/generate`;
     const MODEL_NAME = "llama3.1:latest";
 
     try {
@@ -26367,7 +26374,7 @@ async function handleKpiAnalysis_KE() {
         setLoading("generate", true);
 
         // Define URL and Model
-        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
+        const OLLAMA_URL = `https://${DOMAIN}/api/ollama/generate`;
         const MODEL_NAME = "llama3.1:latest";
 
         try {
@@ -27044,7 +27051,7 @@ function renderKpiPage_KE(container, data) {
     async function ollamaCascadeStrategicPlan(n8nResult, fullContext) {
         console.log("Ollama Cascade: Starting Comprehensive Strategic Plan generation (Expanded)...");
         
-        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
+        const OLLAMA_URL = `https://${DOMAIN}/api/ollama/generate`;
         const MODEL_NAME = "llama3.1:latest";
         
         const statusEl = document.getElementById("analysisStatus");
@@ -27149,7 +27156,7 @@ function renderKpiPage_KE(container, data) {
     async function ollamaCascadeGoals(n8nResult, fullContext) {
         console.log("Ollama Cascade: Starting deep synthesis with contextual breakdowns.");
         
-        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
+        const OLLAMA_URL = `https://${DOMAIN}/api/ollama/generate`;
         const MODEL_NAME = "llama3.1:latest";
         
         const statusEl = document.getElementById("analysisStatus");
@@ -27706,7 +27713,7 @@ function renderKpiPage_KE(container, data) {
         setLoading("generate", true); // Ensure loading state is set
 
         const statusEl = $("analysisStatus");
-        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
+        const OLLAMA_URL = `https://${DOMAIN}/api/ollama/generate`;
         const MODEL_NAME = "llama3.1:latest"; // Consistent model
 
         try {
@@ -28357,7 +28364,7 @@ function renderDetailedAnalysis(swotData, towsData, containerId) {
         setLoading("generate", true);
 
         // Define URL and Model
-        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
+        const OLLAMA_URL = `https://${DOMAIN}/api/ollama/generate`;
         const MODEL_NAME = "llama3.1:latest"; // Consistent model
 
         try {
@@ -28968,7 +28975,7 @@ function renderGoalsAndInitiativesPage_SP(container, data) {
     setLoading("generate", true);
     $("analysisActions").classList.add("hidden");
 
-    const API_URL = "https://analysis.sageaios.com/api/regression"; 
+    const API_URL = `https://${DOMAIN}/api/analysis/regression`; 
     
     const warningEl = $("regressionDataWarning");
     if (warningEl) warningEl.textContent = ""; 
@@ -29789,7 +29796,7 @@ function renderLearnRegressionPanel(containerId) {
         setLoading("generate", true);
 
         // Define URL and Model
-        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
+        const OLLAMA_URL = `https://${DOMAIN}/api/ollama/generate`;
         const MODEL_NAME = "llama3.1:latest";
 
         try {
@@ -30568,7 +30575,7 @@ async function handlePlsAnalysis_DA() {
             formData.append("structural_syntax", structuralSyntax);
 
             // --- 4. Send Request to Backend API ---
-            const API_URL = "https://analysis.sageaios.com/api/pls"; 
+            const API_URL = `https://${DOMAIN}/api/analysis/pls`; 
             const response = await fetch(API_URL, {
                 method: "POST",
                 body: formData,
@@ -31845,7 +31852,7 @@ function renderPlsDiagnosticsTab(data_summary, model_evaluation, reliability_val
         setLoading("generate", true);
         $("analysisActions").classList.add("hidden");
         
-        const API_URL = "https://analysis.sageaios.com/api/prescriptive";
+        const API_URL = `https://${DOMAIN}/api/analysis/prescriptive`;
 
         try {
             const formData = new FormData();
@@ -32671,7 +32678,7 @@ function renderPrescriptivePage_DA(container, data) {
         setLoading("generate", true);
 
         // Define URL and Model
-        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
+        const OLLAMA_URL = `https://${DOMAIN}/api/ollama/generate`;
         const MODEL_NAME = "llama3.1:latest";
 
         try {
@@ -33123,7 +33130,7 @@ function renderActionPlansPage_AP(container, data) {
         setLoading("generate", true);
 
         // Define URL and Model
-        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
+        const OLLAMA_URL = `https://${DOMAIN}/api/ollama/generate`;
         const MODEL_NAME = "llama3.1:latest"; // Consistent model
 
 
@@ -34152,7 +34159,7 @@ function renderSystemGoalsPage(container, data) {
      */
     async function enrichN8nGoal(goalString, fullContext) {
         console.log(`Enriching n8n goal: "${goalString.substring(0, 30)}..."`);
-        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
+        const OLLAMA_URL = `https://${DOMAIN}/api/ollama/generate`;
         const MODEL_NAME = "llama3.1:latest";
 
         const prompt = `
