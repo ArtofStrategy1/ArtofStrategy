@@ -4122,6 +4122,24 @@
                         </div>
                     </div>
 
+                    <div class="glass-container p-6 border-t-4 border-pink-500 mt-6">
+                        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                            <div class="flex-grow">
+                                <h3 class="text-xl font-bold text-white mb-1">Have a Promo Code?</h3>
+                                <p class="text-white/70 text-sm">Enter it here to unlock or extend Premium access.</p>
+                            </div>
+                            <div class="flex-shrink-0 w-full md:w-auto flex flex-col gap-2">
+                                <div class="flex gap-2">
+                                    <input type="text" id="managePromoCodeInput" class="input-field bg-black/20" placeholder="Enter code...">
+                                    <button id="manageApplyPromoBtn" class="btn btn-secondary border-white/20 hover:bg-white/10 whitespace-nowrap">
+                                        Apply
+                                    </button>
+                                </div>
+                                <p id="managePromoMessage" class="text-center text-xs font-bold hidden"></p>
+                            </div>
+                        </div>
+                    </div>
+
                     <div id="upgradeSection" class="hidden">
                         </div>
 
@@ -35384,11 +35402,36 @@ async function handlePasswordUpdate() {
                     body: { code: code }
                 });
 
-                if (error) throw new Error("Network error connecting to server.");
-                if (data.error) throw new Error(data.error);
+                // --- FIX START: Better Error Handling ---
+                if (error) {
+                    console.error("Raw Invoke Error:", error);
+                    
+                    // Attempt to extract the specific error message from the backend response
+                    // Supabase 'error' object often contains the response body in 'context'
+                    let serverMessage = error.message;
+                    
+                    try {
+                        if (error.context && typeof error.context.json === 'function') {
+                            const errorBody = await error.context.json();
+                            if (errorBody && errorBody.error) {
+                                serverMessage = errorBody.error;
+                            }
+                        }
+                    } catch (parseErr) {
+                        console.warn("Could not parse error body:", parseErr);
+                    }
+
+                    throw new Error(serverMessage || "Invalid Code or Network Error");
+                }
+                // --- FIX END ---
+
+                // Also check if data contains an application-level error (e.g. if status was 200 but success: false)
+                if (data && data.error) {
+                    throw new Error(data.error);
+                }
 
                 // 3. Success!
-                msg.textContent = "🎉 Success! Premium Unlocked.";
+                msg.textContent = data.message || "🎉 Success! Premium Unlocked.";
                 msg.className = "text-center text-xs mt-2 text-green-400 block";
                 
                 // 4. Update Local State Immediately
@@ -35399,10 +35442,13 @@ async function handlePasswordUpdate() {
 
                 // 6. Close Modal after delay
                 setTimeout(() => {
-                    document.getElementById("stripePaymentModal").classList.remove("modal-open");
-                    setTimeout(() => {
-                        document.getElementById("stripePaymentModal").style.display = "none";
-                    }, 500);
+                    const modal = document.getElementById("stripePaymentModal");
+                    if (modal) {
+                        modal.classList.remove("modal-open");
+                        setTimeout(() => {
+                            modal.style.display = "none";
+                        }, 500);
+                    }
                     
                     // If user was trying to use a specific template, open it now
                     if (selectedTemplateForModal) {
@@ -35412,10 +35458,80 @@ async function handlePasswordUpdate() {
 
             } catch (err) {
                 console.error("Promo Error:", err);
-                msg.textContent = err.message;
+                // Now this will display "Promo code limit reached" instead of "Network error"
+                msg.textContent = err.message; 
                 msg.className = "text-center text-xs mt-2 text-red-400 block";
                 applyPromoBtn.disabled = false;
                 applyPromoBtn.innerText = originalText;
+            }
+        });
+    }
+
+    // --- MANAGE SUBSCRIPTION PAGE PROMO LOGIC ---
+    const manageApplyBtn = document.getElementById("manageApplyPromoBtn");
+    if (manageApplyBtn) {
+        manageApplyBtn.addEventListener("click", async () => {
+            const input = document.getElementById("managePromoCodeInput");
+            const msg = document.getElementById("managePromoMessage");
+            const code = input.value.trim();
+            const originalText = manageApplyBtn.innerText;
+
+            if (!code) {
+                msg.textContent = "Please enter a code.";
+                msg.className = "text-center text-xs mt-1 text-red-400 block";
+                msg.classList.remove("hidden");
+                return;
+            }
+
+            // UI Loading State
+            manageApplyBtn.disabled = true;
+            manageApplyBtn.innerText = "...";
+            msg.classList.add("hidden");
+
+            try {
+                // 1. Get Session
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session) throw new Error("Please log in first.");
+
+                // 2. Call Edge Function
+                const { data, error } = await supabase.functions.invoke('redeem-promo', {
+                    body: { code: code }
+                });
+
+                // Handle Errors
+                if (error) {
+                    let serverMessage = error.message;
+                    try {
+                        if (error.context && typeof error.context.json === 'function') {
+                            const body = await error.context.json();
+                            if (body.error) serverMessage = body.error;
+                        }
+                    } catch (e) {}
+                    throw new Error(serverMessage || "Invalid Code");
+                }
+
+                if (data && data.error) throw new Error(data.error);
+
+                // 3. Success!
+                msg.textContent = data.message || "Success! Plan updated.";
+                msg.className = "text-center text-xs mt-1 text-green-400 block";
+                msg.classList.remove("hidden");
+                input.value = ""; // Clear input
+
+                // 4. Refresh the Subscription Page UI immediately
+                await fetchAndRenderSubscriptionPage();
+                
+                // Update Nav Bar (in case tier changed)
+                updateNavBar();
+
+            } catch (err) {
+                console.error("Manage Promo Error:", err);
+                msg.textContent = err.message;
+                msg.className = "text-center text-xs mt-1 text-red-400 block";
+                msg.classList.remove("hidden");
+            } finally {
+                manageApplyBtn.disabled = false;
+                manageApplyBtn.innerText = originalText;
             }
         });
     }
