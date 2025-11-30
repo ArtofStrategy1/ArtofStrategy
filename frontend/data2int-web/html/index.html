@@ -5841,14 +5841,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /**
-     * Gatekeeper Function (DYNAMIC LIMITS FROM DB):
-     * - Fetches the specific usage_limit from the stripe_plans table.
-     * - Admin: Unlimited
+     * Gatekeeper Function:
+     * - Checks Tier AND Expiration Date.
+     * - If 'premium_until' is in the past, downgrades user to Basic limits (3).
      */
     async function checkAndIncrementUsage() {
         // 1. Ensure session
         const { data: { session } } = await supabase.auth.getSession();
-        
         if (!session || !session.user) {
             navigateTo("login");
             return false;
@@ -5856,63 +5855,67 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const user = session.user;
 
-        // 2. Fetch usage, tier, AND the linked plan's usage_limit
-        //    We use Supabase's relational query syntax: stripe_plans ( usage_limit )
+        // 2. Fetch usage, tier, and expiration info
         const { data: dbUser, error: dbError } = await supabase
             .from('users')
-            .select('usage_count, tier, stripe_plans ( usage_limit )')
+            .select('usage_count, tier, premium_until, stripe_plans ( usage_limit )')
             .eq('auth_user_id', user.id)
             .single();
 
         if (dbError || !dbUser) {
             console.error("Usage check failed:", dbError);
-            return false; // Fail safe
+            return false;
         }
 
-        const tier = (dbUser.tier || 'basic').toLowerCase();
+        let tier = (dbUser.tier || 'basic').toLowerCase();
         const currentCount = dbUser.usage_count || 0;
+        const premiumUntil = dbUser.premium_until ? new Date(dbUser.premium_until) : null;
+        const now = new Date();
 
-        // 3. Determine Dynamic Limit
-        let limit = 3; // Default fallback for Basic/No Plan
+        // --- 3. EXPIRATION CHECK ---
+        // If premium_until exists AND it is in the past, force Basic limits
+        if (premiumUntil && premiumUntil < now && tier !== 'admin') {
+            console.log(">>> Premium Access Expired on:", premiumUntil);
+            tier = 'basic'; // Effectively downgrade them for this check
+        }
+
+        // 4. Determine Limit
+        let limit = 3; // Default for Basic
 
         if (tier === 'admin') {
-            limit = 999999; // Admin Override
-        } else if (dbUser.stripe_plans && dbUser.stripe_plans.usage_limit) {
-            // USE THE DB VALUE FROM THE JOINED TABLE
+            limit = 999999;
+        } else if (tier === 'premium' && dbUser.stripe_plans?.usage_limit) {
+            // Only give them the plan limit if they are still valid premium
             limit = dbUser.stripe_plans.usage_limit;
         }
 
-        console.log(`>>> Usage Check: ${currentCount} / ${limit} (Tier: ${tier})`);
+        console.log(`>>> Usage: ${currentCount} / ${limit} (Effective Tier: ${tier})`);
 
-        // 4. Check Limit
+        // 5. Check Limit
         if (currentCount >= limit) {
-            console.log(`>>> Limit reached. Blocking.`);
-            
             let message = `You have reached your usage limit of ${limit} analyses.`;
+            
             if (tier === 'basic') {
-                message += `\n\nUpgrade to Premium for more capacity.`;
+                if (premiumUntil && premiumUntil < now) {
+                    message += `\n\nYour promo period has expired. Please subscribe to continue.`;
+                } else {
+                    message += `\n\nUpgrade to Premium for more capacity.`;
+                }
+                alert(message);
+                openStripePlanModal(); // Prompt to pay
             } else {
-                message += `\n\nPlease contact support or wait for your next billing cycle.`;
+                alert(message + `\n\nPlease wait for your next cycle.`);
             }
-            
-            alert(message);
-            
-            // If basic, prompt to upgrade
-            if (tier === 'basic') {
-                openStripePlanModal();
-            }
-            return false; // STOP EXECUTION
+            return false; // STOP
         }
 
-        // 5. Increment Usage
+        // 6. Increment Usage
         supabase.from('users')
             .update({ usage_count: currentCount + 1 })
             .eq('auth_user_id', user.id)
-            .then(({ error }) => {
-                if (error) console.error("Background usage increment failed:", error);
-            });
+            .then(({ error }) => { if (error) console.error(error); });
 
-        return true; // ALLOW ACCESS
+        return true; // GO
     }
 
     // --- AUTH STATE CHANGE LISTENER ---
@@ -6053,10 +6056,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // =========================================================
 
     /**
-     * 1. Main Function: Fetch User Data & Toggle Views (FINAL - Admin Logic Added)
-     * - Free: No footer on left card.
-     * - Premium: Shows Billing Date on left card.
-     * - Admin: Shows "Lifetime Access" on left card, "Unlimited" on right card.
+     * 1. Main Function: Fetch User Data & Render View
+     * - LOGIC: Promo users see "Promo Active" and Upgrade Options.
      */
     async function fetchAndRenderSubscriptionPage() {
         const loadingEl = document.getElementById("subInfoLoading");
@@ -6074,118 +6075,66 @@ document.addEventListener("DOMContentLoaded", () => {
             // A. Fetch User Data
             const { data: userData, error: userError } = await supabase
                 .from('users')
-                .select('usage_count, tier, status, stripe_customer_id, current_period_end, cancel_at_period_end, plan_id') 
+                .select('usage_count, tier, status, stripe_customer_id, plan_id, upgraded_at, premium_until, stripe_plans ( name, price, features, usage_limit )') 
                 .eq('auth_user_id', session.user.id)
                 .single();
 
             if (userError) throw userError;
 
-            // B. Fetch All Active Plans
-            const { data: allPlans } = await supabase
-                .from('stripe_plans')
-                .select('*')
-                .eq('active', true);
-
-            // C. Determine Current Plan
+            // B. Determine Status
             const tier = (userData?.tier || 'basic').toLowerCase();
-            const userPlanId = userData?.plan_id;     
+            const planData = userData?.stripe_plans;
+            const isPaidPremium = tier !== 'basic' && tier !== 'free'; 
 
-            const isPremium = tier !== 'basic' && tier !== 'free';
+            // --- PROMO CHECK ---
+            const now = new Date();
+            const premiumUntil = userData.premium_until ? new Date(userData.premium_until) : null;
+            const isPromoActive = premiumUntil && premiumUntil > now;
 
-            // --- TIER MAPPING ---
-            let currentPlan = null;
-
-            if (userPlanId && allPlans) {
-                currentPlan = allPlans.find(p => p.id === userPlanId);
-            }
-            if (!currentPlan && tier === 'premium' && allPlans) {
-                currentPlan = allPlans.find(p => p.name === 'Individual');
-            }
-
-            // D. Construct Display Data
-            const displayData = {
-                name: currentPlan ? currentPlan.name : (tier === 'admin' ? 'Admin Access' : 'Free Tier'),
-                price: currentPlan ? `$${(currentPlan.price / 100).toFixed(2)}` : '$0.00',
-                interval: '/month', 
-                features: currentPlan?.features || (isPremium 
-                    ? ['Advanced Frameworks', 'Priority Support', 'Export PDF/DOCX'] 
-                    : ['Basic Analysis', '1 Framework Selection'])
+            // C. Construct Display Data
+            let displayData = {
+                name: planData ? planData.name : (tier === 'admin' ? 'Admin Access' : 'Free Tier'),
+                price: planData ? `$${(planData.price / 100).toFixed(2)}` : '$0.00',
+                interval: '/month',
+                features: planData?.features || (isPaidPremium ? ['Advanced Frameworks'] : ['Basic Analysis', '1 Framework Selection']),
+                statusLabel: 'Active',
+                statusColor: 'bg-gray-700 text-gray-300'
             };
 
-            // --- E. Render Detailed Current Plan Card ---
+            // --- OVERRIDE FOR PROMO ---
+            if (isPromoActive) {
+                displayData.name = "Premium (Promo)";
+                displayData.price = "$0.00"; 
+                displayData.interval = `Expires: ${premiumUntil.toLocaleDateString()}`;
+                displayData.statusLabel = "Promo Active";
+                displayData.statusColor = "bg-green-500 text-white";
+                if (!planData) displayData.features = ['Advanced Frameworks', 'Priority Support', 'Export PDF/DOCX'];
+            } else if (tier === 'admin') {
+                 displayData.statusLabel = "Admin";
+                 displayData.statusColor = "bg-red-500 text-white";
+            }
+
+            // --- D. Render "Current Subscription" Card ---
             const planNameEl = document.getElementById("subPlanName");
             if (planNameEl) {
                 const cardContainer = planNameEl.closest('.glass-container');
-                
-                // 1. Status Badge
-                let badgeText = "FREE";
-                let badgeClass = "bg-gray-500/20 text-gray-300 border border-gray-500/30";
-                
-                if (tier === 'admin') {
-                    badgeText = "ADMIN";
-                    badgeClass = "bg-red-500/20 text-red-300 border border-red-500/30";
-                } else if (isPremium) {
-                    if (userData.cancel_at_period_end) {
-                        badgeText = "CANCELING";
-                        badgeClass = "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30";
-                    } else {
-                        badgeText = "ACTIVE";
-                        badgeClass = "bg-green-500/20 text-green-300 border border-green-500/30";
-                    }
-                }
-
-                // 2. Footer Logic (Distinct for Admin)
-                let footerHtml = ""; 
-                
-                if (tier === 'admin') {
-                     footerHtml = `
-                        <div class="mt-auto pt-4 border-t border-white/10 flex justify-between items-center">
-                            <span class="text-white/50 text-xs uppercase tracking-wide font-bold">Account Status</span>
-                            <span class="text-white font-mono text-sm">Lifetime Access</span>
-                        </div>`;
-                } else if (userData.current_period_end) {
-                    const dateObj = new Date(userData.current_period_end);
-                    const year = dateObj.getFullYear();
-                    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-                    const day = String(dateObj.getDate()).padStart(2, '0');
-                    const dateString = `${year}/${month}/${day}`;
-
-                    const label = userData.cancel_at_period_end ? "Access Expires" : "Next Billing Cycle";
-                    
-                    footerHtml = `
-                        <div class="mt-auto pt-4 border-t border-white/10 flex justify-between items-center">
-                            <span class="text-white/50 text-xs uppercase tracking-wide font-bold">${label}</span>
-                            <span class="text-white font-mono text-sm">${dateString}</span>
-                        </div>`;
-                } else if (isPremium) {
-                    // Fallback for premium without date
-                    footerHtml = `
-                        <div class="mt-auto pt-4 border-t border-white/10 flex justify-between items-center">
-                            <span class="text-white/50 text-xs uppercase tracking-wide font-bold">Billing Status</span>
-                            <span class="text-white font-mono text-sm">Active</span>
-                        </div>`;
-                }
-                // NOTE: Free tier falls through here with empty footerHtml
-
-                // 3. Inject HTML
                 if (cardContainer) {
                     let borderColor = 'border-gray-500';
-                    if (tier === 'admin') borderColor = 'border-red-500'; // Special border for Admin
-                    else if (displayData.name === 'Enterprise') borderColor = 'border-yellow-500';
-                    else if (displayData.name === 'Small Business') borderColor = 'border-indigo-500';
-                    else if (displayData.name === 'Individual') borderColor = 'border-purple-500';
+                    if (tier === 'admin') borderColor = 'border-red-500';
+                    else if (isPromoActive) borderColor = 'border-green-400';
+                    else if (isPaidPremium) borderColor = 'border-indigo-500';
 
                     cardContainer.className = `glass-container p-6 relative overflow-hidden flex flex-col h-full border-t-4 ${borderColor}`;
                     
                     cardContainer.innerHTML = `
-                        <div class="flex justify-between items-start mb-4 border-b border-white/10 pb-4">
+                        <div class="mb-4 border-b border-white/10 pb-4 flex justify-between items-start">
                             <div>
-                                <h3 class="text-white/50 text-xs font-bold uppercase tracking-wider mb-1">Current Subscription</h3>
+                                <h3 class="text-white/50 text-xs font-bold uppercase tracking-wider mb-1">Current Plan</h3>
                                 <div class="text-2xl font-bold text-white">${displayData.name}</div>
                             </div>
-                            <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${badgeClass}">
-                                ${badgeText}
-                            </div>
+                            <span class="px-2 py-1 rounded text-xs font-bold ${displayData.statusColor}">
+                                ${displayData.statusLabel}
+                            </span>
                         </div>
                         
                         <div class="mb-6">
@@ -6193,7 +6142,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             <span class="text-white/50 text-sm">${displayData.interval}</span>
                         </div>
 
-                        <div class="flex-grow mb-6">
+                        <div class="flex-grow">
                             <p class="text-xs text-white/40 uppercase font-semibold mb-3">Included Features:</p>
                             <ul class="space-y-2 text-sm text-white/80">
                                 ${(displayData.features || []).map(feat => `
@@ -6204,48 +6153,33 @@ document.addEventListener("DOMContentLoaded", () => {
                                 `).join('')}
                             </ul>
                         </div>
-                        
-                        ${footerHtml}
                     `;
                 }
             }
 
-            // --- F. Update Usage Bar & Right Card Texts ---
+            // --- E. Update Usage Bar ---
             const usageCount = userData?.usage_count || 0;
-            
             let usageLimit = 3; 
-            if (displayData.name === 'Small Business') usageLimit = 50; 
-            if (displayData.name === 'Enterprise' || tier === 'admin') usageLimit = 9999;
-            
-            const usageDisplayLimit = usageLimit === 9999 ? "∞" : usageLimit;
 
+            if (tier === 'admin') usageLimit = 999999;
+            else if (planData && planData.usage_limit) usageLimit = planData.usage_limit;
+            else if (isPromoActive) usageLimit = 10; // Default Promo Limit
+            
+            const usageDisplayLimit = usageLimit === 999999 ? "∞" : usageLimit;
             const usageEl = document.getElementById("subUsageCount");
             const limitEl = document.getElementById("subUsageLimit");
             const progressBar = document.getElementById("usageProgressBar");
             
-            // 1. Update Right Card Header
-            const usageCardHeader = progressBar?.closest('.glass-container')?.querySelector('h3');
-            if (usageCardHeader) usageCardHeader.textContent = "Daily Analysis Credits";
-
-            // 2. Update Right Card "Reset" Text (Check Admin)
-            const resetTextEl = progressBar?.closest('.glass-container')?.querySelector('.text-right p');
-            if (resetTextEl) {
-                if (tier === 'admin') {
-                    resetTextEl.textContent = "Unlimited Access"; // Admin Text
-                } else {
-                    resetTextEl.textContent = "Resets at 12am";   // Regular User Text
-                }
-            }
-
             if (usageEl) usageEl.textContent = usageCount;
             if (limitEl) limitEl.textContent = usageDisplayLimit;
 
             if (progressBar) {
-                let percentage = Math.min((usageCount / usageLimit) * 100, 100);
-                if (usageLimit === 9999) percentage = 5;
+                let percentage = 0;
+                if (usageLimit === 999999) percentage = 5; 
+                else percentage = Math.min((usageCount / usageLimit) * 100, 100);
 
                 progressBar.className = "h-4 rounded-full transition-all duration-1000 ease-out"; 
-                if (isPremium || tier === 'admin') {
+                if (isPaidPremium || isPromoActive || tier === 'admin') {
                     progressBar.classList.add('bg-gradient-to-r', 'from-purple-500', 'to-indigo-500');
                 } else {
                     if (percentage >= 100) progressBar.classList.add('bg-gradient-to-r', 'from-red-500', 'to-red-600');
@@ -6255,11 +6189,35 @@ document.addEventListener("DOMContentLoaded", () => {
                 setTimeout(() => { progressBar.style.width = `${percentage}%`; }, 100);
             }
 
-            // G. Toggle Sections
-            if (isPremium || tier === 'admin') {
+            // --- F. VISIBILITY LOGIC (The "Simple" Strategy) ---
+            
+            // 1. Admin: Hide all payment stuff
+            if (tier === 'admin') {
+                if (upgradeSection) upgradeSection.classList.add("hidden");
+                if (premiumActions) premiumActions.classList.add("hidden");
+            } 
+            
+            // 2. Paid Premium: Hide Upgrade, Show Portal
+            else if (isPaidPremium) {
                 if (upgradeSection) upgradeSection.classList.add("hidden");
                 if (premiumActions) premiumActions.classList.remove("hidden");
-            } else {
+            }
+
+            // 3. Promo User: SHOW Upgrade, Hide Portal (unless they have history)
+            else if (isPromoActive) {
+                if (upgradeSection) {
+                    upgradeSection.classList.remove("hidden");
+                    if (typeof fetchAndRenderUpgradeSection === 'function') fetchAndRenderUpgradeSection();
+                }
+                if (premiumActions) {
+                    // If they have a stripe ID (e.g. past subscriber), show portal
+                    if (userData.stripe_customer_id) premiumActions.classList.remove("hidden");
+                    else premiumActions.classList.add("hidden");
+                }
+            }
+
+            // 4. Basic User: Show Upgrade, Hide Portal
+            else {
                 if (upgradeSection) {
                     upgradeSection.classList.remove("hidden");
                     if (typeof fetchAndRenderUpgradeSection === 'function') fetchAndRenderUpgradeSection();
@@ -6277,8 +6235,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /**
-     * 2. Helper: Render Upgrade Options (SMART LINKS VERSION)
-     * Uses 'payment_link' from DB for subscription.
+     * 2. Helper: Render Upgrade Options (SIMPLE LINKS VERSION)
+     * - Uses standard <a> tags with payment_link from DB.
+     * - Appends user ID so Stripe knows who paid.
      */
     async function fetchAndRenderUpgradeSection() {
         const container = document.getElementById("upgradeSection");
@@ -6301,34 +6260,23 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            // Helper for feature checkmarks
-            const getFeat = (plan, keyword) => {
-                if(!plan.features) return '<span class="text-white/20">✕</span>';
-                const match = plan.features.find(f => f.toLowerCase().includes(keyword));
-                if(match) return match.replace(/Access |Up to /gi, "").trim();
-                return '<span class="text-white/20">✕</span>';
-            };
-
             // B. Generate Cards HTML
             const cardsHtml = plans.map(plan => {
                 const isPopular = plan.is_popular;
                 const priceDisplay = `$${(plan.price / 100).toFixed(0)}`; 
                 const cardBorder = isPopular ? 'border-indigo-500 shadow-[0_0_30px_rgba(99,102,241,0.2)]' : 'border-white/10';
                 const bgClass = isPopular ? 'bg-gradient-to-b from-indigo-900/40 to-gray-900/40' : 'bg-white/5';
+                const btnClass = isPopular ? 'btn-primary' : 'btn-secondary';
                 
-                // --- SMART LINK LOGIC ---
+                // --- SIMPLE SMART LINK LOGIC ---
                 let targetUrl = '#';
-                let isExternal = false;
-
                 if (plan.payment_link && currentUser && currentUser.id) {
                     try {
                         const url = new URL(plan.payment_link);
                         // Attach User ID so Webhook knows who paid
                         url.searchParams.set('client_reference_id', currentUser.id);
-                        // Pre-fill Email
                         if (currentUser.email) url.searchParams.set('prefilled_email', currentUser.email);
                         targetUrl = url.toString();
-                        isExternal = true;
                     } catch (e) {
                         console.error("Invalid payment link:", plan.payment_link);
                     }
@@ -6355,16 +6303,12 @@ document.addEventListener("DOMContentLoaded", () => {
                             `).join('')}
                         </ul>
 
-                        <a href="${targetUrl}" ${isExternal ? 'target="_blank"' : ''} class="btn ${isPopular ? 'btn-primary' : 'btn-secondary'} w-full text-center justify-center py-3 font-semibold tracking-wide transition-colors">
-                            Choose ${plan.name}
+                        <a href="${targetUrl}" target="_blank" class="btn ${btnClass} w-full text-center justify-center py-3 font-semibold tracking-wide transition-colors">
+                            Subscribe to ${plan.name}
                         </a>
                     </div>`;
             }).join('');
 
-            // C. Render Comparison Table (Optional)
-            // ... (Comparison table code remains same as previous versions) ...
-            // For brevity, I'll just render the cards container here
-            
             container.innerHTML = `<div class="glass-container border-0 p-0 bg-transparent"><div class="grid grid-cols-1 md:grid-cols-3 gap-6">${cardsHtml}</div></div>`;
 
         } catch (err) {
@@ -8713,6 +8657,99 @@ async function fetchAndRenderSubscriptions(tabName = 'overview', page = 1) {
 /**
  * Renders the specific Subscriptions List table
  */
+function renderSubscriptionsTable(container, subs, pagination) {
+    if (!container) return;
+
+    // 1. Better Empty State
+    if (!subs || subs.length === 0) {
+        container.innerHTML = `
+            <div class="flex flex-col items-center justify-center p-10 text-white/60">
+                <div class="text-4xl mb-3 opacity-50">📭</div>
+                <h4 class="text-lg font-medium">No Subscriptions Found</h4>
+                <p class="text-sm">Try adjusting your filters or syncing data.</p>
+            </div>`;
+        return;
+    }
+
+    // 2. Render Table
+    let tableHtml = `
+        <table class="w-full text-left styled-table text-xs">
+            <thead>
+                <tr>
+                    <th class="p-3">Status</th>
+                    <th class="p-3">Customer</th>
+                    <th class="p-3">Product Detail</th>
+                    <th class="p-3">Price</th>
+                    <th class="p-3">Dates (Start / End)</th>
+                    <th class="p-3">Renewal</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    subs.forEach(sub => {
+        const badgeStyle = sub.status === 'active' ? 'bg-green-500/20 text-green-400 border-green-500/30' : 
+                           sub.status === 'canceled' ? 'bg-gray-500/20 text-gray-400 border-gray-500/30' :
+                           'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
+
+        // --- FIX: Multiply timestamps by 1000 ---
+        // Handle cases where date might be null or undefined
+        const startDate = sub.current_period_start ? new Date(sub.current_period_start * 1000).toLocaleDateString() : 'N/A';
+        const endDate = sub.current_period_end ? new Date(sub.current_period_end * 1000).toLocaleDateString() : 'N/A';
+
+        tableHtml += `
+            <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+                <td class="p-3"><span class="px-2 py-1 rounded text-xs border ${badgeStyle}">${sub.status}</span></td>
+                <td class="p-3">
+                    <div class="font-bold text-white">${sub.customer_email || "Unknown Email"}</div>
+                    <div class="text-xs text-white/50 font-mono">${sub.stripe_subscription_id ? sub.stripe_subscription_id.slice(0, 14) + '...' : 'N/A'}</div>
+                </td>
+                <td class="p-3">
+                    <div class="font-medium text-indigo-300">${sub.product_name || "Standard Plan"}</div>
+                    <div class="text-xs text-white/60 truncate max-w-[150px]">${sub.product_desc || ""}</div>
+                </td>
+                <td class="p-3 text-white font-bold">
+                    $${((sub.plan_amount || 0) / 100).toFixed(2)} <span class="text-xs font-normal text-white/60">/${sub.plan_interval}</span>
+                </td>
+                <td class="p-3 text-white/80">
+                    <div><span class="text-white/50">Start:</span> ${startDate}</div>
+                    <div><span class="text-white/50">End:</span> ${endDate}</div>
+                </td>
+                <td class="p-3 text-xs">
+                    ${sub.cancel_at_period_end ? '<span class="text-yellow-400">Cancels at end</span>' : '<span class="text-green-400">Auto-renews</span>'}
+                </td>
+            </tr>
+        `;
+    });
+    tableHtml += `</tbody></table>`;
+
+    // 3. Add Pagination Controls (Keep existing logic)
+    if (pagination && pagination.totalPages > 1) {
+        tableHtml += `
+            <div class="flex justify-between items-center mt-4 px-2">
+                <span class="text-xs text-white/50">Page ${pagination.page} of ${pagination.totalPages}</span>
+                <div class="flex gap-2">
+                    <button class="btn btn-secondary text-xs py-1 px-3" 
+                        ${pagination.page <= 1 ? 'disabled' : ''} 
+                        onclick="fetchAndRenderSubscriptions('subscriptions', ${pagination.page - 1})">
+                        Previous
+                    </button>
+                    <button class="btn btn-secondary text-xs py-1 px-3" 
+                        ${pagination.page >= pagination.totalPages ? 'disabled' : ''} 
+                        onclick="fetchAndRenderSubscriptions('subscriptions', ${pagination.page + 1})">
+                        Next
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    container.innerHTML = tableHtml;
+}
+
+/**
+ * Renders the specific Subscriptions List table
+ */
 function renderSubscriptionsTab() {
     const panel = document.getElementById("subscriptionsPanel");
     if (!panel) return;
@@ -9632,13 +9669,13 @@ document.addEventListener('keydown', (e) => {
             return;
         }
 
-        const btn = $("refreshStatsBtn");
-        const textEl = $("refreshStatsBtnText");
-        const spinner = $("refreshStatsSpinner");
+        const btn = document.getElementById("refreshStatsBtn");
+        const textEl = document.getElementById("refreshStatsBtnText");
+        const spinner = document.getElementById("refreshStatsSpinner");
 
-        btn.disabled = true;
-        spinner.classList.remove("hidden");
-        textEl.textContent = "Loading...";
+        if (btn) btn.disabled = true;
+        if (spinner) spinner.classList.remove("hidden");
+        if (textEl) textEl.textContent = "Loading...";
         showMessage("statsMessage", "", "success");
 
         try {
@@ -9646,38 +9683,50 @@ document.addEventListener('keydown', (e) => {
                 body: { update: true }
             });
 
-            if (error) {
-                throw error;
-            }
+            if (error) throw error;
 
             if (data && data.success) {
                 const dbStatus = data.database_status;
                 if (dbStatus) {
-                    $("statTotalUsers").textContent = dbStatus.total_users ?? "N/A";
-                    $("statActiveUsers").textContent = dbStatus.log_in_users ?? "N/A";
-                    $("statTotalQueries").textContent = dbStatus.total_queries ?? "N/A";
-                    $("dashQueryCount").textContent = dbStatus.total_queries ?? "0";
-                    $("statDbSize").textContent = dbStatus.database_size ?? "N/A";
-                    $("statAvgTime").textContent = dbStatus.avg_p_time
-                        ? parseFloat(dbStatus.avg_p_time).toFixed(2) + " ms"
-                        : "N/A";
-                    $("statRecordedAt").textContent = dbStatus.recorded_at
+                    const setText = (id, val) => {
+                        const el = document.getElementById(id);
+                        if (el) el.textContent = val ?? "N/A";
+                    };
+
+                    setText("statTotalUsers", dbStatus.total_users);
+                    setText("statActiveUsers", dbStatus.log_in_users);
+                    setText("statTotalQueries", dbStatus.total_queries);
+                    setText("dashQueryCount", dbStatus.total_queries ?? "0");
+                    setText("statDbSize", dbStatus.database_size);
+                    
+                    // --- THE FIX IS HERE ---
+                    // REMOVED: parseFloat(dbStatus.avg_p_time).toFixed(2) + " ms"
+                    // ADDED: Direct assignment because DB sends "00m:38s"
+                    setText("statAvgTime", dbStatus.avg_p_time); 
+                    // -----------------------
+
+                    setText("statRecordedAt", dbStatus.recorded_at
                         ? new Date(dbStatus.recorded_at).toLocaleString()
-                        : "N/A";
+                        : "N/A");
                 }
 
                 const pineconeStatus = data.pinecone_status;
-                const pineconeContainer = $("pineconeStatsContainer");
-                if (pineconeStatus && pineconeStatus.status) {
+                const pineconeContainer = document.getElementById("pineconeStatsContainer");
+                
+                if (pineconeStatus && pineconeStatus.status && pineconeContainer) {
                     pineconeContainer.classList.remove("hidden");
-                    $("statPineconeName").textContent = pineconeStatus.name ?? "N/A";
-                    $("statTotalVectors").textContent = pineconeStatus.total_vectors ?? "N/A";
-                    $("statBookVectors").textContent = pineconeStatus.book_namespace_vectors ?? "N/A";
-                    $("statPineconeDimension").textContent = pineconeStatus.dimension ?? "N/A";
-                    $("statPineconeStatus").textContent = pineconeStatus.status ?? "N/A";
-                    $("statPineconeCloud").textContent =
-                        `${pineconeStatus.cloud_provider ?? ""} (${pineconeStatus.region ?? ""})`;
-                } else {
+                    const setText = (id, val) => {
+                        const el = document.getElementById(id);
+                        if (el) el.textContent = val ?? "N/A";
+                    };
+
+                    setText("statPineconeName", pineconeStatus.name);
+                    setText("statTotalVectors", pineconeStatus.total_vectors);
+                    setText("statBookVectors", pineconeStatus.book_namespace_vectors);
+                    setText("statPineconeDimension", pineconeStatus.dimension);
+                    setText("statPineconeStatus", pineconeStatus.status);
+                    setText("statPineconeCloud", `${pineconeStatus.cloud_provider ?? ""} (${pineconeStatus.region ?? ""})`);
+                } else if (pineconeContainer) {
                     pineconeContainer.classList.add("hidden");
                 }
                 showMessage("statsMessage", "Statistics updated successfully!", "success");
@@ -9688,9 +9737,9 @@ document.addEventListener('keydown', (e) => {
             console.error("Error fetching statistics:", error);
             showMessage("statsMessage", `Error: ${error.message}`, "error");
         } finally {
-            btn.disabled = false;
-            spinner.classList.add("hidden");
-            textEl.textContent = "Refresh Stats";
+            if (btn) btn.disabled = false;
+            if (spinner) spinner.classList.add("hidden");
+            if (textEl) textEl.textContent = "Refresh Stats";
         }
     }
 
