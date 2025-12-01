@@ -38,6 +38,8 @@ serve(async (req) => {
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    // FIX 1: Check BOTH variable names to prevent errors
+    const adminEmailsEnv = Deno.env.get('ADMIN_EMAILS')
     const supabase = createClient(supabaseUrl, supabaseServiceKey, {
       db: { schema: 'publicv2' } // Assuming 'publicv2'
     })
@@ -61,9 +63,12 @@ serve(async (req) => {
       }), { status: 401, headers })
     }
 
-    // 2. Email whitelist verification
-    const ALLOWED_ADMIN_EMAILS = Deno.env.get('ADMIN_EMAILS')?.split(',').map(email => email.trim()) || [];
-    
+    // SECURITY LAYER 2: Email whitelist verification
+    const ALLOWED_ADMIN_EMAILS = adminEmailsEnv
+      .split(',')
+      .map(e => e.trim().toLowerCase()) // Force lowercase
+      .filter(e => e.length > 0);
+      
     if (!ALLOWED_ADMIN_EMAILS.includes(user.email)) {
       return new Response(JSON.stringify({
         error: 'Access denied - Email not authorized'
