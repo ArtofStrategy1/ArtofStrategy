@@ -1,207 +1,134 @@
 ================================================================================
-SAGE AI - SUPABASE EDGE FUNCTION DOCUMENTATION
+S.A.G.E. AI - SELF-HOSTED SUPABASE INFRASTRUCTURE
 ================================================================================
 
-MAIN PROJECT PATH: /root/Supabase/supabase-project
-FUNCTIONS PATH: /root/Supabase/supabase-project/volumes/functions
-ENV FILE PATH: /root/Supabase/supabase-project/.env
-DOCKER FILE PATH: /root/Supabase/supabase-project/docker-compose.yml
+ACTUAL PROJECT PATH: /root/Supabase/supabase-project
+ORCHESTRATION:       Docker Compose (V2)
+DATA PERSISTENCE:    ./volumes (Local Directory Mapped)
+CONFIG FILES:        docker-compose.yml, .env
 
 --------------------------------------------------------------------------------
-1. PROJECT OVERVIEW
+1.  PROJECT OVERVIEW
 --------------------------------------------------------------------------------
-This repository contains the serverless backend logic for the S.A.G.E. AI
-platform. The system is built on Supabase Edge Functions (running on Deno) and 
-utilizes a unique Gateway Architecture to route requests and enforce universal 
-security policies.
 
-KEY FEATURES:
-- Monolithic Gateway Pattern: A single entry point ('main') routes traffic to 
-  isolated worker instances, ensuring consistent logging and security.
-- Custom Schema (publicv2): All application data resides in a custom PostgreSQL 
-  schema, separated from default Supabase tables.
-- Dual-State Auth Sync: A robust mechanism keeps Supabase's internal 'auth.users' 
-  table perfectly synchronized with the application's 'publicv2.users' profile table.
-- 3-Layer Security Model: Admin endpoints are protected by JWT verification, 
-  an Email Allowlist, and a Database Tier check.
-- Race-Condition Safe Webhooks: The Stripe webhook implementation includes 
-  logic to handle race conditions during user creation.
+This directory constitutes the root infrastructure for the S.A.G.E. AI backend.
+It hosts the entire Supabase stack (Postgres, GoTrue/Auth, Realtime, Storage,
+and Edge Runtime) using Docker Compose.
+
+Unlike the cloud version, this self-hosted setup manages its own persistence
+(in the 'volumes' directory) and configuration secrets. It serves as the
+foundational layer upon which the 'analysis-libraries' (Python) and 'functions'
+(Deno) rely.
+
+KEY COMPONENTS:
+  - Database Engine:   PostgreSQL 15+ (via supabase/postgres image).
+  - Auth Service:      GoTrue (Handles JWT issuance and verification).
+  - API Gateway:       Kong (Routes traffic between Auth, Rest, and Realtime).
+  - Edge Runtime:      Self-hosted Deno runtime for your TypeScript functions.
+  - Backups:           Contains manual SQL dumps and snapshot strategies.
 
 --------------------------------------------------------------------------------
-2. TECH STACK & PREREQUISITES
+2.  TECH STACK & PREREQUISITES
 --------------------------------------------------------------------------------
+
 CORE TECHNOLOGIES:
-- Runtime:         Deno (TypeScript)
-- Backend:         Supabase (PostgreSQL, Auth, Edge Functions)
-- Vector Database: Pinecone (Used in 'statistics' for RAG status)
-- Payments:        Stripe
-- Email:           Resend
-- Infrastructure:  Docker & Docker Compose
+  - Containerization:  Docker Engine
+  - Orchestration:     Docker Compose V2 (plugin)
+  - Database:          PostgreSQL
+  - Storage:           Local filesystem (mapped to ./volumes) or S3 (via config)
+  - Secrets Mgmt:      Environment variables (.env) and local text files.
 
 PREREQUISITES:
-To run or modify this stack, the following tools are required:
-1. Docker & Docker Compose: For container orchestration.
-2. Deno: For local development and type checking.
-3. Supabase CLI: (Optional) For generating types.
+To operate this stack, the host machine (CT100) requires:
+1.  Docker Engine: Installed and running.
+2.  Docker Compose V2: The command `docker compose` should work.
+3.  System Resources: Minimum 4GB RAM recommended for full stack stability.
 
-ENVIRONMENT VARIABLES:
-These variables must be set in your docker-compose.yml or .env file.
-
-[ SUPABASE_URL ]
-  Your project API URL (internal docker network alias or public URL).
-
-[ SUPABASE_SERVICE_ROLE_KEY ]
-  Admin key to bypass Row Level Security (RLS).
-
-[ SUPABASE_ANON_KEY ]
-  Public key for client-side context.
-
-[ JWT_SECRET ]
-  Used by the 'main' gateway to verify token signatures.
-
-[ VERIFY_JWT ]
-  Boolean string ('true'/'false'). Toggles gateway security.
-
-[ ADMIN_EMAILS ]
-  Comma-separated list of allowed admin emails (e.g., admin@sage.com,ceo@sage.com).
-
-[ RESEND_API_KEY ]
-  API Key for sending transactional emails.
-
-[ STRIPE_SECRET_KEY ]
-  Secret key for Stripe API operations.
-
-[ STRIPE_WEBHOOK_SECRET ]
-  Secret used to verify signature of incoming webhooks.
-
-[ PINECONE_API_KEY ]
-  Access key for Vector DB statistics.
+FILE MANIFEST (ROOT):
+  - docker-compose.yml:       Main orchestration file.
+  - docker-compose.s3.yml:    Alternate config for S3-backed storage.
+  - volumes/:                 CRITICAL. Contains live DB data. DO NOT DELETE.
+  - dev/:                     Development configurations/scripts.
+  - tests/:                   Infrastructure integrity tests.
+  - *.sql:                    Database snapshots (e.g., data4in_export.sql).
+  - *.txt:                    Backup keys (stripe_keys.txt, resend_api_key.txt).
 
 --------------------------------------------------------------------------------
-3. ARCHITECTURE & SECURITY
+3.  ARCHITECTURE & SECURITY
 --------------------------------------------------------------------------------
 
-A. THE GATEWAY PATTERN (main.ts)
-Instead of exposing every function directly, this project uses a "Main Router."
-WARNING: THIS IS A CRITICAL FUNCTION.
-1. Ingest: All requests hit the 'main' function.
-2. Verify: If VERIFY_JWT is true, it validates the Bearer token signature.
-3. Route: It parses the URL path (e.g., /functions/v1/admin-users-secure) 
-   and spins up a specific UserWorker for that function.
+A. DATA PERSISTENCE STRATEGY
+   The 'volumes' directory is mapped directly into the Docker containers.
+   - ./volumes/db:    PostgreSQL data files.
+   - ./volumes/storage: Object storage files (images/docs).
 
-B. THE 3-LAYER SECURITY MODEL
-All Admin functions implement the following checks before executing any logic:
-Layer 1 (JWT):      Is the user logged in with a valid Supabase Token?
-Layer 2 (Allowlist): Is the user's email present in the ADMIN_EMAILS env var?
-Layer 3 (Database):  Does the user's row in 'publicv2.users' have tier: 'admin'?
+   WARNING: Deleting the './volumes' folder will result in TOTAL DATA LOSS unless
+   a SQL backup is available.
 
---------------------------------------------------------------------------------
-4. FUNCTION REFERENCE
---------------------------------------------------------------------------------
+B. SECURITY & SECRETS
+   This directory contains sensitive text files (stripe_keys.txt, etc.).
+   - Access Control: Ensure this directory is read/write restricted (chmod 600).
+   - Git Policy:     Never commit .txt key files or .env files to version control.
+   - Backup Policy:  The '(Backup).env.backup.txt' serves as a recovery point
+                     for environment configurations.
 
---- AUTH & USER FLOW ---
-Custom authentication logic that bypasses standard Supabase helpers to ensure 
-data consistency.
-
-Function: custom-signup (mapped to 'create-user-v3')
-Description: Atomic signup process. Creates an Auth user (no default email), 
-             creates a DB profile in 'publicv2', and sends a custom verification email.
-Payload:     { 
-               "email": "...", 
-               "password": "...", 
-               "metadata": { "first_name": "...", "tier": "basic" } 
-             }
-
-Function: email-verify
-Description: The target link for the signup verification email. Verifies the token.
-Method:      GET
-Params:      ?token=...&type=signup&user_id=...
-
-Function: password-reset-request
-Description: Initiates a password reset. Returns "success" even if email doesn't 
-             exist (Security by Obscurity).
-Payload:     { "email": "user@example.com" }
-
-Function: password-reset-verify
-Description: Completes the password reset and invalidates all existing sessions.
-Payload:     { "token": "...", "email": "...", "newPassword": "..." }
-
-
---- ADMIN SECURE ENDPOINTS ---
-These endpoints provide CMS-like capabilities for the dashboard.
-
-Function: admin-users-secure
-Description: A complete CRUD suite for user management.
-Methods:
-  - GET: List users (?page=1&search=...)
-  - POST: Create a user manually.
-  - PUT /bulk-update: Perform bulk actions (disable, delete, upgrade).
-  - DELETE /:id: Hard delete a user.
-
-Function: admin-contacts-secure
-Description: Manages contact form submissions.
-Methods:
-  - GET: List messages (?status=New)
-  - PUT /:id: Update status ({ "status": "Replied" })
-
-Function: admin-feedback-secure
-Description: Manages user feedback. Joins data with the 'users' table.
-Methods:     GET, PUT
-
-Function: stripe-analytics (formerly admin-subscriptions-secure)
-Description: Aggregates data from Stripe and DB for financial overview.
-Tabs:
-  - overview: MRR, User Count, 12-month trend.
-  - transactions: Recent payments.
-  - subscriptions: Active subscriptions with product details.
-  - customers: DB User list with subscription status.
-
-Function: admin-send-email
-Description: Allows admins to send raw HTML emails via Resend.
-Payload:     { "to": "...", "subject": "...", "message": "..." }
-
-Function: statistics
-Description: System health check. Fetches DB stats (via RPC) and Pinecone stats.
-Payload:     { "update": true } (Forces a refresh of cached stats).
-
-
---- BILLING & PUBLIC ENDPOINTS ---
-
-Function: stripe-webhook
-Description: Critical sync engine. Listens to Stripe events to update user Tiers 
-             and Plans in 'publicv2.users'. Includes "Failsafe" lookup by email.
-
-Function: create-portal-session
-Description: Generates a short-lived URL for the Stripe Customer Portal.
-Security:    Uses user's JWT to ensure access only to their own portal.
-
-Function: redeem-promo
-Description: Allows users to input a promo code to unlock Premium access.
-Payload:     { "code": "PROMO2024" }
-
-Function: insert-contact
-Description: Public-facing endpoint for the "Contact Us" form.
-
-Function: insert-feedback
-Description: Submit bug reports. Automatically maps "Reason" to "Priority".
-
-
---- UTILITY FUNCTIONS ---
-
-Function: text-parser
-Description: Document processor. Extracts raw text from files.
-Supported:   PDF, DOCX, CSV, JSON, XML, HTML, TXT, MD.
-Libraries:   mammoth (DOCX), pdf-parse (PDF).
-Input:       multipart/form-data with a 'file' field.
-
-Function: validate-jwt-v2
-Description: Internal middleware. Verifies JWT is valid, not expired, and 
-             belongs to a user that exists in 'publicv2.users'.
+C. NETWORKING
+   The `docker-compose.yml` defines an internal network (`default`) where:
+   - The API Gateway is exposed on port 8000 (Kong).
+   - The Database is exposed on port 5432 (Postgres).
+   - The Studio Dashboard is exposed on port 3000.
 
 --------------------------------------------------------------------------------
-5. DEPLOYMENT & OPERATION GUIDE (DOCKER)
+4.  FILE & BACKUP REFERENCE
 --------------------------------------------------------------------------------
-This project utilizes Docker Compose for orchestration.
+
+--- CONFIGURATION FILES ---
+
+File: docker-compose.yml
+Description: The primary definition file for the Supabase stack. Defines services:
+             studio, kong, auth, rest, realtime, storage, imgproxy, meta, db.
+
+File: docker-compose.s3.yml
+Description: An override file likely used to configure Supabase Storage to use
+             an S3 bucket (AWS/Wasabi) instead of the local filesystem.
+
+File: (DO NOT DELETE)docker-compose.yml.backup
+Description: A hard failsafe copy of the working orchestration config.
+
+
+--- DATABASE BACKUPS (.sql) ---
+
+File: data4in_export.sql
+Description: A full data export (schema + data) of the 'data4in' or related dataset.
+Usage:       cat data4in_export.sql | docker exec -i supabase-db psql -U postgres
+
+File: current_empty_db_backup.sql
+Description: A "Skeleton" backup containing only the Schema (tables/functions)
+             without user data. Useful for resetting environments.
+
+File: data2in_backup_20250727_0153.sql
+Description: Timestamped snapshot.
+Status:      Likely the most recent reliable restore point.
+
+
+--- SECRET KEYS (.txt) ---
+
+File: stripe_keys.txt
+Description: Contains Stripe Secret/Publishable keys and Webhook secrets.
+Action:      Ensure these match the values loaded into the docker container ENV.
+
+File: resend_api_key.txt / full_access_resend_api_key.txt
+Description: API keys for the Resend email service used by Auth/Edge Functions.
+
+File: (Backup).env.backup.txt
+Description: Text copy of the .env file. Contains JWT Secrets, DB Passwords,
+             and API Keys.
+
+--------------------------------------------------------------------------------
+5.  DEPLOYMENT & OPERATION GUIDE (DOCKER)
+--------------------------------------------------------------------------------
+
+IMPORTANT: Use 'docker compose' (space), not 'docker-compose' (hyphen).
 
 STARTING THE STACK:
   docker compose up -d
@@ -209,33 +136,132 @@ STARTING THE STACK:
 
 STOPPING THE STACK:
   docker compose down
-  (Stops and removes containers and networks)
+  (Stops containers and removes networks. Volumes persist.)
 
-RESTARTING SERVICES:
-  docker compose restart
-  (Useful after updating environment variables or configuration)
+CHECKING HEALTH:
+  docker compose ps
+  (Ensure 'supabase-db' and 'supabase-auth' are 'Up' or 'healthy')
 
 VIEWING LOGS:
-  docker logs -f [container_name]
-  
-  Common containers to check:
-  - Edge Functions:  docker logs -f supabase-edge-functions
-  - Database:        docker logs -f supabase-db
-  - Auth Service:    docker logs -f supabase-auth
+  docker compose logs -f
+  (Streams logs from all services)
 
-REBUILDING:
-  docker compose up -d --build
-  (Forces a rebuild of images, useful if Dockerfiles have changed)
+  docker logs -f [container_name] (Find in docker-compose.yml)
 
-CHECKING STATUS:
-  docker compose ps
-  (Lists all running containers and their health status)
+RESTORING A BACKUP:
+  cat data4in_export.sql | docker exec -i supabase-db psql -U postgres
 
-NOTE ON TYPE GENERATION:
-Because this project uses a custom schema (publicv2), you must use the 
-following command to update TypeScript definitions:
+RESETTING TO FRESH STATE:
+  1. docker compose down
+  2. sudo rm -rf volumes/db/* (WARNING: DESTRUCTIVE)
+  3. docker compose up -d
 
-  supabase gen types typescript --project-id "your-id" --schema publicv2 > types/supabase.ts
+--------------------------------------------------------------------------------
+6.  ACCESS CREDENTIALS & SECURITY
+--------------------------------------------------------------------------------
+
+WARNING: These credentials control root access. Do not share this file publicly.
+
+A. DEFAULT CREDENTIALS
+   These values are defined in the `.env` file. If they differ, check .env directly.
+
+   1. POSTGRES DATABASE (Superuser)
+      - Username: postgres
+      - Password: Crimson-Sage-2025!
+      - Port:     5432
+      - Connection String: postgresql://postgres:Crimson-Sage-2025!@localhost:5432/postgres
+
+   2. SUPABASE STUDIO (Dashboard)
+      - URL:      http://localhost:3000
+      - Username: Gurby1@gmail.com
+      - Password: Guraijj1@
+
+   3. SERVICE_ROLE KEY (Admin API Access)
+      - Location: .env file (SEARCH FOR: SERVICE_ROLE_KEY)
+      - Usage:    Used by backend scripts (Python/Node) to bypass Row Level Security.
+
+B. HOW TO CHANGE PASSWORDS
+   Changing credentials requires updating the environment configuration and 
+   restarting the containers.
+
+   Step 1: Open the environment file.
+           nano .env
+
+   Step 2: Locate and edit the relevant variable.
+           POSTGRES_PASSWORD=new_secure_password
+           DASHBOARD_USERNAME=new_admin
+           DASHBOARD_PASSWORD=new_password
+
+   Step 3: Apply changes.
+           docker compose down
+           docker compose up -d
+
+   Note: Changing the POSTGRES_PASSWORD may require updating the connection 
+   strings in your Python backend (analysis-libraries) as well.
+
+--------------------------------------------------------------------------------
+7.  OPERATIONAL WORKFLOWS
+--------------------------------------------------------------------------------
+
+A. EXAMPLE: ADDING DATABASE FIELDS
+   You can add fields via the Studio UI (http://localhost:3000 or https://supabase.sageaios.com).
+
+   Method 1: SQL Command (Preferred for consistency)
+   Run the following command to add a 'phone_number' field to the 'users' table:
+   
+   docker exec -it supabase-db psql -U postgres -c "ALTER TABLE public.users ADD COLUMN phone_number text;"
+
+   Method 2: Studio UI
+   1. Go to http://localhost:3000 or https://supabase.sageaios.com -> Table Editor.
+   2. Select the table (e.g., 'users').
+   3. Click "Insert Column" (Plus icon).
+   4. Name: phone_number | Type: text | Default Value: NULL.
+   5. Click Save.
+
+B. EXAMPLE: CREATING A NEW PROMO CODE
+   Use this workflow to add a new code to the `publicv2.promo_codes` table.
+
+   Method 1: Using SQL (SQL Editor or Terminal)
+   This is the fastest method to ensure all fields are correct.
+
+   INSERT INTO publicv2.promo_codes 
+     (code, description, max_uses, times_used, is_active, type, duration_days) 
+   VALUES 
+     ('SAGE2025', 'Early bird discount', 50, 0, true, 'premium_unlock', 30);
+
+   Method 2: Using Supabase Studio (Visual Table Editor)
+   1. Open Supabase Studio: http://localhost:3000
+   2. Click the "Table Editor" icon (Grid).
+   3. In the sidebar, select the schema: `publicv2`.
+   4. Click on the table: `promo_codes`.
+   5. Click "Insert Row" (Green button or 'Insert').
+   6. Fill in the form:
+      - code:          "SAGE2025"
+      - description:   "Promo description"
+      - max_uses:      50
+      - times_used:    0
+      - is_active:     TRUE
+      - type:          "premium_unlock"
+      - duration_days: 30
+   7. Click "Save".
+
+C. TROUBLESHOOTING THE DATABASE
+   
+   Issue 1: Database is "Locked" or refusing connections.
+   - Action: Check if the container is restarting loop.
+     docker logs supabase-db --tail 50
+   - Fix: If logs show "lock file exists", restart the container forceably:
+     docker restart supabase-db
+
+   Issue 2: "Disk is full" errors.
+   - Action: Prune unused Docker data (Use caution).
+     docker system prune -a
+   - Action: Check volume size.
+     du -sh ./volumes/db
+
+   Issue 3: Slow Queries / Performance.
+   - Action: Run the active queries inspector via Docker CLI:
+     docker exec -it supabase-db psql -U postgres -c "SELECT pid, age(clock_timestamp(), query_start), usename, query FROM pg_stat_activity WHERE state != 'idle' AND query NOT ILIKE '%pg_stat_activity%' ORDER BY query_start desc;"
 
 ================================================================================
 END OF DOCUMENTATION
