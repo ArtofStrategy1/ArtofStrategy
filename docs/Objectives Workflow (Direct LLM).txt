@@ -1,0 +1,345 @@
+Objectives Workflow (Direct LLM)
+================================
+
+Workflow Name : Objectives  
+Workflow Path : https://n8n.data2int.com/workflow/3iT1EgQTEDIwdBlc  
+Platform      : n8n (self-hosted at https://n8n.data2int.com)
+
+
+1. Purpose
+==========
+
+This **Objectives** workflow is a *lighter* version of the strategic
+workflows. It does **not use RAG / Pinecone**; instead it focuses on:
+
+- Taking Mission, Vision, Goals, and context from the frontend.
+- Building a single, very controlled LLM prompt.
+- Asking the LLM to return **SMART Objectives** directly.
+- Logging the request, response, and processing time in Supabase.
+
+It is mainly for:
+
+- Fast objective generation without external retrieval.
+- A/B testing vs the heavier RAG-based Objectives/Strategic-Planning flows.
+- Situations where speed and cost are more important than deep retrieval.
+
+
+2. Tech Stack
+=============
+
+Core platform
+-------------
+- n8n for orchestration and HTTP/Webhook handling.
+
+External services
+-----------------
+- Supabase
+  - Auth: JWT validation via Edge Functions.
+  - Database: stores queries, analytics, and processing times.
+
+- OpenAI (or compatible LLM provider)
+  - Chat/Completion API for generating SMART Objectives.
+
+(No Pinecone / vector DB in this workflow.)
+
+
+3. Prerequisites & Configuration
+================================
+
+Environment / credentials
+-------------------------
+Configured in n8n as credentials or environment variables:
+
+- SUPABASE_URL
+- SUPABASE_ANON_KEY / JWT secret (for Edge Functions)
+- SUPABASE_SERVICE_ROLE_KEY (if used by the logging functions)
+- OPENAI_API_KEY
+
+Supabase tables (conceptual)
+----------------------------
+- `queries`
+  - One row per run of the Objectives workflow.
+  - Fields: id, user_id, customer_name, template_id, payload,
+    start_time, end_time, duration_ms, status, error_message, etc.
+
+- `analytics`
+  - Optional table that stores model name, token usage, etc.,
+    linked back to the `query_id`.
+
+
+4. Input and Output
+===================
+
+4.1 Expected Request (Webhook Input – conceptual)
+-------------------------------------------------
+
+This workflow is triggered by an HTTP POST to the Webhook node.
+
+Example JSON body:
+
+{
+  "customerName": "Acme Health",
+  "industry": "Healthcare",
+  "location": "Canada",
+  "mission": "Our mission is ...",
+  "vision": "Our vision is ...",
+  "goals": [
+    "Improve patient satisfaction...",
+    "Digitize patient intake..."
+  ],
+  "extraContext": "Any additional notes or constraints...",
+  "userId": "uuid-from-supabase",
+  "templateId": "objectives-direct-vX",
+  "auth": {
+    "jwt": "Bearer eyJhbGciOi..."
+  }
+}
+
+Required fields:
+- mission, vision, and at least one goal.
+- A valid JWT in `auth.jwt`.
+- customerName (used for logging and context).
+
+4.2 Response (Webhook Output – conceptual)
+------------------------------------------
+
+{
+  "customerName": "Acme Health",
+  "mission": "...",
+  "vision": "...",
+  "goals": [...],
+  "objectives": [
+    {
+      "goalRef": "Improve patient satisfaction...",
+      "objective": "Increase NPS from 45 to 65 by Q4 2026.",
+      "kpi": "Net Promoter Score",
+      "timeframe": "By Q4 2026",
+      "responsibleOwner": "Head of Patient Experience",
+      "priority": "High"
+    },
+    ...
+  ],
+  "model": "gpt-4.x",
+  "durationMs": 12345
+}
+
+Exact field names depend on the Code nodes, but the main idea is:
+- **Flat objectives array** (not per-framework).
+- Each objective is SMART and mapped to a source goal.
+- Extra metadata for analytics and debugging.
+
+
+5. Workflow Structure (Node-by-Node)
+====================================
+
+This workflow is *linear* (no branching). Node names below follow the
+labels visible in n8n.
+
+A. Ingress & Authentication
+---------------------------
+
+1) Webhook1
+   - Type: Trigger → Webhook
+   - Role: Entry point for all Objective requests.
+   - Behavior: Accepts POST body and exposes it as `{{$json}}`.
+
+2) API
+   - Type: Set / routing node (signpost icon).
+   - Role: Normalize/route incoming payload.
+   - Responsibilities:
+     - Basic cleaning or minimal mapping from frontend format to
+       internal structure (if needed).
+
+3) Supabase Function Token - Request
+   - Type: HTTP Request
+   - Role: Call Supabase Edge Function for token/session handling.
+   - Responsibilities:
+     - Validate or exchange `auth.jwt`.
+     - Optionally enrich with account/organization metadata.
+
+4) Get Text2
+   - Type: Code / Function
+   - Role: Build the main text context for the LLM.
+   - Responsibilities:
+     - Concatenate mission, vision, goals, and extraContext into a
+       single `queryText`.
+     - Attach structured metadata:
+       - `customerName`, `industry`, `location`, `userId`, `templateId`, etc.
+
+5) Build Objectives Prompt
+   - Type: Code / Function
+   - Role: Construct the prompt that will be sent to the LLM.
+   - Responsibilities:
+     - Define what a **SMART Objective** means (Specific, Measurable,
+       Achievable, Relevant, Time-bound).
+     - Ask the model to:
+       - Generate multiple objectives per goal.
+       - Use a strict JSON output format (e.g. `objective`, `kpi`,
+         `timeframe`, `owner`, `priority`, `goalRef`).
+     - Inject `queryText` and metadata into the prompt.
+
+6) Generate Objectives
+   - Type: HTTP Request / OpenAI node
+   - Role: Call the LLM to generate objectives.
+   - Responsibilities:
+     - Send the constructed prompt.
+     - Receive the LLM output (expected to be JSON or JSON-like text).
+
+
+B. Auth Validation & User Checks
+--------------------------------
+
+7) Validate JWT2
+   - Type: HTTP Request
+   - Role: Perform explicit JWT validation via Supabase.
+   - Responsibilities:
+     - Ensure token is valid and not expired.
+     - Attach `user_id` or other claims.
+
+8) Check User2
+   - Type: Function / IF
+   - Role: Enforce access control for the Objectives feature.
+   - Responsibilities:
+     - Confirm the user’s plan/subscription includes objective generation.
+     - Abort the workflow if unauthorized.
+
+
+C. Timing & Query Logging
+-------------------------
+
+9) Start Time2
+   - Type: Set
+   - Role: Capture request start time.
+   - Responsibilities:
+     - Add `startTime` to the item (ms or ISO string).
+
+10) Convert to JSON Format (first one after Start Time2)
+    - Type: Code / Set
+    - Role: Normalize the LLM response.
+    - Responsibilities:
+      - Parse the output from `Generate Objectives` into a clean JSON
+        structure.
+      - Attach mission, vision, goals, and the parsed objectives.
+
+11) Insert Query2
+    - Type: HTTP Request (Supabase)
+    - Role: Insert a row into `queries`.
+    - Responsibilities:
+      - Save:
+        - Raw/normalized input (mission, vision, goals).
+        - Parsed objectives (or a subset).
+        - startTime and user metadata.
+      - Store the `queryId` for later updates.
+
+
+D. Analytics & Response Preparation
+-----------------------------------
+
+12) End all payload analysis2
+    - Type: Code / Function
+    - Role: Prepare analytics payload.
+    - Responsibilities:
+      - Build an `analytics` object (model name, token usage if known,
+        number of objectives generated, etc.).
+      - Optionally clean up any debug fields.
+
+13) Convert to JSON Format (second one)
+    - Type: Code / Set
+    - Role: Ensure final response and analytics payload are well-structured.
+    - Responsibilities:
+      - Confirm field naming and shape for:
+        - Final API response.
+        - Analytics row (for `Insert Analytics3`).
+
+14) Insert Analytics3
+    - Type: HTTP Request (Supabase)
+    - Role: Insert analytics entry linked to `queryId`.
+    - Responsibilities:
+      - Persist model name, tokens (if available), success flags, etc.
+
+
+E. Completion & Process-Time Update
+-----------------------------------
+
+15) End Time2
+    - Type: Set
+    - Role: Capture end time.
+    - Responsibilities:
+      - Add `endTime` to the item.
+
+16) Compare Times2
+    - Type: Code
+    - Role: Compute total processing time.
+    - Responsibilities:
+      - `durationMs = endTime - startTime`.
+
+17) Append To Webhook2
+    - Type: Code / Set
+    - Role: Attach computed metadata to the object that will be sent
+      back to the Webhook response.
+    - Responsibilities:
+      - Add `durationMs`, `queryId`, and `status` fields to the response body.
+
+18) MarkQuery as Finished2
+    - Type: Code / Set
+    - Role: Prepare DB update payload.
+    - Responsibilities:
+      - Set `status = 'completed'` (or equivalent) for `queryId`.
+
+19) Update Query Process Time2
+    - Type: HTTP Request (Supabase)
+    - Role: Update the row in `queries`.
+    - Responsibilities:
+      - Set `end_time`, `duration_ms`, and `status` using `queryId`.
+
+20) HTTP Request2
+    - Type: HTTP Request (optional side-effect)
+    - Role: Optional integration call (e.g., notify app, send webhook,
+      or push to another service).
+    - Note:
+      - The **user-facing HTTP response** is returned directly from the
+        Webhook; this node is mainly for callbacks/integrations.
+
+
+6. Key Features
+===============
+
+- **No-RAG, fast objectives generation**
+  - All objectives are produced in a single LLM call; no Pinecone or web
+    retrieval involved.
+
+- **Strict SMART Objective structure**
+  - Prompt is engineered to force the model into a predictable JSON
+    schema, making it easy for the frontend to consume and render.
+
+- **Full Supabase logging**
+  - Each run is captured in `queries` plus an analytics entry:
+    - Allows comparison vs RAG-based workflows.
+    - Enables debugging and audit trail.
+
+- **Reusable auth & timing pattern**
+  - Same Supabase JWT validation and start/end time logic as the other
+    workflows, so metrics stay consistent.
+
+
+7. Maintenance Notes
+====================
+
+- To change the objective schema (add/remove fields):
+  - Update the **Build Objectives Prompt** node to describe the new JSON
+    format.
+  - Update both **Convert to JSON Format** nodes so they parse/emit the
+    updated structure.
+  - Adjust Supabase column definitions if you store the full structure.
+
+- To switch models or providers:
+  - Change the configuration in **Generate Objectives** (model name,
+    API URL, etc.).
+  - Optionally update analytics fields so model names are correct.
+
+- To extend logging:
+  - Add more fields to the analytics payload in **End all payload
+    analysis2** and **Insert Analytics3**.
+
+- Workflow path for this specific implementation:
+  - https://n8n.data2int.com/workflow/3iT1EgQTEDIwdBlc
