@@ -1,0 +1,397 @@
+Mission-Vision-RAG Workflow
+===========================
+
+Workflow Name : Mission-Vision-RAG  
+Workflow Path : https://n8n.data2int.com/workflow/iVLQZlR90wWNBZcE  
+Platform      : n8n (self-hosted at https://n8n.data2int.com)
+
+
+1. Purpose
+==========
+
+The Mission-Vision-RAG workflow converts a company description and basic
+business context into a structured Mission, Vision, and 3–5 Strategic Goals.
+
+It does this using a Retrieval-Augmented Generation (RAG) pattern that combines:
+
+- The client’s book and frameworks stored in Pinecone.
+- Internal documents / business plans stored in Pinecone.
+- External web search results.
+- User-provided context from the calling application.
+
+The workflow also:
+
+- Authenticates the caller via Supabase (JWT).
+- Logs the query, processing time, and summaries into Supabase.
+- Returns a clean JSON response suitable for API consumption.
+
+
+2. Tech Stack
+=============
+
+Core platform
+-------------
+- n8n (workflow orchestration and HTTP/Webhook handling).
+
+External services
+-----------------
+- Supabase
+  - Auth: JWT validation and/or Edge Functions.
+  - Database: persistent storage for queries, summaries, and analytics.
+
+- Pinecone
+  - Vector database for:
+    - Book chunks (Gurbachan’s methodology).
+    - Internal client documents and strategic plans.
+
+- OpenAI
+  - Embeddings API for vectorizing user queries and text chunks.
+  - Chat/Completion API for:
+    - Summarizing book, docs, and web data.
+    - Generating the final Mission, Vision, and Goals.
+
+- Web Search Provider
+  - Used to retrieve up-to-date information and best practices
+    relevant to the user’s industry and region.
+
+
+3. Prerequisites & Configuration
+================================
+
+Environment / credentials (typically configured as n8n credentials or env vars):
+- SUPABASE_URL
+- SUPABASE_ANON_KEY and/or JWT secret (depending on Edge Function setup)
+- SUPABASE_SERVICE_ROLE_KEY (if the Edge Function uses it)
+- OPENAI_API_KEY
+- PINECONE_API_KEY
+- PINECONE_ENVIRONMENT
+- PINECONE_INDEX (or indices/namespaces for “book” and “docs”)
+- Web search API key (e.g., SERP-style provider)
+
+Supabase data model (conceptual):
+- `queries` table
+  - id, user_id, customer_name, template_id, query_text,
+    start_time, end_time, duration_ms, status, error_message, etc.
+
+- `rag_summaries` table
+  - id, query_id, source_type (book/web/docs), summary_text, raw_metadata.
+
+- `analytics` table (optional)
+  - query_id, model_name, token_usage, source_weights, etc.
+
+Pinecone configuration:
+- At least one index with separate namespaces for:
+  - Book / frameworks (e.g., `mission_vision_book`).
+  - Internal docs / plans (e.g., `plans` or `client_docs`).
+
+
+4. Input and Output
+===================
+
+4.1 Expected Request (Webhook Input – conceptual)
+-------------------------------------------------
+
+The workflow is triggered by an HTTP POST to the n8n Webhook node.
+
+Example JSON body:
+
+{
+  "customerName": "Acme Health",
+  "industry": "Healthcare",
+  "location": "Canada",
+  "companyDescription": "Acme Health is a regional clinic...",
+  "extraContext": "We want to digitize patient intake...",
+  "userId": "uuid-from-supabase",
+  "templateId": "mission-vision-v11",
+  "auth": {
+    "jwt": "Bearer eyJhbGciOi..."
+  }
+}
+
+Required fields:
+- companyDescription (or equivalent main text)
+- userId and/or JWT in `auth.jwt`
+- customerName
+- templateId (used for analytics and routing)
+
+4.2 Response (Webhook Output – conceptual)
+------------------------------------------
+
+{
+  "mission": "Concise mission statement...",
+  "vision": "Forward-looking vision statement...",
+  "goals": [
+    {
+      "id": 1,
+      "label": "Digital Transformation",
+      "description": "Goal description..."
+    },
+    {
+      "id": 2,
+      "label": "Patient Experience",
+      "description": "Goal description..."
+    }
+  ],
+  "clarifyingQuestions": [
+    "Question 1...",
+    "Question 2..."
+  ],
+  "ragContextDebug": {
+    "sources": {
+      "book": [...],
+      "web": [...],
+      "docs": [...]
+    },
+    "processingTimeMs": 12345
+  }
+}
+
+Actual field names can vary slightly depending on the latest Code nodes,
+but this structure reflects the intended contract with the frontend.
+
+
+5. Workflow Structure (Node-by-Node)
+====================================
+
+This section documents the main nodes in left-to-right execution order.
+
+A. Ingress & Authentication
+---------------------------
+
+1) Webhook
+   - Type: Trigger → Webhook
+   - Role: Entry point for external HTTP POST requests.
+   - Behavior: Receives the JSON body and makes it available as `{{$json}}`
+     to downstream nodes.
+
+2) API
+   - Type: Set/Function node (renamed to “API”).
+   - Role: Normalize and clean the input payload.
+   - Responsibilities:
+     - Extract `customerName`, `location`, `industry`,
+       `companyDescription`, `templateId`, etc.
+     - Provide a stable internal schema for subsequent nodes.
+
+3) Supabase Function Token - Request
+   - Type: HTTP Request
+   - Role: Call a Supabase Edge Function for token handling.
+   - Responsibilities:
+     - Validate or exchange the `auth.jwt` received from the frontend.
+     - Optionally enrich the request with user or organization metadata.
+
+4) Get Text
+   - Type: Code/Function
+   - Role: Construct the main unified query text.
+   - Responsibilities:
+     - Concatenate company description, extra context, and metadata.
+     - Output fields such as:
+       - `queryText`
+       - `metadata` (customerName, userId, templateId, etc.)
+
+5) Validate JWT
+   - Type: HTTP Request
+   - Role: Validate the JWT via Supabase Auth or Edge Function.
+   - Responsibilities:
+     - Confirm the user/session is valid.
+     - Attach user data (e.g., `user_id`, `org_id`) to the item.
+
+6) Check User
+   - Type: Function / IF
+   - Role: Enforce access control.
+   - Responsibilities:
+     - Check subscription / plan / feature flags.
+     - Abort the workflow or throw an error if the user is not allowed
+       to use Mission-Vision-RAG.
+
+
+B. Query Tracking & Time Measurement
+------------------------------------
+
+7) Start Time
+   - Type: Set
+   - Role: Store start timestamp.
+   - Responsibilities:
+     - Add `startTime` (e.g., `Date.now()` or ISO timestamp) to the item.
+
+8) Convert JSON Format
+   - Type: Set/Code
+   - Role: Bring everything into the internal “RAG request” format.
+   - Responsibilities:
+     - Ensure downstream nodes always see a consistent structure
+       (`query`, `customerMeta`, `auth`, etc.).
+
+9) Insert Query
+   - Type: HTTP Request (Supabase)
+   - Role: Insert a new row in `queries`.
+   - Responsibilities:
+     - Save `query_text`, `user_id`, `customer_name`, `template_id`, `start_time`.
+     - Initialize status as `processing`.
+     - Store the resulting `queryId` in the item for later updates.
+
+
+C. Retrieval: Web + Knowledge Base + Book/Docs
+----------------------------------------------
+
+10) Web Search Knowledge Base / LLM Retriever
+    - Type: HTTP Request / custom integration.
+    - Role: Run web search and optional internal KB search.
+    - Responsibilities:
+      - Use `queryText` to fetch search results.
+      - Return titles, URLs, snippets, and/or full content.
+
+11) Document Process & Chunking
+    - Type: Code/Function
+    - Role: Clean and chunk the retrieved documents.
+    - Responsibilities:
+      - Strip boilerplate HTML, ads, etc.
+      - Create chunks of suitable size (e.g., 500–1000 tokens).
+      - Tag chunks with source metadata (`sourceType: "web"`, URL, etc.).
+
+12) Cleaning Entity
+    - Type: Code/Function
+    - Role: Normalize and deduplicate entities.
+    - Responsibilities:
+      - Remove duplicate or extremely short chunks.
+      - Perform any additional data cleansing.
+
+13) Generate Chunks
+    - Type: Code
+    - Role: Final pass to prepare chunks for embeddings.
+    - Responsibilities:
+      - Guarantee each chunk has:
+        - Text content.
+        - Source metadata.
+        - Stable identifiers or rankings.
+
+14) Query Embedding
+    - Type: HTTP Request to OpenAI Embeddings.
+    - Role: Vectorize the main query.
+    - Responsibilities:
+      - Use a model such as `text-embedding-3-large` (or configured equivalent).
+      - Append `queryEmbedding` (a numeric vector) to the item.
+
+
+C1. Web Search Summaries (Lower Branch)
+---------------------------------------
+
+15) Extract Relevant Queries
+    - Type: Code
+    - Role: Select the most relevant search results.
+    - Responsibilities:
+      - Filter to the top-N items, based on ranking or content relevance.
+
+16) Extract Relevant Insights
+    - Type: Code
+    - Role: Consolidate snippets per source.
+    - Responsibilities:
+      - Merge snippets/text for each domain or article into a single block.
+
+17) Query Results
+    - Type: Set/Code
+    - Role: Prepare web/KB context object.
+    - Responsibilities:
+      - Create `webContext` data for the summarization LLM node.
+
+18) LLM KB Summary
+    - Type: OpenAI Chat
+    - Role: Summarize the web/KB context.
+    - Responsibilities:
+      - Emphasize industry trends and best practices specific to the client.
+      - Output `webSummary`.
+
+19) Insert Database Summary
+    - Type: HTTP Request (Supabase)
+    - Role: Store `webSummary` and related metadata.
+    - Responsibilities:
+      - Insert into `rag_summaries` with `source_type = 'web'` and link to `queryId`.
+
+
+C2. Book / Framework RAG (Upper Branch)
+---------------------------------------
+
+20) Build Query (book)
+    - Type: Code
+    - Role: Construct Pinecone query for the book namespace.
+    - Responsibilities:
+      - Use `queryEmbedding`.
+      - Apply namespace or chapter filters for mission/vision content.
+
+21) Pinecone Query (book)
+    - Type: HTTP Request
+    - Role: Query Pinecone for book chunks.
+    - Responsibilities:
+      - Retrieve top-K most similar vectors in the book namespace.
+
+22) Aggregate (book)
+    - Type: Code
+    - Role: Merge book matches into ordered context.
+    - Responsibilities:
+      - Concatenate chunk texts with minimal overlap.
+      - Preserve source order and references.
+
+23) LLM Framework Summary (book)
+    - Type: OpenAI Chat
+    - Role: Summarize book content.
+    - Responsibilities:
+      - Capture methodology and principles for designing
+        mission, vision, and goals according to Gurbachan’s framework.
+      - Output `bookSummary`.
+
+24) Insert Pinecone Summary (book)
+    - Type: HTTP Request (Supabase)
+    - Role: Persist `bookSummary`.
+    - Responsibilities:
+      - Insert record with `source_type = 'book'` and reference `queryId`.
+
+
+C3. Internal Docs / Plan RAG (Middle Branch)
+--------------------------------------------
+
+25) Build Plan Query
+    - Type: Code
+    - Role: Construct Pinecone query for plans/docs namespace.
+    - Responsibilities:
+      - Use `queryEmbedding`.
+      - Filter by namespace such as `plans` or `client_docs`.
+
+26) Pinecone Plan Query
+    - Type: HTTP Request
+    - Role: Query Pinecone for internal documents.
+    - Responsibilities:
+      - Retrieve context about existing strategies, plans, and constraints.
+
+27) Aggregate (plans)
+    - Type: Code
+    - Role: Merge plan/doc matches.
+    - Responsibilities:
+      - Build a coherent text block describing the client’s current reality.
+
+28) LLM Plan Summary
+    - Type: OpenAI Chat
+    - Role: Summarize internal docs.
+    - Responsibilities:
+      - Extract constraints, existing directions, and key themes
+        that should influence mission and vision.
+      - Output `planSummary`.
+
+29) Insert Pinecone Summary (plans)
+    - Type: HTTP Request (Supabase)
+    - Role: Persist `planSummary`.
+    - Responsibilities:
+      - Insert record with `source_type = 'docs'` or `plans` and link to `queryId`.
+
+
+D. RAG Merge & Final Prompt Construction
+----------------------------------------
+
+30) Merge Web Search, Knowledge Base, LLM Extracts
+    - Type: Merge
+    - Role: Combine the three summary branches.
+    - Responsibilities:
+      - Merge `webSummary`, `bookSummary`, and `planSummary`
+        into a single item for further processing.
+
+31) Merge Context
+    - Type: Code
+    - Role: Construct the final RAG context object.
+    - Responsibilitie

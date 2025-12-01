@@ -1,0 +1,494 @@
+Strategic-Planning Workflow
+===========================
+
+Workflow Name : Strategic-Planning  
+Workflow Path : https://n8n.data2int.com/workflow/fKoUT6ECze2l81UT
+Platform      : n8n (self-hosted at https://n8n.data2int.com)
+
+
+1. Purpose
+==========
+
+The Strategic-Planning workflow converts a company’s Mission, Vision, Goals,
+and contextual information into a **multi-framework Strategic Plan**.
+
+It uses a Retrieval-Augmented Generation (RAG) pattern that combines:
+
+- The client’s book / strategy frameworks stored in Pinecone.
+- Internal documents and existing strategic plans stored in Pinecone.
+- External web search results.
+- The user’s Mission/Vision/Goals and additional context.
+
+The workflow outputs a structured strategic plan organized by frameworks
+(e.g., SWOT, McKinsey 7S, Blue Ocean, Lean, etc.), each including:
+
+- Situation / diagnosis based on RAG context.
+- Strategic insights and focus areas.
+- A “Novel Strategies Recommended” section.
+- Links back to the user’s goals where relevant.
+
+It also:
+
+- Authenticates the caller via Supabase (JWT).
+- Logs the query, processing time, and summaries into Supabase.
+- Returns a JSON structure suitable for the frontend and downstream tools.
+
+
+2. Tech Stack
+=============
+
+Core platform
+-------------
+- n8n (workflow orchestration and HTTP/Webhook handling).
+
+External services
+-----------------
+- Supabase
+  - Auth: JWT validation and/or Edge Functions.
+  - Database: log queries, RAG summaries, and analytics.
+
+- Pinecone
+  - Vector database for:
+    - Book/framework content (Gurbachan’s strategy frameworks).
+    - Client-specific documents and previous plans.
+
+- OpenAI
+  - Embeddings API for query/document vectorization.
+  - Chat/Completion API for:
+    - Summarizing book/docs/web content.
+    - Generating the final multi-framework strategic plan.
+
+- Web Search Provider
+  - Supplies external articles and reports related to the client’s industry,
+    geography, and strategic themes.
+
+
+3. Prerequisites & Configuration
+================================
+
+Environment / credentials (as n8n credentials or env vars):
+- SUPABASE_URL
+- SUPABASE_ANON_KEY and/or JWT secret
+- SUPABASE_SERVICE_ROLE_KEY (if used by Edge Functions)
+- OPENAI_API_KEY
+- PINECONE_API_KEY
+- PINECONE_ENVIRONMENT
+- PINECONE_INDEX (with namespaces for strategy book/frameworks and for docs)
+- Web search API key
+
+Supabase data model (conceptual, shared with Mission-Vision-RAG):
+- `queries` table
+  - One row per strategic-planning request.
+  - Fields such as id, user_id, customer_name, template_id, query_text,
+    start_time, end_time, duration_ms, status, error_message, etc.
+
+- `rag_summaries` table
+  - Stores RAG summaries per source type (`book`, `web`, `docs`, etc.)
+    linked by `query_id`.
+
+- `analytics` table (optional)
+  - Stores model/tokens/cost and weights of different sources.
+
+Pinecone configuration:
+- Index with namespaces like:
+  - `strategy_book` or similar for frameworks/methodology.
+  - `plans` / `client_docs` for internal plans and uploaded documents.
+
+
+4. Input and Output
+===================
+
+4.1 Expected Request (Webhook Input – conceptual)
+-------------------------------------------------
+
+The workflow is triggered by an HTTP POST to its n8n Webhook node.
+
+Example JSON body:
+
+{
+  "customerName": "Acme Health",
+  "industry": "Healthcare",
+  "location": "Canada",
+  "mission": "Our mission is ...",
+  "vision": "Our vision is ...",
+  "goals": [
+    "Goal 1...",
+    "Goal 2..."
+  ],
+  "frameworks": [
+    "SWOT",
+    "McKinsey 7S",
+    "Blue Ocean"
+  ],
+  "extraContext": "Extra notes from the user or consultant...",
+  "userId": "uuid-from-supabase",
+  "templateId": "strategic-planning-vX",
+  "auth": {
+    "jwt": "Bearer eyJhbGciOi..."
+  }
+}
+
+Required fields:
+- At minimum: mission, vision, goals (or a reference to them),
+  `customerName`, and a valid JWT in `auth.jwt`.
+- `frameworks` list controls which frameworks the workflow will process.
+
+4.2 Response (Webhook Output – conceptual)
+------------------------------------------
+
+{
+  "customerName": "Acme Health",
+  "mission": "...",
+  "vision": "...",
+  "goals": [...],
+  "strategicPlan": {
+    "SWOT": {
+      "currentState": "...",
+      "analysis": {
+        "strengths": [...],
+        "weaknesses": [...],
+        "opportunities": [...],
+        "threats": [...]
+      },
+      "novelStrategiesRecommended": [...]
+    },
+    "McKinsey7S": {
+      "currentState": "...",
+      "analysis": {...},
+      "novelStrategiesRecommended": [...]
+    },
+    "BlueOcean": {
+      "currentState": "...",
+      "analysis": {...},
+      "novelStrategiesRecommended": [...]
+    }
+  },
+  "overallRecommendations": [
+    "High-level recommendation 1...",
+    "High-level recommendation 2..."
+  ],
+  "ragContextDebug": {
+    "sources": {
+      "book": [...],
+      "web": [...],
+      "docs": [...]
+    },
+    "processingTimeMs": 12345
+  }
+}
+
+Field names for each framework may vary slightly (depending on the
+precise Code node implementation), but this is the target contract
+with the frontend: a structured strategic plan organized by framework.
+
+
+5. Workflow Structure (Node-by-Node)
+====================================
+
+The general pattern is very similar to Mission-Vision-RAG, with additional
+steps for splitting frameworks and building per-framework strategies.
+
+A. Ingress & Authentication
+---------------------------
+
+1) Webhook
+   - Type: Trigger → Webhook
+   - Role: Entry point for all Strategic-Planning requests.
+   - Behavior: Receives the JSON body from the frontend application.
+
+2) Supabase Function Token - Request
+   - Type: HTTP Request
+   - Role: Interact with Supabase Edge Function for token-related logic.
+   - Responsibilities:
+     - Validate or exchange JWTs.
+     - Optionally load account/organization context.
+
+3) Get Text / Normalize Input
+   - Type: Code/Function
+   - Role: Normalize all strategic-planning inputs.
+   - Responsibilities:
+     - Build a unified `queryText` that includes mission, vision, goals,
+       and extraContext.
+     - Attach metadata such as customerName, industry, location, userId,
+       templateId, and selected frameworks.
+
+4) Validate JWT
+   - Type: HTTP Request
+   - Role: Confirm the JWT/session is valid.
+   - Responsibilities:
+     - Call Supabase (Auth or Edge Function) to validate the token.
+     - Attach the user record (user_id, org_id, etc.) to the item.
+
+5) Check User
+   - Type: Function / IF
+   - Role: Access control for the Strategic-Planning feature.
+   - Responsibilities:
+     - Verify the user’s plan or permissions.
+     - Abort the workflow if access is not allowed.
+
+
+B. Query Tracking & Time Measurement
+------------------------------------
+
+6) Start Time
+   - Type: Set
+   - Role: Record the start time for this request.
+   - Responsibilities:
+     - Store `startTime` for later duration computation.
+
+7) Convert JSON Format
+   - Type: Set/Code
+   - Role: Build an internal representation for the strategic-planning
+     query.
+   - Responsibilities:
+     - Provide fields like `query`, `frameworks`, `customerMeta`, `auth`,
+       and so on.
+
+8) Insert Query
+   - Type: HTTP Request (Supabase)
+   - Role: Insert a new row in `queries` for this strategic plan.
+   - Responsibilities:
+     - Persist the main input text and metadata.
+     - Set initial status `processing` and capture `queryId` for updates.
+
+
+C. Retrieval: Web + Knowledge Base + Book/Docs
+----------------------------------------------
+
+This section closely mirrors the retrieval in Mission-Vision-RAG.
+
+9) Web Search Knowledge Base / LLM Retriever
+   - Type: HTTP Request / custom integration.
+   - Role: Run web search for industry trends and strategic best practices.
+   - Responsibilities:
+     - Use mission, vision, goals, and industry/location as search context.
+     - Return relevant articles and knowledge-base entries.
+
+10) Document Process & Chunking
+    - Type: Code/Function
+    - Role: Clean and chunk web/KB results.
+    - Responsibilities:
+      - Remove noise, split into manageable chunks with metadata.
+
+11) Cleaning Entity
+    - Type: Code/Function
+    - Role: Normalize and deduplicate chunks.
+    - Responsibilities:
+      - Filter and standardize text for embedding/summarization.
+
+12) Generate Chunks
+    - Type: Code
+    - Role: Prepare final chunk set for RAG.
+    - Responsibilities:
+      - Ensure each chunk has text and metadata (source, rank, URL, etc.).
+
+13) Query Embedding
+    - Type: HTTP Request (OpenAI Embeddings)
+    - Role: Vectorize the strategic-planning query.
+    - Responsibilities:
+      - Create `queryEmbedding` used for Pinecone lookups.
+
+From here the workflow usually branches, reusing the same three RAG
+branches as Mission-Vision-RAG:
+
+C1. Web/KB Summaries (lower branch)
+-----------------------------------
+- Extract Relevant Queries
+- Extract Relevant Insights
+- Query Results
+- LLM KB Summary
+- Insert Database Summary
+
+Role:
+- Summarize web search results into a compact `webSummary` that highlights:
+  - Industry dynamics, common strategies, and best practices.
+
+C2. Book / Framework RAG (upper branch)
+---------------------------------------
+- Build Query (book / strategy)
+- Pinecone Query (book / strategy)
+- Aggregate (book / strategy)
+- LLM Framework Summary (book / strategy)
+- Insert Pinecone Summary (book / strategy)
+
+Role:
+- Retrieve and summarize snippets from the strategy book/frameworks,
+  emphasizing:
+  - How to apply each framework (SWOT, 7S, Blue Ocean, etc.).
+  - Design principles for building strategic initiatives.
+
+C3. Internal Docs / Plan RAG (middle branch)
+--------------------------------------------
+- Build Plan Query
+- Pinecone Plan Query
+- Aggregate (plans)
+- LLM Plan Summary
+- Insert Pinecone Summary (plans)
+
+Role:
+- Retrieve and summarize client-specific documents and existing plans.
+
+
+D. Framework Splitting & Prompt Construction
+--------------------------------------------
+
+After retrieval, the workflow prepares framework-specific prompts.
+
+14) Merge Web Search, Knowledge Base, LLM Extracts
+    - Type: Merge
+    - Role: Combine `webSummary`, `bookSummary`, and `planSummary`.
+    - Responsibilities:
+      - Build a single item which has all RAG context.
+
+15) Merge Context
+    - Type: Code
+    - Role: Construct unified RAG context for strategy design.
+    - Responsibilities:
+      - Weight the sources (book-heavy, web/docs as secondary).
+      - Produce a structured object:
+        - `context.book`, `context.web`, `context.docs`.
+
+16) Split Frameworks
+    - Type: Code / Item Lists / Split In Batches (depending on exact config).
+    - Role: Iterate over selected frameworks.
+    - Responsibilities:
+      - For each framework in `frameworks`:
+        - Create an item with that framework name.
+        - Attach shared RAG context and client metadata.
+
+17) Build Strategy Prompt (per framework)
+    - Type: Code/Function
+    - Role: Build the LLM prompt for each individual framework.
+    - Responsibilities:
+      - Insert mission, vision, goals.
+      - Insert per-framework instructions and expected JSON structure:
+        - Current state / diagnosis.
+        - Framework-specific analysis (e.g., SWOT quadrants).
+        - “Novel Strategies Recommended” list.
+        - Link strategies back to goals where possible.
+
+18) LLM Strategic Plan (per framework)
+    - Type: OpenAI Chat
+    - Role: Generate the strategic-plan content for the current framework.
+    - Responsibilities:
+      - Use RAG context + prompt to output structured text or JSON
+        for that framework.
+
+19) Convert Framework Output to JSON
+    - Type: Code/Set
+    - Role: Normalize each framework’s LLM response.
+    - Responsibilities:
+      - Ensure a consistent shape across all frameworks,
+        e.g. `frameworkName`, `currentState`, `analysis`, `novelStrategiesRecommended`.
+
+20) Merge Framework Results
+    - Type: Merge / Code
+    - Role: Combine all per-framework results into a single `strategicPlan` object.
+    - Responsibilities:
+      - Collect items keyed by framework name.
+      - Attach mission/vision/goals and metadata.
+
+
+E. Final Response, Analytics & Completion
+-----------------------------------------
+
+21) Convert to JSON Format (final)
+    - Type: Set/Code
+    - Role: Build the API-ready response object.
+    - Responsibilities:
+      - Include:
+        - `customerName`, `mission`, `vision`, `goals`.
+        - `strategicPlan` (frameworks as keys).
+        - Any `overallRecommendations` and `ragContextDebug`.
+
+22) Insert Analytics
+    - Type: HTTP Request (Supabase)
+    - Role: Persist analytics for this strategic-planning call.
+    - Responsibilities:
+      - Store model, tokens, source weights, and any relevant flags.
+
+23) End Time
+    - Type: Set
+    - Role: Record the end timestamp.
+    - Responsibilities:
+      - Add `endTime` for this request.
+
+24) Compare Times
+    - Type: Code
+    - Role: Compute total processing time.
+    - Responsibilities:
+      - Calculate `durationMs = endTime - startTime`.
+
+25) Append To Metadata
+    - Type: Set/Code
+    - Role: Enrich metadata with timing and status.
+    - Responsibilities:
+      - Add `durationMs`, `status = "completed"`, and possibly error info.
+
+26) Mark Query as Finished
+    - Type: Set/Code
+    - Role: Prepare final DB record state.
+    - Responsibilities:
+      - Ensure `queries.status` will be updated to “completed” or similar.
+
+27) Update Query Process Time
+    - Type: HTTP Request (Supabase)
+    - Role: Update the `queries` row.
+    - Responsibilities:
+      - Set `end_time`, `duration_ms`, `status`, etc. for `queryId`.
+
+28) HTTP Request (final)
+    - Type: HTTP Request (optional)
+    - Role: Optional callback or logging into another system.
+    - Note:
+      - The main HTTP response to the caller is typically handled
+        directly via the Webhook; this node exists for side-effects only.
+
+
+6. Key Features
+===============
+
+- **End-to-end strategic planning**  
+  Takes Mission, Vision, Goals plus context and returns a rich,
+  multi-framework strategic plan.
+
+- **Multi-framework design**  
+  Supports multiple strategy frameworks in one call by:
+  - Splitting the `frameworks` list.
+  - Generating a dedicated plan per framework.
+  - Merging them back into one cohesive document.
+
+- **Methodology-first RAG**  
+  Strongly grounded in Gurbachan’s book and frameworks (Pinecone “book”
+  namespace), with web and client docs providing supporting context.
+
+- **Tight integration with Mission-Vision-RAG**  
+  The same RAG and logging infrastructure is reused, so:
+  - Inputs from Mission-Vision-RAG can flow directly in.
+  - Analytics and debugging are consistent across workflows.
+
+- **Full observability & auditability**  
+  All queries, summaries, and processing times are stored in Supabase,
+  making it easy to:
+  - Reconstruct how a plan was generated.
+  - Debug or tune prompts, models, and weights over time.
+
+
+7. Maintenance Notes
+====================
+
+- Any change to the frontend input (e.g., additional fields per framework)
+  should be updated in:
+  - `Webhook` → `Get Text / Normalize Input` → `Convert JSON Format`.
+
+- To add a new framework:
+  - Include it in the `frameworks` list from the frontend.
+  - Update the `Split Frameworks` and `Build Strategy Prompt` logic so
+    that this framework:
+    - Has the correct instructions.
+    - Has a stable JSON structure in the LLM response.
+  - Optionally store framework-specific analytics in Supabase.
+
+- To modify source weighting (book vs web vs docs):
+  - Adjust the logic inside `Merge Context` and the prompt wording in
+    `Build Strategy Prompt`.
