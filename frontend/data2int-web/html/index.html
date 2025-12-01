@@ -235,19 +235,31 @@
             width: 100vw;
         }
 
-        /* Firefox Fix (Keeps logic consistent) */
+        /* --- FIREFOX SPECIFIC FIX --- */
+        /* Instead of using 'transform: scale()' which breaks fixed elements (Navbar/Modals),
+           we scale the root font-size. Since Tailwind uses 'rem' units, this 
+           effectively zooms the entire UI to 85% while keeping layout stability.
+        */
         @supports (-moz-appearance:none) {
+            /* 1. Reset the container to normal */
             .site-scaler {
-                width: 100%;
-                /* CALCULATION: 100vh divided by 0.85 (zoom) = ~117.65vh.
-                This forces the container to be exactly the height of the 
-                viewport even when zoomed out.
-                */
-                min-height: 117.65vh; 
-                
-                display: flex;
-                flex-direction: column;
-                zoom: 85%;
+                zoom: 1 !important;
+                transform: none !important;
+                width: 100% !important;
+                min-height: 100vh !important;
+                margin-bottom: 0 !important;
+            }
+            
+            /* 2. Apply the scale via typography */
+            /* Standard base is 16px. 85% of 16px is approx 13.6px */
+            html {
+                font-size: 13.6px !important; 
+            }
+
+            /* 3. Re-adjust the body width to ensure full coverage */
+            body {
+                width: 100vw !important;
+                overflow-x: hidden;
             }
         }
 
@@ -570,34 +582,6 @@
             min-height: 117.65vh; /* Compensates for zoom */
             zoom: 85%;
         }
-
-        /* --- FIREFOX SPECIFIC FIX --- */
-        @supports (-moz-appearance:none) {
-            .site-scaler {
-                /* 1. Disable standard zoom */
-                zoom: 1;
-
-                /* 2. Scale using transform */
-                transform: scale(0.85);
-                transform-origin: top center;
-
-                /* 3. Compensate Width & Height 
-                (100% / 0.85 = 117.647%) 
-                This ensures the content fills the screen edge-to-edge 
-                after being scaled down. */
-                width: 117.647%;
-                min-height: 117.647vh;
-
-                /* 4. Prevent horizontal scrollbar caused by the wide container */
-                margin-bottom: -17.647vh; /* Pull bottom up to remove dead space */
-            }
-            
-            /* Ensure body clips the "wide" container so no scrollbar appears */
-            body {
-                overflow-x: hidden;
-            }
-        }
-
 
         /* Carousel specific styles */
         .carousel-button {
@@ -2949,6 +2933,59 @@
             background-size: 400% 400%;
             background-attachment: fixed; /* Ensures it covers full scroll */
         }
+
+        /* --- DYNAMIC THEME HOVERS --- */
+
+/* 1. Logo Hover: Gradient Text Flow */
+nav a.text-2xl:hover {
+    /* Creates a gradient using the active theme colors */
+    background-image: linear-gradient(to right, var(--primary), var(--accent), var(--primary));
+    background-size: 200% auto;
+    
+    /* Clips background to text */
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    
+    /* Makes text transparent so background shows through */
+    color: transparent !important;
+    -webkit-text-fill-color: transparent !important;
+    
+    /* Adds a subtle shine animation */
+    animation: themeShine 3s linear infinite;
+}
+
+/* 2. Tab Hovers: Gradient Text */
+/* Applies to Home, Analysis, Feedback, and Sub-nav tabs */
+.home-tab-btn:hover,
+.analysis-tab-btn:hover,
+.feedback-tab-btn:hover,
+.sub-nav-btn:hover {
+    background-image: linear-gradient(90deg, var(--primary), var(--text-highlight));
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    color: transparent !important;
+    -webkit-text-fill-color: transparent !important;
+    
+    /* Remove default background colors to let gradient shine */
+    background-color: rgba(255,255,255,0.05); 
+    transition: all 0.3s ease;
+    text-shadow: 0 0 20px rgba(var(--primary), 0.5); /* Optional glow */
+}
+
+/* 3. Active Tab State: Solid Theme Color */
+.home-tab-btn.active,
+.analysis-tab-btn.active,
+.feedback-tab-btn.active {
+    color: var(--text-highlight) !important;
+    text-shadow: 0 0 10px var(--primary);
+}
+
+/* Animation Keyframes for the Logo */
+@keyframes themeShine {
+    to {
+        background-position: 200% center;
+    }
+}
     </style>
 </head>
 
@@ -4943,12 +4980,12 @@ document.addEventListener("DOMContentLoaded", () => {
             description: "Analyze your organization's Strengths, Weaknesses, Opportunities, and Threats."
         },
         "swot-tows": {
-            title: "SWOT/TOWS Analysis",
+            title: "AI SWOT/TOWS Analysis",
             description:
                 "Develop strategies by matching internal factors (Strengths, Weaknesses) to external factors (Opportunities, Threats)."
         },
         "pareto-fishbone": {
-            title: "Pareto & Fishbone Analysis",
+            title: "AI Pareto & Fishbone Analysis",
             description:
                 "A combined approach to identify the root causes of problems (Fishbone) and prioritize them based on impact (Pareto)."
         },
@@ -4968,12 +5005,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 "Model complex systems to understand interdependencies, feedback loops, and high-leverage intervention points."
         },
         "archetype-analysis": {
-            title: "Archetype Analysis",
+            title: "AI Archetypes Analysis",
             description:
                 "Identify and analyze recurring patterns of behavior (archetypes) within your system or market."
         },
         "creative-dissonance": {
-            title: "Creative Dissonance Analysis",
+            title: "AI Creative Dissonance Analysis",
             description:
                 "Explore the gap between your current reality and desired future to fuel innovation and strategic change."
         },
@@ -5010,17 +5047,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 "A systematic approach based on the study of global patent patterns to find innovative solutions to technical problems."
         },
         "regression-analysis": {
-            title: "Regression Analysis",
+            title: "AI Regression Analysis",
             description:
                 "Use statistical regression to model and analyze the relationships between variables for predictive insights."
         },
         "pls-analysis": {
-            title: "PLS Analysis",
+            title: "AI-Based PLS Analysis",
             description:
                 "Apply Partial Least Squares (PLS) for structural equation modeling, especially with complex models and non-normal data."
         },
         "dematel-analysis": {
-            title: "Dematel Analysis",
+            title: "AI-Based Dematel Analysis",
             description:
                 "Understand causal relationships between complex factors to identify core problems and effective leverage points."
         },
@@ -5045,12 +5082,11 @@ document.addEventListener("DOMContentLoaded", () => {
             description: "Plan your organization's journey towards digital maturity."
         },
         "predictive-analysis": {
-            title: "Predictive Analysis",
+            title: "AI Predictive Analysis",
             description:
                 "Upload your dataset (e.g., CSV) to forecast future trends and outcomes based on historical data."
         }
     };
-
     // --- Template UI Rules ---
     const templateRules = {
         "thinking-system": { useThinkingSystemLayout_NS: true },
@@ -5613,187 +5649,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // ===== REVISED EXPORT FUNCTIONS (Using html2canvas) =====
     // =========================================================
 
-    /**
- * SMART CLIENT-SIDE PDF GENERATOR
- * Handles tool-specific layouts by defining 'print configurations' for each analysis type.
- */
-async function handleClientSidePdf() {
-    const originalContainer = document.getElementById("analysisResult");
-    const btn = document.getElementById("savePdfBtn");
     
-    if (!originalContainer || originalContainer.innerText.trim().length < 50) {
-        alert("No analysis content to print.");
-        return;
-    }
-
-    const originalText = btn.innerText;
-    btn.innerText = "Preparing Layout...";
-    btn.disabled = true;
-    document.body.style.cursor = "wait";
-
-    try {
-        // 1. DEFINE TOOL-SPECIFIC CONFIGURATIONS
-        // This is where we "send the divs" as you suggested.
-        let printConfig = {
-            title: "Analysis Report",
-            containers: [], // If empty, defaults to all tabs
-            customCss: ""   // Tool-specific tweaks
-        };
-
-        switch (currentTemplateId) {
-            case 'action-plans':
-                printConfig.title = "Strategic Action Plan";
-                // Action Plans usually have specific panels. We list them in order.
-                // (Adjust these IDs if your specific render function uses different names)
-                printConfig.containers = ["dashboardPanel", "detailsPanel", "timelinePanel", "risksPanel"];
-                printConfig.customCss = `
-                    /* Force Timeline to look good on paper */
-                    .timeline-item { page-break-inside: avoid; margin-bottom: 20px; }
-                    .timeline-content { border: 1px solid #ccc; padding: 10px; }
-                    .action-card { border: 1px solid #999; background: #f9f9f9; page-break-inside: avoid; }
-                `;
-                break;
-
-            case 'mission-vision':
-                printConfig.title = "Strategic Foundation";
-                // Mission Vision might not use tabs, or might use 'dashboardPanel'
-                printConfig.containers = ["dashboardPanel", "detailsPanel"]; 
-                break;
-            
-            // Add other cases here later...
-            default:
-                // Fallback: Try to find ALL tab panels
-                const panels = originalContainer.querySelectorAll('.analysis-tab-panel');
-                if (panels.length > 0) {
-                    printConfig.containers = Array.from(panels).map(p => p.id);
-                }
-                break;
-        }
-
-        // 2. SNAPSHOT CHARTS (Plotly)
-        const originalCharts = originalContainer.querySelectorAll('.plotly-chart');
-        const chartImages = [];
-        for (let i = 0; i < originalCharts.length; i++) {
-            if (originalCharts[i].layout) {
-                try {
-                    const img = await Plotly.toImage(originalCharts[i], {
-                        format: 'png', width: 1000, height: 600, scale: 2, setBackground: 'white'
-                    });
-                    chartImages.push(img);
-                } catch (e) { chartImages.push(null); }
-            } else { chartImages.push(null); }
-        }
-
-        // 3. CLONE & FLATTEN
-        const clone = originalContainer.cloneNode(true);
-        const printWrapper = document.createElement('div');
-
-        // If specific containers are defined, only grab those
-        if (printConfig.containers.length > 0) {
-            printConfig.containers.forEach(id => {
-                const el = clone.querySelector(`#${id}`);
-                if (el) {
-                    // Unhide and style
-                    el.style.display = 'block';
-                    el.classList.remove('hidden');
-                    
-                    // Add a Section Header
-                    const header = document.createElement('h2');
-                    header.className = 'section-header';
-                    header.innerText = id.replace('Panel', '').replace(/([A-Z])/g, ' $1').toUpperCase();
-                    
-                    printWrapper.appendChild(header);
-                    printWrapper.appendChild(el);
-                }
-            });
-        } else {
-            // If no config, just dump the whole thing (fallback)
-            printWrapper.innerHTML = clone.innerHTML;
-        }
-
-        // 4. INJECT STATIC CHARTS
-        // We search the *new* printWrapper for charts and replace them with the captured images
-        const cloneCharts = printWrapper.querySelectorAll('.plotly-chart');
-        cloneCharts.forEach((div, index) => {
-            div.innerHTML = ""; 
-            div.style.cssText = ""; 
-            div.className = "print-chart-container";
-            if (chartImages[index]) {
-                const img = document.createElement('img');
-                img.src = chartImages[index];
-                div.appendChild(img);
-            }
-        });
-
-        // 5. CLEANUP (Remove buttons, inputs)
-        const unwanted = printWrapper.querySelectorAll('button, input, select, .nav-link, .btn');
-        unwanted.forEach(el => el.remove());
-
-        // 6. GENERATE PRINT WINDOW
-        const printWindow = window.open('', '_blank');
-        if (!printWindow) { alert("Please allow popups."); return; }
-
-        const htmlContent = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>${printConfig.title}</title>
-                <style>
-                    @page { size: A4; margin: 15mm; }
-                    body { font-family: 'Helvetica', sans-serif; color: #000; background: #fff; padding: 20px; }
-                    h1 { text-align: center; border-bottom: 3px solid #000; padding-bottom: 10px; }
-                    h2.section-header { 
-                        margin-top: 30px; border-bottom: 2px solid #333; 
-                        font-size: 18px; color: #1a237e; page-break-after: avoid; 
-                    }
-                    
-                    /* Standard Card Reset */
-                    .glass-container, .feature-card, .kpi-card, .summary-stat-card {
-                        border: 1px solid #ccc; background: #f8f9fa !important;
-                        color: #000 !important; padding: 15px; margin-bottom: 15px;
-                        box-shadow: none !important; page-break-inside: avoid;
-                    }
-                    
-                    /* Grid System for Print */
-                    .grid { display: grid; gap: 15px; }
-                    .grid-cols-1 { grid-template-columns: 1fr; }
-                    .grid-cols-2 { grid-template-columns: 1fr 1fr; }
-                    .grid-cols-3 { grid-template-columns: 1fr 1fr 1fr; }
-                    
-                    /* Custom Tool CSS */
-                    ${printConfig.customCss}
-                    
-                    /* Utility */
-                    .text-white { color: #000 !important; }
-                    .text-indigo-300, .text-blue-300 { color: #000080 !important; font-weight: bold; }
-                    .text-green-300 { color: #006400 !important; }
-                    .text-red-300 { color: #8b0000 !important; }
-                </style>
-            </head>
-            <body>
-                <h1>${printConfig.title}</h1>
-                <p style="text-align:center; color:#666; font-size:12px;">Generated on ${new Date().toLocaleString()}</p>
-                ${printWrapper.innerHTML}
-                <script>
-                    window.onload = function() { setTimeout(() => window.print(), 800); };
-                <\/script>
-            </body>
-            </html>
-        `;
-
-        printWindow.document.open();
-        printWindow.document.write(htmlContent);
-        printWindow.document.close();
-
-    } catch (error) {
-        console.error("Print Error:", error);
-        alert("Print failed: " + error.message);
-    } finally {
-        btn.innerText = originalText;
-        btn.disabled = false;
-        document.body.style.cursor = "default";
-    }
-}
 
     // --- REVISED PDF Export Logic (Image-based) ---
     // --- REVISED: Backend PDF Export Handler ---
@@ -6148,44 +6004,54 @@ async function handleClientSidePdf() {
         console.log("=== AUTH STATE CHANGE END ===");
     });
 
-    // --- Navigation Logic ---
     function navigateTo(pageId) {
-        pages.forEach((page) => {
-            page.classList.remove("active", "flex", "block");
-            page.style.display = "none";
-        });
+    // 1. Hide all pages
+    pages.forEach((page) => {
+        page.classList.remove("active", "flex", "block");
+        page.style.display = "none";
+    });
 
-        if (statsInterval) {
-            clearInterval(statsInterval);
-            statsInterval = null;
-            console.log("Stopped admin stats auto-refresh.");
+    // 2. Stop Admin Stats Refresh if leaving admin dashboard
+    if (statsInterval) {
+        clearInterval(statsInterval);
+        statsInterval = null;
+        console.log("Stopped admin stats auto-refresh.");
+    }
+
+    // 3. Initialize Admin Tabs if entering dashboard
+    if (pageId === "adminDashboard") {
+        createAdminDashboardTabs(); 
+    }
+
+    // --- NEW LOGIC: Force Tier Refresh when returning Home ---
+    // This fixes the bug where the app "forgets" you cancelled/upgraded until F5
+    if (pageId === "home" && userLoggedIn && currentUser) {
+        console.log("Navigating to Home: Verifying subscription tier...");
+        checkUserTierFromDB(currentUser.id);
+    }
+    // ---------------------------------------------------------
+
+    // 4. Show Target Page with correct layout
+    const targetPage = document.getElementById(pageId);
+    if (targetPage) {
+        targetPage.classList.add("active");
+        
+        // Maintain layout logic (Block vs Flex centering)
+        // Removed 'feedback' and 'about' from block list to preserve flex centering
+        if (["home", "templates", "templateDetail", "examplesPage", "adminDashboard", "blog", "blogDetail"].includes(pageId)) { 
+            targetPage.style.display = "block";
+        } else {
+            targetPage.style.display = "flex";
         }
+
+        setupPageAnimations(pageId);
 
         if (pageId === "adminDashboard") {
-            createAdminDashboardTabs(); 
+            fetchAndDisplayStatistics();
         }
-
-        const targetPage = document.getElementById(pageId);
-        if (targetPage) {
-            targetPage.classList.add("active");
-            
-            // FIX: Removed 'feedback' AND 'about' from this list.
-            // This allows them to use the Flexbox centering classes defined in their HTML.
-            if (["home", "templates", "templateDetail", "examplesPage", "adminDashboard", 
-                    "blog", "blogDetail"].includes(pageId)) { 
-                targetPage.style.display = "block";
-            } else {
-                targetPage.style.display = "flex";
-            }
-
-            setupPageAnimations(pageId);
-
-            if (pageId === "adminDashboard") {
-                fetchAndDisplayStatistics();
-            }
-            window.scrollTo(0, 0);
-        }
+        window.scrollTo(0, 0);
     }
+}
 
     // --- Navbar & Profile Logic ---
 
@@ -6227,185 +6093,197 @@ async function handleClientSidePdf() {
      * - LOGIC: Promo users see "Promo Active" and Upgrade Options.
      */
     async function fetchAndRenderSubscriptionPage() {
-        const loadingEl = document.getElementById("subInfoLoading");
-        const contentEl = document.getElementById("subInfoContent");
-        const upgradeSection = document.getElementById("upgradeSection");
-        const premiumActions = document.getElementById("premiumActions");
+    const loadingEl = document.getElementById("subInfoLoading");
+    const contentEl = document.getElementById("subInfoContent");
+    const upgradeSection = document.getElementById("upgradeSection");
+    const premiumActions = document.getElementById("premiumActions");
 
-        if (loadingEl) loadingEl.classList.remove("hidden");
-        if (contentEl) contentEl.classList.add("hidden");
+    if (loadingEl) loadingEl.classList.remove("hidden");
+    if (contentEl) contentEl.classList.add("hidden");
 
-        try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) throw new Error("Not logged in");
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error("Not logged in");
 
-            // A. Fetch User Data
-            const { data: userData, error: userError } = await supabase
-                .from('users')
-                .select('usage_count, tier, status, stripe_customer_id, plan_id, upgraded_at, premium_until, stripe_plans ( name, price, features, usage_limit )') 
-                .eq('auth_user_id', session.user.id)
-                .single();
+        // A. Fetch User Data (Matching your Schema)
+        // We fetch 'status' to show the real Stripe state (e.g., 'past_due')
+        const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('usage_count, tier, status, stripe_customer_id, stripe_plans ( name, price, features, usage_limit )') 
+            .eq('auth_user_id', session.user.id)
+            .single();
 
-            if (userError) throw userError;
+        if (userError) throw userError;
 
-            // B. Determine Status
-            // --- FIX: Trust Auth Metadata for Admin status if DB lags ---
-            let tier = (userData?.tier || 'basic').toLowerCase();
-            if (session.user.app_metadata?.role === 'admin' || session.user.app_metadata?.tier === 'admin') {
-                tier = 'admin';
-            }
-            // ------------------------------------------------------------
+        // B. Determine Logic Variables
+        let tier = (userData?.tier || 'basic').toLowerCase();
+        let dbStatus = (userData?.status || 'active').toLowerCase();
 
-            const planData = userData?.stripe_plans;
-            const isPaidPremium = tier !== 'basic' && tier !== 'free'; 
-
-            // --- PROMO CHECK ---
-            const now = new Date();
-            const premiumUntil = userData.premium_until ? new Date(userData.premium_until) : null;
-            const isPromoActive = premiumUntil && premiumUntil > now;
-
-            // C. Construct Display Data
-            let displayData = {
-                name: planData ? planData.name : (tier === 'admin' ? 'Admin Access' : 'Free Tier'),
-                price: planData ? `$${(planData.price / 100).toFixed(2)}` : '$0.00',
-                interval: '/month',
-                features: planData?.features || (isPaidPremium ? ['Advanced Frameworks'] : ['Basic Analysis', '1 Framework Selection']),
-                statusLabel: 'Active',
-                statusColor: 'bg-gray-700 text-gray-300'
-            };
-
-            // --- OVERRIDE FOR PROMO ---
-            if (isPromoActive) {
-                displayData.name = "Premium (Promo)";
-                displayData.price = "$0.00"; 
-                displayData.interval = `Expires: ${premiumUntil.toLocaleDateString()}`;
-                displayData.statusLabel = "Promo Active";
-                displayData.statusColor = "bg-green-500 text-white";
-                if (!planData) displayData.features = ['Advanced Frameworks', 'Priority Support', 'Export PDF/DOCX'];
-            } else if (tier === 'admin') {
-                 displayData.statusLabel = "Admin";
-                 displayData.statusColor = "bg-red-500 text-white";
-            }
-
-            // --- D. Render "Current Subscription" Card ---
-            const planNameEl = document.getElementById("subPlanName");
-            if (planNameEl) {
-                const cardContainer = planNameEl.closest('.glass-container');
-                if (cardContainer) {
-                    let borderColor = 'border-gray-500';
-                    if (tier === 'admin') borderColor = 'border-red-500';
-                    else if (isPromoActive) borderColor = 'border-green-400';
-                    else if (isPaidPremium) borderColor = 'border-indigo-500';
-
-                    cardContainer.className = `glass-container p-6 relative overflow-hidden flex flex-col h-full border-t-4 ${borderColor}`;
-                    
-                    cardContainer.innerHTML = `
-                        <div class="mb-4 border-b border-white/10 pb-4 flex justify-between items-start">
-                            <div>
-                                <h3 class="text-white/50 text-xs font-bold uppercase tracking-wider mb-1">Current Plan</h3>
-                                <div class="text-2xl font-bold text-white">${displayData.name}</div>
-                            </div>
-                            <span class="px-2 py-1 rounded text-xs font-bold ${displayData.statusColor}">
-                                ${displayData.statusLabel}
-                            </span>
-                        </div>
-                        
-                        <div class="mb-6">
-                            <span class="text-4xl font-bold text-white">${displayData.price}</span>
-                            <span class="text-white/50 text-sm">${displayData.interval}</span>
-                        </div>
-
-                        <div class="flex-grow">
-                            <p class="text-xs text-white/40 uppercase font-semibold mb-3">Included Features:</p>
-                            <ul class="space-y-2 text-sm text-white/80">
-                                ${(displayData.features || []).map(feat => `
-                                    <li class="flex items-start">
-                                        <span class="text-green-400 mr-2 font-bold">✓</span>
-                                        <span class="leading-tight">${feat.replace(/^"|"$/g, '')}</span>
-                                    </li>
-                                `).join('')}
-                            </ul>
-                        </div>
-                    `;
-                }
-            }
-
-            // --- E. Update Usage Bar ---
-            const usageCount = userData?.usage_count || 0;
-            let usageLimit = 3; 
-
-            if (tier === 'admin') usageLimit = 999999;
-            else if (planData && planData.usage_limit) usageLimit = planData.usage_limit;
-            else if (isPromoActive) usageLimit = 10; // Default Promo Limit
-            
-            const usageDisplayLimit = usageLimit === 999999 ? "∞" : usageLimit;
-            const usageEl = document.getElementById("subUsageCount");
-            const limitEl = document.getElementById("subUsageLimit");
-            const progressBar = document.getElementById("usageProgressBar");
-            
-            if (usageEl) usageEl.textContent = usageCount;
-            if (limitEl) limitEl.textContent = usageDisplayLimit;
-
-            if (progressBar) {
-                let percentage = 0;
-                if (usageLimit === 999999) percentage = 5; 
-                else percentage = Math.min((usageCount / usageLimit) * 100, 100);
-
-                progressBar.className = "h-4 rounded-full transition-all duration-1000 ease-out"; 
-                if (isPaidPremium || isPromoActive || tier === 'admin') {
-                    progressBar.classList.add('bg-gradient-to-r', 'from-purple-500', 'to-indigo-500');
-                } else {
-                    if (percentage >= 100) progressBar.classList.add('bg-gradient-to-r', 'from-red-500', 'to-red-600');
-                    else if (percentage > 60) progressBar.classList.add('bg-gradient-to-r', 'from-yellow-400', 'to-orange-500');
-                    else progressBar.classList.add('bg-gradient-to-r', 'from-green-400', 'to-emerald-500');
-                }
-                setTimeout(() => { progressBar.style.width = `${percentage}%`; }, 100);
-            }
-
-            // --- F. VISIBILITY LOGIC (The "Simple" Strategy) ---
-            
-            // 1. Admin: Hide all payment stuff
-            if (tier === 'admin') {
-                if (upgradeSection) upgradeSection.classList.add("hidden");
-                if (premiumActions) premiumActions.classList.add("hidden");
-            } 
-            
-            // 2. Paid Premium: Hide Upgrade, Show Portal
-            else if (isPaidPremium) {
-                if (upgradeSection) upgradeSection.classList.add("hidden");
-                if (premiumActions) premiumActions.classList.remove("hidden");
-            }
-
-            // 3. Promo User: SHOW Upgrade, Hide Portal (unless they have history)
-            else if (isPromoActive) {
-                if (upgradeSection) {
-                    upgradeSection.classList.remove("hidden");
-                    if (typeof fetchAndRenderUpgradeSection === 'function') fetchAndRenderUpgradeSection();
-                }
-                if (premiumActions) {
-                    // If they have a stripe ID (e.g. past subscriber), show portal
-                    if (userData.stripe_customer_id) premiumActions.classList.remove("hidden");
-                    else premiumActions.classList.add("hidden");
-                }
-            }
-
-            // 4. Basic User: Show Upgrade, Hide Portal
-            else {
-                if (upgradeSection) {
-                    upgradeSection.classList.remove("hidden");
-                    if (typeof fetchAndRenderUpgradeSection === 'function') fetchAndRenderUpgradeSection();
-                }
-                if (premiumActions) premiumActions.classList.add("hidden");
-            }
-
-            if (loadingEl) loadingEl.classList.add("hidden");
-            if (contentEl) contentEl.classList.remove("hidden");
-
-        } catch (err) {
-            console.error("Sub Info Error:", err);
-            if (loadingEl) loadingEl.innerHTML = `<p class="text-red-400">Error loading subscription: ${err.message}</p>`;
+        // Admin Override
+        if (session.user.app_metadata?.role === 'admin' || session.user.app_metadata?.tier === 'admin') {
+            tier = 'admin';
         }
+
+        const planData = userData?.stripe_plans;
+        const isPaidPremium = tier === 'premium'; 
+        const isAdmin = tier === 'admin';
+
+        // --- C. Construct Display Data ---
+        let displayPlanName = 'Free Tier';
+        let displayPrice = '$0.00';
+        let displayStatus = 'Basic';
+        let displayColor = 'bg-gray-700 text-gray-300';
+        let displayFeatures = ['Basic Analysis', '1 Framework Selection']; 
+
+        if (isAdmin) {
+            displayPlanName = 'Admin Access';
+            displayStatus = 'System Admin';
+            displayColor = 'bg-red-500 text-white';
+            displayFeatures = ['System Control', 'Unlimited Access', 'User Management'];
+        } 
+        else if (isPaidPremium) {
+            // PREMIUM USER: Use Data from DB
+            displayPlanName = planData ? planData.name : 'Premium Plan';
+            displayPrice = planData ? `$${(planData.price / 100).toFixed(2)}` : '--';
+            
+            // Use the Real DB Status (Capitalized)
+            displayStatus = dbStatus.charAt(0).toUpperCase() + dbStatus.slice(1).replace('_', ' '); // e.g. "Past due"
+            
+            // Dynamic Badge Color based on DB Status
+            if (dbStatus === 'active' || dbStatus === 'trialing') {
+                displayColor = 'bg-green-500 text-white';
+            } else if (dbStatus === 'past_due' || dbStatus === 'unpaid') {
+                displayColor = 'bg-yellow-500 text-white';
+            } else {
+                displayColor = 'bg-gray-600 text-gray-200';
+            }
+
+            if (planData && planData.features) {
+                displayFeatures = planData.features;
+            }
+        }
+        // BASIC USER: Fallback to defaults defined above (Free Tier)
+
+        let displayData = {
+            name: displayPlanName,
+            price: displayPrice,
+            interval: '/month',
+            features: displayFeatures,
+            statusLabel: displayStatus,
+            statusColor: displayColor
+        };
+
+        // --- D. Render "Current Subscription" Card ---
+        const planNameEl = document.getElementById("subPlanName");
+        if (planNameEl) {
+            const cardContainer = planNameEl.closest('.glass-container');
+            if (cardContainer) {
+                let borderColor = 'border-gray-500'; // Default for Basic
+                if (isAdmin) borderColor = 'border-red-500';
+                else if (isPaidPremium) borderColor = 'border-indigo-500';
+
+                cardContainer.className = `glass-container p-6 relative overflow-hidden flex flex-col h-full border-t-4 ${borderColor}`;
+                
+                cardContainer.innerHTML = `
+                    <div class="mb-4 border-b border-white/10 pb-4 flex justify-between items-start">
+                        <div>
+                            <h3 class="text-white/50 text-xs font-bold uppercase tracking-wider mb-1">Current Plan</h3>
+                            <div class="text-2xl font-bold text-white">${displayData.name}</div>
+                        </div>
+                        <span class="px-2 py-1 rounded text-xs font-bold ${displayData.statusColor}">
+                            ${displayData.statusLabel}
+                        </span>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <span class="text-4xl font-bold text-white">${displayData.price}</span>
+                        <span class="text-white/50 text-sm">${displayData.interval}</span>
+                    </div>
+
+                    <div class="flex-grow">
+                        <p class="text-xs text-white/40 uppercase font-semibold mb-3">Included Features:</p>
+                        <ul class="space-y-2 text-sm text-white/80">
+                            ${(displayData.features || []).map(feat => `
+                                <li class="flex items-start">
+                                    <span class="text-green-400 mr-2 font-bold">✓</span>
+                                    <span class="leading-tight">${feat.replace(/^"|"$/g, '')}</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+        }
+
+        // --- E. Update Usage Bar ---
+        const usageCount = userData?.usage_count || 0;
+        let usageLimit = 3; // Default for Basic
+
+        if (isAdmin) usageLimit = 999999;
+        else if (isPaidPremium && planData && planData.usage_limit) {
+            usageLimit = planData.usage_limit;
+        }
+        
+        const usageDisplayLimit = usageLimit === 999999 ? "∞" : usageLimit;
+        const usageEl = document.getElementById("subUsageCount");
+        const limitEl = document.getElementById("subUsageLimit");
+        const progressBar = document.getElementById("usageProgressBar");
+        
+        if (usageEl) usageEl.textContent = usageCount;
+        if (limitEl) limitEl.textContent = usageDisplayLimit;
+
+        if (progressBar) {
+            let percentage = 0;
+            if (usageLimit === 999999) percentage = 5; 
+            else percentage = Math.min((usageCount / usageLimit) * 100, 100);
+
+            progressBar.className = "h-4 rounded-full transition-all duration-1000 ease-out"; 
+            if (isPaidPremium || isAdmin) {
+                progressBar.classList.add('bg-gradient-to-r', 'from-purple-500', 'to-indigo-500');
+            } else {
+                if (percentage >= 100) progressBar.classList.add('bg-gradient-to-r', 'from-red-500', 'to-red-600');
+                else if (percentage > 60) progressBar.classList.add('bg-gradient-to-r', 'from-yellow-400', 'to-orange-500');
+                else progressBar.classList.add('bg-gradient-to-r', 'from-green-400', 'to-emerald-500');
+            }
+            setTimeout(() => { progressBar.style.width = `${percentage}%`; }, 100);
+        }
+
+        // --- F. VISIBILITY LOGIC ---
+        
+        // 1. Admin: Hide everything
+        if (isAdmin) {
+            if (upgradeSection) upgradeSection.classList.add("hidden");
+            if (premiumActions) premiumActions.classList.add("hidden");
+        } 
+        
+        // 2. Paid Premium: Hide Upgrade, Show Portal
+        else if (isPaidPremium) {
+            if (upgradeSection) upgradeSection.classList.add("hidden");
+            if (premiumActions) premiumActions.classList.remove("hidden");
+        }
+
+        // 3. Basic User: Show Upgrade, Hide Portal
+        else {
+            if (upgradeSection) {
+                upgradeSection.classList.remove("hidden");
+                // Populate the upgrade cards
+                if (typeof fetchAndRenderUpgradeSection === 'function') fetchAndRenderUpgradeSection();
+            }
+            if (premiumActions) premiumActions.classList.add("hidden");
+        }
+
+        // Ensure Promo UI is gone (Cleanup)
+        const promoContainer = document.querySelector('#subInfoContent .glass-container.border-pink-500');
+        if (promoContainer) promoContainer.style.display = 'none';
+
+        if (loadingEl) loadingEl.classList.add("hidden");
+        if (contentEl) contentEl.classList.remove("hidden");
+
+    } catch (err) {
+        console.error("Sub Info Error:", err);
+        if (loadingEl) loadingEl.innerHTML = `<p class="text-red-400">Error loading subscription: ${err.message}</p>`;
     }
+}
 
     /**
      * 2. Helper: Render Upgrade Options (SIMPLE LINKS VERSION)
@@ -10062,191 +9940,206 @@ async function handleContactSubmit() {
     // 1. PAYMENT MODAL LOGIC (Defines the modal behavior)
     // ============================================================
     async function openStripePlanModal() {
-        console.log(">>> Opening Stripe Payment Modal...");
-        const modal = document.getElementById("stripePaymentModal");
-        if (!modal) {
-            console.error("❌ Error: stripePaymentModal element not found in DOM.");
+    console.log(">>> Opening Stripe Payment Modal...");
+    const modal = document.getElementById("stripePaymentModal");
+    if (!modal) {
+        console.error("❌ Error: stripePaymentModal element not found in DOM.");
+        return;
+    }
+
+    // Show Modal Immediately
+    modal.style.display = 'flex';
+    modal.classList.remove('hidden');
+    setTimeout(() => modal.classList.add('modal-open'), 10);
+
+    // Populate Plans
+    const gridContainer = modal.querySelector('.grid');
+    
+    if (!gridContainer) {
+        console.error("❌ Error: Grid container not found in modal.");
+        return;
+    }
+
+    // Reset Content
+    gridContainer.innerHTML = `<div class="col-span-full text-center text-white/50 py-12"><div class="loading-spinner mb-2"></div><p>Loading latest plans...</p></div>`;
+
+    try {
+        const { data: plans, error } = await supabase
+            .from('stripe_plans')
+            .select('*')
+            .eq('active', true)
+            .order('price', { ascending: true });
+
+        if (error) throw error;
+
+        if (!plans || plans.length === 0) {
+            gridContainer.innerHTML = `<div class="col-span-full text-center text-white/60">No plans available.</div>`;
             return;
         }
 
-        // Show Modal Immediately
-        modal.style.display = 'flex';
-        modal.classList.remove('hidden');
-        setTimeout(() => modal.classList.add('modal-open'), 10);
+        const cardsHtml = plans.map(plan => {
+            const priceDisplay = (plan.price / 100).toFixed(0);
+            let cardClasses = "bg-white/5 border border-white/10 hover:border-purple-400 transition-all duration-300 hover:-translate-y-2";
+            let btnClass = "btn-secondary border-purple-500/50 hover:bg-purple-500/20";
+            let icon = "👤";
+            let popularBadge = "";
 
-        // Populate Plans
-        const gridContainer = modal.querySelector('.grid');
-        
-        // Validation Check to prevent the syntax error
-        if (!gridContainer) {
-            console.error("❌ Error: Grid container not found in modal.");
-            return;
-        }
-
-        // Reset Content
-        gridContainer.innerHTML = `<div class="col-span-full text-center text-white/50 py-12"><div class="loading-spinner mb-2"></div><p>Loading latest plans...</p></div>`;
-
-        try {
-            const { data: plans, error } = await supabase
-                .from('stripe_plans')
-                .select('*')
-                .eq('active', true)
-                .order('price', { ascending: true });
-
-            if (error) throw error;
-
-            if (!plans || plans.length === 0) {
-                gridContainer.innerHTML = `<div class="col-span-full text-center text-white/60">No plans available.</div>`;
-                return;
+            // Basic styling logic based on plan name/popularity
+            if (plan.name.toLowerCase().includes('business') || plan.is_popular) {
+                cardClasses = "bg-gradient-to-b from-blue-900/40 to-white/5 border-2 border-blue-500/50 hover:border-blue-400 transform scale-105 shadow-xl z-10 transition-all duration-300 hover:-translate-y-2";
+                btnClass = "btn-primary shadow-lg";
+                icon = "🚀";
+                popularBadge = `<div class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg uppercase tracking-wide">Most Popular</div>`;
+            } else if (plan.name.toLowerCase().includes('enterprise')) {
+                cardClasses = "bg-white/5 border border-white/10 hover:border-yellow-400 transition-all duration-300 hover:-translate-y-2";
+                btnClass = "btn-secondary border-yellow-500/50 hover:bg-yellow-500/20";
+                icon = "🏢";
             }
 
-            const cardsHtml = plans.map(plan => {
-                const priceDisplay = (plan.price / 100).toFixed(0);
-                let cardClasses = "bg-white/5 border border-white/10 hover:border-purple-400 transition-all duration-300 hover:-translate-y-2";
-                let btnClass = "btn-secondary border-purple-500/50 hover:bg-purple-500/20";
-                let icon = "👤";
-                let popularBadge = "";
+            // Generate Target URL with Client Reference ID
+            let targetUrl = '#';
+            if (plan.payment_link && currentUser && currentUser.id) {
+                try {
+                    const url = new URL(plan.payment_link);
+                    url.searchParams.set('client_reference_id', currentUser.id);
+                    if (currentUser.email) url.searchParams.set('prefilled_email', currentUser.email);
+                    targetUrl = url.toString();
+                } catch (e) { console.error("Invalid link:", plan.payment_link); }
+            }
 
-                if (plan.name.toLowerCase().includes('business') || plan.is_popular) {
-                    cardClasses = "bg-gradient-to-b from-blue-900/40 to-white/5 border-2 border-blue-500/50 hover:border-blue-400 transform scale-105 shadow-xl z-10 transition-all duration-300 hover:-translate-y-2";
-                    btnClass = "btn-primary shadow-lg";
-                    icon = "🚀";
-                    popularBadge = `<div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg uppercase tracking-wide">Most Popular</div>`;
-                } else if (plan.name.toLowerCase().includes('enterprise')) {
-                    cardClasses = "bg-white/5 border border-white/10 hover:border-yellow-400 transition-all duration-300 hover:-translate-y-2";
-                    btnClass = "btn-secondary border-yellow-500/50 hover:bg-yellow-500/20";
-                    icon = "🏢";
-                }
+            const featuresHtml = (plan.features || []).map(f => 
+                `<li class="flex items-center"><span class="text-green-400 mr-2">✓</span> ${f.replace(/^"|"$/g, '')}</li>`
+            ).join('');
 
-                // Smart Link Logic
-                let targetUrl = '#';
-                if (plan.payment_link && currentUser && currentUser.id) {
-                    try {
-                        const url = new URL(plan.payment_link);
-                        url.searchParams.set('client_reference_id', currentUser.id);
-                        if (currentUser.email) url.searchParams.set('prefilled_email', currentUser.email);
-                        targetUrl = url.toString();
-                    } catch (e) { console.error("Invalid link:", plan.payment_link); }
-                }
-
-                const featuresHtml = (plan.features || []).map(f => 
-                    `<li class="flex items-center"><span class="text-green-400 mr-2">✓</span> ${f.replace(/^"|"$/g, '')}</li>`
-                ).join('');
-
-                return `
-                    <div class="${cardClasses} flex flex-col relative group p-6 rounded-xl">
-                        ${popularBadge}
-                        <div class="text-center mb-4 ${popularBadge ? 'mt-2' : ''}">
-                            <div class="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-3 transition-colors">
-                                <span class="text-2xl">${icon}</span>
-                            </div>
-                            <h3 class="text-xl font-bold text-white">${plan.name}</h3>
-                            <p class="text-white/60 text-sm mt-1">${plan.description || 'Unlock features'}</p>
+            return `
+                <div class="${cardClasses} flex flex-col relative group p-6 rounded-xl">
+                    ${popularBadge}
+                    <div class="text-center mb-4 ${popularBadge ? 'mt-2' : ''}">
+                        <div class="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-3 transition-colors">
+                            <span class="text-2xl">${icon}</span>
                         </div>
-                        <div class="text-center mb-6">
-                            <span class="text-3xl font-bold text-white">$${priceDisplay}</span>
-                            <span class="text-white/50">/mo</span>
-                        </div>
-                        <ul class="text-sm text-white/70 space-y-2 mb-6 flex-grow text-left pl-2">
-                            ${featuresHtml}
-                        </ul>
-                        <a href="${targetUrl}" target="_blank" class="btn ${btnClass} w-full py-2 text-center justify-center">
-                             Select ${plan.name}
-                        </a>
+                        <h3 class="text-xl font-bold text-white">${plan.name}</h3>
+                        <p class="text-white/60 text-sm mt-1">${plan.description || 'Unlock features'}</p>
                     </div>
-                `;
-            }).join('');
+                    <div class="text-center mb-6">
+                        <span class="text-3xl font-bold text-white">$${priceDisplay}</span>
+                        <span class="text-white/50">/mo</span>
+                    </div>
+                    <ul class="text-sm text-white/70 space-y-2 mb-6 flex-grow text-left pl-2">
+                        ${featuresHtml}
+                    </ul>
+                    <a href="${targetUrl}" target="_blank" class="btn ${btnClass} w-full py-2 text-center justify-center">
+                         Select ${plan.name}
+                    </a>
+                </div>
+            `;
+        }).join('');
 
-            gridContainer.innerHTML = cardsHtml;
+        gridContainer.innerHTML = cardsHtml;
+        
+        // REMOVED: The promo code input section that used to be here
 
-        } catch (err) {
-            console.error("Error rendering modal plans:", err);
-            gridContainer.innerHTML = `<div class="col-span-full text-center text-red-400">Failed to load plans.</div>`;
-        }
+    } catch (err) {
+        console.error("Error rendering modal plans:", err);
+        gridContainer.innerHTML = `<div class="col-span-full text-center text-red-400">Failed to load plans.</div>`;
     }
+}
 
     // ============================================================
     // 2. CLICK LISTENER LOGIC (Controls access to tools)
     // ============================================================
     function attachHomeCardListeners() {
-        const cards = document.querySelectorAll(".home-template-link");
+    const cards = document.querySelectorAll(".home-template-link");
 
-        cards.forEach((card) => {
-            // Clone to remove old listeners
-            const newCard = card.cloneNode(true);
-            card.parentNode.replaceChild(newCard, card);
+    cards.forEach((card) => {
+        // 1. Clone the card to remove any existing listeners 
+        // (This prevents double-clicks if this function is called multiple times)
+        const newCard = card.cloneNode(true);
+        card.parentNode.replaceChild(newCard, card);
+        
+        newCard.addEventListener("click", (e) => {
+            e.preventDefault(); // Stop anchor default behavior
             
-            newCard.addEventListener("click", () => {
-                const templateId = newCard.dataset.templateId;
-                preFillData = newCard.dataset.preFill || "";
+            const templateId = newCard.dataset.templateId;
+            window.preFillData = newCard.dataset.preFill || "";
 
-                // Auth Check
-                if (!userLoggedIn) {
-                    showMessage("loginMessage", "Please log in to use the analysis tools.", "error");
-                    navigateTo("login");
-                    return;
-                }
+            // --- A. Auth Check ---
+            if (!userLoggedIn) {
+                showMessage("loginMessage", "Please log in to use the analysis tools.", "error");
+                navigateTo("login");
+                return;
+            }
 
-                // --- PREMIUM CHECK ---
-                // Uses the global 'currentUserTier' variable set by checkUserTierFromDB
-                const isPrivileged = 
-                    currentUserTier === 'premium' || 
-                    currentUserTier === 'admin';
+            // --- B. Tier Check (The Fix for 15.d/e) ---
+            // We use the global variable window.currentUserTier which is updated by checkUserTierFromDB
+            const currentTier = (window.currentUserTier || 'basic').toLowerCase();
+            console.log(`Tool Clicked: ${templateId} | User Tier: ${currentTier}`);
 
-                if (isPrivileged) {
-                    console.log(`User is ${currentUserTier}. Bypassing version modal.`);
-                    currentSelectionLimit = 3; 
-                    selectedTemplateForModal = templateId; 
-                    showTemplateDetail(templateId); // Go straight to tool
-                    return; 
-                }
+            const isPrivileged = 
+                currentTier === 'premium' || 
+                currentTier === 'admin';
 
-                // --- BASIC USER FLOW ---
-                selectedTemplateForModal = templateId;                    
-                const modal = $("versionChoiceModal");
+            if (isPrivileged) {
+                console.log(`User is ${currentTier}. Bypassing version modal.`);
+                window.currentSelectionLimit = 3; 
+                showTemplateDetail(templateId); 
+            } else {
+                // Basic User -> Show Choice Modal
+                console.log("User is Basic. Showing choice modal.");
+                window.selectedTemplateForModal = templateId;                    
+                
+                const modal = document.getElementById("versionChoiceModal");
                 if (modal) {
                     modal.style.display = 'flex';
                     setTimeout(() => modal.classList.add('modal-open'), 10);
                 }
-            });
+            }
         });
+    });
 
-        // --- Modal Button Listeners ---
-
-        const selectFreeBtn = $("selectFreeVersion");
-        if (selectFreeBtn) {
-            selectFreeBtn.onclick = () => {
-                currentSelectionLimit = 1; 
-                proceedFromModal();      
-            };
-        }
-
-        const selectPaidBtn = $("selectPaidVersion");
-        if (selectPaidBtn) {
-            selectPaidBtn.onclick = () => {
-                const choiceModal = $("versionChoiceModal");
-                choiceModal.classList.remove('modal-open');
-                
-                setTimeout(() => {
-                    choiceModal.style.display = 'none';
-                    
-                    // Double Check Logic
-                    const isPrivileged = 
-                        currentUserTier === 'premium' || 
-                        currentUserTier === 'admin';
-
-                    if (isPrivileged) {
-                        console.log("User is Premium. Bypassing payment.");
-                        currentSelectionLimit = 3; 
-                        proceedFromModal();      
-                    } else {
-                        console.log("User is Basic. Triggering Payment Modal.");
-                        openStripePlanModal(); // Calls the function defined above
-                    }
-                }, 300);
-            };
-        }
+    // --- C. Attach Listeners to the Modal Buttons ---
+    // We also clone these buttons to ensure clean event binding
+    
+    // 1. Free Version Button
+    const selectFreeBtn = document.getElementById("selectFreeVersion");
+    if (selectFreeBtn) {
+        const newFreeBtn = selectFreeBtn.cloneNode(true);
+        selectFreeBtn.parentNode.replaceChild(newFreeBtn, selectFreeBtn);
+        
+        newFreeBtn.addEventListener("click", () => {
+            window.currentSelectionLimit = 1; 
+            proceedFromModal();      
+        });
     }
+
+    // 2. Paid Version Button
+    const selectPaidBtn = document.getElementById("selectPaidVersion");
+    if (selectPaidBtn) {
+        const newPaidBtn = selectPaidBtn.cloneNode(true);
+        selectPaidBtn.parentNode.replaceChild(newPaidBtn, selectPaidBtn);
+        
+        newPaidBtn.addEventListener("click", () => {
+            const choiceModal = document.getElementById("versionChoiceModal");
+            choiceModal.classList.remove('modal-open');
+            
+            setTimeout(() => {
+                choiceModal.style.display = 'none';
+                
+                // Double check privilege just in case
+                const currentTier = (window.currentUserTier || 'basic').toLowerCase();
+                const isPrivileged = currentTier === 'premium' || currentTier === 'admin';
+
+                if (isPrivileged) {
+                    window.currentSelectionLimit = 3; 
+                    proceedFromModal();      
+                } else {
+                    // Open the Stripe Modal
+                    openStripePlanModal(); 
+                }
+            }, 300);
+        });
+    }
+}
 
 /**
  * Helper to toggle loading state on the Pay button
@@ -10281,16 +10174,18 @@ if (closeStripeBtn) {
     };
 }
 
-    function proceedFromModal() {
-        // --- MODIFIED LINES ---
-        const modal = $("versionChoiceModal");
-        modal.classList.remove('modal-open'); // Start fade-out
-        setTimeout(() => modal.style.display = 'none', 300); // Hide after animation
-        // --- END MODIFICATION ---
-        if (selectedTemplateForModal) {
-            showTemplateDetail(selectedTemplateForModal);
-        }
+    // Helper to close the modal and proceed
+function proceedFromModal() {
+    const modal = document.getElementById("versionChoiceModal");
+    if (modal) {
+        modal.classList.remove('modal-open');
+        setTimeout(() => modal.style.display = 'none', 300);
     }
+    
+    if (window.selectedTemplateForModal) {
+        showTemplateDetail(window.selectedTemplateForModal);
+    }
+}
 
     // --- Template Detail Page Logic ---
 
@@ -10307,8 +10202,7 @@ if (closeStripeBtn) {
             savePdfBtn.parentNode.replaceChild(newPdfBtn, savePdfBtn);
             
             // 2. Attach the NEW backend handler
-            //newPdfBtn.addEventListener("click", handleSaveAsPdf);
-            newPdfBtn.addEventListener("click", handleClientSidePdf);
+            newPdfBtn.addEventListener("click", handleSaveAsPdf);
         }
         
         if (saveDocxBtn) {
@@ -31102,7 +30996,7 @@ async function handlePlsAnalysis_DA() {
 
         try {
             const formData = new FormData();
-            formData.append("data_file", window.tempSampleDataFile, window.tempSampleDataFile.name);
+            // formData.append("data_file", window.tempSampleDataFile, window.tempSampleDataFile.name);
 
             let measurementSyntax, structuralSyntax;
 
@@ -33967,12 +33861,12 @@ function renderSystemGoalsPage(container, data) {
                 <div class="bg-black/20 p-4 rounded-lg border-l-4 border-green-400">
                     <h4 class="text-lg font-bold flex items-center gap-2">📈 ${reinforcing_loop.name} <span class="text-xs font-light text-white/60">(Reinforcing)</span></h4>
                     <p class="text-sm text-white/80 my-3 italic">${reinforcing_loop.description}</p>
-                    <div class="text-xs text-white/60"><strong>Elements:</strong> ${reinforcing_loop.elements.join(", ")}</div>
+                    <div class="text-xs text-white/60"><strong>Elements:</strong> ${(reinforcing_loop.elements || []).join(", ")}</div>
                 </div>
                 <div class="bg-black/20 p-4 rounded-lg border-l-4 border-yellow-400">
                      <h4 class="text-lg font-bold flex items-center gap-2">⚖️ ${balancing_loop.name} <span class="text-xs font-light text-white/60">(Balancing)</span></h4>
                     <p class="text-sm text-white/80 my-3 italic">${balancing_loop.description}</p>
-                    <div class="text-xs text-white/60"><strong>Elements:</strong> ${balancing_loop.elements.join(", ")}</div>
+                    <div class="text-xs text-white/60"><strong>Elements:</strong> ${(balancing_loop.elements || []).join(", ")}</div>
                 </div>
             </div>`;
     } else {
@@ -35531,170 +35425,6 @@ async function handlePasswordUpdate() {
         versionModal.classList.remove('modal-open'); // Start fade-out
         setTimeout(() => versionModal.style.display = 'none', 300); // Hide after animation
     });
-
-    // --- PROMO CODE LOGIC ---
-    const applyPromoBtn = document.getElementById("applyPromoBtn");
-    if (applyPromoBtn) {
-        applyPromoBtn.addEventListener("click", async () => {
-            const input = document.getElementById("promoCodeInput");
-            const msg = document.getElementById("promoMessage");
-            const code = input.value.trim();
-            const originalText = applyPromoBtn.innerText;
-
-            if (!code) {
-                msg.textContent = "Please enter a code.";
-                msg.className = "text-center text-xs mt-2 text-red-400 block";
-                return;
-            }
-
-            // UI Loading State
-            applyPromoBtn.disabled = true;
-            applyPromoBtn.innerText = "Checking...";
-            msg.className = "hidden";
-
-            try {
-                // 1. Get Session
-                const { data: { session } } = await supabase.auth.getSession();
-                if (!session) throw new Error("Please log in first.");
-
-                // 2. Call Edge Function
-                const { data, error } = await supabase.functions.invoke('redeem-promo', {
-                    body: { code: code }
-                });
-
-                // --- FIX START: Better Error Handling ---
-                if (error) {
-                    console.error("Raw Invoke Error:", error);
-                    
-                    // Attempt to extract the specific error message from the backend response
-                    // Supabase 'error' object often contains the response body in 'context'
-                    let serverMessage = error.message;
-                    
-                    try {
-                        if (error.context && typeof error.context.json === 'function') {
-                            const errorBody = await error.context.json();
-                            if (errorBody && errorBody.error) {
-                                serverMessage = errorBody.error;
-                            }
-                        }
-                    } catch (parseErr) {
-                        console.warn("Could not parse error body:", parseErr);
-                    }
-
-                    throw new Error(serverMessage || "Invalid Code or Network Error");
-                }
-                // --- FIX END ---
-
-                // Also check if data contains an application-level error (e.g. if status was 200 but success: false)
-                if (data && data.error) {
-                    throw new Error(data.error);
-                }
-
-                // 3. Success!
-                msg.textContent = data.message || "🎉 Success! Premium Unlocked.";
-                msg.className = "text-center text-xs mt-2 text-green-400 block";
-                
-                // 4. Update Local State Immediately
-                currentSelectionLimit = 3; 
-                
-                // 5. Refresh Nav to show new status
-                updateNavBar();
-
-                // 6. Close Modal after delay
-                setTimeout(() => {
-                    const modal = document.getElementById("stripePaymentModal");
-                    if (modal) {
-                        modal.classList.remove("modal-open");
-                        setTimeout(() => {
-                            modal.style.display = "none";
-                        }, 500);
-                    }
-                    
-                    // If user was trying to use a specific template, open it now
-                    if (selectedTemplateForModal) {
-                        showTemplateDetail(selectedTemplateForModal);
-                    }
-                }, 1500);
-
-            } catch (err) {
-                console.error("Promo Error:", err);
-                // Now this will display "Promo code limit reached" instead of "Network error"
-                msg.textContent = err.message; 
-                msg.className = "text-center text-xs mt-2 text-red-400 block";
-                applyPromoBtn.disabled = false;
-                applyPromoBtn.innerText = originalText;
-            }
-        });
-    }
-
-    // --- MANAGE SUBSCRIPTION PAGE PROMO LOGIC ---
-    const manageApplyBtn = document.getElementById("manageApplyPromoBtn");
-    if (manageApplyBtn) {
-        manageApplyBtn.addEventListener("click", async () => {
-            const input = document.getElementById("managePromoCodeInput");
-            const msg = document.getElementById("managePromoMessage");
-            const code = input.value.trim();
-            const originalText = manageApplyBtn.innerText;
-
-            if (!code) {
-                msg.textContent = "Please enter a code.";
-                msg.className = "text-center text-xs mt-1 text-red-400 block";
-                msg.classList.remove("hidden");
-                return;
-            }
-
-            // UI Loading State
-            manageApplyBtn.disabled = true;
-            manageApplyBtn.innerText = "...";
-            msg.classList.add("hidden");
-
-            try {
-                // 1. Get Session
-                const { data: { session } } = await supabase.auth.getSession();
-                if (!session) throw new Error("Please log in first.");
-
-                // 2. Call Edge Function
-                const { data, error } = await supabase.functions.invoke('redeem-promo', {
-                    body: { code: code }
-                });
-
-                // Handle Errors
-                if (error) {
-                    let serverMessage = error.message;
-                    try {
-                        if (error.context && typeof error.context.json === 'function') {
-                            const body = await error.context.json();
-                            if (body.error) serverMessage = body.error;
-                        }
-                    } catch (e) {}
-                    throw new Error(serverMessage || "Invalid Code");
-                }
-
-                if (data && data.error) throw new Error(data.error);
-
-                // 3. Success!
-                msg.textContent = data.message || "Success! Plan updated.";
-                msg.className = "text-center text-xs mt-1 text-green-400 block";
-                msg.classList.remove("hidden");
-                input.value = ""; // Clear input
-
-                // 4. Refresh the Subscription Page UI immediately
-                await fetchAndRenderSubscriptionPage();
-                
-                // Update Nav Bar (in case tier changed)
-                updateNavBar();
-
-            } catch (err) {
-                console.error("Manage Promo Error:", err);
-                msg.textContent = err.message;
-                msg.className = "text-center text-xs mt-1 text-red-400 block";
-                msg.classList.remove("hidden");
-            } finally {
-                manageApplyBtn.disabled = false;
-                manageApplyBtn.innerText = originalText;
-            }
-        });
-    }
 
     // --- NEW FEEDBACK PAGE LOGIC (CALLING EDGE FUNCTION) ---
 
