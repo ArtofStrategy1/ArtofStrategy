@@ -167,14 +167,14 @@ A. DEFAULT CREDENTIALS
 
    1. POSTGRES DATABASE (Superuser)
       - Username: postgres
-      - Password: Crimson-Sage-2025!
+      - Password: Interceptor-Pearl-CR505hgkmgj
       - Port:     5432
-      - Connection String: postgresql://postgres:Crimson-Sage-2025!@localhost:5432/postgres
+      - Connection String: postgresql://postgres:Interceptor-Pearl-CR505hgkmgj@localhost:5432/postgres
 
    2. SUPABASE STUDIO (Dashboard)
       - URL:      http://localhost:3000
-      - Username: Gurby1@gmail.com
-      - Password: Guraijj1@
+      - Username: LoganGrimnar2345@
+      - Password: AbbaddonTheDespoiler472@
 
    3. SERVICE_ROLE KEY (Admin API Access)
       - Location: .env file (SEARCH FOR: SERVICE_ROLE_KEY)
@@ -218,7 +218,7 @@ A. EXAMPLE: ADDING DATABASE FIELDS
    4. Name: phone_number | Type: text | Default Value: NULL.
    5. Click Save.
 
-B. EXAMPLE: CREATING A NEW PROMO CODE
+B. EXAMPLE: CREATING A NEW PROMO CODE (NOT IN USE)
    Use this workflow to add a new code to the `publicv2.promo_codes` table.
 
    Method 1: Using SQL (SQL Editor or Terminal)
@@ -229,7 +229,7 @@ B. EXAMPLE: CREATING A NEW PROMO CODE
    VALUES 
      ('SAGE2025', 'Early bird discount', 50, 0, true, 'premium_unlock', 30);
 
-   Method 2: Using Supabase Studio (Visual Table Editor)
+   Method 2: Using Supabase Studio (Visual Table Editor) (NOT IN USE)
    1. Open Supabase Studio: http://localhost:3000
    2. Click the "Table Editor" icon (Grid).
    3. In the sidebar, select the schema: `publicv2`.
