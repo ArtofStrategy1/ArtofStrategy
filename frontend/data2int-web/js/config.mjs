@@ -1,6 +1,6 @@
 // --- Supabase configuration ---
-const SUPABASE_URL = "https://supabase.data2int.com";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNjQwOTk1MjAwLCJleHAiOjE5NTYzNTUyMDB9.KHXKQpsN6MNB08H_IPxP4Gh0gjcsvXG9IeJuK3XpnAU";
+const SUPABASE_URL = "https://supabase.sageaios.com";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzY0NTY1MjAwLCJleHAiOjE5MjIzMzE2MDB9.r9ggAn98eTtigs40WMQ4y3WGIjhvhXvFyxLyxfxwMi8";
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     db: { schema: 'publicv2' }
 });
