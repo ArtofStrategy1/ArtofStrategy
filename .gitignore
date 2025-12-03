@@ -142,6 +142,8 @@ docker-compose.override.yml
 
 sem_plot
 sem_plot.png
+sem.png
+sem
 eslint.config.mjs
 webpack.config.js
 .gemini/
