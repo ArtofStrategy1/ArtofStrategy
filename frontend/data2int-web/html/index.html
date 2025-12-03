@@ -3289,32 +3289,47 @@ nav a.text-2xl:hover {
             box-shadow: 0 0 15px var(--primary);
         }
 
-        /* The Label (Appears to the LEFT of the dot now) */
+        /* 1. The Label (Robotic & Invisible Background) */
         .dot-label {
             position: absolute;
-            right: 28px; /* Position to the LEFT of the dot */
+            right: 25px; /* Position to the LEFT of the dot */
             top: 50%;
             transform: translateY(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(4px);
-            padding: 6px 12px;
-            border-radius: 6px;
-            color: white;
+            
+            /* Invisible Background */
+            background: transparent !important;
+            backdrop-filter: none !important;
+            border: none !important;
+            padding: 0; 
+
+            /* Robotic Font Settings */
+            font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
+            text-transform: uppercase;
+            letter-spacing: 3px;
             font-size: 0.75rem;
-            font-weight: 600;
-            white-space: nowrap;
+            color: #fff;
+            text-shadow: 0 0 5px var(--primary), 0 0 10px black; /* Neon glow effect */
+            
+            /* Hidden by default */
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.3s ease, transform 0.3s ease;
-            letter-spacing: 0.5px;
-            border-right: 3px solid var(--primary); /* Border on right side */
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            white-space: nowrap;
             text-align: right;
         }
 
-        .dot-item:hover .dot-label,
-        .dot-item.active .dot-label {
+        .dot-item:hover .dot-label {
             opacity: 1;
-            transform: translateY(-50%) translateX(-5px);
+            transform: translateY(-50%) translateX(-10px); /* Slight slide animation */
+        }
+
+        .dot-item.active .dot-label {
+            opacity: 0; 
+        }
+        
+        .dot-item.active:hover .dot-label {
+            opacity: 1;
+            transform: translateY(-50%) translateX(-10px);
         }
         
         /* Mobile adjustments */
