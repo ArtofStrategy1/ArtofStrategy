@@ -76,7 +76,6 @@ function renderFishboneDiagram(containerId, elements) {
                     'text-max-width': '150px',
                     'text-valign': 'center',
                     'text-halign': 'center',
-                    'width': 'label'
                 }
             },
             {
