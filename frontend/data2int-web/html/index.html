@@ -618,13 +618,44 @@
             right: -6rem;
         }
 
+       /* Mobile adjustments */
         @media (max-width: 768px) {
-            .carousel-button.left {
-                left: 0.5rem;
+            .dot-nav { display: none; }
+            
+            /* 1. Reset the container height and allow scrolling */
+            .snap-container { 
+                height: auto !important; 
+                overflow-y: visible !important; 
+                scroll-snap-type: none !important; 
+                display: block !important;
             }
 
-            .carousel-button.right {
-                right: 0.5rem;
+            .snap-section { 
+                min-height: auto !important; 
+                padding-top: 80px !important; 
+                padding-bottom: 60px !important; 
+                height: auto !important; 
+            }
+
+            /* 2. CRITICAL FIX: Override the inline style on <div id="home"> */
+            #home {
+                height: auto !important;     /* Let it grow with content */
+                overflow-y: visible !important; /* Allow scrolling */
+                overflow-x: hidden !important;  /* Stop side-scrolling */
+            }
+
+            /* 3. Disable Zoom scaling on mobile (fixes touch targets and width) */
+            .site-scaler {
+                zoom: 1 !important;
+                width: 100% !important;
+                min-height: auto !important;
+            }
+
+            /* 4. Ensure body scrolls */
+            html, body { 
+                overflow-y: auto !important; 
+                height: auto !important;
+                -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
             }
         }
 
