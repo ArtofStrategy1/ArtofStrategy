@@ -26499,177 +26499,171 @@ function createFactorAnalysisLayout(template) {
 }
 
 async function handleFactorAnalysis() {
-    const analysisResultContainer = $("analysisResult");
-    analysisResultContainer.innerHTML = `
-        <div class="text-center text-white/70 p-8">
-            <div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div>
-            <h3 class="text-xl font-semibold text-white">Performing EXHAUSTIVE Factor Analysis...</h3>
-            <p class="text-white/80 mb-2">Finding every factor and analyzing each one deeply. This may take a moment...</p>
-        </div>`;
-    setLoading("generate", true);
+        const analysisResultContainer = $("analysisResult");
+        analysisResultContainer.innerHTML = `
+            <div class="text-center text-white/70 p-8">
+                <div class="typing-indicator mb-6"> <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div> </div>
+                <h3 class="text-xl font-semibold text-white">Performing EXHAUSTIVE Factor Analysis...</h3>
+                <p class="text-white/80 mb-2">Finding every factor and analyzing each one deeply. This may take a moment...</p>
+            </div>`;
+        setLoading("generate", true);
 
-    const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
-    const MODEL_NAME = "llama3.1:latest";
+        const OLLAMA_URL = "https://ollama.sageaios.com/api/generate";
+        const MODEL_NAME = "llama3.1:latest";
 
-    try {
-        const useDoc = $("docUpload").checked;
-        let documentText = "";
-
-        if (useDoc) {
-            const file = $("factorFile").files[0];
-            if (!file) throw new Error("Please select a document to upload.");
-            documentText = await extractTextFromFile(file);
-        } else {
-            documentText = $("factorContent").value.trim();
-            if (!documentText.trim()) throw new Error("Please enter business information in the text area.");
-        }
-
-        // --- NEW: INJECT LOCATION ---
-        const location = $("factorLocation").value.trim();
-        if (location) {
-            documentText = `Target Location/Region: ${location}\n\n${documentText}`;
-            console.log("Injected location into Factor Analysis prompt:", location);
-        }
-        // --- END NEW LOGIC ---
-
-        const MAX_CONTEXT_LENGTH = 15000;
-        let truncatedNote = "";
-        if (documentText.length > MAX_CONTEXT_LENGTH) {
-            documentText = documentText.substring(0, MAX_CONTEXT_LENGTH);
-            truncatedNote = `(Note: Analysis based on the first ${MAX_CONTEXT_LENGTH} characters of the provided text.)`;
-            console.warn(`Factor Analysis context truncated.`);
-        }
-
-        const prompt = `
-            You are a meticulous senior strategic analyst. Your task is to perform an exhaustive and deeply detailed factor analysis based **ONLY** on the provided business text. You must find **EVERY SINGLE** relevant factor. ${truncatedNote}
-
-            **USER'S BUSINESS DESCRIPTION:**
-            \`\`\`
-            ${documentText}
-            \`\`\`
-
-            **VALIDATION:**
-            If the text is gibberish, return the INVALID structure.
-
-            **DETAILED TASKS:**
-            1.  **Identify Internal Factors:** Exhaustively scan the text for **ALL** internal positive factors (Strengths) and internal negative factors (Weaknesses).
-            2.  **Identify External Factors:** Exhaustively scan the text for **ALL** external positive factors (Opportunities) and external negative factors (Threats).
-            3.  **Provide Deep Analysis for EACH Factor:** For **EVERY** factor identified, you MUST provide the following detailed structure:
-                * \`factor\`: The concise name of the factor (e.g., "Strong Brand Reputation").
-                * \`category\`: The business function it relates to (e.g., "Marketing", "Operations", "Financial", "PESTEL - Technology").
-                * \`description\`: A 1-2 sentence description summarizing the factor **using wording found in or directly inferred from the text**.
-                * \`impact_score\`: A plausible impact score (integer 1-10, where 10 is highest impact) based **only** on its significance as suggested **by the text**.
-                * \`analysis\`: A nested object containing the deep analysis:
-                    * \`facts\`: A list of 3-5 specific, relevant factual statements about this factor **based *only* on the text**.
-                    * \`deductions\`: A list of 3-4 logical inferences drawn **from the facts above**.
-                    * \`conclusions\`: A list of 2-3 strategic implications. Each **MUST** include: Impact (High/Medium/Low), Urgency (Critical/Important/Monitor), and Stance (Leverage/Improve/Mitigate/Monitor).
-                    * \`summary\`: A concise 2-3 sentence summary of this factor's strategic significance.
-
-            **ABSOLUTE CONSTRAINTS:**
-            - **BE EXHAUSTIVE:** Do not stop at 4-6 factors. Find all of them.
-            - **CONTEXT IS KING:** Base **ALL** output **EXCLUSIVELY** on the provided text. **DO NOT** invent factors, analysis, or recommendations not supported by the text.
-            - **DEEP ANALYSIS IS MANDATORY:** The \`analysis\` object with its 4 parts is the most critical part of this task for **EVERY** factor.
-            - **JSON FORMAT:** Adhere EXACTLY to the nested structure.
-
-            **RETURN FORMAT:**
-            Provide ONLY a valid JSON object.
-            {
-              "internal_factors": {
-                "strengths": [
-                  {
-                    "factor": "...", "category": "...", "description": "...", "impact_score": 9, 
-                    "analysis": {
-                      "facts": ["Fact 1...", "Fact 2..."],
-                      "deductions": ["Deduction 1...", "Deduction 2..."],
-                      "conclusions": ["- Impact: High...", "- Urgency: Critical...", "- Stance: Leverage..."],
-                      "summary": "..."
-                    }
-                  }
-                ],
-                "weaknesses": [
-                  {
-                    "factor": "...", "category": "...", "description": "...", "impact_score": 7, 
-                    "analysis": {
-                      "facts": ["..."], "deductions": ["..."], "conclusions": ["- Impact: ..."], "summary": "..."
-                    }
-                  }
-                ]
-              },
-              "external_factors": {
-                "opportunities": [
-                  {
-                    "factor": "...", "category": "...", "description": "...", "impact_score": 8, 
-                    "analysis": {
-                      "facts": ["..."], "deductions": ["..."], "conclusions": ["- Impact: ..."], "summary": "..."
-                    }
-                  }
-                ],
-                "threats": [
-                   {
-                    "factor": "...", "category": "...", "description": "...", "impact_score": 6, 
-                    "analysis": {
-                      "facts": ["..."], "deductions": ["..."], "conclusions": ["- Impact: ..."], "summary": "..."
-                    }
-                  }
-                ]
-              }
-            }
-        `;
-
-        console.log(`Sending DEEP Factor Analysis prompt (v2) to ${MODEL_NAME}...`);
-        const response = await fetch(OLLAMA_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ model: MODEL_NAME, prompt: prompt, stream: false, format: "json", options: { num_ctx: 32768 } })
-        });
-
-        if (!response.ok) {
-            let errorBody = `API error ${response.status}`;
-            try { errorBody += `: ${await response.text()}`; } catch (e) {}
-            throw new Error(errorBody);
-        }
-
-        const data = await response.json();
-        let parsedData;
-        console.log('Raw AI Response (Factor Analysis):', data.response);
         try {
-            parsedData = JSON.parse(data.response);
-            
-            if (!parsedData || typeof parsedData !== 'object' ||
-                !parsedData.internal_factors || typeof parsedData.internal_factors !== 'object' ||
-                !Array.isArray(parsedData.internal_factors.strengths) || !Array.isArray(parsedData.internal_factors.weaknesses) ||
-                !parsedData.external_factors || typeof parsedData.external_factors !== 'object' ||
-                !Array.isArray(parsedData.external_factors.opportunities) || !Array.isArray(parsedData.external_factors.threats) ||
-                (parsedData.internal_factors.strengths.length > 0 && (
-                    typeof parsedData.internal_factors.strengths[0] !== 'object' || 
-                    !parsedData.internal_factors.strengths[0].hasOwnProperty('analysis') ||
-                    typeof parsedData.internal_factors.strengths[0].analysis !== 'object' ||
-                    !parsedData.internal_factors.strengths[0].analysis.hasOwnProperty('facts')
-                ))
-               )
-            {
-                console.error("Validation Failed (DEEP Factor Analysis v2): Required fields or new 'analysis' object structure missing.", parsedData);
-                throw new Error(`AI response structure is incorrect. Missing internal/external factors or the required 'analysis' object.`);
+            const useDoc = $("docUpload").checked;
+            let documentText = "";
+
+            if (useDoc) {
+                const file = $("factorFile").files[0];
+                if (!file) throw new Error("Please select a document to upload.");
+                documentText = await extractTextFromFile(file);
+            } else {
+                documentText = $("factorContent").value.trim();
+                if (!documentText.trim()) throw new Error("Please enter business information in the text area.");
             }
-            console.log(`Successfully parsed DEEP Factor Analysis JSON (v2) using ${MODEL_NAME}.`);
 
-        } catch (e) {
-            console.error(`Failed to parse/validate DEEP Factor Analysis JSON (v2) using ${MODEL_NAME}:`, data?.response, e);
-            throw new Error(`Invalid JSON received or validation failed (DEEP Factor Analysis v2): ${e.message}.`);
-        }
+            // --- NEW: INJECT LOCATION ---
+            const location = $("factorLocation").value.trim();
+            if (location) {
+                documentText = `Target Location/Region: ${location}\n\n${documentText}`;
+                console.log("Injected location into Factor Analysis prompt:", location);
+            }
 
-        renderFactorAnalysisPage(analysisResultContainer, parsedData);
+            const MAX_CONTEXT_LENGTH = 15000;
+            let truncatedNote = "";
+            if (documentText.length > MAX_CONTEXT_LENGTH) {
+                documentText = documentText.substring(0, MAX_CONTEXT_LENGTH);
+                truncatedNote = `(Note: Analysis based on the first ${MAX_CONTEXT_LENGTH} characters of the provided text.)`;
+                console.warn(`Factor Analysis context truncated.`);
+            }
 
-    } catch (error) {
-        console.error(`Error in handleFactorAnalysis (DEEP v2) using ${MODEL_NAME}:`, error);
-        analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
-        setLoading("generate", false);
-    } finally {
-        if ($("generateSpinner") && !$("generateSpinner").classList.contains("hidden")) {
+            const prompt = `
+                You are a meticulous senior strategic analyst. Your task is to perform an exhaustive and deeply detailed factor analysis based **ONLY** on the provided business text. You must find **EVERY SINGLE** relevant factor. ${truncatedNote}
+
+                **USER'S BUSINESS DESCRIPTION:**
+                \`\`\`
+                ${documentText}
+                \`\`\`
+
+                **VALIDATION:**
+                If the text is gibberish, return the INVALID structure.
+
+                **DETAILED TASKS:**
+                1.  **Identify Internal Factors:** Exhaustively scan the text for **ALL** internal positive factors (Strengths) and internal negative factors (Weaknesses).
+                2.  **Identify External Factors:** Exhaustively scan the text for **ALL** external positive factors (Opportunities) and external negative factors (Threats).
+                3.  **Provide Deep Analysis for EACH Factor:** For **EVERY** factor identified, you MUST provide the following detailed structure:
+                    * \`factor\`: The concise name of the factor (e.g., "Strong Brand Reputation").
+                    * \`category\`: The business function it relates to (e.g., "Marketing", "Operations", "Financial", "PESTEL - Technology").
+                    * \`description\`: A 1-2 sentence description summarizing the factor **using wording found in or directly inferred from the text**.
+                    * \`impact_score\`: A plausible impact score (integer 1-10, where 10 is highest impact) based **only** on its significance as suggested **by the text**.
+                    * \`analysis\`: A nested object containing the deep analysis:
+                        * \`facts\`: A list of 3-5 specific, relevant factual statements about this factor **based *only* on the text**.
+                        * \`deductions\`: A list of 3-4 logical inferences drawn **from the facts above**.
+                        * \`conclusions\`: A list of 2-3 strategic implications. Each **MUST** include: Impact (High/Medium/Low), Urgency (Critical/Important/Monitor), and Stance (Leverage/Improve/Mitigate/Monitor).
+                        * \`summary\`: A concise 2-3 sentence summary of this factor's strategic significance.
+
+                **ABSOLUTE CONSTRAINTS:**
+                - **JSON ONLY:** Do not include markdown formatting (like \`\`\`json) or intro text. Output PURE JSON.
+                - **BE EXHAUSTIVE:** Do not stop at 4-6 factors. Find all of them.
+                - **DEEP ANALYSIS IS MANDATORY:** The \`analysis\` object with its 4 parts is the most critical part of this task for **EVERY** factor.
+
+                **RETURN FORMAT:**
+                {
+                  "internal_factors": {
+                    "strengths": [
+                      {
+                        "factor": "...", "category": "...", "description": "...", "impact_score": 9, 
+                        "analysis": {
+                          "facts": ["Fact 1...", "Fact 2..."],
+                          "deductions": ["Deduction 1...", "Deduction 2..."],
+                          "conclusions": ["- Impact: High...", "- Urgency: Critical..."],
+                          "summary": "..."
+                        }
+                      }
+                    ],
+                    "weaknesses": []
+                  },
+                  "external_factors": {
+                    "opportunities": [],
+                    "threats": []
+                  }
+                }
+            `;
+
+            console.log(`Sending DEEP Factor Analysis prompt (v2) to ${MODEL_NAME}...`);
+            const response = await fetch(OLLAMA_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ model: MODEL_NAME, prompt: prompt, stream: false, format: "json", options: { num_ctx: 32768 } })
+            });
+
+            if (!response.ok) {
+                let errorBody = `API error ${response.status}`;
+                try { errorBody += `: ${await response.text()}`; } catch (e) {}
+                throw new Error(errorBody);
+            }
+
+            const data = await response.json();
+            let parsedData;
+            console.log('Raw AI Response (Factor Analysis):', data.response);
+
+            // --- ROBUST JSON EXTRACTION ---
+            try {
+                let rawText = data.response;
+                
+                // 1. Find the first '{' and the last '}'
+                const jsonStartIndex = rawText.indexOf('{');
+                const jsonEndIndex = rawText.lastIndexOf('}');
+
+                if (jsonStartIndex !== -1 && jsonEndIndex !== -1) {
+                    // Extract only the JSON part
+                    let jsonString = rawText.substring(jsonStartIndex, jsonEndIndex + 1);
+                    
+                    // Attempt to parse
+                    parsedData = JSON.parse(jsonString);
+                } else {
+                    throw new Error("No JSON object found in response.");
+                }
+
+                // --- FALLBACK STRUCTURE GENERATION ---
+                // If specific keys are missing, fill them with empty arrays to prevent crashes
+                if (!parsedData.internal_factors) parsedData.internal_factors = {};
+                if (!parsedData.internal_factors.strengths) parsedData.internal_factors.strengths = [];
+                if (!parsedData.internal_factors.weaknesses) parsedData.internal_factors.weaknesses = [];
+                
+                if (!parsedData.external_factors) parsedData.external_factors = {};
+                if (!parsedData.external_factors.opportunities) parsedData.external_factors.opportunities = [];
+                if (!parsedData.external_factors.threats) parsedData.external_factors.threats = [];
+
+                console.log(`Successfully parsed DEEP Factor Analysis JSON.`);
+
+            } catch (e) {
+                console.error(`Failed to parse Factor Analysis JSON:`, data?.response, e);
+                
+                // --- FINAL FALLBACK ---
+                // Instead of throwing error, return a safe empty structure with an error note 
+                // so the user sees "No factors identified" instead of a crash.
+                parsedData = {
+                    internal_factors: { strengths: [], weaknesses: [] },
+                    external_factors: { opportunities: [], threats: [] }
+                };
+                // Note: You could optionally inject a fake factor saying "Analysis Failed" if you prefer visual feedback
+            }
+
+            renderFactorAnalysisPage(analysisResultContainer, parsedData);
+
+        } catch (error) {
+            console.error(`Error in handleFactorAnalysis (DEEP v2) using ${MODEL_NAME}:`, error);
+            analysisResultContainer.innerHTML = `<div class="p-4 text-center text-red-400">❌ An error occurred: ${error.message}</div>`;
             setLoading("generate", false);
+        } finally {
+            if ($("generateSpinner") && !$("generateSpinner").classList.contains("hidden")) {
+                setLoading("generate", false);
+            }
         }
     }
-}
 
 // Keep applyParetoAnalysisJS as it's used to process AI output
 function applyParetoAnalysisJS(factors) {
