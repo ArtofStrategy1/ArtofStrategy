@@ -5,7 +5,7 @@ services:
     container_name: ollama
     restart: unless-stopped
     ports:
-      - "11434:11434"
+      - "127.0.0.1:11434:11434"
     networks:
       - data2int-net
       - npm_default
@@ -42,7 +42,7 @@ services:
     container_name: n8n
     restart: unless-stopped
     ports:
-      - "5678:5678"
+      - "127.0.0.1:5678:5678"
     networks:
       - data2int-net
       - npm_default
@@ -67,7 +67,7 @@ services:
     container_name: searxng
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     networks:
       - data2int-net
       - searxng-net
@@ -78,8 +78,6 @@ services:
       - SEARXNG_SECRET_KEY=${SEARXNG_SECRET_KEY}
       # Disable bot detection for API access
       - SEARXNG_SETTINGS_USE_DEFAULT_SETTINGS=false
-    env_file:
-      - ./.env
     volumes:
       - ./searxng:/etc/searxng:ro
       - ./searxng/searxng-data:/var/cache/searxng
@@ -99,7 +97,7 @@ services:
     restart: unless-stopped
     container_name: n8n-api
     ports:
-      - "8004:8000" # Map host port 8000 to container port 8000 (for direct testing if needed)
+      - "127.0.0.1:8004:8000" # Map host port 8000 to container port 8000 (for direct testing if needed)
     networks:
       - data2int-net
       - npm_default # Connect to Nginx Proxy Manager network
@@ -156,7 +154,7 @@ services:
     restart: unless-stopped
     container_name: analysis-libraries
     ports:
-      - "8020:8000" # Map host port 8010 to container port 8000
+      - "127.0.0.1:8020:8000" # Map host port 8010 to container port 8000
     networks:
       - data2int-net
       - npm_default   # Connect to Nginx Proxy Manager network
