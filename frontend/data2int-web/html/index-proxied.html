@@ -4472,7 +4472,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- Supabase Configuration ---
     const SUPABASE_URL = `https://${DOMAIN}/api/supabase/`;
     const SUPABASE_ANON_KEY =
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNjQwOTk1MjAwLCJleHAiOjE5NTYzNTUyMDB9.KHXKQpsN6MNB08H_IPxP4Gh0gjcsvXG9IeJuK3XpnAU";
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzY0NTY1MjAwLCJleHAiOjE5MjIzMzE2MDB9.r9ggAn98eTtigs40WMQ4y3WGIjhvhXvFyxLyxfxwMi8";
 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
         db: { schema: 'publicv2' }
@@ -12705,7 +12705,7 @@ CustomerID,Tenure_Months,Support_Tickets,Used_Feature_X,Churned<br>
 
             // --- Function A: Trigger n8n Workflow ---
             async function triggerN8N_Objectives() {
-                const N8N_OBJECTIVES_URL = `https://${DOMAIN}/api/n8n/webhook/objectives-v1`;
+                const N8N_OBJECTIVES_URL = `https://n8n.data2int.com/webhook/objectives-v1`;
                 console.log(`Sending data to n8n workflow at ${N8N_OBJECTIVES_URL}...`);
                 
                 const response = await fetch(N8N_OBJECTIVES_URL, {
