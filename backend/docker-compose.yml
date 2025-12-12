@@ -89,20 +89,20 @@ services:
       retries: 3
       start_period: 40s
 
-  # n8n API service
-  n8n-api:
+  # n8n Workflow Listener service
+  n8n-listener:
     build:
-      context: ./n8n-api/
+      context: ./n8n-listener/
       dockerfile: Dockerfile
     restart: unless-stopped
-    container_name: n8n-api
+    container_name: n8n-listener
     ports:
       - "127.0.0.1:8004:8000" # Map host port 8000 to container port 8000 (for direct testing if needed)
     networks:
       - data2int-net
       - npm_default # Connect to Nginx Proxy Manager network
     volumes:
-      - ./n8n-api/:/app/
+      - ./n8n-listener/:/app/
     
   # spacy-nlp:
   #   build:
