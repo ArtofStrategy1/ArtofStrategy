@@ -5722,7 +5722,8 @@ const mainFooter = document.getElementById('mainFooter');
         const wsStatus = document.getElementById("wsStatus");
 
         try {
-            websocket = new WebSocket("wss://n8n-listener.sageaios.com/ws");
+            let wsUrl = `wss://${DOMAIN}/api/n8n-listener/ws`;
+            websocket = new WebSocket(wsUrl);
 
             wsStatus.textContent = "Connecting...";
             wsStatus.className = "ws-status connecting";
