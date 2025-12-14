@@ -1,31 +1,235 @@
 /* --- THEME COLORS (CSS VARIABLES) --- */
 :root {
+    /* Default (Purple/Pink) */
     --grad-1: #C33764;
     --grad-2: #1D2671;
     --primary: #8E2DE2;
     --primary-hover: #4A00E0;
     --accent: #C33764;
-    --edge-color: #4A00E0;
-    --node-color: #C33764;
+    --text-highlight: #a5b4fc; /* Matches indigo-300 */
+}
+
+/* 1. Ocean (Deep Navy -> Vibrant Cyan) */
+body.theme-ocean {
+    --grad-1: #021B79; --grad-2: #0575E6;
+    --primary: #00D2FF; --primary-hover: #009ec3; --accent: #2E3192; --text-highlight: #7dd3fc;
+}
+
+/* 2. Sunset (Hot Pink -> Intense Orange) */
+body.theme-sunset {
+    --grad-1: #ee0979; --grad-2: #ff6a00;
+    --primary: #FFD200; --primary-hover: #ffaa00; --accent: #ff6a00; --text-highlight: #fff3cd;
+}
+
+/* 3. Cyber (Pitch Black -> Neon Matrix Teal) */
+body.theme-cyber {
+    --grad-1: #000000; --grad-2: #144355;
+    --primary: #00ff00; --primary-hover: #00cc00; --accent: #00ffff; --text-highlight: #00ff00;
+}
+
+/* 4. Forest (Dark Pine -> Bright Fern) */
+body.theme-forest {
+    --grad-1: #051937; --grad-2: #008793;
+    --primary: #55efc4; --primary-hover: #00b894; --accent: #a3e635; --text-highlight: #86efac;
+}
+
+/* 5. Royal (Deep Violet -> Midnight Blue) */
+body.theme-royal {
+    --grad-1: #2b5876; --grad-2: #4e4376;
+    --primary: #F7B733; --primary-hover: #d49b20; --accent: #FFD700; --text-highlight: #FDE68A;
+}
+
+/* 6. Crimson (Blackened Red -> Bright Blood Red) */
+body.theme-crimson {
+    --grad-1: #2b0404; --grad-2: #c75050;
+    --primary: #ff4d4d; --primary-hover: #cc0000; --accent: #ff9f9f; --text-highlight: #fca5a5;
+}
+
+/* 7. Coffee (Dark Espresso -> Warm Latte) */
+body.theme-coffee {
+    --grad-1: #2c221c; --grad-2: #a67c52;
+    --primary: #d4a373; --primary-hover: #b0875d; --accent: #faedcd; --text-highlight: #e2c09f;
+}
+
+/* 8. Aurora (Night Sky Black -> Borealis Green/Teal) */
+body.theme-aurora {
+    --grad-1: #000000; --grad-2: #1D976C;
+    --primary: #93F9B9; --primary-hover: #1D976C; --accent: #00dbde; --text-highlight: #69ff97;
+}
+
+/* 9. Midnight (Deep Space Black -> Galactic Purple) */
+body.theme-midnight {
+    --grad-1: #020024; --grad-2: #4e4ecb;
+    --primary: #00d4ff; --primary-hover: #0088cc; --accent: #764ba2; --text-highlight: #c084fc;
+}
+
+/* 10. Candy (Vibrant Purple -> Hot Pink) */
+body.theme-candy {
+    --grad-1: #4d2e53; --grad-2: #a672d4;
+    --primary: #ff9a9e; --primary-hover: #ff6a88; --accent: #fad0c4; --text-highlight: #ffffff;
+}
+
+/* 11. Slate (Deep Charcoal -> Metallic Silver) */
+body.theme-slate {
+    --grad-1: #1c1c1c; --grad-2: #4b4b4b;
+    --primary: #d1d5db; --primary-hover: #9ca3af; --accent: #ffffff; --text-highlight: #f3f4f6;
+}
+
+/* --- GLOBAL THEME OVERRIDES (Comprehensive) --- */
+
+/* 1. TEXT & LOGO OVERRIDES */
+/* Forces the "SAGE AI" logo and any gradient text to use the theme colors */
+.text-transparent.bg-clip-text,
+a.text-transparent.bg-clip-text {
+    background-image: linear-gradient(to right, var(--primary), var(--accent), var(--primary)) !important;
+}
+
+/* Replaces all "Indigo-300" text (used heavily in headers/subtitles) */
+.text-indigo-300, .text-purple-400, .text-pink-400, .text-blue-300, .text-green-300, .text-yellow-300 {
+    color: var(--text-highlight) !important;
+    transition: color 0.5s ease;
+}
+
+/* Hover states for links */
+.hover\:text-indigo-300:hover {
+    color: var(--primary) !important;
+}
+
+/* 2. BACKGROUND GLOWS & GRADIENTS */
+/* This targets the glowing blur effect behind the Hero Title, Contact Card, and About Card */
+.from-indigo-500, .via-purple-500, .to-pink-500 {
+    --tw-gradient-from: var(--primary) !important;
+    --tw-gradient-to: var(--accent) !important;
+    --tw-gradient-stops: var(--primary), var(--accent), var(--primary) !important;
+}
+
+/* Overrides specific background colors used in "How it Works" circles (About Us) */
+.bg-indigo-600, .bg-purple-600, .bg-pink-600, .bg-blue-600 {
+    background-color: var(--primary) !important;
+}
+
+/* 3. INPUT FIELDS & FORMS (Contact Us / Feedback) */
+/* Changes the border color when you click an input */
+.focus\:border-indigo-500:focus {
+    border-color: var(--primary) !important;
+}
+
+/* Changes the background color on focus/hover for inputs */
+.focus\:bg-indigo-500:focus, .hover\:bg-indigo-600:hover {
+    background-color: var(--primary-hover) !important;
+}
+
+/* 4. BUTTON SHADOWS */
+/* Updates the colored shadow behind primary buttons */
+.shadow-indigo-500\/40, .shadow-indigo-500\/30, .shadow-indigo-500\/50 {
+    --tw-shadow-color: color-mix(in srgb, var(--primary) 40%, transparent) !important;
+    box-shadow: 0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -2px var(--tw-shadow-color) !important;
+}
+
+/* 5. BORDERS & DIVIDERS */
+.border-indigo-500, .border-white\/20, .border-white\/10 {
+    /* Subtle tinting of borders to match theme */
+    border-color: color-mix(in srgb, var(--primary) 30%, rgba(255,255,255,0.1)) !important;
+}
+
+/* 6. MODAL BACKGROUNDS */
+/* Ensures the Feedback/Settings/Contact modals use the main gradient */
+.feedback-modal-container {
+    background: linear-gradient(-45deg, var(--grad-1), var(--grad-2)) !important;
+    background-size: 400% 400%;
+    animation: gradientBG 18s ease infinite;
+    border-color: rgba(255,255,255,0.2) !important;
+}
+
+/* 7. NAVIGATION HOVER */
+.nav-link:hover {
+    background: linear-gradient(90deg, var(--primary), var(--accent)) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    color: transparent !important;
+}
+
+/* 8. GENERIC UTILITY OVERRIDES */
+/* Any text-indigo-X needs to shift to the theme highlight */
+[class*="text-indigo-"] {
+    color: var(--text-highlight) !important;
+}
+
+/* Any bg-indigo-X needs to shift to the primary color */
+[class*="bg-indigo-"] {
+        background-color: var(--primary) !important;
+}
+
+
+/* --- PREVIEW SQUARES FOR SETTINGS --- */
+.theme-preview {
+    height: 60px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 2px solid rgba(255,255,255,0.1);
+    position: relative;
+}
+.theme-preview:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(255,255,255,0.2);
+}
+.theme-preview.active-theme {
+    border-color: #fff;
+    box-shadow: 0 0 0 2px #fff;
+}
+
+/* --- THEME FIX: FORCE BACKGROUND REFRESH --- */
+/* This selector matches any body tag with a class starting with "theme-" */
+body[class*="theme-"] {
+    background-image: linear-gradient(-45deg, var(--grad-1), var(--grad-2)) !important;
+    background-size: 400% 400%; /* Ensure size stays correct */
 }
 
 /* --- Base & Animated Background --- */
 html, body {
-    min-height: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
 }
+
 body {
     font-family: 'Inter', sans-serif;
     background: linear-gradient(-45deg, var(--grad-1), var(--grad-2));
     background-size: 400% 400%;
     animation: gradientBG 18s ease infinite;
     color: #f9fafb;
-    overflow-x: hidden;
-    display: flex;
-    flex-direction: column;
+    width: 100vw;
 }
 
-.main-content {
-    flex-grow: 1;
+/* --- FIREFOX SPECIFIC FIX --- */
+/* Instead of using 'transform: scale()' which breaks fixed elements (Navbar/Modals),
+    we scale the root font-size. Since Tailwind uses 'rem' units, this 
+    effectively zooms the entire UI to 85% while keeping layout stability.
+*/
+@supports (-moz-appearance:none) {
+    /* 1. Reset the container to normal */
+    .site-scaler {
+        zoom: 1 !important;
+        transform: none !important;
+        width: 100% !important;
+        min-height: 100vh !important;
+        margin-bottom: 0 !important;
+    }
+    
+    /* 2. Apply the scale via typography */
+    /* Standard base is 16px. 85% of 16px is approx 13.6px */
+    html {
+        font-size: 13.6px !important; 
+        scroll-behavior: smooth;
+    }
+
+    /* 3. Re-adjust the body width to ensure full coverage */
+    body {
+        width: 100vw !important;
+        overflow-x: hidden;
+    }
 }
 
 @keyframes gradientBG {
@@ -68,9 +272,11 @@ body {
 #emailVerifiedSuccess.active,
 #emailVerifiedAlready.active,
 #passwordResetRequest.active,
-#passwordResetUpdate.active {
+#passwordResetUpdate.active,
+#about.active,
+#privacyPolicy.active,
+#termsOfService.active {
     display: flex;
-    /* Centered pages */
 }
 
 @keyframes fadeIn {
@@ -90,7 +296,7 @@ body {
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 1rem;
-    padding: 2.5rem;
+    padding: 1.75rem;
     box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
 }
 
@@ -332,7 +538,18 @@ body {
     height: 100%;
     z-index: -2;
     display: block;
-    transition: opacity 0.5s ease-in-out;
+    pointer-events: none;
+}
+
+/* --- SCALER: Applies Zoom & Sticky Footer Logic --- */
+.site-scaler {
+    display: flex;
+    flex-direction: column;
+    
+    /* DEFAULT (Chrome/Edge/Safari) */
+    width: 100%;
+    min-height: 117.65vh; /* Compensates for zoom */
+    zoom: 85%;
 }
 
 /* Carousel specific styles */
@@ -369,13 +586,44 @@ body {
     right: -6rem;
 }
 
+/* Mobile adjustments */
 @media (max-width: 768px) {
-    .carousel-button.left {
-        left: 0.5rem;
+    .dot-nav { display: none; }
+    
+    /* 1. Reset the container height and allow scrolling */
+    .snap-container { 
+        height: auto !important; 
+        overflow-y: visible !important; 
+        scroll-snap-type: none !important; 
+        display: block !important;
     }
 
-    .carousel-button.right {
-        right: 0.5rem;
+    .snap-section { 
+        min-height: auto !important; 
+        padding-top: 80px !important; 
+        padding-bottom: 60px !important; 
+        height: auto !important; 
+    }
+
+    /* 2. CRITICAL FIX: Override the inline style on <div id="home"> */
+    #home {
+        height: auto !important;     /* Let it grow with content */
+        overflow-y: visible !important; /* Allow scrolling */
+        overflow-x: hidden !important;  /* Stop side-scrolling */
+    }
+
+    /* 3. Disable Zoom scaling on mobile (fixes touch targets and width) */
+    .site-scaler {
+        zoom: 1 !important;
+        width: 100% !important;
+        min-height: auto !important;
+    }
+
+    /* 4. Ensure body scrolls */
+    html, body { 
+        overflow-y: auto !important; 
+        height: auto !important;
+        -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
     }
 }
 
@@ -530,20 +778,16 @@ footer {
     -webkit-backdrop-filter: blur(10px);
 }
 
-/* --- Sticky Footer Override --- */
-html, body {
-    min-height: 100vh !important;
-}
-body {
-    display: flex !important;
-    flex-direction: column !important;
-}
 .main-content {
-    flex: 1 0 auto !important;
+    /* flex-grow: 1 pushes the footer down to the bottom */
+    flex: 1 0 auto; 
+    display: flex;
+    flex-direction: column;
 }
 footer {
-    flex-shrink: 0 !important;
-    position: relative !important;
+    flex-shrink: 0;
+    width: 100%;
+    margin-top: auto; /* Extra safety to push it down */
 }
 
 /* --- Analysis Results Tab Styling --- */
@@ -1392,16 +1636,18 @@ select.input-field option {
     box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
     background-color: rgba(25, 25, 25, 0.8); 	/* Slightly transparent background */
     padding: 1.5rem;
+    margin: auto;
 }
 
 .diagram-controls {
-    padding: 20px 32px;
-    /* background: #f8f9fa; */
-    background: transparent;
-    /* border-top: 1px solid #e9ecef; */
     display: flex;
+    justify-content: center;
+    align-items: center;
     gap: 12px;
     flex-wrap: wrap;
+    margin: auto;
+    padding: 20px 32px;
+    background: transparent;
 }
 
 .diagram-fit-btn, .diagram-reset-btn, .diagram-export-btn {
@@ -1600,10 +1846,10 @@ select.input-field option {
 }
 
 .modal-body {
-    /* Responsive padding: smaller on mobile */
-    padding: 1rem; 
-    max-height: 80vh;
-    overflow-y: auto;
+/* Responsive padding: smaller on mobile */
+padding: 1rem; 
+max-height: 80vh;
+overflow-y: auto;
 }
 
 .modal-body::-webkit-scrollbar {
@@ -1890,7 +2136,7 @@ select.input-field option {
 
 @media (min-width: 768px) {
     .modal-body {
-        padding: 1.5rem 1.5rem 3.5rem;
+    padding: 1.5rem 1.5rem 3.5rem;
     }
 }
 
@@ -2068,27 +2314,64 @@ select.input-field option {
     height: 300px;
 }
 
-/* Tab Animations */
+/* --- ENHANCED HOME TABS ANIMATION --- */
+
+/* The Button Itself */
 .home-tab-btn {
     position: relative;
-    overflow: hidden;
-    transition: all 0.3s ease;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.6);
+    padding: 0.75rem 1rem;
+    transition: color 0.3s ease, text-shadow 0.3s ease;
+    /* Remove old border transition to prevent conflict */
+    border-bottom: 2px solid transparent; 
 }
 
+.home-tab-btn:hover {
+    color: white;
+}
+
+/* The Sliding Glow Line (Pseudo-element) */
 .home-tab-btn::after {
     content: '';
     position: absolute;
-    bottom: 0;
+    bottom: -2px; /* Align perfectly with the bottom */
     left: 0;
     width: 100%;
-    height: 0;
+    height: 3px;
+    /* Premium Gradient */
     background: linear-gradient(90deg, var(--primary), var(--accent));
-    transition: height 0.3s ease;
+    box-shadow: 0 -2px 10px rgba(142, 45, 226, 0.4); /* Subtle glow upwards */
+    /* Animation State: Hidden */
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.home-tab-btn.active::after,
-.home-tab-btn:hover::after {
-    height: 3px;
+/* Active State */
+.home-tab-btn.active {
+    color: white;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3); /* Text glow */
+}
+
+/* Animation State: Visible */
+.home-tab-btn.active::after {
+    transform: scaleX(1);
+    transform-origin: left;
+}
+
+/* Content Panel Transitions */
+.home-tab-panel {
+    opacity: 0;
+    transform: translateY(15px); /* Start slightly lower */
+    transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+    display: none; /* Hidden by default */
+}
+
+/* Class to trigger the fade-in-up */
+.home-tab-panel.active-anim {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 /* Responsive Grid */
@@ -2108,4 +2391,954 @@ select.input-field option {
     .feature-card {
         background: rgba(0, 0, 0, 0.3);
     }
+}
+
+/* --- CLICK ME ANIMATION FOR TOOLS --- */
+
+.home-template-link {
+    position: relative;
+    z-index: 1;
+    overflow: hidden; /* Keeps the badge cut off cleanly at the edges */
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* The "Click Me" Badge - OBLIQUE TOP RIGHT */
+.home-template-link::after {
+    content: "👆 Click Me!";
+    position: absolute;
+    
+    /* Position: Top Right Corner */
+    top: 12px;
+    right: -12px;  /* Pull it slightly off-screen for that "tucked" look */
+    
+    /* Oblique Angle */
+    transform: rotate(35deg);
+    
+    /* Badge Styling */
+    background: #F59E0B; 
+    color: #000000;      
+    font-weight: 800;
+    
+    /* Small & Unobtrusive */
+    font-size: 0.5rem; 
+    padding: 3px 15px; /* Wider padding makes it look like a ribbon */
+    
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-radius: 99px;
+    
+    /* Effects */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    z-index: 20;
+    pointer-events: none; 
+    
+    /* Animation */
+    animation: badgePulseOblique 2s infinite;
+}
+
+/* Updated Pulse Animation that preserves the Rotation */
+@keyframes badgePulseOblique {
+    0% { 
+        transform: rotate(35deg) scale(1); 
+        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); 
+    }
+    70% { 
+        transform: rotate(35deg) scale(1.1); /* Gentle pulse */
+        box-shadow: 0 0 0 4px rgba(245, 158, 11, 0); 
+    }
+    100% { 
+        transform: rotate(35deg) scale(1); 
+        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); 
+    }
+}
+
+/* HOVER STATE: Highlight the whole card */
+.home-template-link:hover {
+    transform: translateY(-5px) scale(1.02);
+    background: rgba(255, 255, 255, 0.12);
+    border-color: #F59E0B; 
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4), 
+                0 0 15px rgba(245, 158, 11, 0.2);
+}
+
+.home-template-link:hover h3,
+.home-template-link:hover p {
+    opacity: 0.9;
+}
+
+/* --- Blog Article Styling --- */
+
+/* 1. Make the container readable but wide */
+#blogDetailContent {
+    max-width: 1000px; /* Wider reading area */
+    margin: 0 auto;
+    background: rgba(0, 0, 0, 0.3); /* Slightly darker background for readability */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* 2. Typography for the injected article content */
+.article-content {
+    color: #f3f4f6; /* Tailwind gray-100 */
+    line-height: 1.8;
+    font-size: 1.125rem; /* Tailwind text-lg */
+}
+
+/* Headings */
+.article-content h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    background: linear-gradient(90deg, #a78bfa, #f472b6); /* Purple to Pink gradient */
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1.2;
+}
+
+.article-content h2 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    color: #818cf8; /* Indigo-400 */
+}
+
+.article-content h3 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    color: #34d399; /* Emerald-400 */
+}
+
+/* Paragraphs & Lists */
+.article-content p {
+    margin-bottom: 1.5rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.article-content ul, 
+.article-content ol {
+    margin-bottom: 1.5rem;
+    padding-left: 1.5rem;
+    list-style-position: outside;
+}
+
+.article-content ul { list-style-type: disc; }
+.article-content ol { list-style-type: decimal; }
+
+.article-content li {
+    margin-bottom: 0.5rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.article-content strong {
+    color: white;
+    font-weight: 700;
+}
+
+/* Blockquotes */
+.article-content blockquote {
+    border-left: 4px solid #f472b6; /* Pink border */
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1rem 1.5rem;
+    margin: 2rem 0;
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.8);
+    border-radius: 0 0.5rem 0.5rem 0;
+}
+
+/* Citations (Superscript style) */
+.citation {
+    font-size: 0.75em;
+    color: #9ca3af; /* Gray-400 */
+    vertical-align: super;
+    margin-left: 2px;
+}
+
+/* --- NEW ADMIN LAYOUT: Vertical Command Center --- */
+
+/* 1. The Grid Wrapper */
+.admin-layout-wrapper {
+    display: grid;
+    grid-template-columns: 280px 1fr; /* Sidebar | Content */
+    gap: 2rem;
+    min-height: 600px;
+}
+
+/* 2. Left Sidebar Navigation */
+.admin-sidebar {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    height: fit-content;
+    position: sticky;
+    top: 100px; /* Stick on scroll */
+    backdrop-filter: blur(10px);
+}
+
+.admin-sidebar-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.admin-nav-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* Sidebar Buttons */
+.admin-side-btn {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    color: rgba(255, 255, 255, 0.6);
+    transition: all 0.2s ease;
+    text-align: left;
+    background: transparent;
+    border: 1px solid transparent;
+}
+
+.admin-side-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    transform: translateX(5px);
+}
+
+.admin-side-btn.active {
+    background: linear-gradient(90deg, rgba(142, 45, 226, 0.2), transparent);
+    border-left: 4px solid var(--primary);
+    color: white;
+    font-weight: 600;
+}
+
+.admin-btn-icon {
+    font-size: 1.25rem;
+    margin-right: 1rem;
+    width: 24px;
+    text-align: center;
+}
+
+/* 3. Right Content Area */
+.admin-content-area {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* 4. HUD (Heads Up Display) Stats Row */
+.admin-hud-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+}
+
+.admin-hud-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.admin-hud-val {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    line-height: 1.2;
+}
+
+.admin-hud-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 0.25rem;
+}
+
+/* 5. Refresh Button Styling within Sidebar */
+.admin-refresh-wrapper {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 1024px) {
+    .admin-layout-wrapper {
+        grid-template-columns: 1fr; /* Stack vertically */
+    }
+    .admin-sidebar {
+        position: relative;
+        top: 0;
+    }
+    .admin-nav-group {
+        flex-direction: row;
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+    }
+    .admin-side-btn {
+        width: auto;
+        white-space: nowrap;
+        border-left: 1px solid transparent; /* Reset border for mobile */
+    }
+    .admin-side-btn.active {
+        border-left: 1px solid transparent;
+        border-bottom: 4px solid var(--primary);
+        background: linear-gradient(0deg, rgba(142, 45, 226, 0.2), transparent);
+    }
+}
+
+    /* --- New Metric Tile Styling --- */
+
+/* The grid container for the metrics */
+.metric-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 2 columns by default */
+    gap: 1rem;
+}
+
+/* Individual Metric Tile */
+.metric-tile {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.2s ease;
+}
+
+.metric-tile:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.metric-tile.full-width {
+    grid-column: span 2; /* Spans across */
+}
+
+.metric-label {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.metric-value {
+    font-family: 'Monaco', 'Consolas', monospace; /* Tech font */
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Status Indicators */
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.status-dot.green { background-color: #10B981; box-shadow: 0 0 8px #10B981; }
+.status-dot.blue { background-color: #3B82F6; box-shadow: 0 0 8px #3B82F6; }
+.status-dot.purple { background-color: #8B5CF6; box-shadow: 0 0 8px #8B5CF6; }
+
+/* Specific Colors for Values */
+.val-green { color: #34D399; }
+.val-blue { color: #60A5FA; }
+.val-purple { color: #A78BFA; }
+.val-yellow { color: #FBBF24; }
+
+/* --- User Management Specific Styles --- */
+
+/* The Control Bar (Search & Filters) */
+.admin-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 1rem;
+    border-radius: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.admin-search-wrapper {
+    flex-grow: 1;
+    position: relative;
+    min-width: 250px;
+}
+
+.admin-search-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.admin-search-input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.5rem; /* Space for icon */
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.5rem;
+    color: white;
+    transition: all 0.2s;
+}
+
+.admin-search-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: rgba(0, 0, 0, 0.4);
+}
+
+/* Tier Badges */
+.tier-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 99px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-block;
+}
+
+.tier-basic {
+    background: rgba(148, 163, 184, 0.2);
+    color: #cbd5e1;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.tier-premium {
+    background: rgba(250, 204, 21, 0.2);
+    color: #fde047;
+    border: 1px solid rgba(250, 204, 21, 0.3);
+    box-shadow: 0 0 10px rgba(250, 204, 21, 0.1);
+}
+
+.tier-admin {
+    background: rgba(168, 85, 247, 0.2);
+    color: #d8b4fe;
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.1);
+}
+
+/* Table Overrides for this view */
+.user-row {
+    transition: background 0.2s;
+}
+.user-row:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+.user-uid {
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+    background: rgba(0, 0, 0, 0.3);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* --- Subscription Tab Specifics --- */
+
+/* Nested Sub-Tab Navigation (Pill Style) */
+.sub-nav-container {
+    display: flex;
+    gap: 0.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 0.25rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    width: fit-content;
+    margin-bottom: 1.5rem;
+}
+
+.sub-nav-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+    transition: all 0.2s;
+}
+
+.sub-nav-btn:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.sub-nav-btn.active {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Finance Cards */
+.finance-card {
+    background: linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 1rem;
+    padding: 1.5rem;
+}
+
+/* Status Badges for Payments */
+.status-badge {
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.status-active { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.3); }
+.status-canceled { background: rgba(100, 116, 139, 0.2); color: #94a3b8; border: 1px solid rgba(100, 116, 139, 0.3); }
+.status-past_due { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); }
+.status-trialing { background: rgba(59, 130, 246, 0.2); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.3); }
+
+/* --- FORCE GRADIENT REPAINT --- */
+/* This forces the browser to re-read the variables and redraw the gradient 
+    whenever one of these classes is active. */
+body.theme-ocean, 
+body.theme-sunset, 
+body.theme-cyber, 
+body.theme-forest, 
+body.theme-royal, 
+body.theme-crimson, 
+body.theme-coffee, 
+body.theme-aurora, 
+body.theme-midnight, 
+body.theme-candy, 
+body.theme-slate {
+    background-image: linear-gradient(-45deg, var(--grad-1), var(--grad-2)) !important;
+    background-size: 400% 400%;
+    background-attachment: fixed; /* Ensures it covers full scroll */
+}
+
+/* --- DYNAMIC THEME HOVERS --- */
+
+/* 1. Logo Hover: Gradient Text Flow */
+nav a.text-2xl:hover {
+    /* Creates a gradient using the active theme colors */
+    background-image: linear-gradient(to right, var(--primary), var(--accent), var(--primary));
+    background-size: 200% auto;
+    
+    /* Clips background to text */
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    
+    /* Makes text transparent so background shows through */
+    color: transparent !important;
+    -webkit-text-fill-color: transparent !important;
+    
+    /* Adds a subtle shine animation */
+    animation: themeShine 3s linear infinite;
+}
+
+/* 2. Tab Hovers: Gradient Text */
+/* Applies to Home, Analysis, Feedback, and Sub-nav tabs */
+.home-tab-btn:hover,
+.analysis-tab-btn:hover,
+.feedback-tab-btn:hover,
+.sub-nav-btn:hover {
+    background-image: linear-gradient(90deg, var(--primary), var(--text-highlight));
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    color: transparent !important;
+    -webkit-text-fill-color: transparent !important;
+    
+    /* Remove default background colors to let gradient shine */
+    background-color: rgba(255,255,255,0.05); 
+    transition: all 0.3s ease;
+    text-shadow: 0 0 20px rgba(var(--primary), 0.5); /* Optional glow */
+}
+
+/* 3. Active Tab State: Solid Theme Color */
+.home-tab-btn.active,
+.analysis-tab-btn.active,
+.feedback-tab-btn.active {
+    color: var(--text-highlight) !important;
+    text-shadow: 0 0 10px var(--primary);
+}
+
+/* Animation Keyframes for the Logo */
+@keyframes themeShine {
+    to {
+        background-position: 200% center;
+    }
+}
+
+/* --- NEW HERO & NEURAL CORE STYLES --- */
+@import url('https://fonts.googleapis.com/css2?family=Charter:wght@400;700&family=Inter:wght@300;400;600&display=swap');
+
+.font-research {
+    font-family: 'Charter', 'Bitstream Charter', serif;
+    letter-spacing: -0.01em;
+}
+
+/* Enhanced Glass Panel with Shimmer */
+.hero-glass-panel {
+    background: rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 32px;
+    padding: 4rem;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Subtle shimmer animation across the glass */
+.hero-glass-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(115deg, transparent, rgba(255, 255, 255, 0.03), transparent);
+    animation: shimmer 8s infinite linear;
+    pointer-events: none;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-50%); }
+    100% { transform: translateX(50%); }
+}
+
+/* Cursor Blink */
+.cursor-blink {
+    display: inline-block;
+    width: 3px;
+    height: 1.1em;
+    background-color: #a5b4fc;
+    margin-left: 4px;
+    vertical-align: baseline;
+    animation: blink 1s step-end infinite;
+}
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+/* Hero Pills */
+.hero-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-family: 'Inter', sans-serif;
+    color: rgba(255, 255, 255, 0.7);
+    transition: all 0.3s ease;
+}
+.hero-pill:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* --- NEURAL CORE ANIMATION --- */
+.neural-core {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    margin: 0 auto;
+    transform-style: preserve-3d;
+    animation: float 6s ease-in-out infinite;
+}
+
+.core-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    border: 1px solid rgba(165, 180, 252, 0.3); /* Indigo tint */
+    box-shadow: 0 0 15px rgba(165, 180, 252, 0.1);
+}
+
+.core-ring:nth-child(1) { width: 100%; height: 100%; animation: rotate-right 20s linear infinite; border-style: dashed; }
+.core-ring:nth-child(2) { width: 70%; height: 70%; animation: rotate-left 15s linear infinite; border: 2px solid rgba(255,255,255,0.1); }
+.core-ring:nth-child(3) { width: 40%; height: 40%; animation: rotate-right 10s linear infinite; border: 1px dotted rgba(165, 180, 252, 0.6); background: rgba(165, 180, 252, 0.05); }
+
+.core-dot {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 8px;
+    height: 8px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #fff, 0 0 20px #a5b4fc;
+    transform: translate(-50%, -50%);
+    animation: pulse-core 3s ease-in-out infinite;
+}
+
+/* Orbiting electrons */
+.electron {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 6px;
+    height: 6px;
+    background: #a5b4fc;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #a5b4fc;
+}
+.orbit-path {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 120%;
+    height: 120%;
+    border-radius: 50%;
+    animation: rotate-left 8s linear infinite;
+    opacity: 0.6;
+}
+
+@keyframes rotate-right { 100% { transform: translate(-50%, -50%) rotate(360deg); } }
+@keyframes rotate-left { 100% { transform: translate(-50%, -50%) rotate(-360deg); } }
+@keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-15px); } }
+@keyframes pulse-core { 0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; } 50% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; } }
+
+/* Pipeline Layout */
+.pipeline-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem; /* Space between cards and arrows */
+    position: relative;
+    padding: 1rem;
+}
+
+/* Individual Cards */
+.pipeline-card {
+    background: rgba(255, 255, 255, 0.03); /* Subtle glass effect */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 2rem;
+    flex: 1;
+    min-width: 200px; /* Prevent crushing on small screens */
+    text-align: center;
+    backdrop-filter: blur(10px);
+    transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.pipeline-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--primary, #3b82f6); /* Fallback color if var undefined */
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* Icons inside the cards */
+.pipeline-icon {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: 1rem;
+    filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));
+}
+
+/* The Arrows */
+.connector-arrow {
+    font-size: 2rem;
+    color: rgba(255, 255, 255, 0.2);
+    font-weight: bold;
+    user-select: none;
+}
+
+/* Responsive: Stack vertically on mobile */
+@media (max-width: 768px) {
+    .pipeline-container {
+        flex-direction: column;
+    }
+    .connector-arrow {
+        transform: rotate(90deg); /* Point down on mobile */
+        margin: 0.5rem 0;
+    }
+}
+
+/* ANIMATION FOR VERTICAL CONNECTOR */
+@keyframes drop {
+    0% { transform: translateY(-100%); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: translateY(200%); opacity: 0; }
+}
+.animate-drop {
+    animation: drop 2s infinite ease-in-out;
+}
+
+/* --- SCROLL SNAP & DOT NAVIGATION (UPDATED) --- */
+
+/* 1. The Scroll Container */
+.snap-container {
+    height: 100vh;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    scroll-behavior: smooth;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* IE 10+ */
+}
+.snap-container::-webkit-scrollbar { 
+    display: none; /* Chrome/Safari */
+}
+
+/* 2. The Sections - FIXED SQUISHING ISSUES */
+.snap-section {
+    min-height: 100vh; /* Allow it to grow if content is taller */
+    width: 100%;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Center by default */
+    align-items: center;
+    position: relative;
+    padding: 80px 20px 40px; /* Top padding clears navbar */
+    box-sizing: border-box;
+}
+
+/* For sections with lots of content (Tabs/Forms), align top to prevent squish */
+.snap-section.content-heavy {
+    justify-content: flex-start; 
+    padding-top: 100px;
+}
+
+/* 3. The Dot Navigation (RIGHT SIDE) */
+.dot-nav {
+    position: fixed;
+    right: 2rem; /* Moved to Right */
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.dot-item {
+    position: relative;
+    width: 14px;
+    height: 14px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.dot-item:hover,
+.dot-item.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    transform: scale(1.3);
+    box-shadow: 0 0 15px var(--primary);
+}
+
+/* 1. The Label (Robotic & Invisible Background) */
+.dot-label {
+    position: absolute;
+    right: 25px; /* Position to the LEFT of the dot */
+    top: 50%;
+    transform: translateY(-50%);
+    
+    /* Invisible Background */
+    background: transparent !important;
+    backdrop-filter: none !important;
+    border: none !important;
+    padding: 0; 
+
+    /* Robotic Font Settings */
+    font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-size: 0.75rem;
+    color: #fff;
+    text-shadow: 0 0 5px var(--primary), 0 0 10px black; /* Neon glow effect */
+    
+    /* Hidden by default */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    white-space: nowrap;
+    text-align: right;
+}
+
+.dot-item:hover .dot-label {
+    opacity: 1;
+    transform: translateY(-50%) translateX(-10px); /* Slight slide animation */
+}
+
+.dot-item.active .dot-label {
+    opacity: 0; 
+}
+
+.dot-item.active:hover .dot-label {
+    opacity: 1;
+    transform: translateY(-50%) translateX(-10px);
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .dot-nav { display: none; }
+    .snap-container { height: auto; overflow-y: visible; scroll-snap-type: none; }
+    .snap-section { min-height: auto; padding-top: 40px; padding-bottom: 60px; height: auto; }
+    /* Allow scrolling on mobile */
+    html, body { overflow-y: auto; }
+}
+/* --- DYNAMIC TOOL HEADER STYLING --- */
+/* Target the Title (H1) inside the tool detail view */
+#templateDetailContent h1,
+#templateDetailContent h1.text-4xl {
+    background-image: linear-gradient(to right, var(--primary), var(--accent), var(--primary)) !important;
+    background-size: 200% auto;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    color: transparent !important;
+    animation: themeShine 3s linear infinite;
+    text-shadow: 0px 2px 20px rgba(0,0,0,0.2);
+}
+
+/* Target the Description (P) inside the tool detail view */
+#templateDetailContent p.text-lg {
+    background-image: linear-gradient(to right, var(--text-highlight), #ffffff) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    color: transparent !important;
+    opacity: 1 !important;
+    font-weight: 500;
+}
+
+/* Shine Animation */
+@keyframes themeShine {
+    to {
+        background-position: 200% center;
+    }
+}
+
+/* Ensure the last section has space for the fixed footer */
+#sec-connect {
+    padding-bottom: 100px !important; 
 }
