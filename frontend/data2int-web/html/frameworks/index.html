@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Frameworks - SageAIOS</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/mammoth@1.6.0/mammoth.browser.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+const { useState } = React;
+const Upload = () => <span>⬆️</span>;
+const Download = () => <span>⬇️</span>;
+const Sparkles = () => <span>✨</span>;
+const FileText = () => <span>📄</span>;
+const Settings = () => <span>⚙️</span>;
+
+
+
+
+
+const App = () => {
+  const [file, setFile] = useState(null);
+  const [framework, setFramework] = useState('design-thinking');
+  const [aiProvider, setAiProvider] = useState('groq');
+  const [groqApiKey, setGroqApiKey] = useState('');
+  const [ollamaUrl, setOllamaUrl] = useState('http://192.168.2.200:11434');
+  const [extractedText, setExtractedText] = useState('');
+  const [results, setResults] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const styles = {
+    container: {
+      minHeight: '100vh',
+      background: 'linear-gradient(to bottom right, #eff6ff, #e0e7ff)',
+      padding: '24px'
+    },
+    maxWidth: {
+      maxWidth: '1200px',
+      margin: '0 auto'
+    },
+    card: {
+      background: 'white',
+      borderRadius: '12px',
+      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+      padding: '32px',
+      marginBottom: '24px'
+    },
+    header: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '12px',
+      marginBottom: '24px'
+    },
+    title: {
+      fontSize: '30px',
+      fontWeight: 'bold',
+      color: '#1f2937',
+      margin: 0
+    },
+    grid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+      gap: '24px',
+      marginBottom: '24px'
+    },
+    label: {
+      display: 'block',
+      fontSize: '14px',
+      fontWeight: '500',
+      color: '#374151',
+      marginBottom: '8px'
+    },
+    input: {
+      width: '100%',
+      padding: '12px',
+      border: '1px solid #d1d5db',
+      borderRadius: '8px',
+      fontSize: '14px',
+      boxSizing: 'border-box'
+    },
+    select: {
+      width: '100%',
+      padding: '12px',
+      border: '1px solid #d1d5db',
+      borderRadius: '8px',
+      fontSize: '14px',
+      boxSizing: 'border-box',
+      backgroundColor: 'white'
+    },
+    button: {
+      width: '100%',
+      backgroundColor: '#2563eb',
+      color: 'white',
+      padding: '12px',
+      borderRadius: '8px',
+      fontWeight: '600',
+      border: 'none',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '8px',
+      fontSize: '16px'
+    },
+    buttonDisabled: {
+      backgroundColor: '#d1d5db',
+      cursor: 'not-allowed'
+    },
+    error: {
+      marginBottom: '24px',
+      padding: '16px',
+      backgroundColor: '#fef2f2',
+      border: '1px solid #fecaca',
+      borderRadius: '8px',
+      color: '#991b1b'
+    },
+    fileInfo: {
+      marginTop: '8px',
+      fontSize: '14px',
+      color: '#059669',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px'
+    },
+    resultsHeader: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: '24px',
+      flexWrap: 'wrap',
+      gap: '16px'
+    },
+    exportButtons: {
+      display: 'flex',
+      gap: '12px',
+      flexWrap: 'wrap'
+    },
+    exportButton: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      padding: '10px 16px',
+      borderRadius: '8px',
+      border: 'none',
+      cursor: 'pointer',
+      fontWeight: '500',
+      fontSize: '14px'
+    },
+    exportWord: {
+      backgroundColor: '#16a34a',
+      color: 'white'
+    },
+    exportHTML: {
+      backgroundColor: '#dc2626',
+      color: 'white'
+    },
+    frameworkAnalysis: {
+      background: 'linear-gradient(to right, #faf5ff, #eff6ff)',
+      padding: '24px',
+      borderRadius: '8px',
+      border: '2px solid #c4b5fd',
+      marginBottom: '24px'
+    },
+    frameworkTitle: {
+      fontSize: '24px',
+      fontWeight: 'bold',
+      color: '#7c3aed',
+      marginBottom: '16px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px'
+    },
+    frameworkComponent: {
+      backgroundColor: 'white',
+      padding: '20px',
+      borderRadius: '8px',
+      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+      borderLeft: '4px solid #7c3aed',
+      marginBottom: '16px'
+    },
+    componentName: {
+      fontSize: '18px',
+      fontWeight: 'bold',
+      color: '#1f2937',
+      marginBottom: '12px'
+    },
+    workingNotes: {
+      marginBottom: '12px'
+    },
+    workingNotesLabel: {
+      fontSize: '13px',
+      fontWeight: '600',
+      color: '#4b5563',
+      marginBottom: '4px'
+    },
+    workingNotesText: {
+      color: '#374151',
+      lineHeight: '1.6',
+      paddingLeft: '12px',
+      borderLeft: '2px solid #d1d5db'
+    },
+    keyFindings: {
+      fontSize: '13px',
+      fontWeight: '600',
+      color: '#4b5563',
+      marginBottom: '8px',
+      marginTop: '12px'
+    },
+    findingsList: {
+      listStyle: 'none',
+      padding: 0,
+      margin: 0
+    },
+    findingItem: {
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: '8px',
+      marginBottom: '4px',
+      fontSize: '14px',
+      color: '#374151'
+    },
+    section: {
+      marginBottom: '24px'
+    },
+    sectionTitle: {
+      fontSize: '20px',
+      fontWeight: '600',
+      color: '#2563eb',
+      marginBottom: '8px'
+    },
+    text: {
+      color: '#374151',
+      lineHeight: '1.6'
+    },
+    goalsList: {
+      listStyle: 'none',
+      padding: 0,
+      margin: 0
+    },
+    goalItem: {
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: '8px',
+      marginBottom: '8px'
+    },
+    goalNumber: {
+      color: '#2563eb',
+      fontWeight: 'bold'
+    },
+    initiative: {
+      borderLeft: '4px solid #60a5fa',
+      paddingLeft: '16px',
+      backgroundColor: '#eff6ff',
+      padding: '16px',
+      borderRadius: '0 8px 8px 0',
+      marginBottom: '16px'
+    },
+    initiativeTitle: {
+      fontWeight: '600',
+      color: '#1f2937',
+      marginBottom: '4px'
+    },
+    initiativeDesc: {
+      color: '#4b5563',
+      marginBottom: '8px'
+    },
+    frameworkBasis: {
+      fontSize: '13px',
+      color: '#1d4ed8',
+      fontStyle: 'italic'
+    },
+    objective: {
+      backgroundColor: '#f9fafb',
+      padding: '16px',
+      borderRadius: '8px',
+      border: '1px solid #e5e7eb',
+      marginBottom: '16px'
+    },
+    objectiveTitle: {
+      fontWeight: '600',
+      color: '#1f2937',
+      marginBottom: '8px'
+    },
+    krList: {
+      listStyle: 'none',
+      padding: 0,
+      marginLeft: '16px',
+      marginBottom: '12px'
+    },
+    krItem: {
+      color: '#4b5563',
+      fontSize: '14px',
+      marginBottom: '4px'
+    },
+    frameworkAlignment: {
+      fontSize: '13px',
+      color: '#4338ca',
+      fontStyle: 'italic',
+      borderTop: '1px solid #d1d5db',
+      paddingTop: '8px'
+    },
+    spinner: {
+      width: '20px',
+      height: '20px',
+      border: '2px solid white',
+      borderTop: '2px solid transparent',
+      borderRadius: '50%',
+      animation: 'spin 1s linear infinite'
+    }
+  };
+
+  // Add spinner animation
+  const styleSheet = document.styleSheets[0];
+  const keyframes = `
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  `;
+  try {
+    styleSheet.insertRule(keyframes, styleSheet.cssRules.length);
+  } catch (e) {
+    // Rule may already exist
+  }
+
+  const frameworks = [
+    { id: 'design-thinking', name: 'Design Thinking' },
+    { id: 'delphi', name: 'Delphi Method' },
+    { id: 'reframing', name: 'Reframing' },
+    { id: 'blue-ocean', name: 'Blue Ocean Strategy' },
+    { id: 'thinking-hats', name: 'Six Thinking Hats' },
+    { id: 'business-canvas', name: 'Business Model Canvas' },
+    { id: 'mckinsey-7s', name: 'McKinsey 7S' },
+    { id: 'scamper', name: 'SCAMPER' },
+    { id: 'burke-litwin', name: 'Burke-Litwin Model' },
+    { id: 'triz', name: 'TRIZ' },
+    { id: 'lean', name: 'Lean Methodology' },
+    { id: 'swot', name: 'SWOT Analysis' },
+    { id: 'balanced-scorecard', name: 'Balanced Scorecard' }
+  ];
+
+  const handleFileUpload = async (e) => {
+    const uploadedFile = e.target.files[0];
+    if (!uploadedFile) return;
+
+    if (!uploadedFile.name.endsWith('.docx')) {
+      setError('Please upload a .docx file');
+      return;
+    }
+
+    setFile(uploadedFile);
+    setError('');
+
+    try {
+      const arrayBuffer = await uploadedFile.arrayBuffer();
+      const result = await window.mammoth.extractRawText({ arrayBuffer });
+      setExtractedText(result.value);
+    } catch (err) {
+      setError('Failed to extract text from document');
+      console.error(err);
+    }
+  };
+
+  const getFrameworkPrompt = (fw) => {
+    const prompts = {
+      'design-thinking': `Using Design Thinking methodology, analyze through these 5 stages:
+1. EMPATHIZE - Understand stakeholder needs, pain points, and motivations through observation and engagement
+2. DEFINE - Synthesize findings into clear problem statements and opportunity areas
+3. IDEATE - Generate creative solutions through brainstorming, considering unconventional approaches
+4. PROTOTYPE - Design testable concepts and minimum viable solutions
+5. TEST - Plan validation methods and iteration strategies
+Apply human-centered design thinking to create innovative, user-focused strategic recommendations.`,
+
+      'delphi': `Using the Delphi Method, analyze through structured expert consensus:
+1. EXPERT IDENTIFICATION - Identify key stakeholders and subject matter experts
+2. ROUND 1 ANALYSIS - Initial independent assessment and forecasting
+3. CONTROLLED FEEDBACK - Synthesize responses and identify patterns/divergences
+4. ITERATIVE REFINEMENT - Convergence toward consensus through multiple rounds
+5. FINAL SYNTHESIS - Aggregate expert judgment into strategic recommendations
+Emphasize systematic reduction of uncertainty through structured group communication.`,
+
+      'reframing': `Using Reframing techniques, challenge assumptions and shift perspectives:
+1. IDENTIFY FRAMES - Current mental models, assumptions, and limiting beliefs
+2. QUESTION ASSUMPTIONS - Challenge "why" behind existing approaches
+3. ALTERNATIVE PERSPECTIVES - View situation from different stakeholder viewpoints (customer, competitor, industry outsider)
+4. METAPHORICAL THINKING - Apply analogies from other domains
+5. POSITIVE REFRAME - Transform problems into opportunities
+6. FUTURE BACKWARD - Work backward from ideal future state
+Generate strategic insights by fundamentally reconceptualizing the situation.`,
+
+      'blue-ocean': `Using Blue Ocean Strategy's Four Actions Framework and Value Innovation:
+1. ELIMINATE - Which factors the industry takes for granted should be eliminated?
+2. REDUCE - Which factors should be reduced well below industry standards?
+3. RAISE - Which factors should be raised well above industry standards?
+4. CREATE - Which factors should be created that the industry has never offered?
+Additionally analyze:
+- Value Innovation (simultaneous pursuit of differentiation AND low cost)
+- Non-customers (three tiers: soon-to-be, refusing, unexplored)
+- Strategic Sequence (Buyer utility → Price → Cost → Adoption)
+Identify uncontested market space and make competition irrelevant.`,
+
+      'thinking-hats': `Using Edward de Bono's Six Thinking Hats, analyze from ALL six perspectives:
+1. WHITE HAT (Facts & Information) - Data, numbers, information needs, gaps in knowledge
+2. RED HAT (Emotions & Intuition) - Gut feelings, emotional responses, hunches without justification
+3. BLACK HAT (Critical Judgment) - Risks, obstacles, potential problems, why something won't work
+4. YELLOW HAT (Optimism & Benefits) - Positive outcomes, benefits, opportunities, feasibility
+5. GREEN HAT (Creativity) - New ideas, alternatives, possibilities, creative solutions
+6. BLUE HAT (Process Control) - Overview, meta-thinking, next steps, action planning
+Ensure EACH hat's perspective explicitly shapes different aspects of the strategic recommendations.`,
+
+      'business-canvas': `Using Business Model Canvas's 9 building blocks, analyze and innovate:
+1. CUSTOMER SEGMENTS - Who are target customers? Which segments to serve/ignore?
+2. VALUE PROPOSITIONS - What unique value solves customer problems? What bundle of benefits?
+3. CHANNELS - How to reach customers? Which channels work best? Integration strategy?
+4. CUSTOMER RELATIONSHIPS - What relationships does each segment expect? How to maintain?
+5. REVENUE STREAMS - What are customers willing to pay for? How do they prefer to pay?
+6. KEY RESOURCES - What strategic assets are required? Physical, intellectual, human, financial?
+7. KEY ACTIVITIES - What critical activities does the value proposition require?
+8. KEY PARTNERSHIPS - Who are key partners/suppliers? What do they provide?
+9. COST STRUCTURE - What are most important costs? Which key resources/activities most expensive?
+Develop strategic recommendations addressing each building block's optimization.`,
+
+      'mckinsey-7s': `Using McKinsey 7S Framework, ensure alignment across all 7 elements:
+HARD ELEMENTS (easier to define and change):
+1. STRATEGY - Plan to achieve competitive advantage and respond to external changes
+2. STRUCTURE - Organization chart, hierarchy, coordination mechanisms
+3. SYSTEMS - Daily activities, procedures, processes that make the organization function
+
+SOFT ELEMENTS (harder to describe, less tangible, culturally influenced):
+4. SHARED VALUES - Core beliefs and attitudes at organizational center (culture, brand values)
+5. STYLE - Leadership approach, management style, organizational culture
+6. STAFF - Human resources, capabilities, competencies, recruitment/development
+7. SKILLS - Distinctive capabilities and competencies of organization/employees
+
+Analyze interdependencies and ensure strategic recommendations create alignment across ALL seven elements.`,
+
+      'scamper': `Using SCAMPER creative technique, systematically generate innovations by asking:
+1. SUBSTITUTE - What can be replaced? (components, materials, processes, people, places)
+2. COMBINE - What can be merged together? (purposes, units, ideas, talents)
+3. ADAPT - What can be adjusted or tweaked? (altered to fit different context, borrowed from elsewhere)
+4. MODIFY/MAGNIFY/Minify - What can be changed? (make bigger/smaller, alter attributes, amplify/reduce)
+5. PUT TO OTHER USES - What else can this be used for? (new markets, users, purposes)
+6. ELIMINATE - What can be removed? (simplify, reduce to core, streamline)
+7. REVERSE/REARRANGE - What can be flipped or reordered? (opposite, backwards, different sequence)
+Apply each SCAMPER prompt systematically to generate novel strategic options.`,
+
+      'burke-litwin': `Using Burke-Litwin Model of Organizational Performance and Change:
+TRANSFORMATIONAL FACTORS (driven by external environment, change culture):
+1. EXTERNAL ENVIRONMENT - Marketplace conditions, regulations, competition
+2. MISSION & STRATEGY - What organization is trying to accomplish
+3. LEADERSHIP - Executive behavior providing direction
+4. ORGANIZATIONAL CULTURE - Shared beliefs, values, norms
+
+TRANSACTIONAL FACTORS (day-to-day operations):
+5. STRUCTURE - Arrangement of functions and people
+6. MANAGEMENT PRACTICES - What managers do in normal operations
+7. SYSTEMS - Standardized policies and mechanisms (HR, budgeting, control)
+8. WORK UNIT CLIMATE - Collective perceptions of management practices
+9. TASK & INDIVIDUAL SKILLS - Job requirements and individual capabilities
+10. MOTIVATION - Drive toward behavior
+11. INDIVIDUAL NEEDS & VALUES - Personal motivations
+
+OUTPUT: Individual & Organizational Performance
+
+Analyze cause-and-effect relationships between these factors in strategic recommendations.`,
+
+      'triz': `Using TRIZ (Theory of Inventive Problem Solving) systematic innovation principles:
+Apply these key TRIZ concepts:
+1. CONTRADICTIONS - Identify technical/physical contradictions (improving one parameter worsens another)
+2. IDEALITY - Move toward ideal final result (IFR) where benefits increase, costs/harm decrease
+3. RESOURCES - Identify and leverage existing resources (material, energy, information, time, space)
+4. PATTERNS OF EVOLUTION - Apply technological evolution patterns (micro-level, dynamism, segmentation)
+
+Key TRIZ Principles (select most relevant):
+- Segmentation, Extraction, Local Quality, Asymmetry
+- Merging, Universality, Nested Doll, Counterweight
+- Prior Action, Cushion in Advance, Equipotentiality
+- Inert Environment, Composite Materials, Discarding & Recovering
+- Parameter Changes, Phase Transitions, Thermal Expansion
+- Feedback, Self-Service, Copying, Cheap Disposables
+
+Generate breakthrough innovations by resolving contradictions without compromise.`,
+
+      'lean': `Using Lean Methodology principles for strategic optimization:
+CORE PRINCIPLES:
+1. VALUE - Define value from customer perspective (what customer willing to pay for)
+2. VALUE STREAM - Map all steps (value-adding and non-value-adding) from concept to customer
+3. FLOW - Ensure value-creating steps occur in tight sequence
+4. PULL - Nothing produced upstream until downstream signals need (demand-driven)
+5. PERFECTION - Continuous improvement (Kaizen) toward zero waste
+
+8 TYPES OF WASTE (TIMWOODS) TO ELIMINATE:
+- Transportation, Inventory, Motion, Waiting
+- Overproduction, Over-processing, Defects, Skills underutilization
+
+LEAN TOOLS:
+- 5S (Sort, Set in Order, Shine, Standardize, Sustain)
+- Kanban (visual signals), Poka-Yoke (error-proofing)
+- PDCA cycle (Plan-Do-Check-Act)
+- Gemba (go see actual place)
+
+Generate strategic recommendations that eliminate waste and maximize customer value.`,
+
+      'swot': `Using SWOT Analysis framework for comprehensive strategic assessment:
+INTERNAL ANALYSIS:
+1. STRENGTHS - Internal positive attributes and resources
+   - Core competencies, unique capabilities
+   - Competitive advantages (cost, differentiation, focus)
+   - Valuable resources (tangible/intangible)
+   - Strong brand, reputation, relationships
+   - Financial position, operational efficiency
+
+2. WEAKNESSES - Internal limitations and vulnerabilities
+   - Gaps in capabilities, resources
+   - Competitive disadvantages
+   - Operational inefficiencies
+   - Financial constraints
+   - Areas needing improvement
+
+EXTERNAL ANALYSIS:
+3. OPPORTUNITIES - External factors to capitalize on
+   - Market growth, emerging segments
+   - Technological advances
+   - Regulatory changes favorable
+   - Competitor vulnerabilities
+   - Partnership possibilities
+   - Changing customer needs
+
+4. THREATS - External risks and challenges
+   - New competitors, substitute products
+   - Changing regulations
+   - Economic downturns
+   - Shifting customer preferences
+   - Supply chain disruptions
+   - Technological disruption
+
+STRATEGIC MATCHING:
+- SO Strategies (Strength-Opportunity): Use strengths to pursue opportunities
+- WO Strategies (Weakness-Opportunity): Overcome weaknesses to pursue opportunities
+- ST Strategies (Strength-Threat): Use strengths to avoid threats
+- WT Strategies (Weakness-Threat): Minimize weaknesses and avoid threats
+
+Provide comprehensive SWOT analysis with strategic recommendations for each quadrant.`,
+
+      'balanced-scorecard': `Using the Balanced Scorecard framework by Kaplan & Norton for strategic performance management:
+
+FOUR PERSPECTIVES:
+1. FINANCIAL PERSPECTIVE - "How do we look to shareholders?"
+   - Revenue growth and mix
+   - Cost reduction and productivity
+   - Asset utilization and investment strategy
+   - Key metrics: ROI, EVA, profit margins, cash flow
+
+2. CUSTOMER PERSPECTIVE - "How do customers see us?"
+   - Customer acquisition and retention
+   - Customer satisfaction and loyalty
+   - Market share in target segments
+   - Value proposition (price, quality, time, function, relationship)
+   - Key metrics: NPS, customer lifetime value, market share
+
+3. INTERNAL PROCESS PERSPECTIVE - "What must we excel at?"
+   - Operations management processes
+   - Customer management processes
+   - Innovation processes (R&D pipeline)
+   - Regulatory and social processes
+   - Key metrics: cycle time, quality, cost per unit, throughput
+
+4. LEARNING & GROWTH PERSPECTIVE - "Can we continue to improve and create value?"
+   - Human capital (skills, training, knowledge)
+   - Information capital (systems, databases, networks)
+   - Organization capital (culture, leadership, alignment)
+   - Key metrics: employee satisfaction, retention, skill levels
+
+STRATEGY MAP:
+- Link objectives across all four perspectives
+- Show cause-and-effect relationships
+- Align initiatives with strategic themes
+
+Provide balanced scorecard analysis with objectives, measures, targets, and initiatives for each perspective.`
+    };
+    return prompts[fw];
+  };
+
+  const analyzeWithAI = async () => {
+  if (!extractedText) {
+    setError('Please upload a document first');
+    return;
+  }
+
+  if (aiProvider === 'groq' && !groqApiKey) {
+    setError('Please enter your Groq API key');
+    return;
+  }
+
+  setLoading(true);
+  setError('');
+  setResults(null);
+
+  const frameworkPrompt = getFrameworkPrompt(framework);
+  
+  // FIRST API CALL - Framework Analysis
+  const systemPrompt1 = `You are a strategic planning expert. ${frameworkPrompt}
+
+CRITICAL: You MUST analyze the document using EVERY subcomponent explicitly mentioned in the framework description above. For Design Thinking, you MUST include all 5 stages: Empathize, Define, Ideate, Prototype, and Test. For SWOT, you MUST include Strengths, Weaknesses, Opportunities, and Threats. For McKinsey 7S, you MUST include all 7 elements. And so on for every framework.
+
+Based on the provided document, generate ONLY the framework analysis with working notes for EACH specific subcomponent.
+
+Return ONLY valid JSON with no markdown, no backticks, no preamble:
+
+{
+  "frameworkAnalysis": {
+    "component1": {
+      "name": "EXACT subcomponent name from framework (e.g., 'Empathize' for Design Thinking, 'Strengths' for SWOT)",
+      "workingNotes": "Detailed analysis of this specific subcomponent based on the document content",
+      "keyFindings": ["Finding 1", "Finding 2", "Finding 3"]
+    },
+    "component2": {
+      "name": "Next subcomponent name",
+      "workingNotes": "Detailed analysis",
+      "keyFindings": ["Finding 1", "Finding 2"]
+    }
+    // Include ALL framework subcomponents
+  }
+}`;
+
+  // SECOND API CALL - Strategic Plan
+  const systemPrompt2 = `You are a strategic planning expert. Based on the framework analysis provided, generate a complete strategic plan.
+
+Return ONLY valid JSON with no markdown, no backticks, no preamble:
+
+{
+  "vision": "A compelling, inspirational vision statement derived from framework analysis (2-3 sentences)",
+  "mission": "A clear mission statement aligned with framework insights (2-3 sentences)",
+  "goals": ["Goal 1 based on framework", "Goal 2", "Goal 3", "Goal 4", "Goal 5"],
+  "strategicInitiatives": [
+    {"title": "Initiative 1", "description": "Detailed description linked to framework components", "frameworkBasis": "Which framework components this addresses"},
+    {"title": "Initiative 2", "description": "Detailed description", "frameworkBasis": "Framework linkage"},
+    {"title": "Initiative 3", "description": "Detailed description", "frameworkBasis": "Framework linkage"}
+  ],
+  "objectives": [
+    {"objective": "Objective 1", "keyResults": ["KR1", "KR2", "KR3"], "frameworkAlignment": "How this aligns with framework"},
+    {"objective": "Objective 2", "keyResults": ["KR1", "KR2", "KR3"], "frameworkAlignment": "Framework alignment"},
+    {"objective": "Objective 3", "keyResults": ["KR1", "KR2", "KR3"], "frameworkAlignment": "Framework alignment"}
+  ]
+}`;
+
+  try {
+    let frameworkAnalysis;
+    let strategicPlan;
+    
+    // CALL 1: Get Framework Analysis
+    if (aiProvider === 'groq') {
+      const response1 = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${groqApiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: [
+            { role: 'system', content: systemPrompt1 },
+            { role: 'user', content: `Document content:\n\n${extractedText.substring(0, 15000)}` }
+          ],
+          temperature: 0.7,
+          max_tokens: 3000
+        })
+      });
+
+      if (!response1.ok) throw new Error(`API request failed: ${response1.statusText}`);
+      
+      const data1 = await response1.json();
+      const content1 = data1.choices[0].message.content;
+      const jsonMatch1 = content1.match(/\{[\s\S]*\}/);
+      if (jsonMatch1) {
+        frameworkAnalysis = JSON.parse(jsonMatch1[0]).frameworkAnalysis;
+      } else {
+        throw new Error('Invalid JSON response from AI');
+      }
+
+      // CALL 2: Get Strategic Plan
+      const response2 = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${groqApiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: [
+            { role: 'system', content: systemPrompt2 },
+            { role: 'user', content: `Framework Analysis:\n${JSON.stringify(frameworkAnalysis, null, 2)}\n\nDocument Summary:\n${extractedText.substring(0, 8000)}` }
+          ],
+          temperature: 0.7,
+          max_tokens: 3000
+        })
+      });
+
+      if (!response2.ok) throw new Error(`API request failed: ${response2.statusText}`);
+      
+      const data2 = await response2.json();
+      const content2 = data2.choices[0].message.content;
+      const jsonMatch2 = content2.match(/\{[\s\S]*\}/);
+      if (jsonMatch2) {
+        strategicPlan = JSON.parse(jsonMatch2[0]);
+      } else {
+        throw new Error('Invalid JSON response from AI');
+      }
+      
+    } else {
+      // OLLAMA - CALL 1
+      const response1 = await fetch(`${ollamaUrl}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'llama3.1:latest',
+          messages: [
+            { role: 'system', content: systemPrompt1 },
+            { role: 'user', content: `Document content:\n\n${extractedText.substring(0, 15000)}` }
+          ],
+          stream: false,
+          options: {
+            num_predict: 3000
+          }
+        })
+      });
+
+      if (!response1.ok) throw new Error(`API request failed: ${response1.statusText}`);
+      
+      const data1 = await response1.json();
+      const content1 = data1.message.content;
+      const jsonMatch1 = content1.match(/\{[\s\S]*\}/);
+      if (jsonMatch1) {
+        frameworkAnalysis = JSON.parse(jsonMatch1[0]).frameworkAnalysis;
+      } else {
+        throw new Error('Invalid JSON response from AI');
+      }
+
+      // OLLAMA - CALL 2
+      const response2 = await fetch(`${ollamaUrl}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'llama3.1:latest',
+          messages: [
+            { role: 'system', content: systemPrompt2 },
+            { role: 'user', content: `Framework Analysis:\n${JSON.stringify(frameworkAnalysis, null, 2)}\n\nDocument Summary:\n${extractedText.substring(0, 8000)}` }
+          ],
+          stream: false,
+          options: {
+            num_predict: 3000
+          }
+        })
+      });
+
+      if (!response2.ok) throw new Error(`API request failed: ${response2.statusText}`);
+      
+      const data2 = await response2.json();
+      const content2 = data2.message.content;
+      const jsonMatch2 = content2.match(/\{[\s\S]*\}/);
+      if (jsonMatch2) {
+        strategicPlan = JSON.parse(jsonMatch2[0]);
+      } else {
+        throw new Error('Invalid JSON response from AI');
+      }
+    }
+
+    // Combine results
+    setResults({
+      frameworkAnalysis,
+      ...strategicPlan
+    });
+    
+  } catch (err) {
+    setError(`Analysis failed: ${err.message}`);
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+};
+   
+
+  const exportToPDF = () => {
+    if (!results) return;
+
+    let frameworkAnalysisHTML = '';
+    if (results.frameworkAnalysis) {
+      frameworkAnalysisHTML = `
+        <div class="section framework-analysis">
+          <h2>Framework Analysis: ${frameworks.find(f => f.id === framework)?.name}</h2>
+          ${Object.entries(results.frameworkAnalysis).map(([key, component]) => `
+            <div class="framework-component">
+              <h3>${component.name}</h3>
+              <div class="working-notes">
+                <strong>Working Notes:</strong>
+                <p>${component.workingNotes}</p>
+              </div>
+              ${component.keyFindings && component.keyFindings.length > 0 ? `
+                <div class="key-findings">
+                  <strong>Key Findings:</strong>
+                  <ul>
+                    ${component.keyFindings.map(f => `<li>${f}</li>`).join('')}
+                  </ul>
+                </div>
+              ` : ''}
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    const content = `
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 40px; line-height: 1.6; }
+            h1 { color: #2563eb; border-bottom: 3px solid #2563eb; padding-bottom: 10px; }
+            h2 { color: #1e40af; margin-top: 30px; border-bottom: 2px solid #93c5fd; padding-bottom: 5px; }
+            h3 { color: #3b82f6; margin-top: 20px; }
+            .section { margin-bottom: 30px; page-break-inside: avoid; }
+            .framework-analysis { background: #f0f9ff; padding: 20px; border-radius: 8px; border-left: 4px solid #7c3aed; }
+            .framework-component { background: white; padding: 15px; margin-bottom: 15px; border-radius: 5px; border-left: 3px solid #a78bfa; }
+            .working-notes { margin: 10px 0; padding-left: 15px; border-left: 2px solid #e5e7eb; }
+            .key-findings { margin-top: 10px; }
+            ul { margin-left: 20px; }
+            li { margin-bottom: 8px; }
+            .initiative, .objective { background: #f9fafb; padding: 12px; margin-bottom: 10px; border-radius: 5px; }
+            .framework-basis, .framework-alignment { 
+              font-style: italic; 
+              color: #4f46e5; 
+              font-size: 0.9em; 
+              margin-top: 8px;
+              padding-top: 8px;
+              border-top: 1px solid #e5e7eb;
+            }
+          </style>
+        </head>
+        <body>
+          <h1>Strategic Plan - ${frameworks.find(f => f.id === framework)?.name}</h1>
+          
+          ${frameworkAnalysisHTML}
+          
+          <div class="section">
+            <h2>Vision</h2>
+            <p>${results.vision}</p>
+          </div>
+
+          <div class="section">
+            <h2>Mission</h2>
+            <p>${results.mission}</p>
+          </div>
+
+          <div class="section">
+            <h2>Strategic Goals</h2>
+            <ul>
+              ${results.goals?.map(g => `<li>${g}</li>`).join('') || ''}
+            </ul>
+          </div>
+
+          <div class="section">
+            <h2>Strategic Initiatives</h2>
+            ${results.strategicInitiatives?.map(si => `
+              <div class="initiative">
+                <h3>${si.title}</h3>
+                <p>${si.description}</p>
+                ${si.frameworkBasis ? `<div class="framework-basis"><strong>Framework Basis:</strong> ${si.frameworkBasis}</div>` : ''}
+              </div>
+            `).join('') || ''}
+          </div>
+
+          <div class="section">
+            <h2>Objectives & Key Results</h2>
+            ${results.objectives?.map(obj => `
+              <div class="objective">
+                <h3>${obj.objective}</h3>
+                <ul>
+                  ${obj.keyResults?.map(kr => `<li>${kr}</li>`).join('') || ''}
+                </ul>
+                ${obj.frameworkAlignment ? `<div class="framework-alignment"><strong>Framework Alignment:</strong> ${obj.frameworkAlignment}</div>` : ''}
+              </div>
+            `).join('') || ''}
+          </div>
+        </body>
+      </html>
+    `;
+
+    const blob = new Blob([content], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'strategic-plan.html';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportToWord = () => {
+  if (!results) return;
+
+  let content = `STRATEGIC PLAN - ${frameworks.find(f => f.id === framework)?.name.toUpperCase()}\n\n`;
+  
+  // Framework Analysis
+  if (results.frameworkAnalysis) {
+    content += `FRAMEWORK ANALYSIS: ${frameworks.find(f => f.id === framework)?.name.toUpperCase()}\n`;
+    content += `${'='.repeat(80)}\n\n`;
+    
+    Object.entries(results.frameworkAnalysis).forEach(([key, component]) => {
+      content += `${component.name}\n`;
+      content += `${'-'.repeat(component.name.length)}\n`;
+      content += `\nWorking Notes:\n${component.workingNotes}\n\n`;
+      
+      if (component.keyFindings && component.keyFindings.length > 0) {
+        content += `Key Findings:\n`;
+        component.keyFindings.forEach((finding, i) => {
+          content += `  ${i + 1}. ${finding}\n`;
+        });
+        content += `\n`;
+      }
+      content += `\n`;
+    });
+  }
+  
+  content += `\nVISION\n${'='.repeat(80)}\n${results.vision}\n\n`;
+  content += `MISSION\n${'='.repeat(80)}\n${results.mission}\n\n`;
+  content += `STRATEGIC GOALS\n${'='.repeat(80)}\n`;
+  results.goals?.forEach((g, i) => content += `${i + 1}. ${g}\n`);
+  
+  content += `\n\nSTRATEGIC INITIATIVES\n${'='.repeat(80)}\n`;
+  results.strategicInitiatives?.forEach((si, i) => {
+    content += `\n${i + 1}. ${si.title}\n`;
+    content += `   ${si.description}\n`;
+    if (si.frameworkBasis) {
+      content += `   Framework Basis: ${si.frameworkBasis}\n`;
+    }
+  });
+  
+  content += `\n\nOBJECTIVES & KEY RESULTS\n${'='.repeat(80)}\n`;
+  results.objectives?.forEach((obj, i) => {
+    content += `\n${i + 1}. ${obj.objective}\n`;
+    obj.keyResults?.forEach((kr, j) => content += `   ${String.fromCharCode(97 + j)}. ${kr}\n`);
+    if (obj.frameworkAlignment) {
+      content += `   Framework Alignment: ${obj.frameworkAlignment}\n`;
+    }
+  });
+
+  const blob = new Blob([content], { type: 'application/msword' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'strategic-plan.doc';
+  a.click();
+  URL.revokeObjectURL(url);
+};
+return (
+<div style={styles.container}>
+<div style={styles.maxWidth}>
+<div style={styles.card}>
+<div style={styles.header}>
+<Sparkles style={{ width: '32px', height: '32px', color: '#2563eb' }} />
+<h1 style={styles.title}>AI Strategic Planning Assistant</h1>
+</div>
+       <div style={styles.grid}>
+        <div>
+          <label style={styles.label}>
+            <Settings style={{ width: '16px', height: '16px', display: 'inline', marginRight: '4px' }} />
+            AI Provider
+          </label>
+          <select
+            value={aiProvider}
+            onChange={(e) => setAiProvider(e.target.value)}
+            style={styles.select}
+          >
+            <option value="groq">Groq (Llama 3.3 Versatile)</option>
+            <option value="ollama">Ollama (Llama 3.1 Local)</option>
+          </select>
+        </div>
+
+        {aiProvider === 'groq' ? (
+          <div>
+            <label style={styles.label}>Groq API Key</label>
+            <input
+              type="password"
+              value={groqApiKey}
+              onChange={(e) => setGroqApiKey(e.target.value)}
+              placeholder="Enter your Groq API key"
+              style={styles.input}
+            />
+          </div>
+        ) : (
+          <div>
+            <label style={styles.label}>Ollama URL</label>
+            <input
+              type="text"
+              value={ollamaUrl}
+              onChange={(e) => setOllamaUrl(e.target.value)}
+              placeholder="http://192.168.2.200:11434"
+              style={styles.input}
+            />
+          </div>
+        )}
+      </div>
+
+      <div style={{ marginBottom: '24px' }}>
+        <label style={styles.label}>
+          <Upload style={{ width: '16px', height: '16px', display: 'inline', marginRight: '4px' }} />
+          Upload Document (.docx)
+        </label>
+        <input
+          type="file"
+          accept=".docx"
+          onChange={handleFileUpload}
+          style={styles.input}
+        />
+        {file && (
+          <p style={styles.fileInfo}>
+            <FileText style={{ width: '16px', height: '16px' }} />
+            {file.name} ({Math.round(extractedText.length / 1000)}k characters extracted)
+          </p>
+        )}
+      </div>
+
+      <div style={{ marginBottom: '24px' }}>
+        <label style={styles.label}>Strategic Framework</label>
+        <select
+          value={framework}
+          onChange={(e) => setFramework(e.target.value)}
+          style={styles.select}
+        >
+          {frameworks.map(fw => (
+            <option key={fw.id} value={fw.id}>{fw.name}</option>
+          ))}
+        </select>
+      </div>
+
+      {error && (
+        <div style={styles.error}>
+          {error}
+        </div>
+      )}
+
+      <button
+        onClick={analyzeWithAI}
+        disabled={loading || !extractedText}
+        style={{
+          ...styles.button,
+          ...(loading || !extractedText ? styles.buttonDisabled : {})
+        }}
+      >
+        {loading ? (
+          <>
+            <div style={styles.spinner} />
+            Analyzing...
+          </>
+        ) : (
+          <>
+            <Sparkles style={{ width: '20px', height: '20px' }} />
+            Generate Strategic Plan
+          </>
+        )}
+      </button>
+    </div>
+
+    {results && (
+      <div style={styles.card}>
+        <div style={styles.resultsHeader}>
+          <h2 style={{ ...styles.title, fontSize: '24px' }}>Strategic Plan Results</h2>
+          <div style={styles.exportButtons}>
+            <button
+              onClick={exportToWord}
+              style={{ ...styles.exportButton, ...styles.exportWord }}
+            >
+              <Download style={{ width: '16px', height: '16px' }} />
+              Export Word
+            </button>
+            <button
+              onClick={exportToPDF}
+              style={{ ...styles.exportButton, ...styles.exportHTML }}
+            >
+              <Download style={{ width: '16px', height: '16px' }} />
+              Export HTML
+            </button>
+          </div>
+        </div>
+
+        <div>
+          {/* Framework Analysis Section */}
+          {results.frameworkAnalysis && (
+            <div style={styles.frameworkAnalysis}>
+              <h3 style={styles.frameworkTitle}>
+                <Sparkles style={{ width: '24px', height: '24px' }} />
+                Framework Analysis: {frameworks.find(f => f.id === framework)?.name}
+              </h3>
+              <div>
+                {Object.entries(results.frameworkAnalysis).map(([key, component], i) => (
+                  <div key={i} style={styles.frameworkComponent}>
+                    <h4 style={styles.componentName}>{component.name}</h4>
+                    <div style={styles.workingNotes}>
+                      <p style={styles.workingNotesLabel}>Working Notes:</p>
+                      <p style={styles.workingNotesText}>{component.workingNotes}</p>
+                    </div>
+                    {component.keyFindings && component.keyFindings.length > 0 && (
+                      <div>
+                        <p style={styles.keyFindings}>Key Findings:</p>
+                        <ul style={styles.findingsList}>
+                          {component.keyFindings.map((finding, j) => (
+                            <li key={j} style={styles.findingItem}>
+                              <span style={{ color: '#7c3aed', marginTop: '2px' }}>▸</span>
+                              <span>{finding}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div style={styles.section}>
+            <h3 style={styles.sectionTitle}>Vision</h3>
+            <p style={styles.text}>{results.vision}</p>
+          </div>
+
+          <div style={styles.section}>
+            <h3 style={styles.sectionTitle}>Mission</h3>
+            <p style={styles.text}>{results.mission}</p>
+          </div>
+
+          <div style={styles.section}>
+            <h3 style={styles.sectionTitle}>Strategic Goals</h3>
+            <ul style={styles.goalsList}>
+              {results.goals?.map((goal, i) => (
+                <li key={i} style={styles.goalItem}>
+                  <span style={styles.goalNumber}>{i + 1}.</span>
+                  <span style={styles.text}>{goal}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div style={styles.section}>
+            <h3 style={styles.sectionTitle}>Strategic Initiatives</h3>
+            <div>
+              {results.strategicInitiatives?.map((init, i) => (
+                <div key={i} style={styles.initiative}>
+                  <h4 style={styles.initiativeTitle}>{init.title}</h4>
+                  <p style={styles.initiativeDesc}>{init.description}</p>
+                  {init.frameworkBasis && (
+                    <p style={styles.frameworkBasis}>
+                      <strong>Framework Basis:</strong> {init.frameworkBasis}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={styles.section}>
+            <h3 style={styles.sectionTitle}>Objectives & Key Results</h3>
+            <div>
+              {results.objectives?.map((obj, i) => (
+                <div key={i} style={styles.objective}>
+                  <h4 style={styles.objectiveTitle}>{obj.objective}</h4>
+                  <ul style={styles.krList}>
+                    {obj.keyResults?.map((kr, j) => (
+                      <li key={j} style={styles.krItem}>• {kr}</li>
+                    ))}
+                  </ul>
+                  {obj.frameworkAlignment && (
+                    <p style={styles.frameworkAlignment}>
+                      <strong>Framework Alignment:</strong> {obj.frameworkAlignment}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
+</div>
+);
+};
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+  </script>
+</body>
+</html>
