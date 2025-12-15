@@ -1,0 +1,2558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Thinking - SageAIOS</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+const { useState, useEffect, useRef } = React;
+const Plus = () => <span>+</span>;
+const Trash2 = () => <span>🗑</span>;
+const Download = () => <span>⬇</span>;
+const Save = () => <span>💾</span>;
+const RefreshCw = () => <span>🔄</span>;
+const AlertCircle = () => <span>⚠</span>;
+const Upload = () => <span>⬆</span>;
+const FileText = () => <span>📄</span>;
+const Loader = () => <span>⏳</span>;
+const Target = () => <span>🎯</span>;
+const Users = () => <span>👥</span>;
+const Layers = () => <span>📚</span>;
+const Zap = () => <span>⚡</span>;
+const TrendingUp = () => <span>📈</span>;
+const Shield = () => <span>🛡</span>;
+const Play = () => <span>▶</span>;
+const ChevronRight = () => <span>›</span>;
+
+
+
+
+const SystemMapper = () => {
+  const [nodes, setNodes] = useState([]);
+  const [edges, setEdges] = useState([]);
+  const [selectedNode, setSelectedNode] = useState(null);
+  const [connectingFrom, setConnectingFrom] = useState(null);
+  const [newNodeName, setNewNodeName] = useState('');
+  const [savedMessage, setSavedMessage] = useState('');
+  const [analyzing, setAnalyzing] = useState(false);
+  const [extractedData, setExtractedData] = useState(null);
+  const [showUploadPanel, setShowUploadPanel] = useState(true);
+  const [showConfirmClear, setShowConfirmClear] = useState(false);
+  const [activeTab, setActiveTab] = useState('metrics');
+  const [scenarioInput, setScenarioInput] = useState('');
+  const [scenarioResults, setScenarioResults] = useState(null);
+  const [runningScenario, setRunningScenario] = useState(false);
+  const [decisionOptions, setDecisionOptions] = useState(['', '', '']);
+  const [decisionAnalysis, setDecisionAnalysis] = useState(null);
+  const [analyzingDecision, setAnalyzingDecision] = useState(false);
+  const [strategyText, setStrategyText] = useState('');
+  const [stressTestResults, setStressTestResults] = useState(null);
+  const [testingStrategy, setTestingStrategy] = useState(false);
+  const [aiProvider, setAiProvider] = useState('ollama');
+  const [groqApiKey, setGroqApiKey] = useState('');
+  const [showSettings, setShowSettings] = useState(false);
+  const canvasRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const [minVariables, setMinVariables] = useState(25); // default value can be adjusted
+  const [minRelationships, setMinRelationships] = useState(40); // default value can be adjusted
+  useEffect(() => {
+    loadSystem();
+  }, []);
+
+  const callAI = async (prompt, systemPrompt = null) => {
+    if (aiProvider === 'groq') {
+      if (!groqApiKey) {
+        throw new Error('Groq API key is required. Please set it in settings.');
+      }
+      
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${groqApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: [
+            ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
+            { role: 'user', content: prompt }
+          ],
+          temperature: 0.3,
+          max_tokens: 4000
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Groq API error (${response.status}): ${errorText}`);
+      }
+
+      const data = await response.json();
+      return data.choices[0].message.content;
+      
+    } else {
+      // Ollama local
+      const response = await fetch('http://192.168.2.200:11434/api/generate', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'llama3.1:latest',
+          prompt: prompt,
+          stream: false,
+          format: 'json',
+          options: {
+            temperature: 0.3,
+            num_predict: 4000
+          }
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Ollama API error (${response.status}): ${errorText}. Make sure Ollama is running with: ollama serve`);
+      }
+
+      const data = await response.json();
+      return data.response;
+    }
+  };
+
+  const loadSystem = async () => {
+    try {
+      const result = await window.storage.get('system-map');
+      if (result) {
+        const data = JSON.parse(result.value);
+        setNodes(data.nodes || []);
+        setEdges(data.edges || []);
+        setExtractedData(data.extractedData || null);
+        if (data.nodes?.length > 0) setShowUploadPanel(false);
+      }
+    } catch (error) {
+      console.log('No saved system found');
+    }
+  };
+
+  const saveSystem = async () => {
+    try {
+      await window.storage.set('system-map', JSON.stringify({ 
+        nodes, 
+        edges,
+        extractedData 
+      }));
+      setSavedMessage('System saved successfully!');
+      setTimeout(() => setSavedMessage(''), 3000);
+    } catch (error) {
+      setSavedMessage('Error saving system');
+    }
+  };
+
+  const handleFileUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    setAnalyzing(true);
+    setShowUploadPanel(false);
+
+    try {
+      let content = '';
+      
+      if (file.type === 'application/pdf') {
+        setSavedMessage('PDF processing not available with local LLM. Please use text files.');
+        setAnalyzing(false);
+        setShowUploadPanel(true);
+        return;
+      } else {
+        content = await file.text();
+      }
+
+      if (!content || content.trim().length === 0) {
+        throw new Error('Could not extract text from document');
+      }
+
+      await analyzeDocument(content, file.name);
+
+    } catch (error) {
+      console.error('Error processing file:', error);
+      setSavedMessage('Error: ' + error.message);
+      setAnalyzing(false);
+      setShowUploadPanel(true);
+    }
+  };
+  const analyzeDocument = async (content, filename) => {
+  try {
+    const truncatedContent = content.length > 12000 
+      ? content.substring(0, 12000) + '...(truncated)' 
+      : content;
+
+  // Stage 1: Extract comprehensive causal model
+  const aiResponse = await callAI(`You are an expert systems analyst trained in causal mapping, Donella Meadows' leverage points, and Peter Senge's system archetypes.
+CRITICAL INSTRUCTIONS:
+1. Read the ENTIRE document carefully
+2. Extract 15-25 key variables (not just 5-8!)
+3. Identify ALL causal relationships mentioned or implied
+4. Look for feedback loops explicitly
+5. Identify system archetypes (Success to Successful, Limits to Growth, Shifting the Burden, etc.)
+6. Assign leverage levels based on Meadows' framework
+
+Document to analyze:
+${truncatedContent}
+
+STEP 1 - VARIABLE EXTRACTION:
+Identify 15-25 variables. For each, determine:
+- Name (clear, specific)
+- Description (what it represents)
+- Type: "driver" (causes other things), "outcome" (result of other things), "constraint" (limits), "resource" (stock/capacity)
+- Leverage level (1-12, where 1=paradigm shift, 3=goals, 5=rules, 7=feedback gain, 9=delays, 12=parameters)
+
+STEP 2 - RELATIONSHIP MAPPING:
+For EVERY cause-effect relationship in the document:
+- Identify source and target variables
+- Determine polarity: "+" (same direction) or "-" (opposite direction)
+- Assess strength: "strong" (explicit, direct), "medium" (mentioned), "weak" (implied)
+- Note evidence: quote or reference from text
+- Estimate delay: "immediate" (<1 month), "short" (1-6 months), "medium" (6-12 months), "long" (>1 year)
+
+STEP 3 - FEEDBACK LOOP IDENTIFICATION:
+Look for circular causation patterns:
+- Reinforcing loops (growth/decline spirals)
+- Balancing loops (goal-seeking, regulation)
+- Note which variables are involved
+- Describe the dynamic behavior
+
+STEP 4 - SYSTEM ARCHETYPES:
+Check for these patterns:
+1. Success to the Successful (rich get richer)
+2. Limits to Growth (growth hits constraint)
+3. Shifting the Burden (short-term fix, long-term problem)
+4. Eroding Goals (standards slip over time)
+5. Escalation (arms race dynamic)
+6. Tragedy of the Commons (shared resource depletion)
+7. Fixes that Fail (solution makes problem worse)
+8. Growth and Underinvestment (capacity lags behind growth)
+
+STEP 5 - STRATEGIC ANALYSIS:
+- Goals: What objectives are stated or implied?
+- Stakeholders: Who is mentioned or affected?
+- Constraints: What limits are mentioned?
+- Assumptions: What beliefs underpin the logic?
+- Missing factors: What important variables are NOT mentioned but should be?
+- Second-order effects: What delayed consequences are discussed?
+
+Return ONLY this JSON structure (NO markdown, NO explanation):
+{
+  "concepts": [
+    {
+      "name": "Customer Satisfaction",
+      "description": "degree of customer happiness with product/service",
+      "type": "outcome",
+      "leverage_level": 8
+    }
+  ],
+  "relationships": [
+    {
+      "from": "Product Quality",
+      "to": "Customer Satisfaction",
+      "polarity": "+",
+      "strength": "strong",
+      "evidence": "higher quality leads to more satisfied customers",
+      "delay": "short"
+    }
+  ],
+  "goals": ["Increase market share", "Improve profitability"],
+  "stakeholders": ["Customers", "Employees", "Investors", "Suppliers"],
+  "constraints": ["Limited budget", "Regulatory compliance", "Time constraints"],
+  "assumptions": ["Customers value quality over price", "Market will continue to grow"],
+  "missing_factors": ["Competitor actions", "Economic conditions", "Technology disruption"],
+  "leverage_points": [
+    {
+      "level": 3,
+      "type": "System Goals",
+      "description": "Organization optimizing for wrong metrics - focusing on growth instead of sustainability",
+      "impact": "high",
+      "recommendation": "Redefine success metrics to include long-term resilience"
+    }
+  ],
+  "second_order_effects": [
+    {
+      "action": "Cut prices to increase sales",
+      "immediate": "Sales volume increases",
+      "delayed": "Brand perception as 'cheap' erodes premium positioning",
+      "timeline": "6-12 months"
+    }
+  ],
+  "archetypes": [
+    {
+      "name": "Limits to Growth",
+      "description": "Rapid growth eventually hits capacity constraints, slowing expansion",
+      "nodes_involved": ["Sales Growth", "Production Capacity", "Quality"],
+      "dynamic": "Initial success leads to resource strain"
+    }
+  ],
+  "feedback_loops": [
+    {
+      "type": "reinforcing",
+      "variables": ["Product Quality", "Customer Satisfaction", "Revenue", "Investment in Quality"],
+      "description": "Better quality -> happier customers -> more revenue -> more investment in quality"
+    }
+  ]
+}
+
+EXTRACT AT LEAST 15 CONCEPTS AND 20 RELATIONSHIPS. Be thorough and comprehensive.`,
+          ); // Close the callAI prompt
+
+      let analysisText = aiResponse.trim();
+      analysisText = analysisText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      
+      let analysis;
+      try {
+        analysis = JSON.parse(analysisText);
+      } catch (parseError) {
+        console.error('Parse error:', parseError);
+        console.log('Response text:', analysisText);
+        throw new Error('Could not parse AI response. Raw response: ' + analysisText.substring(0, 200));
+      }
+      
+      if (!analysis.concepts || !Array.isArray(analysis.concepts)) {
+        throw new Error('Invalid response format - missing concepts array');
+      }
+
+      if (analysis.concepts.length < 10) {
+        setSavedMessage(`Warning: Only ${analysis.concepts.length} variables extracted. Document may need more detailed analysis.`);
+      }
+
+      if (!analysis.relationships || !Array.isArray(analysis.relationships)) {
+        analysis.relationships = [];
+      }
+
+      if (analysis.relationships.length < 15) {
+        setSavedMessage(`Warning: Only ${analysis.relationships.length} relationships found. Try re-uploading or using a more detailed document.`);
+      }
+      
+      setExtractedData({ ...analysis, filename });
+      generateSystemMap(analysis);
+      setSavedMessage(`Analysis complete! Found ${analysis.concepts.length} variables, ${analysis.relationships.length} relationships`);
+      setAnalyzing(false);
+      
+    } catch (error) {
+      console.error('Analysis error:', error);
+      setSavedMessage(`Analysis failed: ${error.message}`);
+      setAnalyzing(false);
+      setShowUploadPanel(true);
+    }
+  };
+
+  const generateSystemMap = (analysis) => {
+    const newNodes = analysis.concepts.map((concept, idx) => ({
+      id: `node-${Date.now()}-${idx}`,
+      name: concept.name,
+      description: concept.description,
+      type: concept.type,
+      leverage_level: concept.leverage_level || 12,
+      x: 200 + (idx % 4) * 250,
+      y: 150 + Math.floor(idx / 4) * 200
+    }));
+
+    const newEdges = analysis.relationships.map((rel, idx) => {
+      const fromNode = newNodes.find(n => n.name === rel.from);
+      const toNode = newNodes.find(n => n.name === rel.to);
+      
+      if (!fromNode || !toNode) return null;
+      
+      return {
+        id: `edge-${Date.now()}-${idx}`,
+        from: fromNode.id,
+        to: toNode.id,
+        polarity: rel.polarity,
+        strength: rel.strength,
+        evidence: rel.evidence,
+        delay: rel.delay || 'unknown'
+      };
+    }).filter(Boolean);
+
+    setNodes(newNodes);
+    setEdges(newEdges);
+    saveSystem();
+  };
+
+  const runScenarioAnalysis = async () => {
+    if (!scenarioInput.trim() || nodes.length === 0) return;
+    
+    setRunningScenario(true);
+    
+    try {
+      const systemContext = {
+        variables: nodes.map(n => n.name),
+        relationships: edges.map(e => ({
+          from: getNodeById(e.from)?.name,
+          to: getNodeById(e.to)?.name,
+          polarity: e.polarity
+        })),
+        goals: extractedData?.goals || [],
+        constraints: extractedData?.constraints || []
+      };
+
+      const aiResponse = await callAI(`You are a scenario analysis expert. Given this system and a "what-if" scenario, predict cascading effects.
+
+System Context:
+${JSON.stringify(systemContext, null, 2)}
+
+Scenario: ${scenarioInput}
+
+Analyze and return ONLY valid JSON:
+{
+  "immediate_effects": [
+    {"variable": "Revenue", "direction": "decrease", "magnitude": "moderate", "reason": "..."}
+  ],
+  "second_order_effects": [
+    {"variable": "Quality", "direction": "increase", "magnitude": "small", "delay": "3-6 months", "reason": "..."}
+  ],
+  "feedback_activation": [
+    {"loop_type": "reinforcing", "variables": ["X", "Y"], "behavior": "amplifies decline"}
+  ],
+  "risk_level": "medium",
+  "critical_assumptions": ["assumption 1", "assumption 2"],
+  "recommended_actions": ["action 1", "action 2"]
+}`);
+
+      let result = aiResponse.trim().replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      setScenarioResults(JSON.parse(result));
+      setRunningScenario(false);
+      
+    } catch (error) {
+      console.error('Scenario analysis error:', error);
+      setSavedMessage('Scenario analysis failed: ' + error.message);
+      setRunningScenario(false);
+    }
+  };
+
+  const analyzeDecisions = async () => {
+    const validOptions = decisionOptions.filter(opt => opt.trim());
+    if (validOptions.length < 2 || nodes.length === 0) return;
+    
+    setAnalyzingDecision(true);
+    
+    try {
+      const systemContext = {
+        variables: nodes.map(n => ({ name: n.name, type: n.type, leverage: n.leverage_level })),
+        relationships: edges.map(e => ({
+          from: getNodeById(e.from)?.name,
+          to: getNodeById(e.to)?.name,
+          polarity: e.polarity,
+          strength: e.strength
+        })),
+        goals: extractedData?.goals || [],
+        constraints: extractedData?.constraints || []
+      };
+
+      const aiResponse = await callAI(`You are a decision analysis expert. Evaluate these options against the system model.
+
+System Context:
+${JSON.stringify(systemContext, null, 2)}
+
+Decision Options:
+${validOptions.map((opt, i) => `${i + 1}. ${opt}`).join('\n')}
+
+Return ONLY valid JSON:
+{
+  "evaluations": [
+    {
+      "option": "Option text",
+      "score": 75,
+      "pros": ["benefit 1", "benefit 2"],
+      "cons": ["risk 1", "risk 2"],
+      "impact_on_goals": [{"goal": "goal name", "impact": "positive/negative/neutral"}],
+      "unintended_consequences": ["consequence 1"],
+      "leverage_point_alignment": "high/medium/low"
+    }
+  ],
+  "recommendation": {
+    "best_option": "Option text",
+    "reasoning": "explanation",
+    "conditions": ["condition 1", "condition 2"]
+  },
+  "trade_offs": ["trade-off 1", "trade-off 2"]
+}`);
+
+      let result = aiResponse.trim().replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      setDecisionAnalysis(JSON.parse(result));
+      setAnalyzingDecision(false);
+      
+    } catch (error) {
+      console.error('Decision analysis error:', error);
+      setSavedMessage('Decision analysis failed: ' + error.message);
+      setAnalyzingDecision(false);
+    }
+  };
+
+  const stressTestStrategy = async () => {
+    if (!strategyText.trim() || nodes.length === 0) return;
+    
+    setTestingStrategy(true);
+    
+    try {
+      const systemContext = {
+        variables: nodes.map(n => n.name),
+        relationships: edges.map(e => ({
+          from: getNodeById(e.from)?.name,
+          to: getNodeById(e.to)?.name,
+          polarity: e.polarity
+        })),
+        feedback_loops: detectLoops(),
+        leverage_points: extractedData?.leverage_points || [],
+        constraints: extractedData?.constraints || []
+      };
+
+      const aiResponse = await callAI(`You are a strategic red-team analyst. Test this strategy against the system dynamics.
+
+System Context:
+${JSON.stringify(systemContext, null, 2)}
+
+Strategy to Test:
+${strategyText}
+
+Return ONLY valid JSON:
+{
+  "vulnerabilities": [
+    {"issue": "vulnerability description", "severity": "high/medium/low", "affected_variables": ["var1"]}
+  ],
+  "conflicts": [
+    {"type": "goal conflict", "description": "...", "resolution": "..."}
+  ],
+  "dependencies": [
+    {"depends_on": "Critical resource", "risk": "...", "mitigation": "..."}
+  ],
+  "assumption_tests": [
+    {"assumption": "...", "criticality": "high/medium/low", "evidence_needed": "..."}
+  ],
+  "resilience_score": 65,
+  "modifications": [
+    {"change": "Add backup mechanism", "rationale": "...", "expected_improvement": "..."}
+  ]
+}`);
+
+      let result = aiResponse.trim().replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      setStressTestResults(JSON.parse(result));
+      setTestingStrategy(false);
+      
+    } catch (error) {
+      console.error('Strategy test error:', error);
+      setSavedMessage('Strategy test failed: ' + error.message);
+      setTestingStrategy(false);
+    }
+  };
+
+  const addNode = () => {
+    if (!newNodeName.trim()) return;
+    
+    const newNode = {
+      id: `node-${Date.now()}`,
+      name: newNodeName,
+      x: 300 + Math.random() * 200,
+      y: 200 + Math.random() * 200,
+      leverage_level: 12
+    };
+    
+    setNodes([...nodes, newNode]);
+    setNewNodeName('');
+  };
+
+  const deleteNode = (nodeId) => {
+    setNodes(nodes.filter(n => n.id !== nodeId));
+    setEdges(edges.filter(e => e.from !== nodeId && e.to !== nodeId));
+    if (selectedNode?.id === nodeId) setSelectedNode(null);
+  };
+
+  const startConnection = (node) => {
+    if (connectingFrom?.id === node.id) {
+      setConnectingFrom(null);
+    } else {
+      setConnectingFrom(node);
+    }
+  };
+
+  const completeConnection = (toNode, polarity) => {
+    if (!connectingFrom || connectingFrom.id === toNode.id) return;
+    
+    const exists = edges.some(e => 
+      e.from === connectingFrom.id && e.to === toNode.id
+    );
+    
+    if (!exists) {
+      setEdges([...edges, {
+        id: `edge-${Date.now()}`,
+        from: connectingFrom.id,
+        to: toNode.id,
+        polarity: polarity
+      }]);
+    }
+    
+    setConnectingFrom(null);
+  };
+
+  const deleteEdge = (edgeId) => {
+    setEdges(edges.filter(e => e.id !== edgeId));
+  };
+
+  const moveNode = (nodeId, newX, newY) => {
+    setNodes(nodes.map(n => 
+      n.id === nodeId ? { ...n, x: newX, y: newY } : n
+    ));
+  };
+
+  const detectLoops = () => {
+    const loops = [];
+    const visited = new Set();
+    
+    // Enhanced loop detection: find all cycles up to length 5
+    const findCycles = (startNode, currentNode, path, polarities) => {
+      if (path.length > 5) return;
+      
+      const outgoingEdges = edges.filter(e => e.from === currentNode);
+      
+      for (const edge of outgoingEdges) {
+        if (edge.to === startNode && path.length >= 2) {
+          // Found a cycle
+          const allPolarities = [...polarities, edge.polarity];
+          const negativeCount = allPolarities.filter(p => p === '-').length;
+          const isReinforcing = negativeCount % 2 === 0;
+          
+          const loopKey = [...path, edge.to].sort().join('-');
+          if (!visited.has(loopKey)) {
+            visited.add(loopKey);
+            loops.push({
+              nodes: [...path, edge.to],
+              type: isReinforcing ? 'Reinforcing' : 'Balancing',
+              strength: allPolarities.filter(p => p === '+').length / allPolarities.length,
+              length: path.length,
+              polarities: allPolarities
+            });
+          }
+        } else if (!path.includes(edge.to)) {
+          findCycles(startNode, edge.to, [...path, edge.to], [...polarities, edge.polarity]);
+        }
+      }
+    };
+    
+    // Start cycle detection from each node
+    nodes.forEach(node => {
+      findCycles(node.id, node.id, [node.id], []);
+    });
+    
+    return loops;
+  };
+
+  const calculateNetworkMetrics = () => {
+    if (nodes.length === 0) return null;
+    
+    // Calculate degree centrality for each node
+    const nodeMetrics = nodes.map(node => {
+      const inDegree = edges.filter(e => e.to === node.id).length;
+      const outDegree = edges.filter(e => e.from === node.id).length;
+      const totalDegree = inDegree + outDegree;
+      
+      return {
+        id: node.id,
+        name: node.name,
+        inDegree,
+        outDegree,
+        totalDegree,
+        centrality: edges.length > 0 ? totalDegree / (nodes.length - 1) : 0
+      };
+    });
+    
+    // Find highly connected nodes (hubs)
+    const avgDegree = nodeMetrics.reduce((sum, n) => sum + n.totalDegree, 0) / nodes.length;
+    const hubs = nodeMetrics.filter(n => n.totalDegree > avgDegree * 1.5);
+    
+    // Find driver nodes (high out, low in)
+    const drivers = nodeMetrics.filter(n => n.outDegree > n.inDegree && n.outDegree >= 2);
+    
+    // Find outcome nodes (high in, low out)
+    const outcomes = nodeMetrics.filter(n => n.inDegree > n.outDegree && n.inDegree >= 2);
+    
+    // Calculate network density
+    const maxEdges = nodes.length * (nodes.length - 1);
+    const density = maxEdges > 0 ? edges.length / maxEdges : 0;
+    
+    return {
+      nodeMetrics,
+      hubs,
+      drivers,
+      outcomes,
+      density,
+      avgDegree
+    };
+  };
+
+  const findCausalChains = (fromNodeId, maxDepth = 3) => {
+    const chains = [];
+    
+    const traverse = (currentId, path, polarities, depth) => {
+      if (depth > maxDepth) return;
+      
+      const outgoing = edges.filter(e => e.from === currentId && !path.includes(e.to));
+      
+      if (outgoing.length === 0 && path.length > 1) {
+        // End of chain
+        const negatives = polarities.filter(p => p === '-').length;
+        const netPolarity = negatives % 2 === 0 ? '+' : '-';
+        
+        chains.push({
+          path: path.map(id => getNodeById(id)?.name),
+          length: path.length,
+          netPolarity,
+          strength: polarities.every(p => p === '+') || polarities.every(p => p === '-') ? 'consistent' : 'mixed'
+        });
+      }
+      
+      for (const edge of outgoing) {
+        traverse(edge.to, [...path, edge.to], [...polarities, edge.polarity], depth + 1);
+      }
+    };
+    
+    traverse(fromNodeId, [fromNodeId], [], 0);
+    return chains;
+  };
+
+  const exportSystem = () => {
+    const data = {
+      nodes: nodes,
+      edges: edges,
+      loops: detectLoops(),
+      extractedData: extractedData,
+      scenarioResults: scenarioResults,
+      decisionAnalysis: decisionAnalysis,
+      stressTestResults: stressTestResults,
+      exportDate: new Date().toISOString()
+    };
+    
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'system-analysis-complete.json';
+    a.click();
+  };
+  
+  const generateSystemDiagram = () => {
+  const svg = canvasRef.current;
+  if (!svg) return null;
+  
+  try {
+    // Get all nodes to calculate bounds
+    const nodePositions = nodes.map(n => ({ x: n.x, y: n.y }));
+    if (nodePositions.length === 0) return null;
+    
+    const minX = Math.min(...nodePositions.map(n => n.x)) - 100;
+    const minY = Math.min(...nodePositions.map(n => n.y)) - 100;
+    const maxX = Math.max(...nodePositions.map(n => n.x)) + 100;
+    const maxY = Math.max(...nodePositions.map(n => n.y)) + 100;
+    const width = maxX - minX;
+    const height = maxY - minY;
+    
+    // Create a clean SVG string with inline styles
+    let svgContent = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="${minX} ${minY} ${width} ${height}" width="${Math.min(width, 1200)}" height="${Math.min(height, 800)}">
+        <defs>
+          <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+            <polygon points="0 0, 10 3, 0 6" fill="#64748b" />
+          </marker>
+        </defs>
+        
+        <!-- Edges -->
+        ${edges.map(edge => {
+          const from = getNodeById(edge.from);
+          const to = getNodeById(edge.to);
+          if (!from || !to) return '';
+          const color = edge.polarity === '+' ? '#10b981' : '#ef4444';
+          const width = edge.strength === 'strong' ? 3 : edge.strength === 'medium' ? 2 : 1.5;
+          return `
+            <line x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" 
+                  stroke="${color}" stroke-width="${width}" marker-end="url(#arrowhead)" opacity="0.8"/>
+            <text x="${(from.x + to.x) / 2}" y="${(from.y + to.y) / 2 - 10}" 
+                  font-size="14" font-weight="bold" fill="${color}" text-anchor="middle">${edge.polarity}</text>
+          `;
+        }).join('')}
+        
+        <!-- Nodes -->
+        ${nodes.map(node => {
+          const bgColor = node.leverage_level <= 4 ? '#fee2e2' : node.leverage_level <= 8 ? '#fef3c7' : '#dbeafe';
+          const borderColor = node.leverage_level <= 4 ? '#dc2626' : node.leverage_level <= 8 ? '#f59e0b' : '#3b82f6';
+          return `
+            <g>
+              <rect x="${node.x - 80}" y="${node.y - 40}" width="160" height="80" 
+                    fill="${bgColor}" stroke="${borderColor}" stroke-width="2" rx="8"/>
+              <text x="${node.x}" y="${node.y}" 
+                    font-size="14" font-weight="600" text-anchor="middle" 
+                    dominant-baseline="middle" fill="#0f172a">${node.name}</text>
+            </g>
+          `;
+        }).join('')}
+      </svg>
+    `;
+    
+    // Return as data URL
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgContent);
+    
+  } catch (error) {
+    console.error('Diagram generation error:', error);
+    return null;
+  }
+};
+
+const exportToDocx = async () => {
+  try {
+    setSavedMessage('Generating report...');
+    
+    const diagramData = generateSystemDiagram();
+    const networkMetrics = calculateNetworkMetrics();
+    const loops = detectLoops();
+    
+    let htmlContent = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Strategic System Analysis Report</title>
+  <style>
+    body { 
+      font-family: Arial, Helvetica, sans-serif; 
+      line-height: 1.6; 
+      max-width: 1200px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+    h1 { 
+      color: #1e40af; 
+      border-bottom: 3px solid #1e40af; 
+      padding-bottom: 10px; 
+    }
+    h2 { 
+      color: #2563eb; 
+      border-bottom: 2px solid #93c5fd; 
+      padding-bottom: 8px; 
+      margin-top: 30px; 
+    }
+    h3 { color: #3b82f6; margin-top: 20px; }
+    table { 
+      border-collapse: collapse; 
+      width: 100%; 
+      margin: 20px 0; 
+    }
+    th, td { 
+      border: 1px solid #cbd5e1; 
+      padding: 10px; 
+      text-align: left; 
+    }
+    th { 
+      background-color: #eff6ff; 
+      color: #1e40af; 
+      font-weight: bold; 
+    }
+    .metric { 
+      background-color: #f8fafc; 
+      padding: 15px; 
+      margin: 10px 0; 
+      border-radius: 8px; 
+      border-left: 4px solid #2563eb; 
+    }
+    .diagram-container {
+      text-align: center;
+      margin: 30px 0;
+      padding: 20px;
+      background: #f8fafc;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+    }
+    .diagram-container img {
+      max-width: 100%;
+      height: auto;
+      border: 1px solid #cbd5e1;
+      background: white;
+      padding: 20px;
+    }
+    .loop { 
+      padding: 12px; 
+      margin: 10px 0; 
+      border-radius: 6px;
+    }
+    .loop-reinforcing { 
+      background-color: #fee2e2; 
+      border-left: 4px solid #ef4444; 
+    }
+    .loop-balancing { 
+      background-color: #dbeafe; 
+      border-left: 4px solid #3b82f6; 
+    }
+    .leverage-high { color: #dc2626; font-weight: bold; }
+    .leverage-medium { color: #f59e0b; font-weight: bold; }
+    .leverage-low { color: #3b82f6; font-weight: bold; }
+    .footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #cbd5e1;
+      text-align: center;
+      color: #64748b;
+      font-size: 12px;
+    }
+    @media print {
+      body { margin: 0; }
+      h2 { page-break-before: auto; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Strategic System Analysis Report</h1>
+  <div class="metric">
+    <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+    ${extractedData?.filename ? `<p><strong>Source Document:</strong> ${extractedData.filename}</p>` : ''}
+    <p><strong>Variables:</strong> ${nodes.length} | <strong>Relationships:</strong> ${edges.length} | <strong>Feedback Loops:</strong> ${loops.length}</p>
+    ${networkMetrics ? `<p><strong>Network Density:</strong> ${Math.round(networkMetrics.density * 100)}%</p>` : ''}
+  </div>
+
+  <h2>System Diagram</h2>
+  <div class="diagram-container">
+    ${diagramData ? `<img src="${diagramData}" alt="System Diagram" />` : '<p style="color: #64748b;">No diagram available</p>'}
+  </div>
+
+  ${networkMetrics && (networkMetrics.hubs.length > 0 || networkMetrics.drivers.length > 0 || networkMetrics.outcomes.length > 0) ? `
+  <h2>Network Analysis</h2>
+  
+  ${networkMetrics.hubs.length > 0 ? `
+  <h3>Hub Variables (${networkMetrics.hubs.length})</h3>
+  <p>Highly connected nodes with widespread influence:</p>
+  <ul>
+    ${networkMetrics.hubs.slice(0, 5).map(hub => `
+      <li><strong>${hub.name}</strong> - ${hub.totalDegree} connections (In: ${hub.inDegree}, Out: ${hub.outDegree})</li>
+    `).join('')}
+  </ul>
+  ` : ''}
+  
+  ${networkMetrics.drivers.length > 0 ? `
+  <h3>Driver Variables (${networkMetrics.drivers.length})</h3>
+  <p>Upstream influencers - key leverage points:</p>
+  <ul>
+    ${networkMetrics.drivers.slice(0, 5).map(driver => `
+      <li><strong>${driver.name}</strong> - Influences ${driver.outDegree} variables</li>
+    `).join('')}
+  </ul>
+  ` : ''}
+  
+  ${networkMetrics.outcomes.length > 0 ? `
+  <h3>Outcome Variables (${networkMetrics.outcomes.length})</h3>
+  <p>Downstream results - key indicators to monitor:</p>
+  <ul>
+    ${networkMetrics.outcomes.slice(0, 5).map(outcome => `
+      <li><strong>${outcome.name}</strong> - Influenced by ${outcome.inDegree} variables</li>
+    `).join('')}
+  </ul>
+  ` : ''}
+  ` : ''}
+
+  <h2>Variables</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Variable</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Leverage Level</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${nodes.map(node => `
+        <tr>
+          <td><strong>${node.name}</strong></td>
+          <td>${node.type || 'N/A'}</td>
+          <td>${node.description || 'N/A'}</td>
+          <td>${node.leverage_level || 'N/A'}</td>
+        </tr>
+      `).join('')}
+    </tbody>
+  </table>
+
+  <h2>Relationships</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>From</th>
+        <th>To</th>
+        <th>Polarity</th>
+        <th>Strength</th>
+        <th>Evidence</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${edges.map(edge => `
+        <tr>
+          <td>${getNodeById(edge.from)?.name || 'Unknown'}</td>
+          <td>${getNodeById(edge.to)?.name || 'Unknown'}</td>
+          <td style="color: ${edge.polarity === '+' ? '#10b981' : '#ef4444'}; font-weight: bold;">${edge.polarity}</td>
+          <td>${edge.strength || 'N/A'}</td>
+          <td>${edge.evidence || 'N/A'}</td>
+        </tr>
+      `).join('')}
+    </tbody>
+  </table>
+
+  ${loops.length > 0 ? `
+  <h2>Feedback Loops</h2>
+  ${loops.map((loop, idx) => {
+    const isReinforcing = loop.type === 'Reinforcing';
+    return `
+      <div class="loop ${isReinforcing ? 'loop-reinforcing' : 'loop-balancing'}">
+        <strong>${isReinforcing ? '🔄' : '⚖️'} ${loop.type} Loop ${idx + 1}</strong> (${loop.length} variables)<br>
+        <strong>Path:</strong> ${loop.nodes.map(id => getNodeById(id)?.name || 'Unknown').join(' → ')}<br>
+        <em>${isReinforcing ? 'Amplifies changes (growth or decline)' : 'Seeks equilibrium (stabilizing)'}</em>
+      </div>
+    `;
+  }).join('')}
+  ` : ''}
+
+  ${extractedData?.leverage_points && extractedData.leverage_points.length > 0 ? `
+  <h2>Leverage Points Analysis</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Level</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Impact</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${extractedData.leverage_points.map(lp => `
+        <tr>
+          <td class="${lp.level <= 4 ? 'leverage-high' : lp.level <= 8 ? 'leverage-medium' : 'leverage-low'}">
+            ${lp.level}
+          </td>
+          <td>${lp.type}</td>
+          <td>${lp.description}</td>
+          <td>${lp.impact}</td>
+        </tr>
+      `).join('')}
+    </tbody>
+  </table>
+  ` : ''}
+
+  ${extractedData?.archetypes && extractedData.archetypes.length > 0 ? `
+  <h2>System Archetypes</h2>
+  ${extractedData.archetypes.map(arch => `
+    <div class="metric">
+      <h3 style="margin-top: 0; color: #7c3aed;">${arch.name}</h3>
+      <p>${arch.description}</p>
+      ${arch.nodes_involved && arch.nodes_involved.length > 0 ? `<p><strong>Variables Involved:</strong> ${arch.nodes_involved.join(', ')}</p>` : ''}
+    </div>
+  `).join('')}
+  ` : ''}
+
+  ${scenarioResults ? `
+  <h2>Scenario Analysis Results</h2>
+  <div class="metric">
+    <p><strong>Scenario:</strong> ${scenarioInput}</p>
+    <p><strong>Risk Level:</strong> <span style="color: ${scenarioResults.risk_level === 'high' ? '#dc2626' : scenarioResults.risk_level === 'medium' ? '#f59e0b' : '#10b981'}; font-weight: bold;">${scenarioResults.risk_level?.toUpperCase()}</span></p>
+  </div>
+
+  ${scenarioResults.immediate_effects && scenarioResults.immediate_effects.length > 0 ? `
+  <h3>Immediate Effects</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Variable</th>
+        <th>Direction</th>
+        <th>Magnitude</th>
+        <th>Reason</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${scenarioResults.immediate_effects.map(effect => `
+        <tr>
+          <td><strong>${effect.variable}</strong></td>
+          <td style="color: ${effect.direction === 'increase' ? '#10b981' : '#ef4444'}; font-weight: bold;">
+            ${effect.direction === 'increase' ? '↑' : '↓'} ${effect.direction}
+          </td>
+          <td>${effect.magnitude}</td>
+          <td>${effect.reason}</td>
+        </tr>
+      `).join('')}
+    </tbody>
+  </table>
+  ` : ''}
+
+  ${scenarioResults.second_order_effects && scenarioResults.second_order_effects.length > 0 ? `
+  <h3>Second-Order Effects</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Variable</th>
+        <th>Direction</th>
+        <th>Delay</th>
+        <th>Reason</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${scenarioResults.second_order_effects.map(effect => `
+        <tr>
+          <td><strong>${effect.variable}</strong></td>
+          <td style="color: ${effect.direction === 'increase' ? '#10b981' : '#ef4444'}; font-weight: bold;">
+            ${effect.direction}
+          </td>
+          <td>${effect.delay}</td>
+          <td>${effect.reason}</td>
+        </tr>
+      `).join('')}
+    </tbody>
+  </table>
+  ` : ''}
+
+  ${scenarioResults.recommended_actions && scenarioResults.recommended_actions.length > 0 ? `
+  <h3>Recommended Actions</h3>
+  <ul>
+    ${scenarioResults.recommended_actions.map(action => `<li>${action}</li>`).join('')}
+  </ul>
+  ` : ''}
+
+  ${scenarioResults.critical_assumptions && scenarioResults.critical_assumptions.length > 0 ? `
+  <h3>Critical Assumptions</h3>
+  <ul>
+    ${scenarioResults.critical_assumptions.map(assumption => `<li>${assumption}</li>`).join('')}
+  </ul>
+  ` : ''}
+  ` : ''}
+
+  ${decisionAnalysis ? `
+  <h2>Decision Analysis Results</h2>
+  
+  ${decisionAnalysis.recommendation ? `
+  <div class="metric" style="background-color: #dcfce7; border-left: 4px solid #10b981;">
+    <h3 style="margin-top: 0; color: #15803d;">✓ Recommended Decision</h3>
+    <p><strong>${decisionAnalysis.recommendation.best_option}</strong></p>
+    <p>${decisionAnalysis.recommendation.reasoning}</p>
+    ${decisionAnalysis.recommendation.conditions && decisionAnalysis.recommendation.conditions.length > 0 ? `
+      <p><strong>Conditions:</strong> ${decisionAnalysis.recommendation.conditions.join('; ')}</p>
+    ` : ''}
+  </div>
+  ` : ''}
+
+  ${decisionAnalysis.evaluations && decisionAnalysis.evaluations.length > 0 ? `
+  <h3>Option Evaluations</h3>
+  ${decisionAnalysis.evaluations.map(evaluation => `
+    <div class="metric">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h4 style="margin: 0; color: #0f172a;">${evaluation.option}</h4>
+        <span style="font-size: 24px; font-weight: bold; color: ${evaluation.score >= 70 ? '#10b981' : evaluation.score >= 50 ? '#f59e0b' : '#ef4444'};">
+          ${evaluation.score}
+        </span>
+      </div>
+      
+      ${evaluation.pros && evaluation.pros.length > 0 ? `
+      <div style="margin-bottom: 12px;">
+        <strong style="color: #15803d;">Pros:</strong>
+        <ul style="margin: 4px 0;">
+          ${evaluation.pros.map(pro => `<li>${pro}</li>`).join('')}
+        </ul>
+      </div>
+      ` : ''}
+      
+      ${evaluation.cons && evaluation.cons.length > 0 ? `
+      <div style="margin-bottom: 12px;">
+        <strong style="color: #dc2626;">Cons:</strong>
+        <ul style="margin: 4px 0;">
+          ${evaluation.cons.map(con => `<li>${con}</li>`).join('')}
+        </ul>
+      </div>
+      ` : ''}
+      
+      ${evaluation.unintended_consequences && evaluation.unintended_consequences.length > 0 ? `
+      <div>
+        <strong style="color: #f59e0b;">Unintended Consequences:</strong>
+        <ul style="margin: 4px 0;">
+          ${evaluation.unintended_consequences.map(consequence => `<li>${consequence}</li>`).join('')}
+        </ul>
+      </div>
+      ` : ''}
+    </div>
+  `).join('')}
+  ` : ''}
+
+  ${decisionAnalysis.trade_offs && decisionAnalysis.trade_offs.length > 0 ? `
+  <h3>Trade-offs</h3>
+  <ul>
+    ${decisionAnalysis.trade_offs.map(tradeoff => `<li>${tradeoff}</li>`).join('')}
+  </ul>
+  ` : ''}
+  ` : ''}
+
+  ${stressTestResults ? `
+  <h2>Strategy Stress Test Results</h2>
+  
+  <div class="metric">
+    <p><strong>Strategy Tested:</strong></p>
+    <p style="font-style: italic; color: #64748b;">${strategyText}</p>
+  </div>
+
+  ${stressTestResults.resilience_score !== undefined ? `
+  <div class="metric" style="background-color: ${stressTestResults.resilience_score >= 70 ? '#dcfce7' : stressTestResults.resilience_score >= 50 ? '#fef3c7' : '#fee2e2'}; border-left: 4px solid ${stressTestResults.resilience_score >= 70 ? '#10b981' : stressTestResults.resilience_score >= 50 ? '#f59e0b' : '#ef4444'};">
+    <h3 style="margin-top: 0;">Resilience Score: ${stressTestResults.resilience_score}/100</h3>
+  </div>
+  ` : ''}
+
+  ${stressTestResults.vulnerabilities && stressTestResults.vulnerabilities.length > 0 ? `
+  <h3>⚠️ Vulnerabilities</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Severity</th>
+        <th>Issue</th>
+        <th>Affected Variables</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${stressTestResults.vulnerabilities.map(vuln => `
+        <tr>
+          <td style="color: ${vuln.severity === 'high' ? '#dc2626' : vuln.severity === 'medium' ? '#f59e0b' : '#10b981'}; font-weight: bold;">
+            ${vuln.severity === 'high' ? '🔴' : vuln.severity === 'medium' ? '🟡' : '🟢'} ${vuln.severity?.toUpperCase()}
+          </td>
+          <td>${vuln.issue}</td>
+          <td>${vuln.affected_variables?.join(', ') || 'N/A'}</td>
+        </tr>
+      `).join('')}
+    </tbody>
+  </table>
+  ` : ''}
+
+  ${stressTestResults.conflicts && stressTestResults.conflicts.length > 0 ? `
+  <h3>⚡ Conflicts</h3>
+  ${stressTestResults.conflicts.map(conflict => `
+    <div class="metric">
+      <h4 style="margin-top: 0; color: #f59e0b;">${conflict.type}</h4>
+      <p>${conflict.description}</p>
+      ${conflict.resolution ? `<p><strong>Resolution:</strong> ${conflict.resolution}</p>` : ''}
+    </div>
+  `).join('')}
+  ` : ''}
+
+  ${stressTestResults.dependencies && stressTestResults.dependencies.length > 0 ? `
+  <h3>🔗 Critical Dependencies</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Depends On</th>
+        <th>Risk</th>
+        <th>Mitigation</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${stressTestResults.dependencies.map(dep => `
+        <tr>
+          <td><strong>${dep.depends_on}</strong></td>
+          <td>${dep.risk}</td>
+          <td>${dep.mitigation || 'N/A'}</td>
+        </tr>
+      `).join('')}
+    </tbody>
+  </table>
+  ` : ''}
+
+  ${stressTestResults.assumption_tests && stressTestResults.assumption_tests.length > 0 ? `
+  <h3>Assumption Tests</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Assumption</th>
+        <th>Criticality</th>
+        <th>Evidence Needed</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${stressTestResults.assumption_tests.map(test => `
+        <tr>
+          <td>${test.assumption}</td>
+          <td style="color: ${test.criticality === 'high' ? '#dc2626' : test.criticality === 'medium' ? '#f59e0b' : '#10b981'}; font-weight: bold;">
+            ${test.criticality?.toUpperCase()}
+          </td>
+          <td>${test.evidence_needed}</td>
+        </tr>
+      `).join('')}
+    </tbody>
+  </table>
+  ` : ''}
+
+  ${stressTestResults.modifications && stressTestResults.modifications.length > 0 ? `
+  <h3>💡 Suggested Improvements</h3>
+  ${stressTestResults.modifications.map(mod => `
+    <div class="metric" style="background-color: #dcfce7; border-left: 4px solid #10b981;">
+      <h4 style="margin-top: 0; color: #15803d;">${mod.change}</h4>
+      <p>${mod.rationale}</p>
+      ${mod.expected_improvement ? `<p><strong>Expected Improvement:</strong> ${mod.expected_improvement}</p>` : ''}
+    </div>
+  `).join('')}
+  ` : ''}
+  ` : ''}
+
+  <div class="footer">
+
+  <div class="footer">
+    <p><strong>Generated by Strategic System Mapper</strong> | ${new Date().toLocaleString()}</p>
+    <p style="margin-top: 10px;">
+      <strong>To convert to PDF:</strong> File → Print → Save as PDF<br>
+      <strong>To convert to Word:</strong> Open in Word and Save As .docx
+    </p>
+  </div>
+</body>
+</html>`;
+
+    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `system-analysis-report-${Date.now()}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    setSavedMessage('✓ Report exported! Open the HTML file and print to PDF');
+    setTimeout(() => setSavedMessage(''), 5000);
+    
+  } catch (error) {
+    console.error('Export error:', error);
+    setSavedMessage('Export failed: ' + error.message);
+  }
+};
+
+  const clearSystem = () => {
+    setShowConfirmClear(true);
+  };
+
+  const confirmClear = () => {
+    setNodes([]);
+    setEdges([]);
+    setSelectedNode(null);
+    setConnectingFrom(null);
+    setExtractedData(null);
+    setScenarioResults(null);
+    setDecisionAnalysis(null);
+    setStressTestResults(null);
+    setShowUploadPanel(true);
+    setShowConfirmClear(false);
+
+    if (fileInputRef.current) fileInputRef.current.value = '';
+
+    setScenarioInput('');
+    setDecisionOptions(['', '', '']);
+    setStrategyText('');
+    setSavedMessage('');
+    setActiveTab('metrics');
+  };
+
+  const loops = detectLoops();
+  const networkMetrics = calculateNetworkMetrics();
+  const getNodeById = (id) => nodes.find(n => n.id === id);
+
+  const getLeveragePointName = (level) => {
+    const leveragePoints = {
+      1: "Transcend Paradigms",
+      2: "Change Paradigm",
+      3: "Change Goals",
+      4: "Self-Organization",
+      5: "Change Rules",
+      6: "Information Flow",
+      7: "Positive Feedback",
+      8: "Negative Feedback",
+      9: "Delays",
+      10: "Stock Structure",
+      11: "Buffer Sizes",
+      12: "Parameters"
+    };
+    return leveragePoints[level] || "Unknown";
+  };
+
+  return (
+    <div style={{ width: '100%', height: '100vh', backgroundColor: '#f8fafc', display: 'flex', flexDirection: 'column' }}>
+      {showSettings && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+          <div style={{ backgroundColor: 'white', borderRadius: '8px', padding: '24px', maxWidth: '500px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#0f172a', marginBottom: '16px' }}>AI Provider Settings</h3>
+            
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#475569', marginBottom: '8px' }}>
+                Select AI Provider
+              </label>
+              <select
+                value={aiProvider}
+                onChange={(e) => setAiProvider(e.target.value)}
+                style={{ width: '100%', padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '14px' }}
+              >
+                <option value="ollama">Ollama (Local - Free)</option>
+                <option value="groq">Groq (Cloud - API Key Required)</option>
+              </select>
+            </div>
+
+            {aiProvider === 'groq' && (
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#475569', marginBottom: '8px' }}>
+                  Groq API Key
+                </label>
+                <input
+                  type="password"
+                  value={groqApiKey}
+                  onChange={(e) => setGroqApiKey(e.target.value)}
+                  placeholder="gsk_..."
+                  style={{ width: '100%', padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '14px' }}
+                />
+                <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                  Get your free API key at <a href="https://console.groq.com" target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb' }}>console.groq.com</a>
+                </p>
+              </div>
+            )}
+
+            {aiProvider === 'ollama' && (
+              <div style={{ padding: '12px', backgroundColor: '#eff6ff', borderRadius: '6px', marginBottom: '16px' }}>
+                <p style={{ fontSize: '12px', color: '#1e40af' }}>
+                  Make sure Ollama is running: <code style={{ backgroundColor: '#dbeafe', padding: '2px 6px', borderRadius: '4px' }}>ollama serve</code>
+                </p>
+              </div>
+            )}
+            {/* Extraction Parameters */}
+<div style={{ marginBottom: '16px', padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+  <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '16px', color: '#0f172a' }}>📊 Extraction Parameters</h4>
+  
+  <div style={{ marginBottom: '20px' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+      <span style={{ fontSize: '13px', fontWeight: '500', color: '#475569' }}>Minimum Variables</span>
+      <span style={{ fontSize: '18px', fontWeight: '700', color: '#2563eb', backgroundColor: '#eff6ff', padding: '2px 8px', borderRadius: '4px' }}>{minVariables}</span>
+    </div>
+    <input
+      type="range"
+      min="5"
+      max="50"
+      step="1"
+      value={minVariables}
+      onChange={(e) => setMinVariables(parseInt(e.target.value))}
+      style={{ width: '100%', cursor: 'pointer', accentColor: '#2563eb' }}
+    />
+    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#94a3b8', marginTop: '4px', marginBottom: '8px' }}>
+      <span>5 (Quick)</span>
+      <span>25 (Balanced)</span>
+      <span>50 (Deep)</span>
+    </div>
+    
+    <div style={{ 
+      padding: '8px 12px', 
+      backgroundColor: minVariables <= 10 ? '#dbeafe' : minVariables <= 25 ? '#dcfce7' : '#fef3c7',
+      borderRadius: '6px',
+      border: `1px solid ${minVariables <= 10 ? '#93c5fd' : minVariables <= 25 ? '#86efac' : '#fde047'}`
+    }}>
+      <div style={{ fontSize: '11px', fontWeight: '600', color: '#0f172a', marginBottom: '4px' }}>
+        {minVariables <= 10 ? '⚡ Quick Scan Mode' : minVariables <= 25 ? '✓ Balanced Analysis' : '🔬 Deep Dive Mode'}
+      </div>
+      <div style={{ fontSize: '10px', color: '#475569' }}>
+        {minVariables <= 10 
+          ? 'Best for: Short docs (1-3 pages), rapid prototyping, getting started quickly'
+          : minVariables <= 25 
+          ? 'Best for: Medium docs (5-10 pages), standard analysis, most use cases'
+          : 'Best for: Long docs (10+ pages), comprehensive analysis, research papers'}
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+      <span style={{ fontSize: '13px', fontWeight: '500', color: '#475569' }}>Minimum Relationships</span>
+      <span style={{ fontSize: '18px', fontWeight: '700', color: '#10b981', backgroundColor: '#f0fdf4', padding: '2px 8px', borderRadius: '4px' }}>{minRelationships}</span>
+    </div>
+    <input
+      type="range"
+      min="5"
+      max="100"
+      step="5"
+      value={minRelationships}
+      onChange={(e) => setMinRelationships(parseInt(e.target.value))}
+      style={{ width: '100%', cursor: 'pointer', accentColor: '#10b981' }}
+    />
+    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#94a3b8', marginTop: '4px', marginBottom: '8px' }}>
+      <span>5 (Sparse)</span>
+      <span>40 (Balanced)</span>
+      <span>100 (Dense)</span>
+    </div>
+    
+    <div style={{ 
+      padding: '8px 12px', 
+      backgroundColor: minRelationships <= 15 ? '#fef3c7' : minRelationships <= 40 ? '#dcfce7' : '#dbeafe',
+      borderRadius: '6px',
+      border: `1px solid ${minRelationships <= 15 ? '#fde047' : minRelationships <= 40 ? '#86efac' : '#93c5fd'}`
+    }}>
+      <div style={{ fontSize: '11px', fontWeight: '600', color: '#0f172a', marginBottom: '4px' }}>
+        {minRelationships <= 15 ? '🎯 Strong Connections Only' : minRelationships <= 40 ? '⚖️ Balanced Network' : '🕸️ Dense Network'}
+      </div>
+      <div style={{ fontSize: '10px', color: '#475569' }}>
+        {minRelationships <= 15 
+          ? 'Extracts only explicit, strong causal relationships. Cleaner diagrams, less noise.'
+          : minRelationships <= 40 
+          ? 'Mix of strong and moderate connections. Good balance of detail vs clarity.'
+          : 'Includes weak/implied connections. Rich causal model, may include speculation.'}
+      </div>
+    </div>
+    
+    <div style={{ marginTop: '12px', padding: '8px', backgroundColor: '#fffbeb', borderRadius: '4px', border: '1px solid #fef08a' }}>
+      <div style={{ fontSize: '10px', color: '#92400e' }}>
+        <strong>💡 Pro Tip:</strong> Start with lower values and increase if you want more detail. Higher values work best with longer, well-structured documents.
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowSettings(false)}
+                style={{ padding: '8px 16px', backgroundColor: '#e2e8f0', color: '#475569', borderRadius: '8px', border: 'none', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => setShowSettings(false)}
+                style={{ padding: '8px 16px', backgroundColor: '#2563eb', color: 'white', borderRadius: '8px', border: 'none', cursor: 'pointer' }}
+              >
+                Save Settings
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showConfirmClear && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+          <div style={{ backgroundColor: 'white', borderRadius: '8px', padding: '24px', maxWidth: '400px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#0f172a', marginBottom: '12px' }}>Clear System?</h3>
+            <p style={{ color: '#64748b', marginBottom: '24px' }}>
+              This will delete all variables, relationships, and analysis. This cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowConfirmClear(false)}
+                style={{ padding: '8px 16px', backgroundColor: '#e2e8f0', color: '#475569', borderRadius: '8px', border: 'none', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmClear}
+                style={{ padding: '8px 16px', backgroundColor: '#dc2626', color: 'white', borderRadius: '8px', border: 'none', cursor: 'pointer' }}
+              >
+                Clear System
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Header */}
+      <div style={{ backgroundColor: 'white', borderBottom: '1px solid #e2e8f0', padding: '16px' }}>
+        <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#0f172a' }}>Strategic System Mapper</h1>
+            <button
+              onClick={() => setShowSettings(true)}
+              style={{ padding: '8px 16px', backgroundColor: '#f8fafc', color: '#475569', borderRadius: '8px', border: '1px solid #e2e8f0', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              ⚙️ AI Settings ({aiProvider === 'groq' ? 'Groq' : 'Ollama'})
+            </button>
+          </div>
+          
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'flex-end' }}>
+            <div style={{ flex: '1 1 256px' }}>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#475569', marginBottom: '4px' }}>
+                Add Variable/Factor
+              </label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  type="text"
+                  value={newNodeName}
+                  onChange={(e) => setNewNodeName(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && addNode()}
+                  placeholder="e.g., Customer Satisfaction, Revenue..."
+                  style={{ flex: 1, padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none' }}
+                />
+                <button
+                  onClick={addNode}
+                  style={{ padding: '8px 16px', backgroundColor: '#2563eb', color: 'white', borderRadius: '8px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                >
+                  <Plus size={18} />
+                  Add
+                </button>
+              </div>
+            </div>
+            
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileUpload}
+              accept=".txt,.md"
+              style={{ display: 'none' }}
+            />
+            
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={analyzing}
+              style={{ padding: '8px 16px', backgroundColor: analyzing ? '#c4b5fd' : '#7c3aed', color: 'white', borderRadius: '8px', border: 'none', cursor: analyzing ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              <Upload size={18} />
+              Upload Doc
+            </button>
+            
+            <button
+              onClick={saveSystem}
+              style={{ padding: '8px 16px', backgroundColor: '#16a34a', color: 'white', borderRadius: '8px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              <Save size={18} />
+              Save
+            </button>
+            <button
+              onClick={exportToDocx}
+              disabled={nodes.length === 0}
+              style={{ padding: '8px 16px', backgroundColor: nodes.length === 0 ? '#cbd5e1' : '#7c3aed', color: 'white', borderRadius: '8px', border: 'none', cursor: nodes.length === 0 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              <FileText size={18} />
+              Export Report
+            </button>
+            <button
+              onClick={exportSystem}
+              disabled={nodes.length === 0}
+              style={{ padding: '8px 16px', backgroundColor: nodes.length === 0 ? '#cbd5e1' : '#475569', color: 'white', borderRadius: '8px', border: 'none', cursor: nodes.length === 0 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              <Download size={18} />
+              Export
+            </button>
+            
+            <button
+              onClick={clearSystem}
+              style={{ padding: '8px 16px', backgroundColor: '#dc2626', color: 'white', borderRadius: '8px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              <RefreshCw size={18} />
+              Clear
+            </button>
+          </div>
+          
+          {savedMessage && (
+            <div style={{ marginTop: '12px', color: savedMessage.includes('Error') || savedMessage.includes('failed') ? '#dc2626' : '#16a34a', fontSize: '14px', fontWeight: '500' }}>
+              {savedMessage}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+        {/* Canvas */}
+        <div style={{ flex: 1, position: 'relative', overflow: 'auto', backgroundColor: '#f1f5f9' }}>
+          {analyzing && (
+            <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(255,255,255,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+              <div style={{ textAlign: 'center' }}>
+                <Loader size={48} style={{ animation: 'spin 1s linear infinite', color: '#2563eb', margin: '0 auto 16px' }} />
+                <p style={{ fontSize: '18px', fontWeight: '500', color: '#0f172a' }}>Analyzing document...</p>
+                <p style={{ fontSize: '14px', color: '#64748b', marginTop: '8px' }}>Extracting concepts, leverage points, and system archetypes</p>
+              </div>
+            </div>
+          )}
+          
+          {showUploadPanel && !analyzing && nodes.length === 0 && (
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ textAlign: 'center', maxWidth: '600px', padding: '32px' }}>
+                <FileText size={64} style={{ margin: '0 auto 24px', color: '#94a3b8' }} />
+                <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#0f172a', marginBottom: '16px' }}>
+                  Upload Your Strategic Documents
+                </h2>
+                <p style={{ color: '#64748b', marginBottom: '32px' }}>
+                  Upload meeting notes, strategy documents, or planning materials (5+ pages recommended). 
+                  Local Llama 3.1 will perform deep causal analysis extracting 15-25 variables, identifying feedback loops, 
+                  leverage points, and system archetypes using Donella Meadows' framework.
+                </p>
+                <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    style={{ padding: '12px 24px', backgroundColor: '#7c3aed', color: 'white', borderRadius: '8px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px' }}
+                  >
+                    <Upload size={20} />
+                    Upload Document
+                  </button>
+                  <button
+                    onClick={() => setShowUploadPanel(false)}
+                    style={{ padding: '12px 24px', backgroundColor: '#e2e8f0', color: '#475569', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '16px' }}
+                  >
+                    Start Manually
+                  </button>
+                </div>
+                <p style={{ fontSize: '14px', color: '#94a3b8', marginTop: '24px' }}>
+                  Supports: TXT, MD files • Longer documents (10+ pages) yield richer analysis
+                  <br />
+                  <span style={{ fontSize: '12px', color: '#ef4444', fontWeight: '500' }}>
+                    ⚠️ Ollama must be running: ollama serve
+                  </span>
+                </p>
+              </div>
+            </div>
+          )}
+          
+          <svg
+            ref={canvasRef}
+            style={{ width: '100%', height: '100%', minWidth: '1200px', minHeight: '800px', cursor: connectingFrom ? 'crosshair' : 'default' }}
+          >
+            {edges.map(edge => {
+              const fromNode = getNodeById(edge.from);
+              const toNode = getNodeById(edge.to);
+              if (!fromNode || !toNode) return null;
+              
+              const strengthWidth = edge.strength === 'strong' ? 3 : edge.strength === 'medium' ? 2 : 1.5;
+              
+              return (
+                <g key={edge.id}>
+                  <line
+                    x1={fromNode.x}
+                    y1={fromNode.y}
+                    x2={toNode.x}
+                    y2={toNode.y}
+                    stroke={edge.polarity === '+' ? '#10b981' : '#ef4444'}
+                    strokeWidth={strengthWidth}
+                    markerEnd="url(#arrowhead)"
+                    opacity={edge.strength === 'weak' ? 0.5 : 0.8}
+                  />
+                  <text
+                    x={(fromNode.x + toNode.x) / 2}
+                    y={(fromNode.y + toNode.y) / 2 - 10}
+                    style={{ fontSize: '14px', fontWeight: 'bold' }}
+                    fill={edge.polarity === '+' ? '#10b981' : '#ef4444'}
+                  >
+                    {edge.polarity}
+                  </text>
+                  <circle
+                    cx={(fromNode.x + toNode.x) / 2}
+                    cy={(fromNode.y + toNode.y) / 2}
+                    r="12"
+                    fill="white"
+                    stroke={edge.polarity === '+' ? '#10b981' : '#ef4444'}
+                    strokeWidth="2"
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => deleteEdge(edge.id)}
+                  />
+                  <text
+                    x={(fromNode.x + toNode.x) / 2}
+                    y={(fromNode.y + toNode.y) / 2 + 4}
+                    style={{ fontSize: '12px', pointerEvents: 'none' }}
+                    textAnchor="middle"
+                  >
+                    ×
+                  </text>
+                </g>
+              );
+            })}
+            
+            <defs>
+              <marker
+                id="arrowhead"
+                markerWidth="10"
+                markerHeight="10"
+                refX="9"
+                refY="3"
+                orient="auto"
+              >
+                <polygon points="0 0, 10 3, 0 6" fill="#64748b" />
+              </marker>
+            </defs>
+            
+            {nodes.map(node => {
+              const leverageColor = node.leverage_level <= 4 ? '#fee2e2' :
+                                   node.leverage_level <= 8 ? '#fef3c7' :
+                                   '#dbeafe';
+              const leverageBorder = node.leverage_level <= 4 ? '#dc2626' :
+                                    node.leverage_level <= 8 ? '#f59e0b' :
+                                    '#3b82f6';
+              
+              return (
+                <g key={node.id}>
+                  <foreignObject
+                    x={node.x - 80}
+                    y={node.y - 40}
+                    width="160"
+                    height="80"
+                  >
+                    <div
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        borderRadius: '8px',
+                        padding: '12px',
+                        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+                        border: `2px solid ${connectingFrom?.id === node.id ? '#2563eb' : selectedNode?.id === node.id ? '#60a5fa' : leverageBorder}`,
+                        backgroundColor: connectingFrom?.id === node.id ? '#dbeafe' : leverageColor,
+                        cursor: 'move',
+                        boxSizing: 'border-box'
+                      }}
+                      draggable
+                      onDragEnd={(e) => {
+                        const rect = canvasRef.current.getBoundingClientRect();
+                        moveNode(node.id, e.clientX - rect.left, e.clientY - rect.top);
+                      }}
+                      onClick={() => setSelectedNode(node)}
+                    >
+                      <div style={{ fontSize: '14px', fontWeight: '600', color: '#0f172a', marginBottom: '8px', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                        {node.name}
+                      </div>
+                      <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startConnection(node);
+                          }}
+                          style={{
+                            padding: '4px 8px',
+                            fontSize: '12px',
+                            borderRadius: '4px',
+                            border: 'none',
+                            cursor: 'pointer',
+                            backgroundColor: connectingFrom?.id === node.id ? '#2563eb' : '#e2e8f0',
+                            color: connectingFrom?.id === node.id ? 'white' : '#0f172a'
+                          }}
+                        >
+                          {connectingFrom?.id === node.id ? 'Cancel' : 'Link'}
+                        </button>
+                        {connectingFrom && connectingFrom.id !== node.id && (
+                          <>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                completeConnection(node, '+');
+                              }}
+                              style={{ padding: '4px 8px', fontSize: '12px', backgroundColor: '#10b981', color: 'white', borderRadius: '4px', border: 'none', cursor: 'pointer' }}
+                            >
+                              +
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                completeConnection(node, '-');
+                              }}
+                              style={{ padding: '4px 8px', fontSize: '12px', backgroundColor: '#ef4444', color: 'white', borderRadius: '4px', border: 'none', cursor: 'pointer' }}
+                            >
+                              −
+                            </button>
+                          </>
+                        )}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteNode(node.id);
+                          }}
+                          style={{ padding: '4px 8px', fontSize: '12px', backgroundColor: '#fee2e2', color: '#dc2626', borderRadius: '4px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  </foreignObject>
+                </g>
+              );
+            })}
+          </svg>
+        </div>
+
+        {/* Sidebar */}
+        <div style={{ width: '420px', backgroundColor: 'white', borderLeft: '1px solid #e2e8f0', padding: '16px', overflowY: 'auto' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: '#0f172a', marginBottom: '16px' }}>Analysis & Decision Support</h2>
+          
+          {/* Tabs */}
+          <div style={{ display: 'flex', gap: '4px', marginBottom: '16px', borderBottom: '2px solid #e2e8f0', flexWrap: 'wrap' }}>
+            {['metrics', 'network', 'scenario', 'decision', 'stress-test'].map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                style={{
+                  padding: '8px 12px',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  borderBottom: activeTab === tab ? '2px solid #2563eb' : '2px solid transparent',
+                  color: activeTab === tab ? '#2563eb' : '#64748b',
+                  fontWeight: activeTab === tab ? '600' : '400',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  textTransform: 'capitalize'
+                }}
+              >
+                {tab === 'stress-test' ? 'Stress Test' : tab}
+              </button>
+            ))}
+          </div>
+
+          {/* Metrics Tab */}
+          {activeTab === 'metrics' && (
+            <>
+              {/* Strategic Summary - Always Visible */}
+              <div style={{ marginBottom: '20px', padding: '14px', backgroundColor: '#fef3c7', borderRadius: '8px', border: '2px solid #fbbf24' }}>
+                <h3 style={{ fontSize: '14px', fontWeight: '700', color: '#92400e', marginBottom: '10px', textTransform: 'uppercase' }}>
+                  📊 Strategic Overview
+                </h3>
+                
+                {/* Leverage Points Summary */}
+                <div style={{ marginBottom: '12px', padding: '10px', backgroundColor: 'white', borderRadius: '6px' }}>
+                  <h4 style={{ fontSize: '12px', fontWeight: '600', color: '#0f172a', marginBottom: '6px' }}>
+                    🎯 Leverage Points: {extractedData?.leverage_points?.length || 0} identified
+                  </h4>
+                  {extractedData?.leverage_points && extractedData.leverage_points.length > 0 ? (
+                    <>
+                      {extractedData.leverage_points.slice(0, 3).map((lp, idx) => (
+                        <div key={idx} style={{ fontSize: '11px', color: '#64748b', padding: '4px 0', borderBottom: idx < 2 ? '1px solid #f1f5f9' : 'none' }}>
+                          <span style={{ fontWeight: '600', color: lp.level <= 4 ? '#dc2626' : lp.level <= 8 ? '#f59e0b' : '#3b82f6' }}>
+                            L{lp.level}:
+                          </span> {lp.description}
+                        </div>
+                      ))}
+                      {extractedData.leverage_points.length > 3 && (
+                        <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '4px', fontStyle: 'italic' }}>
+                          +{extractedData.leverage_points.length - 3} more (see Network tab)
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <p style={{ fontSize: '11px', color: '#94a3b8', fontStyle: 'italic' }}>
+                      No leverage points detected. Try uploading a more detailed document or re-analyzing.
+                    </p>
+                  )}
+                </div>
+
+                {/* System Archetypes Summary */}
+                <div style={{ padding: '10px', backgroundColor: 'white', borderRadius: '6px' }}>
+                  <h4 style={{ fontSize: '12px', fontWeight: '600', color: '#0f172a', marginBottom: '6px' }}>
+                    🔄 System Archetypes: {extractedData?.archetypes?.length || 0} detected
+                  </h4>
+                  {extractedData?.archetypes && extractedData.archetypes.length > 0 ? (
+                    <>
+                      {extractedData.archetypes.slice(0, 2).map((arch, idx) => (
+                        <div key={idx} style={{ fontSize: '11px', color: '#64748b', padding: '4px 0', borderBottom: idx < 1 ? '1px solid #f1f5f9' : 'none' }}>
+                          <span style={{ fontWeight: '600', color: '#7c3aed' }}>{arch.name}:</span> {arch.description}
+                        </div>
+                      ))}
+                      {extractedData.archetypes.length > 2 && (
+                        <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '4px', fontStyle: 'italic' }}>
+                          +{extractedData.archetypes.length - 2} more archetypes (see Network tab)
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <p style={{ fontSize: '11px', color: '#94a3b8', fontStyle: 'italic' }}>
+                      No system archetypes identified. The AI may need more context to detect behavioral patterns.
+                    </p>
+                  )}
+                </div>
+
+                {/* Key Variable Types */}
+                {networkMetrics && (
+                  <div style={{ marginTop: '10px', padding: '10px', backgroundColor: 'white', borderRadius: '6px' }}>
+                    <div style={{ display: 'flex', gap: '12px', fontSize: '11px' }}>
+                      <div>
+                        <span style={{ color: '#64748b' }}>🚀 Drivers:</span>
+                        <span style={{ fontWeight: '700', color: '#10b981', marginLeft: '4px' }}>
+                          {networkMetrics.drivers.length}
+                        </span>
+                      </div>
+                      <div>
+                        <span style={{ color: '#64748b' }}>🎯 Hubs:</span>
+                        <span style={{ fontWeight: '700', color: '#f59e0b', marginLeft: '4px' }}>
+                          {networkMetrics.hubs.length}
+                        </span>
+                      </div>
+                      <div>
+                        <span style={{ color: '#64748b' }}>📊 Outcomes:</span>
+                        <span style={{ fontWeight: '700', color: '#3b82f6', marginLeft: '4px' }}>
+                          {networkMetrics.outcomes.length}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* System Metrics */}
+              <div style={{ marginBottom: '24px', padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#0f172a', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>System Metrics</h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', marginBottom: '10px', padding: '8px', backgroundColor: 'white', borderRadius: '6px' }}>
+                  <span style={{ color: '#64748b', fontWeight: '500' }}>Variables:</span>
+                  <span style={{ fontWeight: '700', color: '#2563eb', fontSize: '16px' }}>{nodes.length}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', marginBottom: '10px', padding: '8px', backgroundColor: 'white', borderRadius: '6px' }}>
+                  <span style={{ color: '#64748b', fontWeight: '500' }}>Relationships:</span>
+                  <span style={{ fontWeight: '700', color: '#2563eb', fontSize: '16px' }}>{edges.length}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', padding: '8px', backgroundColor: 'white', borderRadius: '6px' }}>
+                  <span style={{ color: '#64748b', fontWeight: '500' }}>Feedback Loops:</span>
+                  <span style={{ fontWeight: '700', color: loops.length > 0 ? '#dc2626' : '#64748b', fontSize: '16px' }}>{loops.length}</span>
+                </div>
+              </div>
+
+              {loops.length > 0 && (
+                <div style={{ marginBottom: '24px' }}>
+                  <h3 style={{ fontWeight: '600', color: '#0f172a', marginBottom: '12px', fontSize: '14px' }}>Feedback Loops</h3>
+                  <div>
+                    {loops.slice(0, 3).map((loop, idx) => {
+                      const isReinforcing = loop.type === 'Reinforcing';
+                      return (
+                        <div
+                          key={idx}
+                          style={{
+                            padding: '10px',
+                            borderRadius: '6px',
+                            fontSize: '13px',
+                            marginBottom: '8px',
+                            backgroundColor: isReinforcing ? '#dcfce7' : '#dbeafe',
+                            border: `2px solid ${isReinforcing ? '#10b981' : '#3b82f6'}`
+                          }}
+                        >
+                          <div style={{ fontWeight: '700', color: isReinforcing ? '#15803d' : '#1e40af', marginBottom: '4px' }}>
+                            {isReinforcing ? '🔄' : '⚖️'} {loop.type}
+                          </div>
+                          <div style={{ fontSize: '11px', color: '#475569' }}>
+                            {loop.nodes.map(nodeId => getNodeById(nodeId)?.name).join(' → ')}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {selectedNode && (
+                <div style={{ padding: '14px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <h3 style={{ fontWeight: '600', color: '#0f172a', marginBottom: '8px', fontSize: '14px' }}>Node: {selectedNode.name}</h3>
+                  {selectedNode.description && (
+                    <p style={{ fontSize: '12px', color: '#64748b', marginBottom: '12px', fontStyle: 'italic' }}>{selectedNode.description}</p>
+                  )}
+                  <div style={{ fontSize: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', padding: '6px', backgroundColor: 'white', borderRadius: '4px' }}>
+                      <span style={{ color: '#64748b' }}>Outgoing:</span>
+                      <span style={{ fontWeight: '700', color: '#10b981' }}>{edges.filter(e => e.from === selectedNode.id).length}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', padding: '6px', backgroundColor: 'white', borderRadius: '4px' }}>
+                      <span style={{ color: '#64748b' }}>Incoming:</span>
+                      <span style={{ fontWeight: '700', color: '#f59e0b' }}>{edges.filter(e => e.to === selectedNode.id).length}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px', backgroundColor: 'white', borderRadius: '4px' }}>
+                      <span style={{ color: '#64748b' }}>Centrality:</span>
+                      <span style={{ fontWeight: '700', color: '#2563eb' }}>
+                        {edges.length > 0 ? Math.round((edges.filter(e => e.from === selectedNode.id || e.to === selectedNode.id).length / edges.length) * 100) : 0}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Network Analysis Tab */}
+          {activeTab === 'network' && networkMetrics && (
+            <div>
+              <div style={{ marginBottom: '16px', padding: '12px', backgroundColor: '#f0fdf4', borderRadius: '8px', border: '1px solid #86efac' }}>
+                <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#15803d', marginBottom: '6px' }}>Network Analysis</h3>
+                <p style={{ fontSize: '11px', color: '#166534' }}>System interconnectivity and structural patterns</p>
+              </div>
+
+              {/* Network Density */}
+              <div style={{ marginBottom: '16px', padding: '12px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                <h4 style={{ fontSize: '13px', fontWeight: '600', color: '#0f172a', marginBottom: '8px' }}>Network Density</h4>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ flex: 1, height: '8px', backgroundColor: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${networkMetrics.density * 100}%`, backgroundColor: networkMetrics.density > 0.5 ? '#10b981' : networkMetrics.density > 0.3 ? '#f59e0b' : '#ef4444', transition: 'width 0.3s' }} />
+                  </div>
+                  <span style={{ fontWeight: '700', fontSize: '14px', color: '#2563eb' }}>
+                    {Math.round(networkMetrics.density * 100)}%
+                  </span>
+                </div>
+                <p style={{ fontSize: '10px', color: '#64748b', marginTop: '6px' }}>
+                  {networkMetrics.density > 0.5 ? 'Highly interconnected system' : 
+                   networkMetrics.density > 0.3 ? 'Moderately connected system' : 
+                   'Loosely coupled system'}
+                </p>
+              </div>
+
+              {/* Hub Nodes */}
+              {networkMetrics.hubs.length > 0 && (
+                <div style={{ marginBottom: '16px' }}>
+                  <h4 style={{ fontSize: '13px', fontWeight: '600', color: '#0f172a', marginBottom: '8px' }}>
+                    🎯 Hub Variables ({networkMetrics.hubs.length})
+                  </h4>
+                  <p style={{ fontSize: '11px', color: '#64748b', marginBottom: '8px' }}>
+                    Highly connected nodes - changes here ripple widely
+                  </p>
+                  {networkMetrics.hubs.slice(0, 5).map((hub, idx) => (
+                    <div key={idx} style={{ padding: '8px', backgroundColor: '#fef3c7', borderRadius: '6px', marginBottom: '6px', border: '1px solid #fbbf24' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontWeight: '600', fontSize: '12px', color: '#0f172a' }}>{hub.name}</span>
+                        <span style={{ fontSize: '11px', color: '#92400e', fontWeight: '600' }}>
+                          {hub.totalDegree} connections
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '10px', color: '#78350f', marginTop: '4px' }}>
+                        In: {hub.inDegree} | Out: {hub.outDegree}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Driver Nodes */}
+              {networkMetrics.drivers.length > 0 && (
+                <div style={{ marginBottom: '16px' }}>
+                  <h4 style={{ fontSize: '13px', fontWeight: '600', color: '#0f172a', marginBottom: '8px' }}>
+                    🚀 Driver Variables ({networkMetrics.drivers.length})
+                  </h4>
+                  <p style={{ fontSize: '11px', color: '#64748b', marginBottom: '8px' }}>
+                    Upstream influencers - leverage points for intervention
+                  </p>
+                  {networkMetrics.drivers.slice(0, 5).map((driver, idx) => (
+                    <div key={idx} style={{ padding: '8px', backgroundColor: '#dcfce7', borderRadius: '6px', marginBottom: '6px', border: '1px solid #86efac' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontWeight: '600', fontSize: '12px', color: '#0f172a' }}>{driver.name}</span>
+                        <span style={{ fontSize: '11px', color: '#15803d', fontWeight: '600' }}>
+                          {driver.outDegree}→ influences
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Outcome Nodes */}
+              {networkMetrics.outcomes.length > 0 && (
+                <div style={{ marginBottom: '16px' }}>
+                  <h4 style={{ fontSize: '13px', fontWeight: '600', color: '#0f172a', marginBottom: '8px' }}>
+                    📊 Outcome Variables ({networkMetrics.outcomes.length})
+                  </h4>
+                  <p style={{ fontSize: '11px', color: '#64748b', marginBottom: '8px' }}>
+                    Downstream results - indicators to monitor
+                  </p>
+                  {networkMetrics.outcomes.slice(0, 5).map((outcome, idx) => (
+                    <div key={idx} style={{ padding: '8px', backgroundColor: '#dbeafe', borderRadius: '6px', marginBottom: '6px', border: '1px solid #93c5fd' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontWeight: '600', fontSize: '12px', color: '#0f172a' }}>{outcome.name}</span>
+                        <span style={{ fontSize: '11px', color: '#1e40af', fontWeight: '600' }}>
+                          ←{outcome.inDegree} influenced by
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Enhanced Feedback Loops */}
+              {loops.length > 0 && (
+                <div>
+                  <h4 style={{ fontSize: '13px', fontWeight: '600', color: '#0f172a', marginBottom: '8px' }}>
+                    🔄 Feedback Loops ({loops.length} detected)
+                  </h4>
+                  {loops
+                    .sort((a, b) => b.length - a.length)
+                    .slice(0, 5)
+                    .map((loop, idx) => {
+                      const isReinforcing = loop.type === 'Reinforcing';
+                      return (
+                        <div
+                          key={idx}
+                          style={{
+                            padding: '10px',
+                            borderRadius: '6px',
+                            fontSize: '12px',
+                            marginBottom: '8px',
+                            backgroundColor: isReinforcing ? '#fee2e2' : '#dbeafe',
+                            border: `2px solid ${isReinforcing ? '#ef4444' : '#3b82f6'}`
+                          }}
+                        >
+                          <div style={{ fontWeight: '700', color: isReinforcing ? '#dc2626' : '#1e40af', marginBottom: '4px' }}>
+                            {isReinforcing ? '⚠️ Reinforcing' : '⚖️ Balancing'} ({loop.length} nodes)
+                          </div>
+                          <div style={{ fontSize: '10px', color: '#475569', marginBottom: '4px' }}>
+                            {loop.nodes.slice(0, loop.length).map(nodeId => getNodeById(nodeId)?.name).join(' → ')}
+                          </div>
+                          <div style={{ fontSize: '9px', color: '#64748b', fontStyle: 'italic' }}>
+                            Polarities: {loop.polarities.join(' → ')}
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
+
+              {/* Causal Chains from Selected Node */}
+              {selectedNode && (
+                <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <h4 style={{ fontSize: '13px', fontWeight: '600', color: '#0f172a', marginBottom: '8px' }}>
+                    Causal Chains from: {selectedNode.name}
+                  </h4>
+                  {(() => {
+                    const chains = findCausalChains(selectedNode.id);
+                    return chains.length > 0 ? (
+                      chains.slice(0, 5).map((chain, idx) => (
+                        <div key={idx} style={{ padding: '8px', backgroundColor: 'white', borderRadius: '4px', marginBottom: '6px', border: '1px solid #e2e8f0' }}>
+                          <div style={{ fontSize: '10px', color: '#64748b', marginBottom: '4px' }}>
+                            {chain.path.join(' → ')}
+                          </div>
+                          <div style={{ fontSize: '9px', color: chain.netPolarity === '+' ? '#10b981' : '#ef4444', fontWeight: '600' }}>
+                            Net Effect: {chain.netPolarity === '+' ? 'Positive' : 'Negative'} ({chain.strength})
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p style={{ fontSize: '11px', color: '#94a3b8' }}>No downstream chains found</p>
+                    );
+                  })()}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Scenario Tab */}
+          {activeTab === 'scenario' && (
+            <div>
+              <div style={{ marginBottom: '16px', padding: '12px', backgroundColor: '#eff6ff', borderRadius: '8px', border: '1px solid #93c5fd' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                  <Zap size={18} style={{ color: '#2563eb' }} />
+                  <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#1e40af' }}>Scenario Analysis</h3>
+                </div>
+                <p style={{ fontSize: '11px', color: '#3b82f6' }}>Test "what-if" scenarios and predict cascading effects</p>
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#475569', marginBottom: '6px' }}>
+                  What if...
+                </label>
+                <textarea
+                  value={scenarioInput}
+                  onChange={(e) => setScenarioInput(e.target.value)}
+                  placeholder="e.g., 'What if we reduce prices by 20%?'"
+                  style={{ width: '100%', minHeight: '80px', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '13px', resize: 'vertical' }}
+                />
+                <button
+                  onClick={runScenarioAnalysis}
+                  disabled={runningScenario || !scenarioInput.trim() || nodes.length === 0}
+                  style={{
+                    width: '100%',
+                    marginTop: '8px',
+                    padding: '10px',
+                    backgroundColor: runningScenario || !scenarioInput.trim() || nodes.length === 0 ? '#cbd5e1' : '#2563eb',
+                    color: 'white',
+                    borderRadius: '6px',
+                    border: 'none',
+                    cursor: runningScenario || !scenarioInput.trim() || nodes.length === 0 ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    fontWeight: '600',
+                    fontSize: '14px'
+                  }}
+                >
+                  {runningScenario ? <Loader size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Play size={16} />}
+                  {runningScenario ? 'Analyzing...' : 'Run Scenario'}
+                </button>
+              </div>
+
+              {scenarioResults && (
+                <div style={{ marginTop: '20px' }}>
+                  <div style={{ padding: '12px', backgroundColor: scenarioResults.risk_level === 'high' ? '#fee2e2' : scenarioResults.risk_level === 'medium' ? '#fef3c7' : '#dcfce7', borderRadius: '8px', marginBottom: '16px' }}>
+                    <div style={{ fontWeight: '700', fontSize: '14px', color: '#0f172a', marginBottom: '4px' }}>
+                      Risk Level: {scenarioResults.risk_level?.toUpperCase()}
+                    </div>
+                  </div>
+
+                  {scenarioResults.immediate_effects && scenarioResults.immediate_effects.length > 0 && (
+                    <div style={{ marginBottom: '16px' }}>
+                      <h4 style={{ fontSize: '13px', fontWeight: '600', color: '#0f172a', marginBottom: '8px' }}>Immediate Effects</h4>
+                      {scenarioResults.immediate_effects.map((effect, idx) => (
+                        <div key={idx} style={{ padding: '10px', backgroundColor: '#f8fafc', borderRadius: '6px', marginBottom: '8px', border: '1px solid #e2e8f0' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                            <span style={{ fontWeight: '600', fontSize: '12px', color: '#0f172a' }}>{effect.variable}</span>
+                            <span style={{ fontSize: '11px', fontWeight: '600', color: effect.direction === 'increase' ? '#10b981' : '#ef4444' }}>
+                              {effect.direction === 'increase' ? '↑' : '↓'} {effect.magnitude}
+                            </span>
+                          </div>
+                          <p style={{ fontSize: '11px', color: '#64748b' }}>{effect.reason}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {scenarioResults.second_order_effects && scenarioResults.second_order_effects.length > 0 && (
+                    <div style={{ marginBottom: '16px' }}>
+                      <h4 style={{ fontSize: '13px', fontWeight: '600', color: '#0f172a', marginBottom: '8px' }}>Second-Order Effects</h4>
+                      {scenarioResults.second_order_effects.map((effect, idx) => (
+                        <div key={idx} style={{ padding: '10px', backgroundColor: '#fef3c7', borderRadius: '6px', marginBottom: '8px', border: '1px solid #fbbf24' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                            <span style={{ fontWeight: '600', fontSize: '12px', color: '#0f172a' }}>{effect.variable}</span>
+                            <span style={{ fontSize: '10px', color: '#92400e' }}>{effect.delay}</span>
+                          </div>
+                          <p style={{ fontSize: '11px', color: '#78350f' }}>{effect.reason}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {scenarioResults.recommended_actions && scenarioResults.recommended_actions.length > 0 && (
+                    <div>
+                      <h4 style={{ fontSize: '13px', fontWeight: '600', color: '#0f172a', marginBottom: '8px' }}>Recommended Actions</h4>
+                      {scenarioResults.recommended_actions.map((action, idx) => (
+                        <div key={idx} style={{ fontSize: '11px', color: '#475569', paddingLeft: '12px', borderLeft: '3px solid #2563eb', marginBottom: '6px', padding: '6px' }}>
+                          <ChevronRight size={12} style={{ display: 'inline', marginRight: '4px' }} />
+                          {action}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Decision Tab */}
+          {activeTab === 'decision' && (
+            <div>
+              <div style={{ marginBottom: '16px', padding: '12px', backgroundColor: '#f0fdf4', borderRadius: '8px', border: '1px solid #86efac' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                  <Target size={18} style={{ color: '#16a34a' }} />
+                  <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#15803d' }}>Decision Support</h3>
+                </div>
+                <p style={{ fontSize: '11px', color: '#166534' }}>Compare options and identify trade-offs</p>
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#475569', marginBottom: '8px' }}>
+                  Decision Options (2-3 required)
+                </label>
+                {decisionOptions.map((option, idx) => (
+                  <input
+                    key={idx}
+                    type="text"
+                    value={option}
+                    onChange={(e) => {
+                      const newOptions = [...decisionOptions];
+                      newOptions[idx] = e.target.value;
+                      setDecisionOptions(newOptions);
+                    }}
+                    placeholder={`Option ${idx + 1}`}
+                    style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '12px', marginBottom: '8px' }}
+                  />
+                ))}
+                <button
+                  onClick={analyzeDecisions}
+                  disabled={analyzingDecision || decisionOptions.filter(o => o.trim()).length < 2 || nodes.length === 0}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    backgroundColor: analyzingDecision || decisionOptions.filter(o => o.trim()).length < 2 || nodes.length === 0 ? '#cbd5e1' : '#16a34a',
+                    color: 'white',
+                    borderRadius: '6px',
+                    border: 'none',
+                    cursor: analyzingDecision || decisionOptions.filter(o => o.trim()).length < 2 || nodes.length === 0 ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    fontWeight: '600',
+                    fontSize: '14px'
+                  }}
+                >
+                  {analyzingDecision ? <Loader size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <TrendingUp size={16} />}
+                  {analyzingDecision ? 'Analyzing...' : 'Analyze Decisions'}
+                </button>
+              </div>
+
+              {decisionAnalysis && (
+                <div style={{ marginTop: '20px' }}>
+                  {decisionAnalysis.recommendation && (
+                    <div style={{ padding: '12px', backgroundColor: '#dcfce7', borderRadius: '8px', marginBottom: '16px', border: '2px solid #10b981' }}>
+                      <div style={{ fontWeight: '700', fontSize: '13px', color: '#15803d', marginBottom: '6px' }}>
+                        ✓ Recommended: {decisionAnalysis.recommendation.best_option}
+                      </div>
+                      <p style={{ fontSize: '11px', color: '#166534', marginBottom: '8px' }}>{decisionAnalysis.recommendation.reasoning}</p>
+                      {decisionAnalysis.recommendation.conditions && decisionAnalysis.recommendation.conditions.length > 0 && (
+                        <div style={{ fontSize: '10px', color: '#166534', fontStyle: 'italic' }}>
+                          Conditions: {decisionAnalysis.recommendation.conditions.join(', ')}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {decisionAnalysis.evaluations && decisionAnalysis.evaluations.map((evaluation, idx) => (
+                    <div key={idx} style={{ padding: '12px', backgroundColor: 'white', borderRadius: '8px', marginBottom: '12px', border: '1px solid #e2e8f0' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <span style={{ fontWeight: '600', fontSize: '13px', color: '#0f172a' }}>{evaluation.option}</span>
+                        <span style={{ fontSize: '16px', fontWeight: '700', color: evaluation.score >= 70 ? '#10b981' : evaluation.score >= 50 ? '#f59e0b' : '#ef4444' }}>
+                          {evaluation.score}
+                        </span>
+                      </div>
+                      {evaluation.pros && evaluation.pros.length > 0 && (
+                        <div style={{ marginBottom: '6px' }}>
+                          <div style={{ fontSize: '11px', fontWeight: '600', color: '#15803d', marginBottom: '4px' }}>Pros:</div>
+                          {evaluation.pros.map((pro, i) => (
+                            <div key={i} style={{ fontSize: '10px', color: '#166534', paddingLeft: '8px' }}>• {pro}</div>
+                          ))}
+                        </div>
+                      )}
+                      {evaluation.cons && evaluation.cons.length > 0 && (
+                        <div>
+                          <div style={{ fontSize: '11px', fontWeight: '600', color: '#dc2626', marginBottom: '4px' }}>Cons:</div>
+                          {evaluation.cons.map((con, i) => (
+                            <div key={i} style={{ fontSize: '10px', color: '#991b1b', paddingLeft: '8px' }}>• {con}</div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Stress Test Tab */}
+          {activeTab === 'stress-test' && (
+            <div>
+              <div style={{ marginBottom: '16px', padding: '12px', backgroundColor: '#fef3c7', borderRadius: '8px', border: '1px solid #fbbf24' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                  <Shield size={18} style={{ color: '#f59e0b' }} />
+                  <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#92400e' }}>Strategy Stress Test</h3>
+                </div>
+                <p style={{ fontSize: '11px', color: '#78350f' }}>Red-team your strategy and find vulnerabilities</p>
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#475569', marginBottom: '6px' }}>
+                  Your Strategy or Plan
+                </label>
+                <textarea
+                  value={strategyText}
+                  onChange={(e) => setStrategyText(e.target.value)}
+                  placeholder="Paste your strategic plan, initiative, or approach here..."
+                  style={{ width: '100%', minHeight: '120px', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '13px', resize: 'vertical' }}
+                />
+                <button
+                  onClick={stressTestStrategy}
+                  disabled={testingStrategy || !strategyText.trim() || nodes.length === 0}
+                  style={{
+                    width: '100%',
+                    marginTop: '8px',
+                    padding: '10px',
+                    backgroundColor: testingStrategy || !strategyText.trim() || nodes.length === 0 ? '#cbd5e1' : '#f59e0b',
+                    color: 'white',
+                    borderRadius: '6px',
+                    border: 'none',
+                    cursor: testingStrategy || !strategyText.trim() || nodes.length === 0 ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    fontWeight: '600',
+                    fontSize: '14px'
+                  }}
+                >
+                  {testingStrategy ? <Loader size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Shield size={16} />}
+                  {testingStrategy ? 'Testing...' : 'Run Stress Test'}
+                </button>
+              </div>
+
+              {stressTestResults && (
+                <div style={{ marginTop: '20px' }}>
+                  {stressTestResults.resilience_score !== undefined && (
+                    <div style={{ padding: '12px', backgroundColor: stressTestResults.resilience_score >= 70 ? '#dcfce7' : stressTestResults.resilience_score >= 50 ? '#fef3c7' : '#fee2e2', borderRadius: '8px', marginBottom: '16px' }}>
+                      <div style={{ fontWeight: '700', fontSize: '14px', color: '#0f172a' }}>
+                        Resilience Score: {stressTestResults.resilience_score}/100
+                      </div>
+                    </div>
+                  )}
+
+                  {stressTestResults.vulnerabilities && stressTestResults.vulnerabilities.length > 0 && (
+                    <div style={{ marginBottom: '16px' }}>
+                      <h4 style={{ fontSize: '13px', fontWeight: '600', color: '#0f172a', marginBottom: '8px' }}>⚠️ Vulnerabilities</h4>
+                      {stressTestResults.vulnerabilities.map((vuln, idx) => (
+                        <div key={idx} style={{ padding: '10px', backgroundColor: vuln.severity === 'high' ? '#fee2e2' : vuln.severity === 'medium' ? '#fef3c7' : '#f0fdf4', borderRadius: '6px', marginBottom: '8px', border: `2px solid ${vuln.severity === 'high' ? '#ef4444' : vuln.severity === 'medium' ? '#f59e0b' : '#86efac'}` }}>
+                          <div style={{ fontWeight: '600', fontSize: '12px', color: '#0f172a', marginBottom: '4px' }}>
+                            {vuln.severity === 'high' ? '🔴' : vuln.severity === 'medium' ? '🟡' : '🟢'} {vuln.issue}
+                          </div>
+                          {vuln.affected_variables && vuln.affected_variables.length > 0 && (
+                            <div style={{ fontSize: '10px', color: '#64748b', marginBottom: '4px' }}>
+                              Affects: {vuln.affected_variables.join(', ')}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {stressTestResults.conflicts && stressTestResults.conflicts.length > 0 && (
+                    <div style={{ marginBottom: '16px' }}>
+                      <h4 style={{ fontSize: '13px', fontWeight: '600', color: '#0f172a', marginBottom: '8px' }}>⚡ Conflicts</h4>
+                      {stressTestResults.conflicts.map((conflict, idx) => (
+                        <div key={idx} style={{ padding: '10px', backgroundColor: '#fef3c7', borderRadius: '6px', marginBottom: '8px', border: '1px solid #fbbf24' }}>
+                          <div style={{ fontWeight: '600', fontSize: '11px', color: '#92400e', marginBottom: '4px' }}>{conflict.type}</div>
+                          <p style={{ fontSize: '10px', color: '#78350f' }}>{conflict.description}</p>
+                          {conflict.resolution && (
+                            <p style={{ fontSize: '10px', color: '#166534', marginTop: '4px', fontStyle: 'italic' }}>→ {conflict.resolution}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {stressTestResults.dependencies && stressTestResults.dependencies.length > 0 && (
+                    <div style={{ marginBottom: '16px' }}>
+                      <h4 style={{ fontSize: '13px', fontWeight: '600', color: '#0f172a', marginBottom: '8px' }}>🔗 Critical Dependencies</h4>
+                      {stressTestResults.dependencies.map((dep, idx) => (
+                        <div key={idx} style={{ padding: '10px', backgroundColor: '#eff6ff', borderRadius: '6px', marginBottom: '8px', border: '1px solid #93c5fd' }}>
+                          <div style={{ fontWeight: '600', fontSize: '11px', color: '#1e40af', marginBottom: '4px' }}>{dep.depends_on}</div>
+                          <p style={{ fontSize: '10px', color: '#3b82f6', marginBottom: '4px' }}>Risk: {dep.risk}</p>
+                          {dep.mitigation && (
+                            <p style={{ fontSize: '10px', color: '#166534', fontStyle: 'italic' }}>Mitigation: {dep.mitigation}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {stressTestResults.modifications && stressTestResults.modifications.length > 0 && (
+                    <div>
+                      <h4 style={{ fontSize: '13px', fontWeight: '600', color: '#0f172a', marginBottom: '8px' }}>💡 Suggested Improvements</h4>
+                      {stressTestResults.modifications.map((mod, idx) => (
+                        <div key={idx} style={{ padding: '10px', backgroundColor: '#dcfce7', borderRadius: '6px', marginBottom: '8px', border: '1px solid #86efac' }}>
+                          <div style={{ fontWeight: '600', fontSize: '11px', color: '#15803d', marginBottom: '4px' }}>{mod.change}</div>
+                          <p style={{ fontSize: '10px', color: '#166534' }}>{mod.rationale}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<SystemMapper />);
+  </script>
+</body>
+</html>
