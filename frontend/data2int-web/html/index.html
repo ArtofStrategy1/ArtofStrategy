@@ -2374,7 +2374,7 @@ const mainFooter = document.getElementById('mainFooter');
         const wsStatus = document.getElementById("wsStatus");
 
         try {
-            let wsUrl = `wss://${DOMAIN}/api/n8n-listener/ws`;
+            let wsUrl = "wss://n8n-listener.sageaios.com/ws";
             websocket = new WebSocket(wsUrl);
 
             wsStatus.textContent = "Connecting...";
@@ -2786,7 +2786,7 @@ const mainFooter = document.getElementById('mainFooter');
 
 
     async function fetchGroq(systemPrompt, userContext, analysisType) {
-        const GROQ_URL = "https://matt-groq.data2int.com/api/groq/chat";
+        const GROQ_URL = `https://${DOMAIN}/api/llm-proxy/groq/chat`;
         const GROQ_MODEL = "llama-3.1-8b-instant";
         const messages = [
                 {"role": "system", "content": `${systemPrompt}`},
@@ -2817,7 +2817,7 @@ const mainFooter = document.getElementById('mainFooter');
 
 
     async function fetchOpenRouter(systemPrompt, userContext, jsonSchema, analysisType) {
-        const OPRT_URL = "https://matt-groq.data2int.com/api/oprt/chat";
+        const OPRT_URL = `https://${DOMAIN}/api/llm-proxy/oprt/chat`;
         const OPRT_MODEL = "openai/gpt-oss-20b:free";
         const messages = [
                 {"role": "user", "content": `${systemPrompt}\n\n${userContext}`}
