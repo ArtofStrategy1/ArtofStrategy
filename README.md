@@ -173,8 +173,8 @@ A. DEFAULT CREDENTIALS
 
    2. SUPABASE STUDIO (Dashboard)
       - URL:      http://localhost:3000
-      - Username: LoganGrimnar2345@
-      - Password: AbbaddonTheDespoiler472@
+      - Username: admin@sageaios.com
+      - Password: gurajji1@
 
    3. SERVICE_ROLE KEY (Admin API Access)
       - Location: .env file (SEARCH FOR: SERVICE_ROLE_KEY)

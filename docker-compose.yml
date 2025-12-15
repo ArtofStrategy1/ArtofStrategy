@@ -40,7 +40,7 @@ services:
       DEFAULT_PROJECT_NAME: ${STUDIO_DEFAULT_PROJECT}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
 
-      SUPABASE_URL: http://kong:8000
+      SUPABASE_URL: http://kong:8005
       SUPABASE_PUBLIC_URL: ${SUPABASE_PUBLIC_URL}
       SUPABASE_ANON_KEY: ${ANON_KEY}
       SUPABASE_SERVICE_KEY: ${SERVICE_ROLE_KEY}
@@ -59,8 +59,12 @@ services:
     image: kong:2.8.1
     restart: unless-stopped
     ports:
-      - ${KONG_HTTP_PORT}:8000/tcp
+      - ${KONG_HTTP_PORT}:8005/tcp
       - ${KONG_HTTPS_PORT}:8443/tcp
+    networks:
+      - default
+      - npm_default
+      - data2int-net
     volumes:
       # https://github.com/supabase/supabase/issues/12661
       - ./volumes/api/kong.yml:/home/kong/temp.yml:ro,z
@@ -306,7 +310,7 @@ services:
         condition: service_healthy
     environment:
       JWT_SECRET: ${JWT_SECRET}
-      SUPABASE_URL: http://kong:8000
+      SUPABASE_URL: http://kong:8005
       SUPABASE_ANON_KEY: ${ANON_KEY}
       SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
       # Supabase project settings
@@ -518,3 +522,10 @@ services:
 
 volumes:
   db-config:
+
+networks:
+  default:
+  data2int-net:
+    external: true
+  npm_default:
+    external: true
