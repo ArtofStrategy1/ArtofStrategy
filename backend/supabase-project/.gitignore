@@ -1,0 +1,27 @@
+# Environment files (contain secrets)
+.env
+.env.local
+.env.*.local
+*.env.backup.txt
+
+# API keys and secrets
+*api_key.txt
+resend_api_key.txt
+full_access_resend_api_key.txt
+stripe_keys.txt
+
+# Database backups and exports
+*.sql
+*.backup
+
+# Docker backup files
+*.backup
+
+# Supabase generated files - ignore database data but keep functions
+volumes/db/
+volumes/logs/
+volumes/storage/
+# Keep volumes/functions/ (don't ignore this)
+
+# Development files
+dev/
