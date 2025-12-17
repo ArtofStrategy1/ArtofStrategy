@@ -151,3 +151,4 @@ webpack.config.js
 .geminiignore
 *gemini*
 *GEMINI*
+backend/supabase-project/README.md
